@@ -1,6 +1,6 @@
 surface.CreateFont( "NoticeFont", {
-	font = "BITSTREAM VERA SANS", --Use the font-name which is shown to you by your operating system Font Viewer, not the file name
-	size = 16.2,
+	font = "DermaDefault", -- *shrugs*
+	size = 20,
 	weight = 2000,
 	antialias = true
 } )
@@ -66,8 +66,6 @@ function CoolNotify(message,delay)
 	end
 
 	OrganizeNotices()
-
-	MsgC(color_white,"[Notification]: "..message.."\n")	
 	
 	local function RemoveNotices()
 		if IsValid(notice) then		
