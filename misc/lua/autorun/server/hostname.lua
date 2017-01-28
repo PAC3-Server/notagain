@@ -8,6 +8,10 @@ local extra = [[
     Crashes
     Lag
     Minges
+    Invalid Proxy Expressions
+    34.21 ms
+    TimerX frustration
+    MEGALOVANIA
 ]]
 
 extra = string.Explode("\n",extra)
