@@ -1,0 +1,3 @@
+[submodule "gmod-xp-chat"]
+	path = gmod-xp-chat
+	url = https://github.com/CaveeJohnson/gmod-xp-chat.git
