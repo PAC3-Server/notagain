@@ -86,10 +86,7 @@ function notification.AddProgress(id,message)
 end
 
 function notification.Kill(id)
-	for _,v in pairs(notices) do
-		if v.id == id then
-			v:Remove()
-			break
-		end
+	if IsValid(notices[id]) then
+		notices[id]:Remove()
 	end
 end
