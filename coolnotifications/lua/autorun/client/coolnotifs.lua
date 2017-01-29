@@ -1,5 +1,5 @@
 surface.CreateFont( "NoticeFont", {
-	font = "DermaDefault", -- *shrugs*
+	font = "DermaDefault", 
 	size = 20,
 	weight = 2000,
 	antialias = true
@@ -39,28 +39,27 @@ vgui.Register("DNotice", PANEL, "DLabel")
 notices = notices or {}
 
 function CoolNotify(message,delay)
-	local notice = vgui.Create("DNotice")
 	local i = #notices+1
 	local scrW = ScrW()
-
+	local notice = vgui.Create("DNotice")
+	
 	notices[i] = notice
+	notice.id = i
 	
 	notice:SetText(message)
-	notice:SetPos(ScrW(), ScrH() - (i - 1) * (notice:GetTall() + 4 	) + 4)
+	notice:SetPos(ScrW(), ScrH() - (notice.id - 1) * (notice:GetTall() + 4 	) + 4)
 	notice:SizeToContentsX()
 	notice:SetWide(notice:GetWide() + 64)
 	notice.start = CurTime() + 0.25
-	notice.endTime = CurTime() + delay
-	notice.id = i	
+	notice.endTime = CurTime() + delay	
 	notice.OnRemove = function() 
 		notices[notice.id] = nil
 	end
 
-
 	local function OrganizeNotices()
 		for k, v in ipairs(notices) do
 			if IsValid(v) then
-				v:MoveTo(scrW - (v:GetWide()), ScrH() - 40 - ( k - i ) * ( v:GetTall() + 12 ) - i * ( v:GetTall() + 12 ), 0.15, (k / #notices) * 0.25, nil)
+				v:MoveTo(scrW - (v:GetWide()), ScrH() - 40 - ( k - notice.id ) * ( v:GetTall() + 12 ) - notice.id * ( v:GetTall() + 12 ), 0.15, (k / #notices) * 0.25, nil)
 			end
 		end
 	end
@@ -68,10 +67,18 @@ function CoolNotify(message,delay)
 	OrganizeNotices()
 	
 	local function RemoveNotices()
+		
+		for k,v in pairs(notices) do --Removing NULL panels the hard way
+			if not IsValid(v) then
+				notices[k] = nil
+			end
+		end
+		
 		if IsValid(notice) then		
-			notice:MoveTo(ScrW(), notice.y, 0.15, 0.1, nil, function() notice:Remove() end)
+			notice:MoveTo(ScrW(), notice.y, 0.15, 0.1, nil, function(tbl,pa) pa:Remove() end)
 			OrganizeNotices()
-		end			
+		end
+		
 	end
 		
 	timer.Simple(delay,RemoveNotices)
