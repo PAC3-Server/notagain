@@ -2,11 +2,11 @@ AddCSLuaFile()
  
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
-local tag = "YScoreboard:"
 local mainMenuSize = {
     w = scrW * .60,
     h = scrH * .85
 }
+
 hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
     if (ScrW() != scrW or ScrH() != scrH) then
         scrW, scrH = ScrW(), ScrH()
@@ -158,10 +158,6 @@ Number only input:
    
 end
  
-local function inQuad( fraction, beginning, change )
-    return change * ( fraction ^ 2 ) + beginning
-end
- 
 local polyBackground = {
     { x = 100, y = 0 },
     { x = 1016, y = 0 },
@@ -307,10 +303,10 @@ local PLAYER_LINE = {
             end
             if aowl ~= nil then
                 local SubAdmin = self.Menu:AddSubMenu("Staff")
-                    SubAdmin:AddOption( "Bring",function() LocalPlayer():ConCommand( "awol bring "..self.Player:Nick() ) end)
-                    SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..self.Player:Nick() ) end)
-                    SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..self.Player:Nick() ) end)
-                    SubAdmin:AddOption( "Reconnect",function() LocalPlayer():ConCommand( [[awol retry]]) end)
+                    SubAdmin:AddOption( "Bring",function() RunConsoleCommand("aowl","bring",self.Player:Nick() ) end)
+                    SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..self.Player:Nick(),3 ) end)
+                    SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..self.Player:Nick(),3 ) end)
+                    SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand("aowl","cexec",self¨.Player:Nick(),"retry") end)
                     SubAdmin.Paint = function()
                         surface.SetDrawColor( 75, 75, 75, 255 )
                         surface.DrawRect( 0, 0, SubAdmin:GetWide(), SubAdmin:GetTall() )
@@ -337,7 +333,7 @@ local PLAYER_LINE = {
            
             local SubUtility = self.Menu:AddSubMenu("Utilities")
                 if aowl ~= nil then
-                    SubUtility:AddOption( "Goto",function() LocalPlayer():ConCommand("aowl goto "..self.Player:Nick()) end)
+                    SubUtility:AddOption( "Goto",function() RunConsoleCommand("aowl","goto",self.Player:Nick()) end)
                 end
                 SubUtility:AddOption( "Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end)
                 SubUtility.Paint = function()
@@ -348,6 +344,8 @@ local PLAYER_LINE = {
                 end
             RegisterDermaMenuForClose( self.Menu )
             self.Menu:Open()
+        elseif num == MOUSE_LEFT then
+            RunConsoleCommand("aowl","goto",self.Player:Nick())
         end
        
     end
@@ -423,7 +421,7 @@ local SCORE_BOARD = {
         self.Footer.Time:SetTextColor( Color( 255, 255, 255, 255 ) )
         self.Footer.Time:Dock( RIGHT )
         self.Footer.Time:DockMargin( 0, 0, 20, 0 )
-        self.Footer.Time:SetWidth( 50 )
+        self.Footer.Time:SetWidth( 60 )
         self.Footer.Time:SetContentAlignment( 3 )
        
         self.Footer.TimeName = self.Footer:Add( "DLabel" )
@@ -448,41 +446,12 @@ local SCORE_BOARD = {
         self:Center()
  
     end,
-   
-    StartAnim = function( self, n )
-        local x, y, w, h = self:GetBounds()
-        w = w < 100 and 1016 or w
-        h = h < 50 and 555 or h
-        local startp = ScrW()
-        startp = ( startp > x and x > ( ScrW() - w ) / 2 ) and x or startp
-        local dist = ( ScrW() - w ) / 2 - startp
-        self.anim = Derma_Anim( "EaseInQuad", self, function( pnl, anim, delta, data )
-            pnl:SetPos( inQuad( delta, startp, dist ), ( ScrH() - h ) / 2  )
-        end )
-        self.anim:Start( n )
-    end,
-   
-    EndAnim = function( self, n )
-        local x, y, w, h = self:GetBounds()
-        local startp = ( ScrW() - w ) / 2
-        startp = startp <= x and x or startp
-        local dist = ScrW() - startp
-        self.anim = Derma_Anim( "EaseInQuad", self, function( pnl, anim, delta, data )
-            pnl:SetPos( inQuad( delta, startp, dist ), ( ScrH() - h ) / 2  )
-        end )
-        self.anim:Start( n )
-       
-    end,
- 
  
     Paint = function( self, w, h )
         if self:IsMouseInputEnabled() then Derma_DrawBackgroundBlur( self, self.startTime ) end
     end,
  
     Think = function( self, w, h )
-        if self.anim:Active() then
-            self.anim:Run()
-        end
        
         self.Footer.Time:SetText( os.date("%X") )
         self.Footer.Fps:SetText( math.Round( 1/FrameTime() ) )
@@ -506,7 +475,6 @@ local w_Scoreboard = nil
 timer.Simple( 1.5, function()
  
     function GAMEMODE:ScoreboardShow()
-        if ( timer.Exists( "w_Scoreboard_Hide" ) ) then timer.Remove( "w_Scoreboard_Hide" ) end
         if ( !IsValid( w_Scoreboard ) ) then
             w_Scoreboard = vgui.CreateFromTable( SCORE_BOARD )
         end
@@ -520,7 +488,6 @@ timer.Simple( 1.5, function()
         w_Scoreboard:MakePopup()
         w_Scoreboard:SetKeyboardInputEnabled( false )
        
-        w_Scoreboard:StartAnim( 0.01 )
      
     end
  
@@ -528,8 +495,9 @@ timer.Simple( 1.5, function()
      
         if ( IsValid( w_Scoreboard ) ) then
             w_Scoreboard:SetMouseInputEnabled( false )
-            timer.Create( "w_Scoreboard_Hide", 0.1, 1, function() if ( IsValid( w_Scoreboard ) ) then w_Scoreboard:Hide() end end )
-            w_Scoreboard:EndAnim( 0.01 )
+            if ( IsValid( w_Scoreboard ) ) then 
+                w_Scoreboard:Hide() 
+            end 
         end
         hook.Remove("KeyPress","w_Scoreboard_scoreBoard_ShowCursor")
         CloseDermaMenus()
