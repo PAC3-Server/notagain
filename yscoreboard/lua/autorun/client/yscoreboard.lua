@@ -495,9 +495,7 @@ timer.Simple( 1.5, function()
      
         if ( IsValid( w_Scoreboard ) ) then
             w_Scoreboard:SetMouseInputEnabled( false )
-            if ( IsValid( w_Scoreboard ) ) then 
-                w_Scoreboard:Hide() 
-            end 
+            w_Scoreboard:Hide() 
         end
         hook.Remove("KeyPress","w_Scoreboard_scoreBoard_ShowCursor")
         CloseDermaMenus()
