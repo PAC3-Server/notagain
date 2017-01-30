@@ -2,12 +2,12 @@ AddCSLuaFile()
  
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
+local tag = "YScoreboard"
 local mainMenuSize = {
     w = scrW * .60,
     h = scrH * .85
 }
-
-hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
+hook.Add("PreRender", tag, function()
     if (ScrW() != scrW or ScrH() != scrH) then
         scrW, scrH = ScrW(), ScrH()
         mainMenuSize.w = mainMenuSize.w / resolutionScale
@@ -87,7 +87,7 @@ function getPlayerTime (ply)
     -- todo
     return 0
 end
- 
+
 local function cinputs( command, mode )
 --[[
 Result in LocalPlayer:ConCommand( command..(Vars from selected modes) )
@@ -129,14 +129,13 @@ Number only input:
         textentry:SetText("reason")
         textentry:SetPos(main:GetWide()/20,main:GetTall()/2.75)
         textentry:SetSize(main:GetWide()/2,22)
-        if math.floor( mode / 2 ) == 0 then textentry:SetVisible( false ) end
        
     local wang = vgui.Create("DNumberWang",main)
         wang:SetMinMax( 0, 99999 )
         wang:SetDecimals( 0 )
         wang:SetPos(main:GetWide()/1.625,main:GetTall()/2.75)
         wang:SetSize(main:GetWide()/3,22)
-        if mode % 2 == 0 then wang:SetVisible( false ) end
+        if mode == 1 then wang:SetVisible( false ) end
        
     local button = vgui.Create("DButton",main)
         button:SetText("Go")
@@ -149,8 +148,8 @@ Number only input:
             surface.DrawOutlinedRect( 0, 0, button:GetWide(), button:GetTall() )
         end
         button.DoClick = function()
-            if mode % 2 != 0 and math.floor( mode / 1 ) != 0 then command = command..[[ "]]..wang:GetValue()..[[" ]] end
-            if mode % 4 != 0 and math.floor( mode / 2 ) != 0 then command = command..[[ "]]..textentry:GetValue()..[[" ]] end
+        	if mode == 2 then command = command..[[ "]]..wang:GetValue()..[["]] end
+        	command = command..[[ "]]..textentry:GetValue()..[[" ]]
            
             LocalPlayer():ConCommand(command)
             main:Remove()
@@ -201,7 +200,7 @@ local PLAYER_LINE = {
         self.Name:SetFont( "Sfont" )
         self.Name:SetTextColor( Color( 255, 255, 255 ) )
         self.Name:DockMargin( 8, 0, 0, 0 )
-        self.Name:SetWidth( 200 )
+        self.Name:SetWidth( scrW * .45 )
  
         self.Mute = self:Add( "DImageButton" )
         self.Mute:SetSize( 30, 30 )
@@ -242,7 +241,7 @@ local PLAYER_LINE = {
  
         if ( self.PName == nil || self.PName != self.Player:Nick() ) then
             self.PName = self.Player:Nick()
-            self.Name:SetText( self.PName )
+            self.Name:SetText( self.PName:gsub("<(.+)=(.+)>","") )
         end
  
         if ( self.NumPing == nil || self.NumPing != self.Player:Ping() ) then
@@ -302,17 +301,32 @@ local PLAYER_LINE = {
                 surface.DrawOutlinedRect( 0, 0, self.Menu:GetWide(), self.Menu:GetTall() )
             end
             if aowl ~= nil then
-                local SubAdmin = self.Menu:AddSubMenu("Staff")
-                    SubAdmin:AddOption( "Bring",function() RunConsoleCommand("aowl","bring",self.Player:Nick() ) end)
-                    SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..self.Player:Nick(),3 ) end)
-                    SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..self.Player:Nick(),3 ) end)
-                    SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand("aowl","cexec",self¨.Player:Nick(),"retry") end)
+                local goto = self.Menu:AddOption("Goto", function()
+                   RunConsoleCommand( "aowl", "goto", tostring( self.Player:UniqueID() ) )
+                end)    
+                goto:SetImage("icon16/arrow_right.png")
+                local bring = goto:AddSubMenu( "Bring" )
+                bring:AddOption("Bring",function() RunConsoleCommand( "aowl", "bring", tostring( self.Player:UniqueID() ) ) end):SetImage("icon16/arrow_in.png")
+                bring.Paint = function()
+                    surface.SetDrawColor( 75, 75, 75, 255 )
+                    surface.DrawRect( 0, 0, bring:GetWide(), bring:GetTall() )
+                    surface.SetDrawColor( 100, 100, 100, 255 )
+                    surface.DrawOutlinedRect( 0, 0, bring:GetWide(), bring:GetTall() )
+                end
+
+                local SubAdmin,pic = self.Menu:AddSubMenu("Staff")
+                    pic:SetImage("icon16/shield.png")
+                    SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..tostring( self.Player:UniqueID() ) , 1) end):SetImage("icon16/door_in.png")
+                    SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..tostring( self.Player:UniqueID() ) , 2) end):SetImage("icon16/stop.png")
+                    SubAdmin:AddSpacer()
+                    SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand( "aowl", "cexec", tostring( self.Player:UniqueID() ), "retry") end):SetImage("icon16/arrow_refresh.png")
                     SubAdmin.Paint = function()
                         surface.SetDrawColor( 75, 75, 75, 255 )
                         surface.DrawRect( 0, 0, SubAdmin:GetWide(), SubAdmin:GetTall() )
                         surface.SetDrawColor( 100, 100, 100, 255 )
                         surface.DrawOutlinedRect( 0, 0, SubAdmin:GetWide(), SubAdmin:GetTall() )
                     end
+
            
                 self.Menu:AddSpacer()  
             end  
@@ -331,11 +345,9 @@ local PLAYER_LINE = {
                 self.Menu:AddSpacer()
             end
            
-            local SubUtility = self.Menu:AddSubMenu("Utilities")
-                if aowl ~= nil then
-                    SubUtility:AddOption( "Goto",function() RunConsoleCommand("aowl","goto",self.Player:Nick()) end)
-                end
-                SubUtility:AddOption( "Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end)
+            local SubUtility,pic = self.Menu:AddSubMenu("Utilities")
+            	pic:SetImage("icon16/wrench.png")
+                SubUtility:AddOption( "Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end):SetImage("icon16/tab_edit.png")
                 SubUtility.Paint = function()
                     surface.SetDrawColor( 75, 75, 75, 255 )
                     surface.DrawRect( 0, 0, SubUtility:GetWide(), SubUtility:GetTall() )
@@ -344,11 +356,12 @@ local PLAYER_LINE = {
                 end
             RegisterDermaMenuForClose( self.Menu )
             self.Menu:Open()
+
         elseif num == MOUSE_LEFT then
-            RunConsoleCommand("aowl","goto",self.Player:Nick())
-        end
-       
+            RunConsoleCommand( "aowl", "goto", tostring( self.Player:UniqueID() ) )
+        end             
     end
+
 }
  
 PLAYER_LINE = vgui.RegisterTable( PLAYER_LINE, "DPanel" )
@@ -448,7 +461,7 @@ local SCORE_BOARD = {
     end,
  
     Paint = function( self, w, h )
-        if self:IsMouseInputEnabled() then Derma_DrawBackgroundBlur( self, self.startTime ) end
+        Derma_DrawBackgroundBlur( self, self.startTime )
     end,
  
     Think = function( self, w, h )
@@ -474,31 +487,35 @@ local w_Scoreboard = nil
  
 timer.Simple( 1.5, function()
  
-    function GAMEMODE:ScoreboardShow()
+    hook.Add("ScoreboardShow", tag, function()
         if ( !IsValid( w_Scoreboard ) ) then
             w_Scoreboard = vgui.CreateFromTable( SCORE_BOARD )
         end
      
         if ( IsValid( w_Scoreboard ) ) then
             w_Scoreboard:Show()
-            w_Scoreboard:SetKeyboardInputEnabled( false )
-            w_Scoreboard:SetMouseInputEnabled( false )
         end
        
         w_Scoreboard:MakePopup()
         w_Scoreboard:SetKeyboardInputEnabled( false )
-       
-     
-    end
+        w_Scoreboard:SetMouseInputEnabled( false )
+
+        return true
+    end)
  
-    function GAMEMODE:ScoreboardHide()
-     
+    hook.Add("ScoreboardHide", tag, function()
         if ( IsValid( w_Scoreboard ) ) then
-            w_Scoreboard:SetMouseInputEnabled( false )
-            w_Scoreboard:Hide() 
+            w_Scoreboard:Hide()
         end
-        hook.Remove("KeyPress","w_Scoreboard_scoreBoard_ShowCursor")
+
         CloseDermaMenus()
-    end
+        return true
+    end)
+
+    hook.Add("PlayerBindPress", tag, function(ply,bind,pressed)
+       if pressed and bind == "+attack2" and IsValid(w_Scoreboard) and w_Scoreboard:IsVisible() then
+            w_Scoreboard:SetMouseInputEnabled( true )
+        end
+     end)
    
 end )
