@@ -21,50 +21,34 @@ end)
  
  
 surface.CreateFont( "InfoFont", {
-    font = "DermaDefault",
-    size = 21,
-    weight = 1000,
-    blursize = 0,
+    font      = "DermaDefault",
+    size      = 21,
+    weight    = 1000,
+    blursize  = 0,
     scanlines = 0,
     antialias = true,
-    underline = false,
-    italic = false,
-    strikeout = false,
-    symbol = false,
-    rotary = false,
-    shadow = true,
-    additive = true,
-    outline = true,
+    shadow    = true,
+    additive  = true,
+    outline   = true,
 } )
+
 surface.CreateFont( "Sfont", {
-    font = "DermaDefault",
-    size = 15,
-    weight = 1000,
-    blursize = 0,
+    font      = "DermaDefault",
+    size      = 15,
+    weight    = 1000,
+    blursize  = 0,
     scanlines = 0,
     antialias = true,
-    underline = false,
-    italic = false,
-    strikeout = false,
-    symbol = false,
-    rotary = false,
-    shadow = true,
-    additive = true,
-    outline = true,
+    shadow    = true,
+    additive  = true,
+    outline   = true,
 } )
-surface.CreateFont( "ScoreboardDefault", {
-    font    = "DermaLarge",
-    size    = 15,
-    weight  = 800,
-    shadow = true,
-    outline = true
-} )
- 
+
 surface.CreateFont( "ScoreboardDefaultTitle", {
     font    = "DermaDefault",
     size    = 32,
     weight  = 800,
-    shadow = true,
+    shadow  = true,
     outline = true
 } )
  
@@ -83,12 +67,8 @@ local function formatTime (time)
   return string.format( str.."%02ih %02im", h, m )
 end
  
-function getPlayerTime (ply)
-    -- todo
-    return 0
-end
- 
 local function cinputs( command, mode )
+
 --[[
 Result in LocalPlayer:ConCommand( command..(Vars from selected modes) )
  
@@ -110,15 +90,6 @@ Number only input:
         main:SetVisible(true)
         main:SetDraggable(true)
         main:ShowCloseButton(true)
-        main.Paint = function()
-            surface.SetDrawColor( 75, 75, 75, 255 )
-            surface.DrawRect( 0, 0, main:GetWide(), main:GetTall() )
-            surface.SetDrawColor(15,15,15,255)
-            surface.DrawRect( 0, 0, main:GetWide(), main:GetTall()-(main:GetTall()/1.20) )
-            surface.SetDrawColor( 100, 100, 100, 255 )
-            surface.DrawOutlinedRect( 0, 0, main:GetWide(), main:GetTall() )
-            surface.DrawOutlinedRect( 0, 0, main:GetWide(), main:GetTall()-(main:GetTall()/1.20) )
-        end
         main:SetVisible(true)
         main:MakePopup()
         main.OnClose = function()
@@ -126,28 +97,26 @@ Number only input:
         end
        
     local textentry = vgui.Create("DTextEntry",main)
+        
         textentry:SetText("reason")
         textentry:SetPos(main:GetWide()/20,main:GetTall()/2.75)
         textentry:SetSize(main:GetWide()/2,22)
+        
         if math.floor( mode / 2 ) == 0 then textentry:SetVisible( false ) end
        
     local wang = vgui.Create("DNumberWang",main)
+        
         wang:SetMinMax( 0, 99999 )
         wang:SetDecimals( 0 )
         wang:SetPos(main:GetWide()/1.625,main:GetTall()/2.75)
         wang:SetSize(main:GetWide()/3,22)
+        
         if mode % 2 == 0 then wang:SetVisible( false ) end
        
     local button = vgui.Create("DButton",main)
         button:SetText("Go")
         button:SetPos(main:GetWide()/4,main:GetTall()/1.35)
         button:SetSize(main:GetWide()/2-8,22)
-        button.Paint = function()
-            surface.SetDrawColor( 30, 30, 30, 255 )
-            surface.DrawRect( 0, 0, button:GetWide(), button:GetTall() )
-            surface.SetDrawColor( 100, 100, 100, 255 )
-            surface.DrawOutlinedRect( 0, 0, button:GetWide(), button:GetTall() )
-        end
         button.DoClick = function()
             if mode % 2 != 0 and math.floor( mode / 1 ) != 0 then command = command..[[ "]]..wang:GetValue()..[[" ]] end
             if mode % 4 != 0 and math.floor( mode / 2 ) != 0 then command = command..[[ "]]..textentry:GetValue()..[[" ]] end
@@ -157,20 +126,6 @@ Number only input:
         end
    
 end
- 
-local polyBackground = {
-    { x = 100, y = 0 },
-    { x = 1016, y = 0 },
-    { x = 916, y = 555 },
-    { x = 0, y = 555 },
-}
-local polyServerName = {
-    { x = 110, y = 5 },
-    { x = 1006, y = 5 },
-    { x = 998.8, y = 40 },
-    { x = 102.8, y = 40 },
-}
- 
  
 local ScoreEntries = {}
  
@@ -278,85 +233,65 @@ local PLAYER_LINE = {
             return
         end
        
-        local polyPlyBox = {
-            { x = 0, y = 0 },
-            { x = w, y = 0 },
-            { x = w, y = h },
-            { x = 0, y = h },
-        }
- 
         surface.SetDrawColor( 0, 0, 0, 200 )
         draw.NoTexture()
         surface.DrawRect(0,0,w,h)
+
+        if self:IsHovered() then
+            surface.SetDrawColor(255,255,255)
+            surface.DrawOutlinedRect(0,0,w,h)
+        end
  
     end,
    
     OnMousePressed = function( self, num )
         if num == MOUSE_RIGHT then
+            
             self.Menu = self:Add( "DMenu" )
             self.Menu:SetAutoDelete( true )
-            self.Menu.Paint = function()
-                surface.SetDrawColor( 75, 75, 75, 255 )
-                surface.DrawRect( 0, 0, self.Menu:GetWide(), self.Menu:GetTall() )
-                surface.SetDrawColor( 100, 100, 100, 255 )
-                surface.DrawOutlinedRect( 0, 0, self.Menu:GetWide(), self.Menu:GetTall() )
-            end
+
             if aowl ~= nil then
                 local SubAdmin = self.Menu:AddSubMenu("Staff")
-                    SubAdmin:AddOption( "Bring",function() RunConsoleCommand("aowl","bring",self.Player:Nick() ) end)
-                    SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..self.Player:Nick(),3 ) end)
-                    SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..self.Player:Nick(),3 ) end)
-                    SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand("aowl","cexec",self¨.Player:Nick(),"retry") end)
-                    SubAdmin.Paint = function()
-                        surface.SetDrawColor( 75, 75, 75, 255 )
-                        surface.DrawRect( 0, 0, SubAdmin:GetWide(), SubAdmin:GetTall() )
-                        surface.SetDrawColor( 100, 100, 100, 255 )
-                        surface.DrawOutlinedRect( 0, 0, SubAdmin:GetWide(), SubAdmin:GetTall() )
-                    end
+               
+                SubAdmin:AddOption( "Bring",function() RunConsoleCommand("aowl","bring",self.Player:Nick() ) end)
+                SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..self.Player:Nick(),2 ) end)
+                SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..self.Player:Nick(),3 ) end)
+                SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand("aowl","cexec",self.Player:Nick(),"retry") end)
            
                 self.Menu:AddSpacer()  
             end  
            
             if pac ~= nil and pace ~= nil then
                 local SubPac = self.Menu:AddSubMenu("PAC3")
-                    SubPac:AddOption( "Ignore",function() pac.IgnoreEntity(self.Player) end)
-                    SubPac:AddOption( "Unignore",function() pac.UnIgnoreEntity(self.Player) end)
-                    SubPac.Paint = function()
-                        surface.SetDrawColor( 75, 75, 75, 255 )
-                        surface.DrawRect( 0, 0, SubPac:GetWide(), SubPac:GetTall() )
-                        surface.SetDrawColor(100, 100, 100, 255 )
-                        surface.DrawOutlinedRect( 0, 0, SubPac:GetWide(), SubPac:GetTall() )
-                    end
+                
+                SubPac:AddOption( "Ignore",function() pac.IgnoreEntity(self.Player) end)
+                SubPac:AddOption( "Unignore",function() pac.UnIgnoreEntity(self.Player) end)
                    
                 self.Menu:AddSpacer()
             end
            
             local SubUtility = self.Menu:AddSubMenu("Utilities")
-                if aowl ~= nil then
-                    SubUtility:AddOption( "Goto",function() RunConsoleCommand("aowl","goto",self.Player:Nick()) end)
-                end
-                SubUtility:AddOption( "Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end)
-                SubUtility.Paint = function()
-                    surface.SetDrawColor( 75, 75, 75, 255 )
-                    surface.DrawRect( 0, 0, SubUtility:GetWide(), SubUtility:GetTall() )
-                    surface.SetDrawColor( 100, 100, 100, 255 )
-                    surface.DrawOutlinedRect( 0, 0, SubUtility:GetWide(), SubUtility:GetTall() )
-                end
+                
+            if aowl ~= nil then
+                SubUtility:AddOption( "Goto",function() RunConsoleCommand("aowl","goto",self.Player:Nick()) end)
+            end
+            
+            SubUtility:AddOption( "Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end)
+
             RegisterDermaMenuForClose( self.Menu )
             self.Menu:Open()
+        
         elseif num == MOUSE_LEFT then
+            
             RunConsoleCommand("aowl","goto",self.Player:Nick())
+        
         end
        
     end
 }
  
-PLAYER_LINE = vgui.RegisterTable( PLAYER_LINE, "DPanel" )
- 
 local SCORE_BOARD = {
-    Init = function( self )
-        self.startTime = SysTime()
-       
+    Init = function( self ) 
         self.Header = self:Add( "Panel" )
         self.Header:Dock( TOP )
         self.Header:SetHeight( 70 )
@@ -448,7 +383,7 @@ local SCORE_BOARD = {
     end,
  
     Paint = function( self, w, h )
-        if self:IsMouseInputEnabled() then Derma_DrawBackgroundBlur( self, self.startTime ) end
+        if self:IsMouseInputEnabled() then Derma_DrawBackgroundBlur( self,  SysTime()/4 ) end
     end,
  
     Think = function( self, w, h )
@@ -458,7 +393,9 @@ local SCORE_BOARD = {
         self.Name:SetText( GetHostName() )
        
         for id, pl in pairs( player.GetAll() ) do
+            
             if ( IsValid( ScoreEntries[pl:EntIndex()] ) ) then continue end
+            
             ScoreEntries[pl:EntIndex()] = vgui.CreateFromTable( PLAYER_LINE )
             ScoreEntries[pl:EntIndex()]:Setup( pl )
            
@@ -467,14 +404,18 @@ local SCORE_BOARD = {
  
     end
 }
- 
+
+PLAYER_LINE = vgui.RegisterTable( PLAYER_LINE, "DPanel" )
 SCORE_BOARD = vgui.RegisterTable( SCORE_BOARD, "EditablePanel" )
- 
+
+local ysc_convar = CreateClientConVar( "yscoreboad_show", "1", true, false )
+ysc_convar:SetInt(1)
+
 local w_Scoreboard = nil
- 
-timer.Simple( 1.5, function()
- 
-    function GAMEMODE:ScoreboardShow()
+  
+local function YScoreboardShow()
+    if ysc_convar:GetInt() == 1 then
+        
         if ( !IsValid( w_Scoreboard ) ) then
             w_Scoreboard = vgui.CreateFromTable( SCORE_BOARD )
         end
@@ -487,18 +428,22 @@ timer.Simple( 1.5, function()
        
         w_Scoreboard:MakePopup()
         w_Scoreboard:SetKeyboardInputEnabled( false )
-       
-     
+
+        return false
     end
- 
-    function GAMEMODE:ScoreboardHide()
-     
+   
+end
+
+local function YScoreboardHide()
+    if ysc_convar:GetInt() == 1 then
         if ( IsValid( w_Scoreboard ) ) then
             w_Scoreboard:SetMouseInputEnabled( false )
             w_Scoreboard:Hide() 
         end
-        hook.Remove("KeyPress","w_Scoreboard_scoreBoard_ShowCursor")
         CloseDermaMenus()
     end
-   
-end )
+end
+
+hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
+hook.Add("ScoreboardHide","YScoreboardHide",YScoreboardHide)
+
