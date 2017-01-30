@@ -302,11 +302,11 @@ local PLAYER_LINE = {
             end
             if aowl ~= nil then
                 local goto = self.Menu:AddOption("Goto", function()
-                   RunConsoleCommand( "aowl", "goto", self.Player:EntIndex() == (1 or 2) and self.Player:Name():gsub( "<(.+)=(.+)>" , "") or tostring( self.Player:EntIndex() ) ) -- workaround for #1 and #2 aowl gotolocation. Remove if those arent present.
+                   RunConsoleCommand( "aowl", "goto", tostring( self.Player:UniqueID() ) )
                 end)    
                 goto:SetImage("icon16/arrow_right.png")
                 local bring = goto:AddSubMenu( "Bring" )
-                bring:AddOption("Bring",function() RunConsoleCommand( "aowl", "bring", tostring( self.Player:EntIndex() ) ) end):SetImage("icon16/arrow_in.png")
+                bring:AddOption("Bring",function() RunConsoleCommand( "aowl", "bring", tostring( self.Player:UniqueID() ) ) end):SetImage("icon16/arrow_in.png")
                 bring.Paint = function()
                     surface.SetDrawColor( 75, 75, 75, 255 )
                     surface.DrawRect( 0, 0, bring:GetWide(), bring:GetTall() )
@@ -316,10 +316,10 @@ local PLAYER_LINE = {
 
                 local SubAdmin,pic = self.Menu:AddSubMenu("Staff")
                     pic:SetImage("icon16/shield.png")
-                    SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..tostring(self.Player:EntIndex()) , 1) end):SetImage("icon16/door_in.png")
-                    SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..tostring(self.Player:EntIndex()) , 2) end):SetImage("icon16/stop.png")
+                    SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..tostring( self.Player:UniqueID() ) , 1) end):SetImage("icon16/door_in.png")
+                    SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..tostring( self.Player:UniqueID() ) , 2) end):SetImage("icon16/stop.png")
                     SubAdmin:AddSpacer()
-                    SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand( "aowl", "cexec", tostring( self.Player:EntIndex() ), "retry") end):SetImage("icon16/arrow_refresh.png")
+                    SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand( "aowl", "cexec", tostring( self.Player:UniqueID() ), "retry") end):SetImage("icon16/arrow_refresh.png")
                     SubAdmin.Paint = function()
                         surface.SetDrawColor( 75, 75, 75, 255 )
                         surface.DrawRect( 0, 0, SubAdmin:GetWide(), SubAdmin:GetTall() )
@@ -358,7 +358,7 @@ local PLAYER_LINE = {
             self.Menu:Open()
 
         elseif num == MOUSE_LEFT then
-            RunConsoleCommand( "aowl", "goto", self.Player:EntIndex() == (1 or 2) and self.Player:Name():gsub( "<(.+)=(.+)>" , "") or tostring( self.Player:EntIndex() ) )
+            RunConsoleCommand( "aowl", "goto", tostring( self.Player:UniqueID() ) )
         end             
     end
 
