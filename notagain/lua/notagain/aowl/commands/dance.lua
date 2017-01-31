@@ -1,23 +1,25 @@
-local aowl = requirex("aowl")
+AddCSLuaFile()
+
+local tag = "aowl_dance"
 
 local function is_dancing(ply)
-	return ply:GetNWBool("dancing")
+	return ply:GetNWBool(tag)
 end
 
 local function set_dancing(ply, b)
-	ply:SetNWBool("dancing", b)
+	ply:SetNWBool(tag, b)
 end
 
 if CLIENT then
-	local bpm = CreateClientConVar("dance_bpm", 120, true, true)
+	local bpm = CreateClientConVar(tag .. "_bpm", 120, true, true)
 
-	hook.Add("ShouldDrawLocalPlayer", "dance", function(ply)
+	hook.Add("ShouldDrawLocalPlayer", tag, function(ply)
 		if is_dancing(ply) then
 			return true
 		end
 	end)
 
-	hook.Add("CalcView", "dance", function(ply, pos)
+	hook.Add("CalcView", tag, function(ply, pos)
 		if not is_dancing(ply) then return end
 
 		local pos = pos + ply:GetAimVector() * -100
@@ -33,7 +35,7 @@ if CLIENT then
 	local suppress = false
 	local last
 
-	hook.Add("CreateMove", "dance", function(cmd)
+	hook.Add("CreateMove", tag, function(cmd)
 		if is_dancing(LocalPlayer()) then
 			if cmd:KeyDown(IN_JUMP) then
 				if not suppress then
@@ -51,8 +53,8 @@ if CLIENT then
 						table.remove(beats, 1)
 					end
 
-					RunConsoleCommand("dance_bpm", (temp * 60))
-					RunConsoleCommand("dance_setrate", bpm:GetInt())
+					RunConsoleCommand(tag .. "_bpm", (temp * 60))
+					RunConsoleCommand(tag .. "_setrate", bpm:GetInt())
 
 					suppress = true
 				end
@@ -63,9 +65,9 @@ if CLIENT then
 		end
 	end)
 
-	hook.Add("CalcMainActivity", "dance", function(ply)
+	hook.Add("CalcMainActivity", tag, function(ply)
 		if is_dancing(ply) then
-			local bpm = (ply:GetNWBool("dance_bpm") or 120) / 94
+			local bpm = (ply:GetNWBool(tag .. "_bpm") or 120) / 94
 			local time = (RealTime() / 10) * bpm
 			time = time%2
 			if time > 1 then
@@ -83,8 +85,8 @@ if CLIENT then
 end
 
 if SERVER then
-	concommand.Add("dance_setrate", function(ply, _, args)
-		ply:SetNWBool("dance_bpm", tonumber(args[1]))
+	concommand.Add(tag .. "_setrate", function(ply, _, args)
+		ply:SetNWBool(tag .. "_bpm", tonumber(args[1]))
 	end)
 
 	aowl.AddCommand("dance", function(ply)
@@ -97,7 +99,7 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("PlayerDeath", "DancingDeath", function(ply)
+	hook.Add("PlayerDeath", tag, function(ply)
 		if is_dancing(ply) then
 			set_dancing(ply, false)
 		end
