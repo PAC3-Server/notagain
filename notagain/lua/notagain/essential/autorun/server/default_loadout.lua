@@ -6,9 +6,9 @@ local weps = {
 	"none",
 }
 
-hook.Add("PlayerLoadout","ReplaceDefault",function(pl)
-	for _,w in pairs(weps) do
-		pl:Give(w)
+hook.Add("PlayerLoadout", "default_loadout", function(ply)
+	for _, name in ipairs(weps) do
+		ply:Give(name)
 	end
 	return true
 end)
