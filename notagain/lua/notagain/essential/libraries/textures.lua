@@ -22,11 +22,11 @@ function textures.ReplaceTexture(id, path, to)
 			return false
 		end
 
-		textures.replaced[path] = textures.replaced[path] or {}
-		textures.replaced[path][id] = textures.replaced[path][id] or {}
+		textures.replaced[id] = textures.replaced[id] or {}
+		textures.replaced[id][path] = textures.replaced[id][path] or {}
 
-		textures.replaced[path][id].old_tex = textures.replaced[path][id].old_tex or mat:GetTexture("$basetexture")
-		textures.replaced[path][id].new_tex = tex
+		textures.replaced[id][path].old_tex = textures.replaced[id][path].old_tex or mat:GetTexture("$basetexture")
+		textures.replaced[id][path].new_tex = tex
 
 		mat:SetTexture("$basetexture", tex)
 
@@ -43,11 +43,11 @@ function textures.SetColor(id, path, color)
 	local mat = Material(path)
 
 	if not mat:IsError() then
-		textures.replaced[path] = textures.replaced[path] or {}
-		textures.replaced[path][id] = textures.replaced[path][id] or {}
+		textures.replaced[id] = textures.replaced[id] or {}
+		textures.replaced[id][path] = textures.replaced[id][path] or {}
 
-		textures.replaced[path][id].old_color = textures.replaced[path][id].old_color or mat:GetVector("$color")
-		textures.replaced[path][id].new_color = color
+		textures.replaced[id][path].old_color = textures.replaced[id][path].old_color or mat:GetVector("$color")
+		textures.replaced[id][path].new_color = color
 
 		mat:SetVector("$color", color)
 
@@ -59,23 +59,22 @@ end
 
 function textures.Restore(id)
 	for id_, data in pairs(textures.replaced) do
-		if not id or id == _id then
-			for name, tbl in pairs(data) do
-				if
-					not pcall(function()
-						if tbl.old_tex then
-							textures.ReplaceTexture(name, tbl.old_tex)
-						end
+		for name, tbl in pairs(data) do
+			if
+				not pcall(function()
+					if tbl.old_tex then
+						textures.ReplaceTexture(id_, name, tbl.old_tex)
+					end
 
-						if tbl.old_color then
-							textures.SetColor(name, tbl.old_color)
-						end
-					end)
-				then
-					print("Failed to restore: " .. tostring(name))
-				end
+					if tbl.old_color then
+						textures.SetColor(id_, name, tbl.old_color)
+					end
+				end)
+			then
+				print("textures.lua: failed to restore: " .. tostring(name))
 			end
 		end
+		if id == _id then break end
 	end
 end
 

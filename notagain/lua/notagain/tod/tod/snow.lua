@@ -1,3 +1,5 @@
+local textures = requirex("textures")
+
 local snow_density = 0.05
 
 local config =
@@ -82,7 +84,7 @@ if CLIENT then
 		path = path:lower()
 		if path:find("grass") or path:find("mud") or path:find("sand") then
 			textures.ReplaceTexture("tod", path, "nature/snowfloor002a")
-			textures.SetTextureColor("tod", path, Vector(1,1,1)*0.3)
+			textures.SetColor("tod", path, Vector(1,1,1)*0.3)
 		end
 	end)
 end
