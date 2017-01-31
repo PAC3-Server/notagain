@@ -12,9 +12,9 @@ do
 		"libraries/client/%s.lua",
 		"libraries/server/%s.lua",
 
-		"autorun/%s.lua",
-		"autorun/client/%s.lua",
-		"autorun/server/%s.lua",
+		--"autorun/client/%s.lua",
+		--"autorun/server/%s.lua",
+		--"autorun/%s.lua",
 
 		"%s.lua",
 	}
@@ -42,7 +42,6 @@ do
 	end
 
 	local function try(tries, name, dir)
-		local func
 		local errors = ""
 
 		for _, try in ipairs(tries) do
@@ -71,10 +70,12 @@ do
 			errors = errors .. err .. "\n"
 		end
 
-		return func, errors
+		return nil, errors
 	end
 
 	function notagain.GetLibrary(name, ...)
+		print("REQUIRE: ", name)
+
 		if notagain.loaded_libraries[name] then
 			return notagain.loaded_libraries[name]
 		end
@@ -83,7 +84,7 @@ do
 		local errors = ""
 
 		if not func then
-			for _, addon_dir in ipairs(notagain.directories) do
+			for addon_name, addon_dir in pairs(notagain.directories) do
 				local found, err = try(addon_tries, name, addon_dir .. "/")
 
 				if found then
@@ -117,13 +118,19 @@ do
 			return nil, errors
 		end
 
-		local ok, ret = pcall(func, ...)
+		local lib
 
-		if ok == false then
-			return nil, ret
+		if type(func) == "function" then
+			local ok, ret = pcall(func, ...)
+
+			if ok == false then
+				return nil, ret
+			end
+
+			lib = ret
+		else
+			lib = func
 		end
-
-		local lib = ret
 
 		notagain.loaded_libraries[name] = lib
 
@@ -136,23 +143,28 @@ function notagain.UnloadLibrary(name)
 end
 
 function notagain.Load()
+	local include = function(path) print("INCLUDE: ", path) return _G.include(path) end
+	local AddCSLuaFile = function(path) print("AddCSLuaFile: ", path) return AddCSLuaFile(path) end
+
 	do
 		local _, dirs = file.Find(root_dir .. "/*", "LUA")
 
 		for i, addon_dir in ipairs(dirs) do
-			dirs[i] = root_dir .. "/" .. addon_dir
+			dirs[addon_dir] = root_dir .. "/" .. addon_dir
 		end
 
 		notagain.directories = dirs
 	end
 
-	for _, addon_dir in ipairs(notagain.directories) do
+	for addon_name, addon_dir in pairs(notagain.directories) do
 		do -- autorun
 			local dir = addon_dir .. "/autorun/"
 
 			for _, name in pairs((file.Find(dir .. "*.lua", "LUA"))) do
 				local path = dir .. name
+
 				include(path)
+
 				if SERVER then
 					AddCSLuaFile(path)
 				end
@@ -184,9 +196,15 @@ function notagain.Load()
 				AddCSLuaFile(dir .. name)
 			end
 
-			for _, name in pairs((file.Find(dir .. "client/*.lua", "LUA"))) do
-				AddCSLuaFile(dir .. "client/" .. name)
+			local path = dir .. "client/"
+			for _, name in pairs((file.Find(path .. "*.lua", "LUA"))) do
+				AddCSLuaFile(path .. name)
 			end
+		end
+
+		local path = addon_dir .. "/" .. addon_name .. ".lua"
+		if file.Exists(path, "LUA") then
+			notagain.loaded_libraries[addon_name] = include(path)
 		end
 	end
 end
@@ -197,5 +215,5 @@ function _G.requirex(name, ...)
 	if res == nil then error(err, 2) end
 	return res
 end
-
+print("=================")
 notagain.Load()
