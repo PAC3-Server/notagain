@@ -1,4 +1,5 @@
 aowl.AddCommand("settod", function(player, line, val)
+	local val = val or "realtime"
 	local time24 = tonumber(val)
 
 	if time24 then
