@@ -74,7 +74,7 @@ do
 	end
 
 	function notagain.GetLibrary(name, ...)
-		print("REQUIRE: ", name)
+		--print("REQUIRE: ", name)
 
 		if notagain.loaded_libraries[name] then
 			return notagain.loaded_libraries[name]
@@ -143,8 +143,8 @@ function notagain.UnloadLibrary(name)
 end
 
 function notagain.Load()
-	local include = function(path) print("INCLUDE: ", path) return _G.include(path) end
-	local AddCSLuaFile = function(path) print("AddCSLuaFile: ", path) return AddCSLuaFile(path) end
+	--local include = function(path) print("INCLUDE: ", path) return _G.include(path) end
+	--local AddCSLuaFile = function(path) print("AddCSLuaFile: ", path) return AddCSLuaFile(path) end
 
 	do
 		local _, dirs = file.Find(root_dir .. "/*", "LUA")
@@ -215,5 +215,7 @@ function _G.requirex(name, ...)
 	if res == nil then error(err, 2) end
 	return res
 end
-print("=================")
+
+--print("=================")
+
 notagain.Load()
