@@ -190,16 +190,18 @@ if CLIENT then
 		end)
 	end
 
-	local last_byte
+	timer.Simple(1, function()
+		local last_byte
 
-	timer.Create("tod_update_lightmap", 0.1, 0, function()
-		local byte = tod.MultToLightEnv(tod.GetCycle())
+		timer.Create("tod_update_lightmap", 0.1, 0, function()
+			local byte = tod.MultToLightEnv(tod.GetCycle())
 
-		if last_byte ~= byte then
-			-- this function is very slow
-			render.RedownloadAllLightmaps()
-			last_byte = byte
-		end
+			if last_byte ~= byte then
+				-- this function is very slow
+				render.RedownloadAllLightmaps()
+				last_byte = byte
+			end
+		end)
 	end)
 
 
