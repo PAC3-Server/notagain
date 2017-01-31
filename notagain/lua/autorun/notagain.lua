@@ -11,11 +11,6 @@ do
 		"libraries/%s.lua",
 		"libraries/client/%s.lua",
 		"libraries/server/%s.lua",
-
-		"autorun/client/%s.lua",
-		"autorun/server/%s.lua",
-		"autorun/%s.lua",
-
 		"%s.lua",
 	}
 
@@ -26,13 +21,11 @@ do
 	}
 
 	local function load_path(path)
-		local lua = file.Read(path, "LUA")
-
-		if not lua then
+		if not file.Exists(path, "LUA") then
 			return nil, "unable to find " .. path
 		end
 
-		local var = CompileString(lua, path, false)
+		local var = CompileFile(path)
 
 		if type(var) ~= "string" then
 			return var
@@ -215,7 +208,5 @@ function _G.requirex(name, ...)
 	if res == nil then error(err, 2) end
 	return res
 end
-
---print("=================")
 
 notagain.Load()
