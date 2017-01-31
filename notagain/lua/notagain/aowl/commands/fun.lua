@@ -4,25 +4,6 @@ aowl.AddCommand("fov",function(pl,_,fov,delay)
 	pl:SetFOV(fov,tonumber(delay) or 0.3)
 end)
 
-aowl.AddCommand({"name","nick","setnick","setname","nickname"}, function(player, line)
-	if line then
-		line=line:Trim()
-		if(line=="") or line:gsub(" ","")=="" then
-			line = nil
-		end
-		if line and #line>40 then
-			if not line.ulen or line:ulen()>40 then
-				return false,"my god what are you doing"
-			end
-		end
-	end
-	timer.Create("setnick"..player:UserID(),1,1,function()
-		if IsValid(player) then
-			player:SetNick(line)
-		end
-	end)
-end, "players", true)
-
 aowl.AddCommand("bot",function(pl,cmd,what,name)
 	if not what or what=="" or what=="create" or what==' ' then
 
