@@ -1,3 +1,4 @@
+local testing = CreateConVar("sv_testing","0",{FCVAR_NOTIFY, FCVAR_ARCHIVE},"testing mode")
 local hostname = "Official PAC 3 Server - PAC and "
 local extra = [[
     Chill
@@ -13,6 +14,18 @@ local extra = [[
     TimerX frustration
     MEGALOVANIA
 ]]
+
+if testing:GetBool() then
+extra = [[
+    Crashing
+    Errors
+    nil
+    Testing
+    TODO
+    unable to find notagain/pac_server/autorun/server/hostname.lua
+]]
+end
+
 
 extra = string.Explode("\n",extra)
 
