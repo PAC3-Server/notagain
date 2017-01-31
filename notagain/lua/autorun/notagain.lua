@@ -12,9 +12,9 @@ do
 		"libraries/client/%s.lua",
 		"libraries/server/%s.lua",
 
-		--"autorun/client/%s.lua",
-		--"autorun/server/%s.lua",
-		--"autorun/%s.lua",
+		"autorun/client/%s.lua",
+		"autorun/server/%s.lua",
+		"autorun/%s.lua",
 
 		"%s.lua",
 	}
