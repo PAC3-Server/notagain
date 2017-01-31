@@ -1,3 +1,5 @@
+AddCSLuaFile()
+
 local aowl = {}
 _G.aowl = aowl
 
@@ -657,6 +659,13 @@ end
 
 for _, file_name in ipairs((file.Find("notagain/aowl/commands/*", "LUA"))) do
 	include("notagain/aowl/commands/" .. file_name)
+end
+
+for _, addon_dir in pairs(notagain.directories) do
+	local path = addon_dir .. "/aowl_commands/"
+	for _, file_name in ipairs((file.Find(path .. "*", "LUA"))) do
+		include(path .. file_name)
+	end
 end
 
 return aowl

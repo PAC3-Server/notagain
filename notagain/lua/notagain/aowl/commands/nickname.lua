@@ -27,19 +27,19 @@ end
 do
 	local cvar = CreateConVar("sh_playernick_enabled", "1")
 
-	old.GetName = old.GetName or META.GetName or META.Nick
+	META.OldGetName = META.OldGetName or META.GetName
 
 	function META:GetName(...)
 		local ok = playernick and cvar:GetBool() and type(self) == "Player" and self.IsValid and self:IsValid()
-		return ok and (hook.Call("PlayerNick", GAMEMODE, self, self:RealNick()) or self:RealNick()) or old.GetName(self, ...) or "Invalid player!?!?"
+		return ok and (hook.Call("PlayerNick", GAMEMODE, self, self:RealNick()) or self:RealNick()) or self:OldGetName(...) or "Invalid player!?!?"
 	end
 
 	META.Nick = META.GetName
 	META.Name = META.GetName
 
-	META.RealNick = old.GetName
-	META.RealName = old.GetName
-	META.GetRealName = old.GetName
+	META.RealNick = META.OldGetName
+	META.RealName = META.OldGetName
+	META.GetRealName = META.OldGetName
 end
 
 do
