@@ -1,4 +1,7 @@
-tod = {}
+AddCSLuaFile()
+
+local tod = {}
+_G.tod = tod
 
 tod.Params = {}
 tod.CurrentParams = {}
@@ -773,3 +776,5 @@ do -- weather
 		end
 	end
 end
+
+return tod
