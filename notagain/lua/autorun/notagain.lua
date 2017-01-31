@@ -147,9 +147,9 @@ function notagain.Load()
 	--local AddCSLuaFile = function(path) print("AddCSLuaFile: ", path) return AddCSLuaFile(path) end
 
 	do
-		local _, dirs = file.Find(root_dir .. "/*", "LUA")
+		local dirs = {}
 
-		for i, addon_dir in ipairs(dirs) do
+		for i, addon_dir in ipairs(select(2, file.Find(root_dir .. "/*", "LUA"))) do
 			dirs[addon_dir] = root_dir .. "/" .. addon_dir
 		end
 
