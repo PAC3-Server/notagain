@@ -59,19 +59,21 @@ end
 
 function textures.Restore(id)
 	for id_, data in pairs(textures.replaced) do
-		for name, tbl in pairs(data) do
-			if
-				not pcall(function()
-					if tbl.old_tex then
-						textures.ReplaceTexture(id_, name, tbl.old_tex)
-					end
+		for path, tbl in pairs(data) do
+			local ok, err = pcall(function()
+				if tbl.old_tex then
+					textures.ReplaceTexture(id_, path, tbl.old_tex)
+				end
 
-					if tbl.old_color then
-						textures.SetColor(id_, name, tbl.old_color)
-					end
-				end)
-			then
-				print("textures.lua: failed to restore: " .. tostring(name))
+				if tbl.old_color then
+					textures.SetColor(id_, path, tbl.old_color)
+				end
+
+				textures.replaced[id_] = nil
+			end)
+
+			if not ok then
+				print("textures.lua: failed to restore:", tostring(path),  err)
 			end
 		end
 		if id == _id then break end
