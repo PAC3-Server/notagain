@@ -1,3 +1,5 @@
+AddCSLuaFile()
+
 local META = FindMetaTable("Player")
 
 function META:SetNick(nick)
