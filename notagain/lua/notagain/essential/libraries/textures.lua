@@ -69,14 +69,15 @@ function textures.Restore(id)
 					textures.SetColor(id_, path, tbl.old_color)
 				end
 
-				textures.replaced[id_] = nil
+				textures.replaced[id_][path] = nil
 			end)
 
 			if not ok then
 				print("textures.lua: failed to restore:", tostring(path),  err)
 			end
 		end
-		if id == _id then break end
+		textures.replaced[id_] = nil
+		if id == id_ then break end
 	end
 end
 
