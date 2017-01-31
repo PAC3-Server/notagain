@@ -1,3 +1,5 @@
+do return end
+
 AddCSLuaFile()
 
 local tod = {}
