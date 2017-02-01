@@ -1,6 +1,3 @@
-timer.Simple(0.1, function()
-if not luadev then return end
-
 local easylua = requirex("easylua")
 _G.easylua = easylua -- for luadev
 
@@ -111,5 +108,4 @@ add("printb", function(ply, line, target)
 
 	luadev.RunOnClient("easylua.PrintOnServer(" .. line .. ")",  ply, X(ply,"printb"), {ply=ply})
 	return luadev.RunOnServer("print(" .. line .. ")",  X(ply,"printb"), {ply=ply})
-end)
 end)
