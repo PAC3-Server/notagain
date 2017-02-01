@@ -1,10 +1,10 @@
 AddCSLuaFile()
 
-local aowl = {}
-_G.aowl = aowl
-
 local luadata = requirex("luadata")
 local easylua = requirex("easylua")
+
+local aowl = {}
+_G.aowl = aowl
 
 local USERSFILE = "aowl/users.txt"
 

@@ -1,3 +1,4 @@
+local easylua = requirex("easylua")
 
 aowl.AddCommand("owner", function (ply, line, target)
 	if not banni then return false,"no info" end

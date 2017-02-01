@@ -1,3 +1,5 @@
+local easylua = requirex("easylua")
+
 aowl.AddCommand("map", function(ply, line, map, time)
 	if map and file.Exists("maps/"..map..".bsp", "GAME") then
 		time = tonumber(time) or 10

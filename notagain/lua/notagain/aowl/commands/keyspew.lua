@@ -1,5 +1,7 @@
 AddCSLuaFile()
 
+local easylua = requirex("easylua")
+
 local Tag="keyspew"
 if SERVER then
 	util.AddNetworkString(Tag)
