@@ -1,25 +1,12 @@
 AddCSLuaFile()
 
+local root_dir = "notagain"
+
 notagain = notagain or {}
 notagain.loaded_libraries = notagain.loaded_libraries or {}
 notagain.directories = notagain.directories or {}
 
-local root_dir = "notagain"
-
 do
-	local addon_tries = {
-		"libraries/%s.lua",
-		"libraries/client/%s.lua",
-		"libraries/server/%s.lua",
-		"%s.lua",
-	}
-
-	local other_tries = {
-		"/%s.lua",
-		function(name) return _G[name] end,
-		function(name) return require(name) end,
-	}
-
 	local function load_path(path)
 		if not file.Exists(path, "LUA") then
 			return nil, "unable to find " .. path
@@ -34,30 +21,14 @@ do
 		return nil, var
 	end
 
-	local function try(tries, name, dir)
+	local function find_library(tries, name, dir)
 		local errors = ""
 
 		for _, try in ipairs(tries) do
-			local err
+			local func, err = load_path(dir .. try:format(name))
 
-			if type(try) == "function" then
-				local res, ret = pcall(try, name)
-
-				if res == true then
-					if ret then
-						return ret
-					else
-						err = ""
-					end
-				else
-					err = ret
-				end
-			else
-				res, err = load_path(dir .. try:format(name))
-
-				if res then
-					return res
-				end
+			if func then
+				return func
 			end
 
 			errors = errors .. err .. "\n"
@@ -77,8 +48,15 @@ do
 		local errors = ""
 
 		if not func then
+			local addon_tries = {
+				"libraries/%s.lua",
+				"libraries/client/%s.lua",
+				"libraries/server/%s.lua",
+				"%s.lua",
+			}
+
 			for addon_name, addon_dir in pairs(notagain.directories) do
-				local found, err = try(addon_tries, name, addon_dir .. "/")
+				local found, err = find_library(addon_tries, name, addon_dir .. "/")
 
 				if found then
 					func = found
@@ -88,6 +66,7 @@ do
 			end
 		end
 
+		-- foo/init.lua
 		if not func then
 			local res, msg = load_path(root_dir .. "/" .. name .. "/init.lua")
 			if res then
@@ -97,32 +76,18 @@ do
 			end
 		end
 
-		if not func then
-			local found, err = try(other_tries, name, "")
-
-			if found then
-				func = found
-			else
-				errors = errors .. err
-			end
-		end
-
 		if func == nil then
 			return nil, errors
 		end
 
-		local lib
+		local ok, lib = pcall(func, ...)
 
-		if type(func) == "function" then
-			local ok, ret = pcall(func, ...)
+		if ok == false then
+			return nil, lib
+		end
 
-			if ok == false then
-				return nil, ret
-			end
-
-			lib = ret
-		else
-			lib = func
+		if lib == nil then
+			return nil, "library " .. name .. " returns nil"
 		end
 
 		notagain.loaded_libraries[name] = lib
