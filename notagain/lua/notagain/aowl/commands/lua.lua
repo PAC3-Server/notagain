@@ -90,14 +90,14 @@ add("keys", function(ply, line, target)
 end)
 
 add("printc", function(ply, line, target)
-	line = "easylua.PrintOnServer(" .. line .. ")"
+	line = "requirex('easylua').PrintOnServer(" .. line .. ")"
 	if luadev.ValidScript then local valid,err = luadev.ValidScript(line,'printc') if not valid then return false,err end end
 
 	return luadev.RunOnClients(line,  X(ply,"printc"), {ply=ply})
 end)
 
 add("printm", function(ply, line, target)
-	line = "easylua.PrintOnServer(" .. line .. ")"
+	line = "requirex('easylua').PrintOnServer(" .. line .. ")"
 	if luadev.ValidScript then local valid,err = luadev.ValidScript(line,'printm') if not valid then return false,err end end
 
 	luadev.RunOnClient(line,  ply,  X(ply,"printm"), {ply=ply})
@@ -106,6 +106,6 @@ end)
 add("printb", function(ply, line, target)
 	if luadev.ValidScript then local valid,err = luadev.ValidScript('x('..line..')','printb') if not valid then return false,err end end
 
-	luadev.RunOnClient("easylua.PrintOnServer(" .. line .. ")",  ply, X(ply,"printb"), {ply=ply})
+	luadev.RunOnClient("requirex('easylua').PrintOnServer(" .. line .. ")",  ply, X(ply,"printb"), {ply=ply})
 	return luadev.RunOnServer("print(" .. line .. ")",  X(ply,"printb"), {ply=ply})
 end)
