@@ -1,5 +1,3 @@
-local luadev = requirex("luadev")
-
 local easylua = {}
 
 local function compare(a, b)
