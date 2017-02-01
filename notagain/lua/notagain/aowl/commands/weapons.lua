@@ -1,3 +1,5 @@
+local easylua = requirex("easylua")
+
 aowl.AddCommand("drop",function(ply)
 
 	-- Admins not allowed either, this is added for gamemodes and stuff

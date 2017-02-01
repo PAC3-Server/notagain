@@ -1,3 +1,5 @@
+local easylua = requirex("easylua")
+
 local t = {start=nil,endpos=nil,mask=MASK_PLAYERSOLID,filter=nil}
 local function IsStuck(ply)
 

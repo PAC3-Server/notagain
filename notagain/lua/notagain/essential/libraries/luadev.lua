@@ -1,3 +1,6 @@
+
+local easylua = requirex("easylua")
+
 local luadev = {}
 local Tag="luadev"
 

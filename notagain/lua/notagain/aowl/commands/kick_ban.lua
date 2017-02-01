@@ -1,3 +1,5 @@
+local easylua = requirex("easylua")
+
 aowl.AddCommand("kick", function(ply, line, target, reason)
 	local ent = easylua.FindEntity(target)
 

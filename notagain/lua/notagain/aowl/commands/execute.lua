@@ -1,3 +1,5 @@
+local easylua = requirex("easylua")
+
 TRANSFER_ID=TRANSFER_ID or 0
 aowl.AddCommand("getfile",function(pl,line,target,name)
 	if not GetNetChannel then return end

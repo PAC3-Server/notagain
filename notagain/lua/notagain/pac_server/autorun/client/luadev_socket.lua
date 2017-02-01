@@ -1,4 +1,5 @@
 local luadev = requirex("luadev")
+local easylua = requirex("easylua")
 
 local ok, why
 
