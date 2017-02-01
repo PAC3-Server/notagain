@@ -1,5 +1,5 @@
 local easylua = requirex("easylua")
-_G.easylua = easylua -- for luadev
+local luadev = requirex("luadev")
 
 local function add(cmd,callback)
 	aowl.AddCommand(cmd,function(ply, script, param_a, ...)
