@@ -12,7 +12,11 @@ if SERVER then
 	discordrelay.endpoints.guilds = discordrelay.endpoints.base.."/guilds"
 	discordrelay.endpoints.channels = discordrelay.endpoints.base.."/channels"
 
-	discordrelay.authed = false
+	discordrelay.enabled = true
+
+	discordrelay.user = {}
+	discordrelay.user.username = "GMod-Relay"
+	discordrelay.user.id = "276379732726251521"
 
 	function discordrelay.HTTPRequest(ctx, callback)
 		local HTTPRequest = {}
@@ -62,7 +66,6 @@ if SERVER then
 		end)
 	end
 
-
 	function discordrelay.init()
 		discordrelay.user = {}
 		discordrelay.authed = false
@@ -83,7 +86,7 @@ if SERVER then
 	local nextFetch = 0
 	--It was either this or websockets. But this shouldt be that bad of a solution
 	hook.Add("Think", "DiscordRelayFetchMessages", function()
-		if discordrelay.authed and nextFetch < CurTime() then
+		if discordrelay.enabled and nextFetch < CurTime() then
 			local url
 			if after ~= 0 then
 				url = discordrelay.endpoints.channels.."/"..discordrelay.relayChannel.."/messages?after="..after
@@ -98,7 +101,7 @@ if SERVER then
 		   			for k,v in pairs(json) do
 		   				if discordrelay.user.id == v.author.id then continue end
 
-						if string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") then
+						if string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
 				            local onlineplys = ""
 				            for k,v in pairs(player.GetAll()) do
 				                if k == table.Count(player.GetAll()) then
@@ -125,7 +128,7 @@ if SERVER then
 		   			end
 		   		end
 
-		   		if json[1] then
+		   		if json and json[1] then
 		   			after = json[1].id
 		   		end
 		   	end)
@@ -134,32 +137,28 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerSay", "DiscordRelayChat", function(ply, text, teamChat)
-	    if discordrelay and discordrelay.authed then
+	    if discordrelay and discordrelay.enabled then
 	        discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** "..ply:Nick()..": "..text)
 	    end
 	end)
 
 	hook.Add("PlayerConnect", "DiscordRelayPlayerConnect", function(name)
-	    if discordrelay and discordrelay.authed then
+	    if discordrelay and discordrelay.enabled then
 	        discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** *"..name.." is joining the server!*")
 	    end
 	end)
 
-	hook.Add("PlayerDisconnected", "DiscordRelayPlayerConnect", function(ply)
-	    if discordrelay and discordrelay.authed then
-	       	discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** *"..ply:Nick().." has disconnected from the server!*")
+
+	gameevent.Listen( "player_disconnect" )
+	hook.Add("player_disconnect", "DiscordRelayPlayerDisconnect", function(data)
+	    if discordrelay and discordrelay.enabled then
+	       	discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** *"..data.name.." has disconnected from the server! ("..data.reason..")*")
 	    end
 	end)
 
 	hook.Add("ShutDown", "DiscordRelayShutDown", function()
-		if discordrelay and discordrelay.authed then
+		if discordrelay and discordrelay.enabled then
 			discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** *The server is shutting down!*")
-		end
-	end)
-
-	hook.Add("PlayerInitialSpawn", "DiscordRelayInit", function()
-		if discordrelay and not discordrelay.authed then
-			discordrelay.init()
 		end
 	end)
 else
