@@ -16,3 +16,12 @@
 [submodule "advdupe2"]
 	path = advdupe2
 	url = https://github.com/wiremod/advdupe2.git
+[submodule "sit-anywhere"]
+	path = sit-anywhere
+	url = https://github.com/Xerasin/Sit-Anywhere.git
+[submodule "epoe"]
+	path = epoe
+	url = https://github.com/Metastruct/EPOE.git
+[submodule "falcos-prop-protection"]
+	path = falcos-prop-protection
+	url = https://github.com/FPtje/Falcos-Prop-protection.git
