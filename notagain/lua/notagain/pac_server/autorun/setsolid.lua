@@ -1,5 +1,3 @@
-//Toggleable Collisions (Set Player Solidity)
-
 local solidvar = CreateClientConVar("solidmode", "1", true, true, "Solid Mode.  Set to 0 to stop yourself from colliding with anything." )
 
 local function PlayerNonSolid(ent1,ent2)
