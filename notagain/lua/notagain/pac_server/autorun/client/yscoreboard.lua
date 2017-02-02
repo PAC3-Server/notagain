@@ -38,7 +38,7 @@ surface.CreateFont( "ScoreboardDefaultTitle", {
     font    = "Arial",
     size    = 32,
     weight  = 800,
-    outline = true,
+    blursize = 1,
 } )
  
 local function formatTime (time)
@@ -230,7 +230,8 @@ local PLAYER_LINE = {
         end
        
         draw.NoTexture()
-        surface.SetDrawColor( self:IsHovered() and Color(100, 175, 175, 175) or Color(0, 97, 155, 225) )
+        //surface.SetDrawColor( self:IsHovered() and Color(0, 97, 155, 225) or Color(100, 175, 175, 175) )
+        surface.SetDrawColor( self:IsHovered() and Color(100, 175, 175, 100) or Color(0, 97, 155, 100) )
         surface.DrawPoly(Poly)
  
     end,
