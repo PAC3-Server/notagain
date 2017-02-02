@@ -1,27 +1,18 @@
 [submodule "gmod-xp-chat"]
 	path = gmod-xp-chat
 	url = https://github.com/Techbot121/gmod-xp-chat.git
-[submodule "EPOE"]
-	path = EPOE
-	url = https://github.com/Metastruct/EPOE.git
 [submodule "wire"]
 	path = wire
 	url = https://github.com/wiremod/wire.git
 [submodule "gm-mediaplayer"]
 	path = gm-mediaplayer
 	url = https://github.com/pixeltailgames/gm-mediaplayer.git
-[submodule "Sit-Anywhere"]
-	path = Sit-Anywhere
-	url = https://github.com/Xerasin/Sit-Anywhere.git
 [submodule "customisable_thirdperson"]
 	path = customisable_thirdperson
 	url = https://github.com/CapsAdmin/customisable_thirdperson
 [submodule "fishingmod2"]
 	path = fishingmod2
 	url = https://github.com/CapsAdmin/fishingmod2
-[submodule "Falcos-Prop-protection"]
-	path = Falcos-Prop-protection
-	url = https://github.com/FPtje/Falcos-Prop-protection
 [submodule "advdupe2"]
 	path = advdupe2
 	url = https://github.com/wiremod/advdupe2.git
