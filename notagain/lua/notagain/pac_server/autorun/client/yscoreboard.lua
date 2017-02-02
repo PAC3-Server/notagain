@@ -1,5 +1,5 @@
 AddCSLuaFile() 
- 
+
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
 local mainMenuSize = {
@@ -17,8 +17,7 @@ hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
         mainMenuSize.h = mainMenuSize.h * resolutionScale
     end
 end)
- 
- 
+
  
 surface.CreateFont( "InfoFont", {
     font      = "Arial",
@@ -38,7 +37,6 @@ surface.CreateFont( "ScoreboardDefaultTitle", {
     font    = "Arial",
     size    = 32,
     weight  = 800,
-    blursize = 1,
 } )
  
 local function formatTime (time)
@@ -230,7 +228,7 @@ local PLAYER_LINE = {
         end
        
         draw.NoTexture()
-        surface.SetDrawColor( self:IsHovered() and Color(100, 175, 175, 175) or Color(0, 97, 155, 175) )
+        surface.SetDrawColor( self:IsHovered() and Color(100, 175, 175, 200) or Color(0, 97, 155, 200) )
         surface.DrawPoly(Poly)
  
     end,
@@ -380,10 +378,6 @@ local SCORE_BOARD = {
  
     end,
  
-    Paint = function( self, w, h )
-        Derma_DrawBackgroundBlur( self,  SysTime()/4 )
-    end,
- 
     Think = function( self, w, h )
        
         self.Footer.Time:SetText( os.date("%X") )
@@ -409,7 +403,7 @@ SCORE_BOARD = vgui.RegisterTable( SCORE_BOARD, "EditablePanel" )
 local ysc_convar = CreateClientConVar( "yscoreboad_show", "1", true, false )
 ysc_convar:SetInt(1)
 
-local w_Scoreboard = nil
+w_Scoreboard = nil
   
 local function YScoreboardShow()
     if ysc_convar:GetInt() == 1 then
