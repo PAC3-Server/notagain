@@ -1,7 +1,7 @@
 surface.CreateFont( "NoticeFont", {
     font      = "Arial",
     size      = 18,
-    weight    = 500,
+    weight    = 600,
 } )
 
 local scrW, scrH = ScrW(), ScrH()
@@ -25,15 +25,12 @@ function PANEL:Paint(w, h)
         { x = w,                    y = h }, --200/200
     }
     draw.NoTexture()
-	surface.SetDrawColor(100, 175, 175, 175)
+	surface.SetDrawColor(0, 97, 155, 225)
 	surface.DrawPoly(Poly)
 
 	if (self.start) then
 		local w2 = math.TimeFraction(self.start, self.endTime, CurTime()) * w
-
-		//surface.SetDrawColor( 0, 97, 155, 225)
-		//surface.DrawPoly(Poly)
-		surface.SetDrawColor(Color(255,255,255))
+		surface.SetDrawColor(255,255,255)
 		surface.DrawRect(w2, h-2, w - w2, 2)
 	end
 
