@@ -245,7 +245,7 @@ if CLIENT then
 					local bg = Color(200, 180, 180, 255 * fade)
 					local fg = Color(100, 50, 50, 255 * fade)
 
-					if ent == LocalPlayer() or (ent:IsPlayer() and (ent:GetFriendStatus() == "friend")) then
+					if ent == ply or (ent:IsPlayer() and (ent:GetFriendStatus() == "friend")) then
 						fg = Color(220, 220, 255, 255 * fade)
 						bg = Color(25, 75, 150, 255 * fade)
 					else
@@ -418,7 +418,9 @@ if CLIENT then
 	end
 
 	timer.Create("hitmark", 0.25, 0, function()
-		local data = LocalPlayer():GetEyeTrace()
+		local ply = LocalPlayer()
+		if not ply:IsValid() then return end
+		local data = ply:GetEyeTrace()
 		local ent = data.Entity
 		if ent:IsNPC() or ent:IsPlayer() then
 			for i, data in ipairs(health_bars) do
