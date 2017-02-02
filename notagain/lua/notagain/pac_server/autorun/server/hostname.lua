@@ -1,31 +1,34 @@
 local testing = CreateConVar("sv_testing","0",{FCVAR_NOTIFY,FCVAR_ARCHIVE,FCVAR_REPLICATED},"testing mode")
-local hostname = "Official PAC 3 Server - PAC and "
-local extra = [[
-    Chill
-    Black Triangles
-    Prop Pushers
-    Errors
-    Pain
-    Crashes
-    Lag
-    Minges
-    Invalid Proxy Expressions
-    34.21 ms
-    TimerX frustration
-    MEGALOVANIA
-]]
+local hostname = "Official PAC3 Server"
+local extra = ""
 
 if testing:GetBool() then
-extra = [[
-    Crashing
-    Errors
-    nil
-    Testing
-    TODO
-    unable to find notagain/pac_server/autorun/server/hostname.lua
-]]
+    hostname = "Official PAC3 Testing Server - Testing and "
+    extra = [[
+        Crashing
+        Restarting
+        Errors
+        nil
+        it's not working
+        unable to find notagain/pac_server/autorun/server/hostname.lua
+    ]]
+else
+    hostname = "Official PAC3 Server - PAC and "
+    extra = [[
+        Chill
+        Black Triangles
+        Prop Pushers
+        Errors
+        Pain
+        Crashes
+        Lag
+        Minges
+        Invalid Proxy Expressions
+        34.21 ms
+        TimerX frustration
+        MEGALOVANIA
+    ]]
 end
-
 
 extra = string.Explode("\n",extra)
 
