@@ -4,7 +4,7 @@ if SERVER then
 	discordrelay = discordrelay or {} 
 	discordrelay.token = file.Read( "discordbot_token.txt", "DATA" )
 	discordrelay.relayChannel = "273575417401573377"
-	discordrelay.serverName = "Server"
+	discordrelay.serverName = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "TestServer" or "Server"
 
 	discordrelay.endpoints = discordrelay.endpoints or {}
 	discordrelay.endpoints.base = "https://discordapp.com/api/v6"
@@ -83,7 +83,7 @@ if SERVER then
 	local nextFetch = 0
 	--It was either this or websockets. But this shouldt be that bad of a solution
 	hook.Add("Think", "DiscordRelayFetchMessages", function()
-		if discordrelay.authed and nextFetch < CurTime() and (table.Count(player.GetAll()) > 0) then
+		if discordrelay.authed and nextFetch < CurTime() then
 			local url
 			if after ~= 0 then
 				url = discordrelay.endpoints.channels.."/"..discordrelay.relayChannel.."/messages?after="..after
@@ -151,8 +151,16 @@ if SERVER then
 	    end
 	end)
 
-	hook.Add("OnGamemodeLoaded", "DiscordRelayInit", function()
-		discordrelay.init()
+	hook.Add("ShutDown", "DiscordRelayShutDown", function()
+		if discordrelay and discordrelay.authed then
+			discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** *The server is shutting down!*")
+		end
+	end)
+
+	hook.Add("PlayerInitialSpawn", "DiscordRelayInit", function()
+		if discordrelay and not discordrelay.authed then
+			discordrelay.init()
+		end
 	end)
 else
 	net.Receive( "DiscordMessage", function()
