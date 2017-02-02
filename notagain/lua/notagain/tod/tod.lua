@@ -768,6 +768,7 @@ if SERVER then
 	AddCSLuaFile("notagain/tod/tod/default_cycle.lua")
 end
 
+--[[
 do -- weather
 	local month = tonumber(os.date("%m")) or -1
 
@@ -778,5 +779,5 @@ do -- weather
 		end
 	end
 end
-
+]]
 return tod
