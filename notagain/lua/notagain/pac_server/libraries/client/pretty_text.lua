@@ -92,7 +92,7 @@ function prettytext.GetTextSize(text, font, size, weight, blursize)
 	if not fonts[font][size][weight] then fonts[font][size][weight] = {} end
 	if not fonts[font][size][weight][blursize] then fonts[font][size][weight][blursize] = create_fonts(font, size, weight, blursize) end
 
-	surface.SetFont(fonts[font][size][weight][blursize].blur)
+	surface.SetFont(fonts[font][size][weight][blursize].main)
 	return surface.GetTextSize(text)
 end
 

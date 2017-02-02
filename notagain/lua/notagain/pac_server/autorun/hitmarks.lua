@@ -85,6 +85,8 @@ if CLIENT then
 			return
 		end
 
+		local ply = LocalPlayer()
+
 		for i = #health_bars, 1, -1 do
 			local data = health_bars[i]
 			local ent = data.ent
@@ -141,7 +143,7 @@ if CLIENT then
 					local width2 = width/2
 					local height = 6
 					local text_x_offset = 20
-
+--[[
 					if max >= 500 then
 						width = (ScrW() / 1.4)
 						width2 = width/2
@@ -157,7 +159,7 @@ if CLIENT then
 
 						text_x_offset = 0
 					end
-
+]]
 					surface.SetDrawColor(255, 255, 255, 255 * fade)
 					draw_line(
 						pos.x - 5 - width2,
@@ -368,6 +370,28 @@ if CLIENT then
 		end
 	end)
 
+	local function show_healthbar(ent)
+		for i, data in ipairs(health_bars) do
+			if data.ent == ent then
+				table.remove(health_bars, i)
+				break
+			end
+		end
+		table.insert(health_bars, {ent = ent, time = RealTime() + life_time * 2})
+	end
+
+	local function show_weapon(ent, name)
+		for i, data in ipairs(weapon_info) do
+			if data.ent == ent then
+				table.remove(weapon_info, i)
+				break
+			end
+		end
+
+		local length = 2
+		table.insert(weapon_info, {name = name, ent = ent, time = RealTime() + length, length = length})
+	end
+
 	function Hitmark(ent, dmg, pos, type)
 		ent = ent or NULL
 		dmg = dmg or 0
@@ -407,14 +431,7 @@ if CLIENT then
 			}
 		)
 
-		for i, v in ipairs(health_bars) do
-			if v.ent == ent then
-				table.remove(health_bars, i)
-				break
-			end
-		end
-
-		table.insert(health_bars, {ent = ent, time = RealTime() + life_time * 2})
+		show_healthbar(ent)
 	end
 
 	timer.Create("hitmark", 0.25, 0, function()
@@ -423,48 +440,50 @@ if CLIENT then
 		local data = ply:GetEyeTrace()
 		local ent = data.Entity
 		if ent:IsNPC() or ent:IsPlayer() then
-			for i, data in ipairs(health_bars) do
-				if data.ent == ent then
-					table.remove(health_bars, i)
-					break
-				end
-			end
-			table.insert(health_bars, {ent = ent, time = RealTime() + life_time * 2})
+			show_healthbar(ent)
 		end
 
-		for _, ent in ipairs(ents.FindInSphere(EyePos(), 1000)) do
-			if ent.GetActiveWeapon then
+		for _, ent in pairs(ents.FindInSphere(ply:GetPos(), 1000)) do
+			if ent:IsNPC() or ent:IsPlayer() then
 				local wep = ent:GetActiveWeapon()
-				if wep:IsValid() then
-					local name = wep:GetClass()
+				local name
 
-					if ent.hm_last_wep ~= name then
-						ent.hm_last_wep = name
+				if wep:IsValid() and wep:GetClass() ~= ent.hm_last_wep then
+					name = wep:GetClass()
+					ent.hm_last_wep = name
+				end
 
-						if language.GetPhrase(name) then
-							name = language.GetPhrase(name)
-						end
+				local seq_name = ent:GetSequenceName(ent:GetSequence()):lower()
 
-						for i, data in ipairs(weapon_info) do
-							if data.ent == ent then
-								table.remove(weapon_info, i)
-								break
-							end
-						end
+				if not seq_name:find("idle") and not seq_name:find("run") and not seq_name:find("walk") then
+					local fixed = seq_name:gsub("shoot", "")
+					fixed = fixed:gsub("attack", "")
+					fixed = fixed:gsub("loop", "")
 
-						local length = 2
-						table.insert(weapon_info, {name = name, ent = ent, time = RealTime() + length, length = length})
-
-						if ent:IsPlayer() or ent:IsNPC() then
-							for i, data in ipairs(health_bars) do
-								if data.ent == ent then
-									table.remove(health_bars, i)
-									break
-								end
-							end
-							table.insert(health_bars, {ent = ent, time = RealTime() + life_time * 2})
-						end
+					if fixed:Trim() == "" or not fixed:find("[a-Z]") then
+						name = seq_name
+					else
+						name = fixed
 					end
+
+					name = name:gsub("_", " ")
+					name = name:gsub("%d", "")
+					name = name:gsub("^%l", function(s) return s:upper() end)
+					name = name:gsub(" %l", function(s) return s:upper() end)
+					name = name:Trim()
+
+					if name == "" then
+						name = seq_name
+					end
+				end
+
+				if name then
+					if language.GetPhrase(name) then
+						name = language.GetPhrase(name)
+					end
+
+					show_weapon(ent, name)
+					show_healthbar(ent)
 				end
 			end
 		end
