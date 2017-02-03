@@ -1,6 +1,17 @@
-resource.AddWorkshop("307755108") -- ze_FFVII_Mako_Reactor_v5_3
-resource.AddWorkshop("108168164") -- Customisable Thirdperson
-resource.AddWorkshop("108170491") -- Wowozela
-resource.AddWorkshop("109624491") -- Vuvuzela
 resource.AddWorkshop("546392647") -- Media Player
-resource.AddWorkshop("129640520") -- JRPG Hitmarks
+
+do
+	local map_content = {
+		ze_ffvii_mako_reactor_v5_3 = {"307755108"}
+		gm_bluehills_test3 = {"243902601"}
+	}
+
+	local map = game.GetMap():lower()
+
+	if map_content[map] then
+		for _, id in ipairs(map_content[map]) do
+			resource.AddWorkshop(id)
+		end
+	end
+end
+
