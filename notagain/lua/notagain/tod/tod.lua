@@ -1,3 +1,5 @@
+if game.GetMap():lower():find("ze_ffvii_mako_reactor_v5_3") then return end
+
 AddCSLuaFile()
 
 local tod = {}
