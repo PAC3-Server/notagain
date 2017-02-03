@@ -1,6 +1,10 @@
 local draw_line = requirex("draw_line")
 local prettytext = requirex("pretty_text")
 
+local function FrameTime()
+	return math.Clamp(_G.FrameTime(), 0, 0.1)
+end
+
 battlecam = battlecam or {}
 
 local HOOK = function(event) hook.Add(event, "battlecam", battlecam[event]) end
@@ -29,7 +33,7 @@ function battlecam.LimitPos(pos, ply)
 		endpos = pos,
 		mins = ply:OBBMins() / 2,
 		maxs = ply:OBBMaxs() / 2,
-		filter = ents.FindInSphere(pos, 300),
+		filter = ents.FindInSphere(ply:GetPos(), 50),
 		mask = MASK_SOLID_BRUSHONLY,
 	})
 
@@ -53,9 +57,12 @@ function battlecam.FindHeadPos(ent)
 	end
 
 	if ent.bc_head then
-		local pos, ang = ent:GetBonePosition(ent.bc_head)
-		if pos ~= ent:GetPos() then
-			return pos, ang
+		local m = ent:GetBoneMatrix(ent.bc_head)
+		if m then
+			local pos = m:GetTranslation()
+			if pos ~= ent:GetPos() then
+				return pos
+			end
 		end
 	end
 
@@ -81,6 +88,15 @@ function battlecam.CreateCrosshair()
 
 	ent.RenderOverride = function(ent)
 		local c = Vector(GetConVarString("cl_weaponcolor")) * 1.5
+
+		if battlecam.selected_enemy:IsValid() then
+			if battlecam.selected_enemy:IsPlayer() and battlecam.selected_enemy:GetFriendStatus() == "friend" then
+				c = Vector(0.5,1,0.5)*2
+			else
+				c = Vector(1,0.5,0.5)*2
+			end
+		end
+
 		render.SetColorModulation(c.r ^ 10, c.g ^ 10, c.b ^ 10)
 			render.SetBlend(0.75)
 				ent:DrawModel()
@@ -104,7 +120,6 @@ function battlecam.Enable()
 	HOOK("CreateMove")
 	HOOK("HUDShouldDraw")
 	HOOK("ShouldDrawLocalPlayer")
-	HOOK("InputMouseApply")
 	HOOK("HUDPaint")
 
 	battlecam.enabled = true
@@ -119,13 +134,15 @@ function battlecam.Disable()
 	UNHOOK("CreateMove")
 	UNHOOK("HUDShouldDraw")
 	UNHOOK("ShouldDrawLocalPlayer")
-	UNHOOK("InputMouseApply")
 	UNHOOK("HUDPaint")
 
 	battlecam.enabled = false
 
 	SafeRemoveEntity(battlecam.crosshair_ent)
 	battlecam.crosshair_ent = NULL
+	battlecam.selected_enemy = NULL
+	battlecam.want_select = false
+
 	battlecam.DestroyHUD()
 end
 
@@ -192,13 +209,20 @@ do -- view
 				local size = ent:BoundingRadius() * ent:GetModelScale()
 				size = size / 2
 
-				target_pos = target_pos + ply:EyeAngles():Right() * 70-- * (ply:GetAimVector():Dot(ent:GetRight()) < 0.25 and 70 or -70)
-				target_pos = target_pos + ply:EyeAngles():Up() * -10
+				local clean_ang = (ent:EyePos() - ply:EyePos()):Angle()
+				local eye_ang = ply:EyeAngles()
 
-				local head_pos = battlecam.FindHeadPos(ent)
+				local dist = math.min(size/ent:NearestPoint(ply:GetPos()):Distance(ply:NearestPoint(ent:GetPos())), 1)
+
+				target_pos = target_pos + LerpVector(dist, eye_ang:Right(), clean_ang:Right()) * 70-- * (ply:GetAimVector():Dot(ent:GetRight()) < 0.25 and 70 or -70)
+				target_pos = target_pos + LerpVector(dist, eye_ang:Up(), clean_ang:Up()) * -10
+
+				local head_pos = LerpVector(math.max(dist, 0.5), battlecam.FindHeadPos(ent), ent:NearestPoint(ent:EyePos()))
+				target_pos = target_pos + Vector(0,0,dist*size)
+				target_fov = target_fov + dist*30
 
 				--target_dir = (ent:EyePos() - target_pos):GetNormalized()
-				target_dir = (LerpVector(0.5, head_pos, ent:NearestPoint(last_pos)) - target_pos):GetNormalized()
+				target_dir = (head_pos - target_pos):GetNormalized()
 				--target_dir.z = target_dir.z / 10
 
 				target_pos = target_pos + target_dir * -(200 + size)
@@ -261,27 +285,140 @@ end
 do -- selection
 	battlecam.selected_enemy = NULL
 
-	local last_use = 0
-	local last_select = 0
+	local last_enemy_target = 0
+	local last_enemy_scroll = 0
 
 	function battlecam.CalcEnemySelect()
 		local ply = LocalPlayer()
+		local target = battlecam.selected_enemy
 
-		if ply:KeyDown(IN_USE) and last_use < RealTime() then
+		if target:IsValid() then
+			if ply:KeyDown(IN_USE) and last_enemy_target < RealTime() then
+				battlecam.selected_enemy = NULL
+				battlecam.want_select = false
+				last_enemy_target = RealTime() + 0.25
+			end
 
-			local end_pos = battlecam.aim_pos + (battlecam.aim_dir * 2000)
-			local filter = ents.FindInSphere(end_pos, 50)
-			table.insert(filter, ply)
-			local data = util.TraceHull({
-				start = battlecam.aim_pos,
-				endpos = end_pos,
-				mins = ply:OBBMins()*2,
-				maxs = ply:OBBMaxs()*2,
-				filter = filter,
-			})
+			if target:IsNPC() then
+				for _, val in ipairs(ents.FindInSphere(target:GetPos(), 500)) do
+					if val:GetRagdollOwner() == target then
+						battlecam.selected_enemy = NULL
+						return
+					end
+				end
+			end
+
+			if last_enemy_scroll < RealTime()  then
+				if not target.battlecam_probably_dead then
+					if input.IsKeyDown(KEY_LEFT) or input.IsKeyDown(KEY_RIGHT) then
+
+						local found_left = {}
+						local found_right = {}
+
+						local center = target:EyePos():ToScreen()
+
+						for _, val in ipairs(ents.FindInSphere(battlecam.cam_pos, 2500)) do
+							if
+								(val:IsNPC() and val ~= target) or (val:IsPlayer() and val ~= ply and val:GetFriendStatus() ~= "friend") and
+								not util.TraceLine({start = ply:EyePos(), endpos = val:EyePos(), filter = {val, ply}}).Hit
+							then
+								local pos = val:EyePos():ToScreen()
+
+								if pos.visible then
+									if pos.x > center.x then
+										table.insert(found_right, {pos = pos, ent = val})
+									else
+										table.insert(found_left, {pos = pos, ent = val})
+									end
+								end
+							end
+						end
+
+						table.sort(found_right, function(a, b)
+							return a.pos.x < b.pos.x
+						end)
+
+						table.sort(found_left, function(a, b)
+							return a.pos.x > b.pos.x
+						end)
+
+						--[[local done_right = {}
+						local done_left = {}
+						local found_right = {}
+						local found_left = {}
+
+						for _, val in ipairs(table.Add(ents.FindInSphere(ply:EyePos(), 500), ents.FindInSphere(target:EyePos(), 500))) do
+							if (val:IsNPC() and val ~= target) or (val:IsPlayer() and val ~= ply and val:GetFriendStatus() ~= "friend") then
+								local dot = battlecam.cam_dir:Dot((target:EyePos() - val:EyePos()):GetNormalized():Angle():Right())
+
+								if not done_right[val] and dot > 0 then
+									table.insert(found_right, val)
+									done_right[val] = true
+								end
+
+								if not done_left[val] and dot < 0 then
+									table.insert(found_left, val)
+									done_left[val] = true
+								end
+
+							end
+						end
+
+
+						table.sort(found_left, function(a, b)
+							return a:EyePos():Distance(target:EyePos()) < b:EyePos():Distance(target:EyePos())
+						end)
+
+						table.sort(found_right, function(a, b)
+							return a:EyePos():Distance(target:EyePos()) < b:EyePos():Distance(target:EyePos())
+						end)
+						]]
+
+						local found
+
+						if input.IsKeyDown(KEY_RIGHT) then
+							found = found_right[1]
+							if not found or found.ent == battlecam.selected_enemy then
+								found = found_left[#found_left]
+							end
+						else
+							found = found_left[1]
+							if not found or found.ent == battlecam.selected_enemy then
+								found = found_right[#found_right]
+							end
+						end
+
+						if found then
+							battlecam.selected_enemy = found.ent
+
+							last_enemy_scroll = RealTime() + 0.15
+						end
+					else
+						last_enemy_scroll = 0
+					end
+				elseif battlecam.want_select then
+					for _, val in ipairs(ents.FindInSphere(ply:GetPos(), 500)) do
+						if (val:IsNPC() and not val.battlecam_probably_dead) or (val:IsPlayer() and val ~= ply and val:GetFriendStatus() ~= "friend") then
+							battlecam.selected_enemy = val
+							break
+						end
+					end
+				end
+			end
+		elseif (ply:KeyDown(IN_USE) or input.IsKeyDown(KEY_ENTER)) and last_enemy_target < RealTime() then
+			local data = ply:GetEyeTrace()
 
 			if not data.Entity:IsValid() then
-				data = ply:GetEyeTrace()
+				local end_pos = battlecam.aim_pos + (battlecam.aim_dir * 2000)
+				local filter = ents.FindInSphere(end_pos, 50)
+				table.insert(filter, ply)
+				data = util.TraceHull({
+					start = battlecam.aim_pos,
+					endpos = end_pos,
+					mins = ply:OBBMins(),
+					maxs = ply:OBBMaxs(),
+					filter = filter,
+				})
 			end
 
 			local ent = data.Entity
@@ -289,17 +426,15 @@ do -- selection
 			if ent:IsValid() and (ent:IsPlayer() or ent:IsNPC()) and battlecam.selected_enemy ~= ent and ent ~= LocalPlayer() then
 				battlecam.selected_enemy = ent
 				battlecam.want_select = true
-			elseif not battlecam.selected_enemy:IsValid() then
+			else
 				local done = {}
 				local found = {}
-				for _, val in ipairs(ents.FindInSphere(data.HitPos, 500)) do
-					if not done[val] and (val:IsNPC() or (val:IsPlayer() and val ~= ply)) and not util.TraceLine({start = ply:EyePos(), endpos = val:EyePos(), filter = {val, ply}}).Hit then
-						table.insert(found, val)
-						done[val] = true
-					end
-				end
-				for _, val in ipairs(ents.FindInSphere(ply:EyePos(), 500)) do
-					if not done[val] and (val:IsNPC() or (val:IsPlayer() and val ~= ply)) and not util.TraceLine({start = ply:EyePos(), endpos = val:EyePos(), filter = {val, ply}}).Hit then
+				for _, val in ipairs(table.Add(ents.FindInSphere(data.HitPos, 500), ents.FindInSphere(ply:EyePos(), 500))) do
+					if
+						not done[val] and
+						(val:IsNPC() or (val:IsPlayer() and val ~= ply and val:GetFriendStatus() ~= "friend")) and
+						not util.TraceLine({start = ply:EyePos(), endpos = val:EyePos(), filter = {val, ply}}).Hit
+					then
 						table.insert(found, val)
 						done[val] = true
 					end
@@ -310,84 +445,10 @@ do -- selection
 					battlecam.selected_enemy = found[1]
 					battlecam.want_select = true
 				end
-			else
-				battlecam.selected_enemy = NULL
-				battlecam.want_select = false
 			end
 
-			last_use = RealTime() + 0.25
+			last_enemy_target = RealTime() + 0.25
 		end
-
-		local ent = battlecam.selected_enemy
-
-		if ent:IsValid() and ent:IsNPC() then
-			for _, val in ipairs(ents.FindInSphere(ent:GetPos(), 500)) do
-				if val:GetRagdollOwner() == ent then
-					ent.battlecam_probably_dead = true
-					ent = NULL
-					break
-				end
-			end
-		end
-		if  last_select < RealTime()  then
-			if ent:IsValid() and not ent.battlecam_probably_dead then
-				if (input.IsKeyDown(KEY_LEFT) or input.IsKeyDown(KEY_RIGHT)) then
-					local found = {}
-
-					for _, val in ipairs(table.Add(ents.FindInSphere(ply:EyePos(), 500), ents.FindInSphere(ent:EyePos(), 500))) do
-						if (val:IsNPC() and val ~= ent) or (val:IsPlayer() and val ~= ply) then
-							local dot = battlecam.cam_dir:Dot((ent:EyePos() - val:EyePos()):GetNormalized():Angle():Right())
-
-							if input.IsKeyDown(KEY_RIGHT) and dot > 0 then
-								table.insert(found, val)
-							elseif input.IsKeyDown(KEY_LEFT) and dot < 0 then
-								table.insert(found, val)
-							end
-						end
-					end
-
-					if found[1] then
-						table.sort(found, function(a, b)
-							return a:EyePos():Distance(ent:EyePos()) < b:EyePos():Distance(ent:EyePos())
-						end)
-
-						battlecam.selected_enemy = found[1]
-
-						last_select = RealTime() + 0.15
-					end
-				else
-					last_select = 0
-				end
-			elseif battlecam.want_select then
-				for _, val in ipairs(ents.FindInSphere(ply:GetPos(), 500)) do
-					if (val:IsNPC() and not val.battlecam_probably_dead) or (val:IsPlayer() and val ~= ply) then
-						battlecam.selected_enemy = val
-						break
-					end
-				end
-			end
-		end
-	end
-end
-
-function battlecam.InputMouseApply(ucmd)
-	local ply = LocalPlayer()
-	local ent = battlecam.selected_enemy
-
-	if ent:IsValid() and not battlecam.want_mouse_control then
-
-		if ent:IsPlayer() and (not ent:Alive() or not ply:Alive()) then
-			battlecam.selected_enemy = NULL
-		end
-
-		local head_pos = battlecam.FindHeadPos(ent)
-		local aim_ang = (head_pos - ply:EyePos()):Angle()
-
-		aim_ang.p = math.NormalizeAngle(aim_ang.p)
-		aim_ang.y = math.NormalizeAngle(aim_ang.y)
-		aim_ang.r = 0
-
-		ucmd:SetViewAngles(aim_ang)
 	end
 end
 
@@ -416,6 +477,22 @@ do
 		battlecam.CalcEnemySelect()
 
 		local ent = battlecam.selected_enemy
+
+		if ent:IsValid() and not battlecam.want_mouse_control then
+
+			if ent:IsPlayer() and (not ent:Alive() or not ply:Alive()) then
+				battlecam.selected_enemy = NULL
+			end
+
+			local head_pos = battlecam.FindHeadPos(ent)
+			local aim_ang = (head_pos - ply:GetShootPos()):Angle()
+
+			aim_ang.p = math.NormalizeAngle(aim_ang.p)
+			aim_ang.y = math.NormalizeAngle(aim_ang.y)
+			aim_ang.r = 0
+
+			ucmd:SetViewAngles(aim_ang)
+		end
 
 		if battlecam.last_select < RealTime() then
 			if input.IsKeyDown(KEY_DOWN) then
@@ -449,7 +526,7 @@ do
 			battlecam.want_mouse_control_time = RealTime() + 0.5
 		end
 
-		if (not ent:IsValid() or ply:KeyDown(IN_SPEED)) and not ply:KeyDown(IN_WALK) and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not battlecam.want_mouse_control then
+		if (not ent:IsValid() or (ply:KeyDown(IN_SPEED) and not ply:KeyDown(IN_FORWARD))) and not ply:KeyDown(IN_WALK) and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not battlecam.want_mouse_control then
 
 			local dir = Vector()
 
@@ -595,7 +672,14 @@ do
 		ent:SetNoDraw(true)
 		ent:SetPos(pos)
 		ent:SetAngles(ang)
-		ent:SetModelScale(scale or 1)
+
+		if type(scale) == "Vector" then
+			local m = Matrix()
+			m:Scale(Vector(scale))
+			ent:EnableMatrix("RenderMultiply", m)
+		else
+			ent:SetModelScale(scale or 1)
+		end
 		ent:SetLOD(0)
 
 		local mat
@@ -641,30 +725,11 @@ do
 		local suit_charger_ent = create_ent("models/props_combine/suit_charger001.mdl", Vector(x+350,y-20,0), Angle(-90,0,0), 10)
 		suit_charger_ent:SetSequence(suit_charger_ent:LookupSequence("idle"))
 
-		local health_bar_bg = create_ent("models/props_combine/combine_train02a.mdl", Vector(x+645,y-5,300), Angle(0,-90,0), 1)
-		local m = Matrix()
-		m:Scale(Vector(0.2,1.27,1))
-		health_bar_bg:EnableMatrix("RenderMultiply", m)
+		local health_bar_bg = create_ent("models/props_combine/combine_train02a.mdl", Vector(x+645,y-5,300), Angle(0,-90,0), Vector(0.2,1.27,1))
+		local health_bar = create_ent("models/hunter/plates/plate1x1.mdl", Vector(x+640,y-5,600), Angle(90,90,0), Vector(1,3,0.7) * 6, "decals/light")
+		local mana_bar_bg = create_ent("models/props_combine/combine_train02a.mdl", Vector(x+445,y-20,300), Angle(0,-90,0), Vector(0.125,0.75,1))
+		local mana_bar = create_ent("models/hunter/plates/plate1x1.mdl", Vector(x+640,y-20,600), Angle(90,90,0), Vector(1,3,0.3) * 6, "decals/light")
 
-		local health_bar = create_ent("models/hunter/plates/plate1x1.mdl", Vector(x+640,y-5,600), Angle(90,90,0), 6, "decals/light")
-		local m = Matrix()
-		m:Scale(Vector(1,3,0.7))
-		health_bar:EnableMatrix("RenderMultiply", m)
-
-
-		local mana_bar_bg = create_ent("models/props_combine/combine_train02a.mdl", Vector(x+445,y-20,300), Angle(0,-90,0), 1)
-		local m = Matrix()
-		m:Scale(Vector(0.125,0.75,1))
-		mana_bar_bg:EnableMatrix("RenderMultiply", m)
-
-		local mana_bar = create_ent("models/hunter/plates/plate1x1.mdl", Vector(x+640,y-20,600), Angle(90,90,0), 6, "decals/light")
-		local m = Matrix()
-		m:Scale(Vector(1,3,0.3))
-		mana_bar:EnableMatrix("RenderMultiply", m)
-
-		--[[
-
-	]]
 		local smooth_hp = 100
 		local smooth_armor = 100
 		local time = 0
@@ -700,28 +765,28 @@ do
 					combine_scanner_ent:DrawModel()
 				render.CullMode(MATERIAL_CULLMODE_CCW)
 
+				-- armor
 				render.SetColorModulation(1,1,1,1)
 				mana_bar_bg:DrawModel()
+
 				render.SetColorModulation(0.5,0.65,1.75)
 				render.PushCustomClipPlane(Vector(-1,0,0), (-670 - x) * math.min(smooth_armor/max_armor, 1))
-				mana_bar:DrawModel()
+					mana_bar:DrawModel()
 				render.PopCustomClipPlane()
 
+				-- health
 				render.SetColorModulation(1,1,1,1)
 				health_bar_bg:DrawModel()
+
 				render.SetColorModulation(0.5,1.75,0.65)
 				render.PushCustomClipPlane(Vector(-1,0,0), (-1000 - x) * math.min(smooth_hp/max_hp, 1))
-				health_bar:DrawModel()
+					health_bar:DrawModel()
 				render.PopCustomClipPlane()
 
+				render.SetColorModulation(1,1,1)
 
 
-			render.SetColorModulation(1,1,1)
-
-			local x = x + 280
-			local y = y + 10
-
-			prettytext.Draw(math.Round(smooth_hp), x, y, "Candara", 30, 30, 2, Color(255, 255, 255, 200))
+				prettytext.Draw(math.Round(smooth_hp), x + 280, y + 5, "Candara", 30, 30, 2, Color(255, 255, 255, 200))
 
 			cam.EndOrthoView()
 		end
@@ -737,10 +802,7 @@ do
 
 		local weapon_selection = {}
 		for i= 1,32 do
-			weapon_selection[i] = create_ent("models/props_combine/combinetrain01a.mdl", Vector(x-5, y - 5, -500), Angle(0,0,0), 0.5)
-			local m = Matrix()
-			m:Scale(Vector(0.8,0.45,1))
-			weapon_selection[i]:EnableMatrix("RenderMultiply", m)
+			weapon_selection[i] = create_ent("models/props_combine/combinetrain01a.mdl", Vector(x-5, y - 5, -500), Angle(0,0,0), Vector(0.8,0.45,1) * 0.5)
 		end
 
 		local smooth_i = 0
@@ -829,33 +891,31 @@ do
 
 				render.CullMode(MATERIAL_CULLMODE_CCW)
 
-			cam.IgnoreZ(true)
+				cam.IgnoreZ(true)
 
-			local wep = LocalPlayer():GetActiveWeapon()
-			if wep:IsValid() then
-				local size = 200
-				if wep.DrawWeaponSelection then
-					wep:DrawWeaponSelection(x-size/2,y-size/4, size, size, 255)
-				else
-					local icon = font_lookup[wep:GetClass()]
-					if icon then
-						local w,h = prettytext.GetTextSize(icon, "HALFLIFE2", 150, 0)
-						local m = Matrix()
-						m:Translate(Vector(x-w/2 + w, y-h/2, 0))
-						m:Scale(Vector(-1,1,1))
-						cam.PushModelMatrix(m)
-						render.CullMode(MATERIAL_CULLMODE_CW)
-							surface.SetAlphaMultiplier(0.5)
-							prettytext.Draw(icon, 0, -12, "HALFLIFE2", 1000, 0, 10, Color(200, 255, 255, 255))
-							surface.SetAlphaMultiplier(1)
-						render.CullMode(MATERIAL_CULLMODE_CCW)
-						cam.PopModelMatrix()
+				local wep = LocalPlayer():GetActiveWeapon()
+				if wep:IsValid() then
+					local size = 200
+					if wep.DrawWeaponSelection then
+						wep:DrawWeaponSelection(x-size/2,y-size/4, size, size, 255)
+					else
+						local icon = font_lookup[wep:GetClass()]
+						if icon then
+							local w,h = prettytext.GetTextSize(icon, "HALFLIFE2", 150, 0)
+							local m = Matrix()
+							m:Translate(Vector(x-w/2 + w, y-h/2, 0))
+							m:Scale(Vector(-1,1,1))
+							cam.PushModelMatrix(m)
+							render.CullMode(MATERIAL_CULLMODE_CW)
+								surface.SetAlphaMultiplier(0.5)
+								prettytext.Draw(icon, 0, -12, "HALFLIFE2", 1000, 0, 10, Color(200, 255, 255, 255))
+								surface.SetAlphaMultiplier(1)
+							render.CullMode(MATERIAL_CULLMODE_CCW)
+							cam.PopModelMatrix()
+						end
 					end
 				end
-			end
-
-						cam.EndOrthoView()
-
+			cam.EndOrthoView()
 		end
 	end
 end
