@@ -1,5 +1,5 @@
 AddCSLuaFile() 
- 
+
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
 local mainMenuSize = {
@@ -17,39 +17,26 @@ hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
         mainMenuSize.h = mainMenuSize.h * resolutionScale
     end
 end)
- 
- 
+
  
 surface.CreateFont( "InfoFont", {
-    font      = "DermaDefault",
+    font      = "Arial",
     size      = 21,
-    weight    = 1000,
-    blursize  = 0,
-    scanlines = 0,
-    antialias = true,
-    shadow    = true,
-    additive  = true,
-    outline   = true,
+    weight    = 600,
 } )
 
 surface.CreateFont( "Sfont", {
-    font      = "DermaDefault",
-    size      = 15,
-    weight    = 1000,
-    blursize  = 0,
-    scanlines = 0,
+    font      = "Arial",
+    size      = 17,
+    weight  = 600,
     antialias = true,
-    shadow    = true,
-    additive  = true,
-    outline   = true,
+    additive = true,
 } )
 
 surface.CreateFont( "ScoreboardDefaultTitle", {
-    font    = "DermaDefault",
+    font    = "Arial",
     size    = 32,
     weight  = 800,
-    shadow  = true,
-    outline = true
 } )
  
 local function formatTime (time)
@@ -136,7 +123,7 @@ local PLAYER_LINE = {
         self.Friend:SetText("●")
         self.Friend:Dock( LEFT )
         self.Friend:SetFont( "Sfont" )
-        self.Friend:DockMargin( 15, 0, 0, 0 )
+        self.Friend:DockMargin( 30, 0, 0, 0 )
         self.Friend:SetWidth( 20 )
        
        
@@ -152,20 +139,21 @@ local PLAYER_LINE = {
         self.Name = self:Add( "DLabel" )
         self.Name:Dock( LEFT )
         self.Name:SetFont( "Sfont" )
-        self.Name:SetTextColor( Color( 255, 255, 255 ) )
-        self.Name:DockMargin( 8, 0, 0, 0 )
+        self.Name:SetTextColor( textColor )
+        self.Name:DockMargin( 15, 0, 0, 0 )
         self.Name:SetWidth( scrW * .45 )
  
         self.Mute = self:Add( "DImageButton" )
         self.Mute:SetSize( 30, 30 )
         self.Mute:Dock( RIGHT )
+        self.Mute:DockMargin(0,0,30,0)
  
         self.Ping = self:Add( "DLabel" )
         self.Ping:Dock( RIGHT )
         self.Ping:SetWidth( 80 )
         self.Ping:SetFont( "Sfont" )
-        self.Ping:SetTextColor( Color( 255, 255, 255 ) )
-        self.Ping:SetContentAlignment( 5 )
+        self.Ping:SetTextColor( textColor )
+        self.Ping:SetContentAlignment(5)
  
         self:Dock( TOP )
         self:DockPadding( 3, 3, 3, 3 )
@@ -185,7 +173,7 @@ local PLAYER_LINE = {
  
     Think = function( self )
         local x, y = self:GetPos()
-        self:DockMargin( 30, 0, 25, 2 )
+        self:DockMargin( 30, 6, 25, 0 )
        
         if ( !IsValid( self.Player ) ) then
             self:SetZPos( 9999 ) -- Causes a rebuild
@@ -227,49 +215,54 @@ local PLAYER_LINE = {
     end,
  
     Paint = function( self, w, h )
+            
+        local Poly = {
+            { x = (25/ resolutionScale),   y = h }, --100/200
+            { x = 0,                       y = 0 }, --100/100
+            { x = w-(25/ resolutionScale), y = 0 }, --200/100
+            { x = w,                       y = h }, --200/200
+        }
+        
         if ( !IsValid( self.Player ) ) then
             return
         end
        
-        surface.SetDrawColor( 0, 0, 0, 200 )
         draw.NoTexture()
-        surface.DrawRect(0,0,w,h)
-
-        if self:IsHovered() then
-            surface.SetDrawColor(255,255,255)
-            surface.DrawOutlinedRect(0,0,w,h)
-        end
+        surface.SetDrawColor( self:IsHovered() and Color(100, 175, 175, 200) or Color(0, 97, 155, 200) )
+        surface.DrawPoly(Poly)
  
     end,
    
     OnMousePressed = function( self, num )
+        local PlayerID = tostring(self.Player:UniqueID())
+        
         if num == MOUSE_RIGHT then
             
             self.Menu = self:Add( "DMenu" )
             self.Menu:SetAutoDelete( true )
 
-            if aowl ~= nil then
+            if aowl then
                 local goto = self.Menu:AddOption("Goto", function()
-                    RunConsoleCommand( "aowl", "goto", tostring( self.Player:UniqueID() ) )
+                    RunConsoleCommand( "aowl", "goto", PlayerID )
                 end)    
                 
                 goto:SetImage("icon16/arrow_right.png")
                 
                 local bring = goto:AddSubMenu( "Bring" )
-                bring:AddOption("Bring",function() RunConsoleCommand( "aowl", "bring", tostring( self.Player:UniqueID() ) ) end):SetImage("icon16/arrow_in.png")
+                bring:AddOption("Bring",function() RunConsoleCommand( "aowl", "bring", PlayerID  ) end):SetImage("icon16/arrow_in.png")
 
                 local SubAdmin,pic = self.Menu:AddSubMenu("Staff")
                 pic:SetImage("icon16/shield.png")
-                SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..tostring( self.Player:UniqueID() ) , 1) end):SetImage("icon16/door_in.png")
-                SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..tostring( self.Player:UniqueID() ) , 2) end):SetImage("icon16/stop.png")
+                SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..PlayerID  , 1) end):SetImage("icon16/door_in.png")
+                SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..PlayerID  , 2) end):SetImage("icon16/stop.png")
                 SubAdmin:AddSpacer()
-                SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand( "aowl", "cexec", tostring( self.Player:UniqueID() ), "retry") end):SetImage("icon16/arrow_refresh.png")
+                SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand( "aowl", "cexec", PlayerID , "retry") end):SetImage("icon16/arrow_refresh.png")
                      
            
                 self.Menu:AddSpacer()  
             end  
            
-            if pac ~= nil and pace ~= nil then
+            if pac then
                 local SubPac = self.Menu:AddSubMenu("PAC3")
                 
                 SubPac:AddOption( "Ignore",function() pac.IgnoreEntity(self.Player) end)
@@ -284,10 +277,11 @@ local PLAYER_LINE = {
             self.Menu:Open()
         
         elseif num == MOUSE_LEFT then
-            RunConsoleCommand( "aowl", "goto", tostring( self.Player:UniqueID() ) )
+            RunConsoleCommand( "aowl", "goto", PlayerID )
         end
        
-    end
+    end,
+
 }
  
 local SCORE_BOARD = {
@@ -296,9 +290,11 @@ local SCORE_BOARD = {
         self.Header:Dock( TOP )
         self.Header:SetHeight( 70 )
         self.Header.Paint = function()
-            surface.SetDrawColor(0, 0, 0, 200)
+            local w,h = self.Header:GetWide(),self.Header:GetTall()
+
+            surface.SetDrawColor(255, 255, 255, 255)
             draw.NoTexture()
-            surface.DrawRect(mainMenuSize.w * 0.05, 5, mainMenuSize.w * 0.9, 40)
+            surface.DrawRect(0,h-(22/ resolutionScale),w,(2/ resolutionScale))
         end
  
         self.Name = self.Header:Add( "DLabel" )
@@ -316,7 +312,7 @@ local SCORE_BOARD = {
         self.Labels.Name:SetFont( "InfoFont" )
         self.Labels.Name:SetTextColor( Color( 255, 255, 255, 255 ) )
         self.Labels.Name:Dock( LEFT )
-        self.Labels.Name:DockMargin( 70, 0, 0, 0 )
+        self.Labels.Name:DockMargin( 110, 0, 0, 0 )
         self.Labels.Name:SetWidth( 150 )
         self.Labels.Name:SetText( "Name:" )
         self.Labels.Name:SetContentAlignment( 1 )
@@ -328,7 +324,7 @@ local SCORE_BOARD = {
         self.Labels.Ping:DockMargin( 0, 0, 75, 0 )
         self.Labels.Ping:SetWidth( 70 )
         self.Labels.Ping:SetText( "Ping:" )
-        self.Labels.Ping:SetContentAlignment( 3 )
+        self.Labels.Ping:SetContentAlignment( 1 )
        
         self.Footer = self:Add( "Panel" )
         self.Footer:Dock( BOTTOM )
@@ -339,7 +335,7 @@ local SCORE_BOARD = {
         self.Footer.Fps:SetTextColor( Color( 255, 255, 255, 255 ) )
         self.Footer.Fps:Dock( RIGHT )
         self.Footer.Fps:DockMargin( 0, 0, 120, 0 )
-        self.Footer.Fps:SetWidth( 25 )
+        self.Footer.Fps:SetWidth( 35 )
         self.Footer.Fps:SetContentAlignment( 3 )
        
         self.Footer.FpsName = self.Footer:Add( "DLabel" )
@@ -347,7 +343,7 @@ local SCORE_BOARD = {
         self.Footer.FpsName:SetTextColor( Color( 255, 255, 255, 255 ) )
         self.Footer.FpsName:Dock( RIGHT )
         self.Footer.FpsName:DockMargin( 0, 0, 0, 0 )
-        self.Footer.FpsName:SetWidth( 30 )
+        self.Footer.FpsName:SetWidth( 50 )
         self.Footer.FpsName:SetText( "FPS: " )
         self.Footer.FpsName:SetContentAlignment( 3 )
        
@@ -356,7 +352,7 @@ local SCORE_BOARD = {
         self.Footer.Time:SetTextColor( Color( 255, 255, 255, 255 ) )
         self.Footer.Time:Dock( RIGHT )
         self.Footer.Time:DockMargin( 0, 0, 20, 0 )
-        self.Footer.Time:SetWidth( 60 )
+        self.Footer.Time:SetWidth( 90 )
         self.Footer.Time:SetContentAlignment( 3 )
        
         self.Footer.TimeName = self.Footer:Add( "DLabel" )
@@ -364,7 +360,7 @@ local SCORE_BOARD = {
         self.Footer.TimeName:SetTextColor( Color( 255, 255, 255, 255 ) )
         self.Footer.TimeName:Dock( RIGHT )
         self.Footer.TimeName:DockMargin( 0, 0, 0, 0 )
-        self.Footer.TimeName:SetWidth( 90 )
+        self.Footer.TimeName:SetWidth( 120 )
         self.Footer.TimeName:SetText( "Current time: " )
         self.Footer.TimeName:SetContentAlignment( 3 )
        
@@ -380,10 +376,6 @@ local SCORE_BOARD = {
         self:SetSize( mainMenuSize.w, mainMenuSize.h )
         self:Center()
  
-    end,
- 
-    Paint = function( self, w, h )
-        Derma_DrawBackgroundBlur( self,  SysTime()/4 )
     end,
  
     Think = function( self, w, h )
@@ -411,7 +403,7 @@ SCORE_BOARD = vgui.RegisterTable( SCORE_BOARD, "EditablePanel" )
 local ysc_convar = CreateClientConVar( "yscoreboad_show", "1", true, false )
 ysc_convar:SetInt(1)
 
-local w_Scoreboard = nil
+w_Scoreboard = nil
   
 local function YScoreboardShow()
     if ysc_convar:GetInt() == 1 then
@@ -423,7 +415,7 @@ local function YScoreboardShow()
         if ( IsValid( w_Scoreboard ) ) then
             w_Scoreboard:Show()
             w_Scoreboard:SetKeyboardInputEnabled( false )
-            w_Scoreboard:SetMouseInputEnabled( false )
+            w_Scoreboard:SetMouseInputEnabled( true )
         end
        
         w_Scoreboard:MakePopup()

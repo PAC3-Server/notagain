@@ -1,11 +1,11 @@
 surface.CreateFont( "NoticeFont", {
-	font = "DermaDefault", 
-	size = 20,
-	weight = 2000,
-	antialias = true
+    font      = "Arial",
+    size      = 18,
+    weight    = 600,
 } )
 
-
+local scrW, scrH = ScrW(), ScrH()
+local resolutionScale = math.Min(scrW/1600 , scrH/900)
 local PANEL = {}
 
 function PANEL:Init()
@@ -18,15 +18,19 @@ end
 
 function PANEL:Paint(w, h)
 
-	surface.SetDrawColor(230, 230, 230, 10)
-	surface.DrawRect(0, 0, w, h)
+	local Poly = {
+        { x = 0,   					y = h }, --100/200
+        { x = (25/ resolutionScale),y = 0 }, --100/100
+        { x = w, 					y = 0 }, --200/100
+        { x = w,                    y = h }, --200/200
+    }
+    draw.NoTexture()
+	surface.SetDrawColor(0, 97, 155, 225)
+	surface.DrawPoly(Poly)
 
 	if (self.start) then
 		local w2 = math.TimeFraction(self.start, self.endTime, CurTime()) * w
-
-		surface.SetDrawColor(Color( 0, 0, 0, 230 ))
-		surface.DrawRect(0, 0, w, h)
-		surface.SetDrawColor(Color(255,255,255))
+		surface.SetDrawColor(255,255,255)
 		surface.DrawRect(w2, h-2, w - w2, 2)
 	end
 
