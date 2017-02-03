@@ -453,27 +453,29 @@ if CLIENT then
 					ent.hm_last_wep = name
 				end
 
-				local seq_name = ent:GetSequenceName(ent:GetSequence()):lower()
+				if ent:IsNPC() then
+					local seq_name = ent:GetSequenceName(ent:GetSequence()):lower()
 
-				if not seq_name:find("idle") and not seq_name:find("run") and not seq_name:find("walk") then
-					local fixed = seq_name:gsub("shoot", "")
-					fixed = fixed:gsub("attack", "")
-					fixed = fixed:gsub("loop", "")
+					if not seq_name:find("idle") and not seq_name:find("run") and not seq_name:find("walk") then
+						local fixed = seq_name:gsub("shoot", "")
+						fixed = fixed:gsub("attack", "")
+						fixed = fixed:gsub("loop", "")
 
-					if fixed:Trim() == "" or not fixed:find("[a-Z]") then
-						name = seq_name
-					else
-						name = fixed
-					end
+						if fixed:Trim() == "" or not fixed:find("[a-Z]") then
+							name = seq_name
+						else
+							name = fixed
+						end
 
-					name = name:gsub("_", " ")
-					name = name:gsub("%d", "")
-					name = name:gsub("^%l", function(s) return s:upper() end)
-					name = name:gsub(" %l", function(s) return s:upper() end)
-					name = name:Trim()
+						name = name:gsub("_", " ")
+						name = name:gsub("%d", "")
+						name = name:gsub("^%l", function(s) return s:upper() end)
+						name = name:gsub(" %l", function(s) return s:upper() end)
+						name = name:Trim()
 
-					if name == "" then
-						name = seq_name
+						if name == "" then
+							name = seq_name
+						end
 					end
 				end
 
