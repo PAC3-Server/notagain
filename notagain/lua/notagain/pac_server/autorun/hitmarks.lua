@@ -139,7 +139,7 @@ if CLIENT then
 
 					surface.SetMaterial(health_mat)
 
-					local width = math.max(ent:BoundingRadius() * 3.5 * ent:GetModelScale(), w * 1.5)
+					local width = math.max(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5)
 					local width2 = width/2
 					local height = 6
 					local text_x_offset = 20
