@@ -1,6 +1,6 @@
-if game.GetMap():lower():find("ze_ffvii_mako_reactor") then return end
+if not game.GetMap():lower():find("ze_ffvii_mako_reactor") then return end
 
-timer.Simple(1, function()
+hook.Add("InitPostEntity", "fixmap", function()
 	if SERVER then
 		local remove_these = {
 			trigger_teleport = true,
@@ -24,4 +24,6 @@ timer.Simple(1, function()
 	if CLIENT then
 		RunConsoleCommand("mat_colorcorrection", "0")
 	end
+
+	hook.Remove("InitPostEntity", "fixmap")
 end)
