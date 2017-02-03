@@ -324,12 +324,10 @@ do -- selection
 							then
 								local pos = val:EyePos():ToScreen()
 
-								if pos.visible then
-									if pos.x > center.x then
-										table.insert(found_right, {pos = pos, ent = val})
-									else
-										table.insert(found_left, {pos = pos, ent = val})
-									end
+								if pos.x > center.x then
+									table.insert(found_right, {pos = pos, ent = val})
+								else
+									table.insert(found_left, {pos = pos, ent = val})
 								end
 							end
 						end
@@ -341,38 +339,6 @@ do -- selection
 						table.sort(found_left, function(a, b)
 							return a.pos.x > b.pos.x
 						end)
-
-						--[[local done_right = {}
-						local done_left = {}
-						local found_right = {}
-						local found_left = {}
-
-						for _, val in ipairs(table.Add(ents.FindInSphere(ply:EyePos(), 500), ents.FindInSphere(target:EyePos(), 500))) do
-							if (val:IsNPC() and val ~= target) or (val:IsPlayer() and val ~= ply and val:GetFriendStatus() ~= "friend") then
-								local dot = battlecam.cam_dir:Dot((target:EyePos() - val:EyePos()):GetNormalized():Angle():Right())
-
-								if not done_right[val] and dot > 0 then
-									table.insert(found_right, val)
-									done_right[val] = true
-								end
-
-								if not done_left[val] and dot < 0 then
-									table.insert(found_left, val)
-									done_left[val] = true
-								end
-
-							end
-						end
-
-
-						table.sort(found_left, function(a, b)
-							return a:EyePos():Distance(target:EyePos()) < b:EyePos():Distance(target:EyePos())
-						end)
-
-						table.sort(found_right, function(a, b)
-							return a:EyePos():Distance(target:EyePos()) < b:EyePos():Distance(target:EyePos())
-						end)
-						]]
 
 						local found
 
