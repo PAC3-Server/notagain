@@ -1,4 +1,3 @@
-local draw_line = requirex("draw_line")
 local prettytext = requirex("pretty_text")
 
 local function FrameTime()
@@ -120,7 +119,7 @@ function battlecam.Enable()
 	HOOK("CreateMove")
 	HOOK("HUDShouldDraw")
 	HOOK("ShouldDrawLocalPlayer")
-	HOOK("HUDPaint")
+	HOOK("PreDrawHUD")
 
 	battlecam.enabled = true
 	battlecam.aim_pos = Vector()
@@ -134,7 +133,7 @@ function battlecam.Disable()
 	UNHOOK("CreateMove")
 	UNHOOK("HUDShouldDraw")
 	UNHOOK("ShouldDrawLocalPlayer")
-	UNHOOK("HUDPaint")
+	UNHOOK("PreDrawHUD")
 
 	battlecam.enabled = false
 
@@ -551,85 +550,6 @@ function battlecam.ShouldDrawLocalPlayer()
 	return true
 end
 
-local line_mat = Material("particle/Particle_Glow_04")
-
-local line_width = 8
-local line_height = -31
-local max_bounce = 2
-local bounce_plane_height = 5
-
-local life_time = 3
-local hitmarks = {}
-local height_offset = 0
-
-battlecam.healthbars = battlecam.healthbars or {}
-
-local health_mat = Material("gui/gradient")
-
-local function draw_bar(x, y, w, h, cur, max, fade, fr,fg,fb, br,bg,bb, thick)
-	fade = fade or 1
-	w = w or 256
-
-	fr = fr or 0
-	fg = fg or 255
-	fb = fb or 0
-
-	br = br or 255
-	bg = bg or 0
-	bb = bb or 0
-
-	thick = thick or 6
-
-	surface.SetDrawColor(50, 50, 50, 255 * fade)
-	draw_line(
-		x - 5,
-		y + h - 2,
-
-		x + w - 5,
-		y + h - 2,
-
-		thick + 3
-	)
-
-	surface.SetMaterial(health_mat)
-
-	surface.SetDrawColor(255, 255, 255, 255 * fade)
-	draw_line(
-		x - 5,
-		y + h - 2,
-
-		x + w - 5,
-		y + h - 2,
-
-		thick + 3,
-		true
-	)
-
-	surface.SetDrawColor(br, bg, bb, 255 * fade)
-	draw_line(
-		x - 5,
-		y + h - 2,
-
-		x + w - 5,
-		y + h - 2,
-
-		thick,
-		true
-	)
-
-	surface.SetDrawColor(fr, fg, fb, 255 * fade)
-	draw_line(
-		x - 5,
-		y + h - 2,
-
-		(x + (w * math.Clamp(cur / max, 0, 1))) - 5,
-		y + h - 2,
-
-		thick,
-		true
-	)
-end
-
 do
 	battlecam.entities = battlecam.entities or {}
 
@@ -642,6 +562,7 @@ do
 		if type(scale) == "Vector" then
 			local m = Matrix()
 			m:Scale(Vector(scale))
+			ent.matrix = m
 			ent:EnableMatrix("RenderMultiply", m)
 		else
 			ent:SetModelScale(scale or 1)
@@ -659,6 +580,7 @@ do
 
 		function ent:RenderOverride()
 			render.MaterialOverride(mat)
+			ent:SetupBones()
 			ent:DrawModel()
 			render.MaterialOverride()
 		end
@@ -679,214 +601,217 @@ do
 		local sx = ScrW() / 1980
 		local sy = ScrH() / 1050
 
-		local x = 65*sx
-		local y = ScrH() - 140*sy
+		do
+			local x = 65*sx
+			local y = ScrH() - 140*sy
 
-		x = x * 1/sx
-		y = y * 1/sy
+			x = x * 1/sx
+			y = y * 1/sy
 
-		local combine_scanner_ent = create_ent("models/combine_scanner.mdl", Vector(x+150,y-38,1000), Angle(-90,-90-45,0), 10)
-		combine_scanner_ent:SetSequence(combine_scanner_ent:LookupSequence("flare"))
+			local combine_scanner_ent = create_ent("models/combine_scanner.mdl", Vector(x+150,y-38,1000), Angle(-90,-90-45,0), 10)
+			combine_scanner_ent:SetSequence(combine_scanner_ent:LookupSequence("flare"))
 
-		local suit_charger_ent = create_ent("models/props_combine/suit_charger001.mdl", Vector(x+350,y-20,0), Angle(-90,0,0), 10)
-		suit_charger_ent:SetSequence(suit_charger_ent:LookupSequence("idle"))
+			local suit_charger_ent = create_ent("models/props_combine/suit_charger001.mdl", Vector(x+350,y-20,0), Angle(-90,0,0), 10)
+			suit_charger_ent:SetSequence(suit_charger_ent:LookupSequence("idle"))
 
-		local health_bar_bg = create_ent("models/props_combine/combine_train02a.mdl", Vector(x+645,y-5,300), Angle(0,-90,0), Vector(0.2,1.27,1))
-		local health_bar = create_ent("models/hunter/plates/plate1x1.mdl", Vector(x+640,y-5,600), Angle(90,90,0), Vector(1,3,0.7) * 6, "decals/light")
-		local mana_bar_bg = create_ent("models/props_combine/combine_train02a.mdl", Vector(x+445,y-20,300), Angle(0,-90,0), Vector(0.125,0.75,1))
-		local mana_bar = create_ent("models/hunter/plates/plate1x1.mdl", Vector(x+640,y-20,600), Angle(90,90,0), Vector(1,3,0.3) * 6, "decals/light")
+			local health_bar_bg = create_ent("models/props_combine/combine_train02a.mdl", Vector(x+645,y-5,300), Angle(0,-90,0), Vector(0.2,1.27,1))
+			local health_bar = create_ent("models/hunter/plates/plate1x1.mdl", Vector(x+640,y-5,600), Angle(90,90,0), Vector(1,3,0.7) * 6, "decals/light")
 
-		local smooth_hp = 100
-		local smooth_armor = 100
-		local time = 0
 
-		function battlecam.DrawHPMP()
-			local ply = LocalPlayer()
-			local cur_hp = ply:Health()
-			local cur_armor = ply:Armor()
+			local mana_bar_bg = create_ent("models/props_combine/combine_train02a.mdl", Vector(x+445,y-20,300), Angle(0,-90,0), Vector(0.125,0.75,1))
+			local mana_bar = create_ent("models/hunter/plates/plate1x1.mdl", Vector(x+640,y-20,600), Angle(90,90,0), Vector(1,3,0.3) * 6, "decals/light")
 
-			smooth_hp = smooth_hp + ((cur_hp - smooth_hp) * FrameTime() * 5)
-			smooth_armor = smooth_armor + ((cur_armor - smooth_armor) * FrameTime() * 5)
+			local smooth_hp = 100
+			local smooth_armor = 100
+			local smooth_hide_bar = 0
+			local time = 0
 
-			local max_hp = ply:GetMaxHealth()
-			local max_armor = 100
+			function battlecam.DrawHPMP()
+				local ply = LocalPlayer()
+				local cur_hp = ply:Health()
+				local cur_armor = ply:Armor()
 
-			local fract = smooth_hp / max_hp
-			fract = fract ^ 0.3
+				smooth_hp = smooth_hp + ((cur_hp - smooth_hp) * FrameTime() * 5)
+				smooth_armor = smooth_armor + ((cur_armor - smooth_armor) * FrameTime() * 5)
 
-			combine_scanner_ent:SetCycle((-fract+1)^0.25)
-			suit_charger_ent:SetCycle(fract)
+				local max_hp = ply:GetMaxHealth()
+				local max_armor = 100
 
-			render.SetColorModulation(Lerp(fract, math.sin(time)+1.5, 1),Lerp(fract, 0.25, 1),Lerp(fract, 0.25, 1))
-			time = time + FrameTime()*(7/fract)
+				local fract = smooth_hp / max_hp
+				fract = fract ^ 0.3
 
-			render.SuppressEngineLighting(true)
+				combine_scanner_ent:SetCycle(((-fract+1)^0.25) + (math.sin((-smooth_hide_bar+1)*math.pi)*0.25))
+				suit_charger_ent:SetCycle(smooth_hide_bar)
 
-			cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
+				render.SetColorModulation(Lerp(fract, math.sin(time)+1.5, 1),Lerp(fract, 0.25, 1),Lerp(fract, 0.25, 1))
+				time = time + FrameTime()*(7/fract)
 
-				render.CullMode(MATERIAL_CULLMODE_CW)
-					render.PushCustomClipPlane(Vector(0,1,0), 500)
-						suit_charger_ent:DrawModel()
+				render.SuppressEngineLighting(true)
+
+				cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
+
+					render.CullMode(MATERIAL_CULLMODE_CW)
+						render.PushCustomClipPlane(Vector(0,1,0), 500)
+							suit_charger_ent:DrawModel()
+						render.PopCustomClipPlane()
+						combine_scanner_ent:DrawModel()
+					render.CullMode(MATERIAL_CULLMODE_CCW)
+
+					-- armor
+					render.SetColorModulation(1,1,1,1)
+					mana_bar_bg:DrawModel()
+
+					render.SetColorModulation(0.5,0.65,1.75)
+					render.PushCustomClipPlane(Vector(-1,0,0), (-670 - x) * math.min(smooth_armor/max_armor, 1))
+						mana_bar:DrawModel()
 					render.PopCustomClipPlane()
-					combine_scanner_ent:DrawModel()
-				render.CullMode(MATERIAL_CULLMODE_CCW)
 
-				-- armor
-				render.SetColorModulation(1,1,1,1)
-				mana_bar_bg:DrawModel()
+					-- health
 
-				render.SetColorModulation(0.5,0.65,1.75)
-				render.PushCustomClipPlane(Vector(-1,0,0), (-670 - x) * math.min(smooth_armor/max_armor, 1))
-					mana_bar:DrawModel()
-				render.PopCustomClipPlane()
+					do
+						smooth_hide_bar = smooth_hide_bar + (((battlecam.selected_enemy:IsValid() and 0 or 1) - smooth_hide_bar) * FrameTime() * 5)
 
-				-- health
-				render.SetColorModulation(1,1,1,1)
-				health_bar_bg:DrawModel()
+						local m = Matrix()
+						m:Scale(Vector(0.2,1.27 * Lerp(smooth_hide_bar, 1, 0.6),1))
+						m:Translate(Vector(0,smooth_hide_bar*-245,0))
+						health_bar_bg:EnableMatrix("RenderMultiply", m)
 
-				render.SetColorModulation(0.5,1.75,0.65)
-				render.PushCustomClipPlane(Vector(-1,0,0), (-1000 - x) * math.min(smooth_hp/max_hp, 1))
-					health_bar:DrawModel()
-				render.PopCustomClipPlane()
-
-				render.SetColorModulation(1,1,1)
+						render.SetColorModulation(1,1,1,1)
+						health_bar_bg:DrawModel()
 
 
-				prettytext.Draw(math.Round(smooth_hp), x + 280, y + 5, "Candara", 30, 30, 2, Color(255, 255, 255, 200))
-
-			cam.EndOrthoView()
-		end
-
-		local x = ScrW() - 220*sx
-		local y = ScrH() - 175*sy
-
-		x = x * 1/sx
-		y = y * 1/sy
-
-		local weapon_menu = create_ent("models/combine_helicopter/helicopter_bomb01.mdl", Vector(x,y), Angle(0,90,0), 7)
-		local weapon_menu2 = create_ent("models/combine_dropship_container.mdl", Vector(x-80,y, -500), Angle(90,0,0), 1.9)
-
-		local weapon_selection = {}
-		for i= 1,32 do
-			weapon_selection[i] = create_ent("models/props_combine/combinetrain01a.mdl", Vector(x-5, y - 5, -500), Angle(0,0,0), Vector(0.8,0.45,1) * 0.5)
-		end
-
-		local smooth_i = 0
-
-		local font_lookup = {
-			["Pistol"] = "p",
-			["SMG1"] = "\x72",
-			["SMG1_Grenade"] = "\x5F",
-			["357"] = "\x71",
-			["AR2"] = "u",
-			["AR2AltFire"] = "z",
-			["Buckshot"] = "s",
-			["XBowBolt"] = "w",
-			["Grenade"] = "v",
-			["RPG_Round"] = "x",
-			["slam"] = "o",
-
-			["weapon_smg1"] = "&",
-			["weapon_shotgun"] = "(",
-			["weapon_pistol"] = "%",
-			["weapon_357"] = "$",
-			["weapon_crossbow"] = ")",
-			["weapon_ar2"] = ":",
-			["weapon_frag"] = "_",
-			["weapon_rpg"] = ";",
-			["weapon_crowbar"] = "^",
-			["weapon_stunstick"] = "n",
-			["weapon_physcannon"] = "!",
-			["weapon_physgun"] = "h",
-			["weapon_bugbait"] = "~",
-			["weapon_slam"] = "o",
-		}
-
-		function battlecam.DrawWeaponSelection()
-			local ply = LocalPlayer()
-			local weapons = battlecam.GetWeapons()
-
-			if not weapons[1] then return end
-
-			local max_hp = ply:GetMaxHealth()
-			local fract = smooth_hp / max_hp
-			fract = fract ^ 0.3
-
-			cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
-				render.CullMode(MATERIAL_CULLMODE_CW)
-
-				render.PushCustomClipPlane(Vector(-1,0,0), -x)
-					for i, wep in ipairs(weapons) do
-						local real_i = i
-
-						i = i + -battlecam.weapon_i
-						i = i - #weapons / 2
-						i = i + (0.25 * #weapons) - 1
-						i = i / #weapons
-						i = i * math.pi * 2
-
-						wep.battlecam_smooth_i = wep.battlecam_smooth_i or 0
-						wep.battlecam_smooth_i = wep.battlecam_smooth_i + ((i - wep.battlecam_smooth_i) * FrameTime() * 10)
-
-						local i = wep.battlecam_smooth_i
-
-						local x = x + math.sin(i) * 200
-						local y = y + math.cos(i) * 50
-
-						local ent = weapon_selection[real_i%#weapon_selection + 1]
-						ent:SetRenderOrigin(Vector(x-5, y - 5, x*-40))
-						ent:DrawModel()
-
-						local name = wep:GetClass()
-
-						if language.GetPhrase(name) then
-							name = language.GetPhrase(name)
-						end
-
-						render.CullMode(MATERIAL_CULLMODE_CCW)
-							surface.SetAlphaMultiplier(math.abs(math.sin(i)) ^ 3)
-							prettytext.Draw(name, x-120, y-19, "Candara", 26, 0, 4, Color(255, 255, 255, 150))
-							surface.SetAlphaMultiplier(1)
-						render.CullMode(MATERIAL_CULLMODE_CW)
+						render.SetColorModulation(0.5,1.75,0.65)
+						render.PushCustomClipPlane(Vector(-1,0,0), (-1000 - x) * math.min(smooth_hp/max_hp, 1) * Lerp(smooth_hide_bar, 1, 0.69))
+							health_bar:DrawModel()
+						render.PopCustomClipPlane()
 					end
-				render.PopCustomClipPlane()
 
-				weapon_menu:DrawModel()
-				weapon_menu:SetModelScale(7)
-				weapon_menu2:DrawModel()
+					render.SetColorModulation(1,1,1)
 
-				render.CullMode(MATERIAL_CULLMODE_CCW)
+					prettytext.Draw(math.Round(smooth_hp), x + 280, y + 5, "Candara", 30, 30, 2, Color(255, 255, 255, 200))
 
-				cam.IgnoreZ(true)
+				cam.EndOrthoView()
+			end
+		end
 
-				local wep = LocalPlayer():GetActiveWeapon()
-				if wep:IsValid() then
-					local size = 200
-					if wep.DrawWeaponSelection then
-						wep:DrawWeaponSelection(x-size/2,y-size/4, size, size, 255)
-					else
-						local icon = font_lookup[wep:GetClass()]
-						if icon then
-							local w,h = prettytext.GetTextSize(icon, "HALFLIFE2", 150, 0)
-							local m = Matrix()
-							m:Translate(Vector(x-w/2 + w, y-h/2, 0))
-							m:Scale(Vector(-1,1,1))
-							cam.PushModelMatrix(m)
-							render.CullMode(MATERIAL_CULLMODE_CW)
-								surface.SetAlphaMultiplier(0.5)
-								prettytext.Draw(icon, 0, -12, "HALFLIFE2", 1000, 0, 10, Color(200, 255, 255, 255))
-								surface.SetAlphaMultiplier(1)
+		do
+			local x = ScrW() - 220*sx
+			local y = ScrH() - 175*sy
+
+			x = x * 1/sx
+			y = y * 1/sy
+
+			local weapon_menu = create_ent("models/combine_helicopter/helicopter_bomb01.mdl", Vector(x,y), Angle(0,90,0), 7)
+			local weapon_menu2 = create_ent("models/combine_dropship_container.mdl", Vector(x-80,y, -500), Angle(90,0,0), 1.9)
+			local weapon_selection = create_ent("models/props_combine/combinetrain01a.mdl", Vector(x-5, y - 5, -500), Angle(0,0,0), Vector(0.8,0.45,1) * 0.5)
+
+			local font_lookup = {
+				["Pistol"] = "p",
+				["SMG1"] = "\x72",
+				["SMG1_Grenade"] = "\x5F",
+				["357"] = "\x71",
+				["AR2"] = "u",
+				["AR2AltFire"] = "z",
+				["Buckshot"] = "s",
+				["XBowBolt"] = "w",
+				["Grenade"] = "v",
+				["RPG_Round"] = "x",
+				["slam"] = "o",
+
+				["weapon_smg1"] = "&",
+				["weapon_shotgun"] = "(",
+				["weapon_pistol"] = "%",
+				["weapon_357"] = "$",
+				["weapon_crossbow"] = ")",
+				["weapon_ar2"] = ":",
+				["weapon_frag"] = "_",
+				["weapon_rpg"] = ";",
+				["weapon_crowbar"] = "^",
+				["weapon_stunstick"] = "n",
+				["weapon_physcannon"] = "!",
+				["weapon_physgun"] = "h",
+				["weapon_bugbait"] = "~",
+				["weapon_slam"] = "o",
+			}
+
+			function battlecam.DrawWeaponSelection()
+				local ply = LocalPlayer()
+				local weapons = battlecam.GetWeapons()
+
+				if not weapons[1] then return end
+
+				cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
+					render.CullMode(MATERIAL_CULLMODE_CW)
+
+					render.PushCustomClipPlane(Vector(-1,0,0), -x)
+						for i, wep in ipairs(weapons) do
+							i = i + -battlecam.weapon_i
+							i = i - #weapons / 2
+							i = i + (0.25 * #weapons) - 1
+							i = i / #weapons
+							i = i * math.pi * 2
+
+							wep.battlecam_smooth_i = wep.battlecam_smooth_i or 0
+							wep.battlecam_smooth_i = wep.battlecam_smooth_i + ((i - wep.battlecam_smooth_i) * FrameTime() * 10)
+
+							local i = wep.battlecam_smooth_i
+
+							local x = x + math.sin(i) * 200
+							local y = y + math.cos(i) * 50
+
+							weapon_selection:SetRenderOrigin(Vector(x-5, y - 5, x*-40))
+							weapon_selection:DrawModel()
+
+							local name = wep:GetClass()
+
+							if language.GetPhrase(name) then
+								name = language.GetPhrase(name)
+							end
+
 							render.CullMode(MATERIAL_CULLMODE_CCW)
-							cam.PopModelMatrix()
+								surface.SetAlphaMultiplier(math.abs(math.sin(i)) ^ 3)
+								prettytext.Draw(name, x-120, y-19, "Candara", 26, 0, 4, Color(255, 255, 255, 150))
+								surface.SetAlphaMultiplier(1)
+							render.CullMode(MATERIAL_CULLMODE_CW)
+						end
+					render.PopCustomClipPlane()
+
+					weapon_menu:DrawModel()
+					weapon_menu2:DrawModel()
+
+					render.CullMode(MATERIAL_CULLMODE_CCW)
+
+					cam.IgnoreZ(true)
+
+					local wep = LocalPlayer():GetActiveWeapon()
+					if wep:IsValid() then
+						local size = 200
+						if wep.DrawWeaponSelection then
+							wep:DrawWeaponSelection(x-size/2,y-size/4, size, size, 255)
+						else
+							local icon = font_lookup[wep:GetClass()]
+							if icon then
+								local w,h = prettytext.GetTextSize(icon, "HALFLIFE2", 150, 0)
+								local m = Matrix()
+								m:Translate(Vector(x-w/2 + w, y-h/2, 0))
+								m:Scale(Vector(-1,1,1))
+								cam.PushModelMatrix(m)
+								render.CullMode(MATERIAL_CULLMODE_CW)
+									surface.SetAlphaMultiplier(0.5)
+									prettytext.Draw(icon, 0, -12, "HALFLIFE2", 1000, 0, 10, Color(200, 255, 255, 255))
+									surface.SetAlphaMultiplier(1)
+								render.CullMode(MATERIAL_CULLMODE_CCW)
+								cam.PopModelMatrix()
+							end
 						end
 					end
-				end
-			cam.EndOrthoView()
+				cam.EndOrthoView()
+			end
 		end
 	end
 end
 
-function battlecam.HUDPaint()
+function battlecam.PreDrawHUD()
 	surface.SetDrawColor(255,255,255,255)
 	surface.SetAlphaMultiplier(1)
 	--[[
