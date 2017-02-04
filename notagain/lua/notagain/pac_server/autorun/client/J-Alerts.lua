@@ -28,7 +28,7 @@ local ALERT = {
 	    }
 
 	    draw.NoTexture()
-		surface.SetDrawColor(0, 97, 155, 200)
+		surface.SetDrawColor( math.abs(math.sin(CurTime()*3)*255), 0, math.abs(math.sin(CurTime()*3)*255)/4, 200)
 		surface.DrawPoly(Poly)
 
 	end,
@@ -36,7 +36,7 @@ local ALERT = {
 
 vgui.Register( "DAlert" , ALERT , "DLabel" )
 
-function Alert( message , delay )
+function Alert( message , time )
 	
 	RemoveAlert() --So we don't have overlaping alerts
 	
@@ -46,10 +46,18 @@ function Alert( message , delay )
 	JAlert:SetWide((JAlert:GetWide() + 64/ResolutionScale > 800) and JAlert:GetWide() + 64/ResolutionScale or 800 )
 	JAlert:SetPos( scrW/2-JAlert:GetWide()/2, -JAlert:GetTall() ) 
 	JAlert:MoveTo( JAlert.x , 0 , 0.35, 0.3)
+	JAlert.Removal = CurTime()+150 --150s max time
+
+	JAlert.Think = function() -- ermergency removal
+		if JAlert.Removal <= CurTime() then
+			JAlert:MoveTo( JAlert.x , -JAlert:GetTall(), 0.35, 0.3, nil, function() JAlert:Remove() end)
+			ActiveAlert = nil
+		end
+	end
 	
 	ActiveAlert = JAlert
 
-	timer.Simple(delay or 60,RemoveAlert)
+	timer.Simple(time or 10,RemoveAlert)
 
 	
 end
