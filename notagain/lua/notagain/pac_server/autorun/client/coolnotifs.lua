@@ -6,37 +6,38 @@ surface.CreateFont( "NoticeFont", {
 
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
-local PANEL = {}
 
-function PANEL:Init()
-	self:SetSize(256, 30)
-	self:SetContentAlignment(5)
-	self:SetExpensiveShadow(1, Color(0, 0, 0, 150))
-	self:SetFont("NoticeFont")
-	self:SetTextColor(color_white)
-end
+local PANEL = {
 
-function PANEL:Paint(w, h)
+	Init = function( self )
+		self:SetSize(256, 30)
+		self:SetContentAlignment(5)
+		self:SetExpensiveShadow(1, Color(0, 0, 0, 150))
+		self:SetFont("NoticeFont")
+		self:SetTextColor(color_white)
+	end,
 
-	local Poly = {
-        { x = 0,   					y = h }, --100/200
-        { x = (25/ resolutionScale),y = 0 }, --100/100
-        { x = w, 					y = 0 }, --200/100
-        { x = w,                    y = h }, --200/200
-    }
-    draw.NoTexture()
-	surface.SetDrawColor(0, 97, 155, 225)
-	surface.DrawPoly(Poly)
+	Paint = function ( self , w , h)
 
-	if (self.start) then
-		local w2 = math.TimeFraction(self.start, self.endTime, CurTime()) * w
-		surface.SetDrawColor(255,255,255)
-		surface.DrawRect(w2, h-2, w - w2, 2)
+		local Poly = {
+	        { x = 0,   					y = h }, --100/200
+	        { x = (25/ resolutionScale),y = 0 }, --100/100
+	        { x = w, 					y = 0 }, --200/100
+	        { x = w,                    y = h }, --200/200
+	    }
+	    draw.NoTexture()
+		surface.SetDrawColor(0, 97, 155, 225)
+		surface.DrawPoly(Poly)
+
+		if (self.start) then
+			local w2 = math.TimeFraction(self.start, self.endTime, CurTime()) * w
+			surface.SetDrawColor(255,255,255)
+			surface.DrawRect(w2, h-2, w - w2, 2)
+		end
+
 	end
 
-	surface.SetDrawColor(0, 0, 0, 45)
-	surface.DrawOutlinedRect(0, 0, w, h)
-end
+}
 
 vgui.Register("DNotice", PANEL, "DLabel")
 
@@ -54,8 +55,6 @@ function CoolNotify(message,delay)
 	notice:SetPos(ScrW(), ScrH() - (notice.id - 1) * (notice:GetTall() + 4 	) + 4)
 	notice:SizeToContentsX()
 	notice:SetWide(notice:GetWide() + 64)
-	notice.start = CurTime() + 0.25
-	notice.endTime = CurTime() + delay	
 	notice.OnRemove = function() 
 		notices[notice.id] = nil
 	end
