@@ -500,7 +500,7 @@ do -- selection
 				battlecam.SelectTarget(ent)
 				last_enemy_target = RealTime() + 0.25
 			else
-				local origin = battlecam.last_target_pos:Distance(ply:GetPos()) < 500 and battlecam.last_target_pos or ply:GetPos()
+				local origin = (battlecam.last_target_pos and battlecam.last_target_pos:Distance(ply:GetPos()) < 500 and battlecam.last_target_pos) or ply:GetPos()
 				local found = {}
 				local ents = ents.FindInSphere(origin, 500)
 
