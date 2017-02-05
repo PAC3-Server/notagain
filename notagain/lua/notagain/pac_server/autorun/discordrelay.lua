@@ -146,7 +146,7 @@ if SERVER then
 				for k,v in pairs(json) do
 					if discordrelay.user.id == v.author.id then continue end
 
-					if v.webhook_id then
+					if v.author.bot and v.webhook_id then
 						if string.lower(v.author.username) == "github" and v.embeds and v.embeds[1] then
 							local embed = v.embeds[1]
 							if string.match(embed.title, "new commit") then
