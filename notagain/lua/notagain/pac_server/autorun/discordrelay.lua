@@ -129,22 +129,6 @@ if SERVER then
 		end,function(err) print(err) end)
     end
 
-	function discordrelay.init()
-		discordrelay.user = {}
-		discordrelay.authed = false
-	   	discordrelay.HTTPRequest({["method"] = "get", ["url"] = discordrelay.endpoints.users.."/@me"}, function(headers, body)
-	   		local json = util.JSONToTable(body)
-	   		if json and json.username then
-	   			discordrelay.user.username = json.username
-	   			discordrelay.user.id = json.id
-	   			discordrelay.authed = true
-	   			print("Discord Relay: Is authed!")
-	   		else
-	   			print("Sure that is a valid token?")
-	   		end
-	   	end)
-	end
-
 	local after = 0
 	--It was either this or websockets. But this shouldn't be that bad of a solution
 	timer.Create("DiscordRelayFetchMessages", 1.5, 0, function()
@@ -162,7 +146,27 @@ if SERVER then
 				for k,v in pairs(json) do
 					if discordrelay.user.id == v.author.id or v.author.bot == true then continue end
 
-					if string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
+					if v.webhook_id then
+						if string.lower(v.author.username) == "github" and v.embeds and v.embeds[1] then
+							local embed = v.embeds[1]
+							if string.match(embed.title, "new commit") then
+								local message = "GitHub: "..embed.title
+								for k,v in pairs(string.Split(embed.description, "\n")) do
+									local hash, url, commit = string.match(v, "%[`(.*)`%]%((.*)%) (.*)")
+									message = message.."\n	"..hash.." "..commit
+								end
+								net.Start( "DiscordMessage" )
+									net.WriteString("")
+									net.WriteString(message)
+								net.Broadcast()
+							else
+								net.Start( "DiscordMessage" )
+									net.WriteString("")
+									net.WriteString("GitHub: "..embed.title)
+								net.Broadcast()
+							end 
+						end
+					elseif string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
 						local onlineplys = ""
 						local players = player.GetAll()
 						for k,v in pairs(players) do
@@ -296,7 +300,10 @@ else
 	net.Receive( "DiscordMessage", function()
 		local nick = net.ReadString()
 		local message = net.ReadString()
-
-		chat.AddText(Color(114,137,218),nick,Color(255,255,255,255),": ",message);
+		if nick ~= "" then
+			chat.AddText(Color(114,137,218),nick,Color(255,255,255,255),": ",message)
+		else
+			chat.AddText(Color(255,255,255,255), message)
+		end
 	end)
 end
