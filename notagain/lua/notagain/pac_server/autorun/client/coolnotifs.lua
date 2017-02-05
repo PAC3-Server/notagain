@@ -15,7 +15,7 @@ local PANEL = {
 		self:SetExpensiveShadow(1, Color(0, 0, 0, 150))
 		self:SetFont("NoticeFont")
 		self:SetTextColor(color_white)
-	end,
+	end
 
 	Paint = function ( self , w , h)
 
@@ -55,6 +55,8 @@ function CoolNotify(message,delay)
 	notice:SetPos(ScrW(), ScrH() - (notice.id - 1) * (notice:GetTall() + 4 	) + 4)
 	notice:SizeToContentsX()
 	notice:SetWide(notice:GetWide() + 64)
+	notice.start = CurTime()
+	notice.endTime = CurTime() + delay
 	notice.OnRemove = function() 
 		notices[notice.id] = nil
 	end
