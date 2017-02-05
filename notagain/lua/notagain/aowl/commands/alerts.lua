@@ -14,7 +14,7 @@ if SERVER then
 			end
 			net.Broadcast()
 		end
-	end, "developers")
+	end, "developers",true)
 end
 
 if CLIENT then
