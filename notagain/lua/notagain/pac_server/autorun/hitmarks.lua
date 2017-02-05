@@ -1,3 +1,6 @@
+local hitmarkers = _G.hitmarkers or {}
+_G.hitmarkers = hitmarkers
+
 if CLIENT then
 	local draw_line = requirex("draw_line")
 	local prettytext = requirex("pretty_text")
@@ -101,8 +104,20 @@ if CLIENT then
 					name = ent:Nick()
 				else
 					name = ent:GetClass()
+
+					local npcs = ents.FindByClass(name)
+					if npcs[1] then
+						for i, other in ipairs(npcs) do
+							other.hm_letter = string.char(64 + i%26)
+						end
+					end
+
 					if language.GetPhrase(name) then
 						name = language.GetPhrase(name)
+					end
+
+					if ent.hm_letter then
+						name = name .. " " .. ent.hm_letter
 					end
 				end
 
@@ -262,6 +277,7 @@ if CLIENT then
 				end
 			end
 		end
+
 		if hitmarks[1] then
 			local d = FrameTime()
 
@@ -370,17 +386,21 @@ if CLIENT then
 		end
 	end)
 
-	local function show_healthbar(ent)
-		for i, data in ipairs(health_bars) do
-			if data.ent == ent then
-				table.remove(health_bars, i)
-				break
+	function hitmarkers.ShowHealth(ent, focus)
+		if focus then
+			table.Empty(health_bars)
+		else
+			for i, data in ipairs(health_bars) do
+				if data.ent == ent then
+					table.remove(health_bars, i)
+					break
+				end
 			end
 		end
-		table.insert(health_bars, {ent = ent, time = RealTime() + life_time * 2})
+		table.insert(health_bars, {ent = ent, time = focus and math.huge or (RealTime() + life_time * 2)})
 	end
 
-	local function show_weapon(ent, name)
+	function hitmarkers.ShowAttack(ent, name)
 		for i, data in ipairs(weapon_info) do
 			if data.ent == ent then
 				table.remove(weapon_info, i)
@@ -392,7 +412,7 @@ if CLIENT then
 		table.insert(weapon_info, {name = name, ent = ent, time = RealTime() + length, length = length})
 	end
 
-	function Hitmark(ent, dmg, pos, type)
+	function hitmarkers.ShowDamage(ent, dmg, pos, type)
 		ent = ent or NULL
 		dmg = dmg or 0
 		pos = pos or ent:EyePos()
@@ -431,7 +451,7 @@ if CLIENT then
 			}
 		)
 
-		show_healthbar(ent)
+		hitmarkers.ShowHealth(ent)
 	end
 
 	timer.Create("hitmark", 0.25, 0, function()
@@ -440,7 +460,7 @@ if CLIENT then
 		local data = ply:GetEyeTrace()
 		local ent = data.Entity
 		if ent:IsNPC() or ent:IsPlayer() then
-			show_healthbar(ent)
+			hitmarkers.ShowHealth(ent)
 		end
 
 		for _, ent in pairs(ents.FindInSphere(ply:GetPos(), 1000)) do
@@ -484,8 +504,8 @@ if CLIENT then
 						name = language.GetPhrase(name)
 					end
 
-					show_weapon(ent, name)
-					show_healthbar(ent)
+					hitmarkers.ShowAttack(ent, name)
+					hitmarkers.ShowHealth(ent)
 				end
 			end
 		end
@@ -509,12 +529,12 @@ if CLIENT then
 		ent.hm_max_health = max
 
 
-		Hitmark(ent, dmg, pos, type)
+		hitmarkers.ShowDamage(ent, dmg, pos, type)
 	end)
 end
 
 if SERVER then
-	function Hitmark(ent, dmg, pos, type, filter)
+	function hitmarkers.ShowDamage(ent, dmg, pos, type, filter)
 		ent = ent or NULL
 		dmg = dmg or 0
 		pos = pos or ent:EyePos()
@@ -565,7 +585,7 @@ if SERVER then
 					health = ent:Health() - last_health
 				end
 
-				Hitmark(ent, health, pos, dmg:GetDamageType(), filter)
+				hitmarkers.ShowDamage(ent, health, pos, dmg:GetDamageType(), filter)
 			end
 		end)
 	end)
@@ -580,7 +600,7 @@ if SERVER then
 			if type(data) == "table" and data.Damage then
 				local ent = select(1, ...)
 				if IsEntity(ent) and ent:IsValid() and math.floor(data.Damage) ~= 0 then
-					Hitmark(ent, -data.Damage, ent:GetPos(), data.Damage > 500)
+					hitmarkers.ShowDamage(ent, -data.Damage, ent:GetPos(), data.Damage > 500)
 				end
 			end
 
@@ -594,7 +614,7 @@ if SERVER then
 				if ent.hm_last_health ~= ent:Health() then
 					local diff = ent:Health() - (ent.hm_last_health or 0)
 					if diff > 0 then
-						Hitmark(ent, diff)
+						hitmarkers.ShowDamage(ent, diff)
 					end
 					ent.hm_last_health = ent:Health()
 				end
@@ -602,3 +622,5 @@ if SERVER then
 		end
 	end)
 end
+
+return hitmarkers
