@@ -88,7 +88,7 @@ if SERVER then
 		end)
 	end
 
-	function discordrelay.CreateMessage(channelid, msg, cb)
+	function discordrelay.CreateMessage(channelid, msg, cb) -- still keeping this if we want to post anything in the future, feel free to remove though
 		local res
 		if type(msg) == "string" then
 			res = util.TableToJSON({["content"] = msg})
@@ -164,21 +164,46 @@ if SERVER then
 
 					if string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
 						local onlineplys = ""
-						for k,v in pairs(player.GetAll()) do
-							if k == table.Count(player.GetAll()) then
+						local players = player.GetAll()
+						for k,v in pairs(players) do
+							if k == #players then
 								onlineplys = onlineplys..v:Nick()
 							else
 								onlineplys = onlineplys..v:Nick()..", "
 							end
 						end
-						discordrelay.CreateMessage(discordrelay.relayChannel, {
-							["embed"] = {
-								["title"] = "Server status:",
-								["description"] = "**Hostname:** "..GetHostName().."\n**Map:** "..game.GetMap().."\n**Players online:** "..table.Count(player.GetAll()).."/"..game.MaxPlayers().."\n```"..onlineplys.." ```",
-								["type"] = "rich",
-								["color"] = 0x051690
+						if #players > 0 then
+							discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+								["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
+								["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
+								["embeds"] = {
+									[1] = {
+										["title"] = "Server status:",
+										["description"] = "**Hostname:** "..GetHostName().."\n**Map:** "..game.GetMap().."\n**Players online:** "..table.Count(player.GetAll()).."/"..game.MaxPlayers().."\n```"..onlineplys.." ```",
+										["author"] = {
+											["name"] = data.name,
+											["icon_url"] = ret
+										},
+										["type"] = "rich",
+										["color"] = 0x0040ff
+									}
+								}
+							})
+						else
+						discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+							["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
+							["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
+							["embeds"] = {
+								[1] = {
+									["title"] = "Server status:",
+									["description"] = "No Players are currently on the Server...",
+									["type"] = "rich",
+									["color"] = 0x5a5a5a
+								}
 							}
 						})
+						end
+						
 					else
 						net.Start( "DiscordMessage" )
 							net.WriteString(string.sub(v.author.username,1,14))
@@ -210,16 +235,20 @@ if SERVER then
 	hook.Add("player_connect", "DiscordRelayPlayerConnect", function(data)
 	    if discordrelay and discordrelay.enabled then
             discordrelay.GetAvatar(data.networkid, function(ret)
-            	discordrelay.CreateMessage(discordrelay.relayChannel, {
-					["embed"] = {
-                    	["title"] = "",
-                    	["description"] = "Joined the Server.",
-                    	["author"] = {
-	                        ["name"] = data.name,
-                        	["icon_url"] = ret
-                    	},
-                    	["type"] = "rich",
-                    	["color"] = 0x00b300
+				discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+					["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
+					["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
+					["embeds"] = {
+						[1] = {
+							["title"] = "",
+							["description"] = "is joining the Server.",
+							["author"] = {
+								["name"] = data.name,
+								["icon_url"] = ret
+							},
+							["type"] = "rich",
+							["color"] = 0x00b300
+						}
                 	}
 				})
             end)
@@ -231,17 +260,21 @@ if SERVER then
 	hook.Add("player_disconnect", "DiscordRelayPlayerDisconnect", function(data)
 	    if discordrelay and discordrelay.enabled then
         	discordrelay.GetAvatar(data.networkid, function(ret)
-				discordrelay.CreateMessage(discordrelay.relayChannel, {
-					["embed"] = {
-						["title"] = "",
-						["description"] = "Left the Server.",
-						["author"] = {
-							["name"] = data.name,
-							["icon_url"] = ret
-						},
-						["type"] = "rich",
-						["color"] = 0xb30000
-					}
+				discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+					["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
+					["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
+					["embeds"] = {
+						[1] = {
+							["title"] = "",
+							["description"] = "left the Server.",
+							["author"] = {
+								["name"] = data.name,
+								["icon_url"] = ret
+							},
+							["type"] = "rich",
+							["color"] = 0xb30000
+						}
+                	}
 				})
 			end)
 		end
@@ -249,15 +282,16 @@ if SERVER then
 
 	hook.Add("ShutDown", "DiscordRelayShutDown", function()
 		if discordrelay and discordrelay.enabled then
-			discordrelay.CreateMessage(discordrelay.relayChannel, {
-				["embed"] = {
-					["title"] = "",
-					["description"] = "is shutting down...",
-					["author"] = {
-						["name"] = "Server"
-					},
-					["type"] = "rich",
-					["color"] = 0xb3b300
+			discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+				["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
+				["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
+				["embeds"] = {
+					[1] = {
+						["title"] = "",
+						["description"] = ":warning: has shutdown. :warning:",
+						["type"] = "rich",
+						["color"] = 0xb30000
+					}
 				}
 			})
 		end
