@@ -144,9 +144,9 @@ if SERVER then
 
 			if after ~= 0 then
 				for k,v in pairs(json) do
-					if discordrelay.user.id == v.author.id or v.author.bot == true then continue end
+					if discordrelay.user.id == v.author.id then continue end
 
-					if v.webhook_id then
+					if v.author.bot and v.webhook_id then
 						if string.lower(v.author.username) == "github" and v.embeds and v.embeds[1] then
 							local embed = v.embeds[1]
 							if string.match(embed.title, "new commit") then
@@ -166,7 +166,7 @@ if SERVER then
 								net.Broadcast()
 							end 
 						end
-					elseif string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
+					elseif v.author.bot ~= true and string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
 						local onlineplys = ""
 						local players = player.GetAll()
 						for k,v in pairs(players) do
@@ -204,7 +204,7 @@ if SERVER then
 						})
 						end
 						
-					else
+					elseif v.author.bot ~= true then
 						net.Start( "DiscordMessage" )
 							net.WriteString(string.sub(v.author.username,1,14))
 							net.WriteString(string.sub(v.content,1,400))
