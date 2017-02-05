@@ -4,13 +4,15 @@ if SERVER then
 	discordrelay = discordrelay or {} 
 	discordrelay.token = file.Read( "discordbot_token.txt", "DATA" )
 	discordrelay.relayChannel = "273575417401573377"
-	discordrelay.serverName = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "TestServer" or "Server"
-
+    discordrelay.webhookid = "274957435091812352"
+    discordrelay.webhooktoken = file.Read( "webhook_token.txt", "DATA" )
+	
 	discordrelay.endpoints = discordrelay.endpoints or {}
 	discordrelay.endpoints.base = "https://discordapp.com/api/v6"
 	discordrelay.endpoints.users = discordrelay.endpoints.base.."/users"
 	discordrelay.endpoints.guilds = discordrelay.endpoints.base.."/guilds"
 	discordrelay.endpoints.channels = discordrelay.endpoints.base.."/channels"
+    discordrelay.endpoints.webhook = "https://canary.discordapp.com/api/webhooks"
 
 	discordrelay.enabled = true
 
@@ -18,12 +20,12 @@ if SERVER then
 	discordrelay.user.username = "GMod-Relay"
 	discordrelay.user.id = "276379732726251521"
 
-	function discordrelay.HTTPRequest(ctx, callback)
+	function discordrelay.HTTPRequest(ctx, callback, err)
 		local HTTPRequest = {}
 		HTTPRequest.method = ctx.method
 		HTTPRequest.url = ctx.url
 		HTTPRequest.headers = {
-			["Authorization"]="Bot "..discordrelay.token,
+			["Authorization"]= "Bot "..discordrelay.token,
 			["Content-Type"] = "application/json",
 			["User-Agent"] = "GModRelay (https://datamats.com/, 1.0.0)"
 		}
@@ -37,13 +39,53 @@ if SERVER then
 		end
 
 		HTTPRequest.success = function(code, body, headers)
+        if not callback then return end
 			callback(headers, body)
 		end
 
 		HTTPRequest.failed = function(reason)
+        if not err then return end
+            err(reason)
 		end
 
 		HTTP(HTTPRequest)
+	end
+
+    function discordrelay.WebhookRequest(ctx, callback, err)
+        local HTTPRequest = {}
+        HTTPRequest.method = ctx.method
+		HTTPRequest.url = ctx.url
+        HTTPRequest.headers = {
+			["Content-Type"] = "application/json",
+            ["Content-Length"] = string.len(ctx.body) or "0"
+		}
+
+        HTTPRequest.type = "application/json"
+
+		if ctx.body then
+			HTTPRequest.body = ctx.body
+		elseif ctx.parameters then
+			HTTPRequest.parameters = ctx.parameters
+		end
+
+		HTTPRequest.success = function(code, body, headers)
+        if not callback then return end
+			callback(headers, body)
+		end
+
+		HTTPRequest.failed = function(reason)
+        if not err then return end
+            err(reason)
+		end
+
+		HTTP(HTTPRequest)
+    end
+	function discordrelay.GetAvatar(steamid, ret)
+		local commid = util.SteamIDTo64(steamid)
+		http.Fetch("http://steamcommunity.com/profiles/" .. commid .. "?xml=1", function(content, size)
+			local ret = content:match("<avatarFull><!%[CDATA%[(.-)%]%]></avatarFull>")
+			callback(ret)
+		end)
 	end
 
 	function discordrelay.CreateMessage(channelid, msg, cb)
@@ -66,6 +108,27 @@ if SERVER then
 		end)
 	end
 
+    function discordrelay.ExecuteWebhook(whid, whtoken, msg, cb)
+        local res
+        if type(msg) == "string" then
+			res = util.TableToJSON({["content"] = msg})
+		elseif type(msg) == "table" then
+			res = util.TableToJSON(msg)
+		else
+			return print("Relay: attempting to send a invalid message")
+		end
+        discordrelay.WebhookRequest({
+            ["method"] = "POST",
+            ["url"] = discordrelay.endpoints.webhook.."/"..whid.."/"..whtoken,
+            ["body"] = res
+            
+        }, function(headers, body)
+        if not cb then return end
+			local tbl = util.JSONToTable(body)
+			cb(tbl)
+		end,function(err) print(err) end)
+    end
+
 	function discordrelay.init()
 		discordrelay.user = {}
 		discordrelay.authed = false
@@ -83,68 +146,83 @@ if SERVER then
 	end
 
 	local after = 0
-	local nextFetch = 0
-	--It was either this or websockets. But this shouldt be that bad of a solution
-	hook.Add("Think", "DiscordRelayFetchMessages", function()
-		if discordrelay.enabled and nextFetch < CurTime() then
-			local url
+	--It was either this or websockets. But this shouldn't be that bad of a solution
+	timer.Create("DiscordRelayFetchMessages", 1.5, 0, function()
+		local url
+		if after ~= 0 then
+			url = discordrelay.endpoints.channels.."/"..discordrelay.relayChannel.."/messages?after="..after
+		else
+			url = discordrelay.endpoints.channels.."/"..discordrelay.relayChannel.."/messages"
+		end
+
+		discordrelay.HTTPRequest({["method"] = "get", ["url"] = url}, function(headers, body)
+			local json = util.JSONToTable(body)
+
 			if after ~= 0 then
-				url = discordrelay.endpoints.channels.."/"..discordrelay.relayChannel.."/messages?after="..after
-			else
-				url = discordrelay.endpoints.channels.."/"..discordrelay.relayChannel.."/messages"
+				for k,v in pairs(json) do
+					if discordrelay.user.id == v.author.id or v.author.bot == true then continue end
+
+					if string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
+						local onlineplys = ""
+						for k,v in pairs(player.GetAll()) do
+							if k == table.Count(player.GetAll()) then
+								onlineplys = onlineplys..v:Nick()
+							else
+								onlineplys = onlineplys..v:Nick()..", "
+							end
+						end
+						discordrelay.CreateMessage(discordrelay.relayChannel, {
+							["embed"] = {
+								["title"] = "Server status:",
+								["description"] = "**Hostname:** "..GetHostName().."\n**Map:** "..game.GetMap().."\n**Players online:** "..table.Count(player.GetAll()).."/"..game.MaxPlayers().."\n```"..onlineplys.." ```",
+								["type"] = "rich",
+								["color"] = 0x051690
+							}
+						})
+					else
+						net.Start( "DiscordMessage" )
+							net.WriteString(string.sub(v.author.username,1,14))
+							net.WriteString(string.sub(v.content,1,400))
+						net.Broadcast()
+					end
+
+				end
 			end
 
-	   		discordrelay.HTTPRequest({["method"] = "get", ["url"] = url}, function(headers, body)
-		   		local json = util.JSONToTable(body)
-
-		   		if after ~= 0 then
-		   			for k,v in pairs(json) do
-		   				if discordrelay.user.id == v.author.id then continue end
-
-						if string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
-				            local onlineplys = ""
-				            for k,v in pairs(player.GetAll()) do
-				                if k == table.Count(player.GetAll()) then
-				                    onlineplys = onlineplys..v:Nick()
-				                else
-				                    onlineplys = onlineplys..v:Nick()..", "
-				                end
-				            end
-				           	discordrelay.CreateMessage(discordrelay.relayChannel, {
-				                ["embed"] = {
-				                    ["title"] = "Server status:",
-				                    ["description"] = "**Hostname:** "..GetHostName().."\n**Map:** "..game.GetMap().."\n**Players online:** "..table.Count(player.GetAll()).."/"..game.MaxPlayers().."\n```"..onlineplys.." ```",
-				                    ["type"] = "rich",
-				                    ["color"] = 0x051690
-				                }
-				            })
-				        else
-				            net.Start( "DiscordMessage" )
-				                net.WriteString(string.sub(v.author.username,1,14))
-				                net.WriteString(string.sub(v.content,1,400))
-				            net.Broadcast()
-				        end
-
-		   			end
-		   		end
-
-		   		if json and json[1] then
-		   			after = json[1].id
-		   		end
-		   	end)
-			nextFetch = CurTime() + 1.5
-		end
+			if json and json[1] then
+				after = json[1].id
+			end
+		end)
 	end)
 
 	hook.Add("PlayerSay", "DiscordRelayChat", function(ply, text, teamChat)
 	    if discordrelay and discordrelay.enabled then
-	        discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** "..ply:Nick()..": "..text)
+            discordrelay.GetAvatar(ply:SteamID(), function(ret)
+            	discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+					["username"] = ply:Nick(),
+					["content"] = text,
+					["avatar_url"] = ret
+					}) 
+			end)
 	    end
 	end)
-
-	hook.Add("PlayerConnect", "DiscordRelayPlayerConnect", function(name)
+    gameevent.Listen( "player_connect" )
+	hook.Add("player_connect", "DiscordRelayPlayerConnect", function(data)
 	    if discordrelay and discordrelay.enabled then
-	        discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** *"..name.." is joining the server!*")
+            discordrelay.GetAvatar(data.networkid, function(ret)
+            	discordrelay.CreateMessage(discordrelay.relayChannel, {
+					["embed"] = {
+                    	["title"] = "",
+                    	["description"] = "Joined the Server.",
+                    	["author"] = {
+	                        ["name"] = data.name,
+                        	["icon_url"] = ret
+                    	},
+                    	["type"] = "rich",
+                    	["color"] = 0x00b300
+                	}
+				})
+            end)
 	    end
 	end)
 
@@ -152,13 +230,36 @@ if SERVER then
 	gameevent.Listen( "player_disconnect" )
 	hook.Add("player_disconnect", "DiscordRelayPlayerDisconnect", function(data)
 	    if discordrelay and discordrelay.enabled then
-	       	discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** *"..data.name.." has disconnected from the server! ("..data.reason..")*")
-	    end
+        	discordrelay.GetAvatar(data.networkid, function(ret)
+				discordrelay.CreateMessage(discordrelay.relayChannel, {
+					["embed"] = {
+						["title"] = "",
+						["description"] = "Left the Server.",
+						["author"] = {
+							["name"] = data.name,
+							["icon_url"] = ret
+						},
+						["type"] = "rich",
+						["color"] = 0xb30000
+					}
+				})
+			end)
+		end
 	end)
 
 	hook.Add("ShutDown", "DiscordRelayShutDown", function()
 		if discordrelay and discordrelay.enabled then
-			discordrelay.CreateMessage(discordrelay.relayChannel, "**<"..discordrelay.serverName..">** *The server is shutting down!*")
+			discordrelay.CreateMessage(discordrelay.relayChannel, {
+				["embed"] = {
+					["title"] = "",
+					["description"] = "is shutting down...",
+					["author"] = {
+						["name"] = "Server"
+					},
+					["type"] = "rich",
+					["color"] = 0xb3b300
+				}
+			})
 		end
 	end)
 else
@@ -166,6 +267,6 @@ else
 		local nick = net.ReadString()
 		local message = net.ReadString()
 
-		chat.AddText(Color(114,137,218), "Discord ", Color(255,255,255), "| ",nick,": ",message);
+		chat.AddText(Color(114,137,218),nick,Color(255,255,255,255),": ",message);
 	end)
 end
