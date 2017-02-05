@@ -139,10 +139,10 @@ if CLIENT then
 
 					surface.SetMaterial(health_mat)
 
-					local width = math.max(ent:BoundingRadius() * 3.5 * ent:GetModelScale(), w * 1.5)
+					local width = math.max(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5)
 					local width2 = width/2
 					local height = 6
-					local text_x_offset = 20
+					local text_x_offset = 15
 --[[
 					if max >= 500 then
 						width = (ScrW() / 1.4)
@@ -160,24 +160,24 @@ if CLIENT then
 						text_x_offset = 0
 					end
 ]]
-					surface.SetDrawColor(255, 255, 255, 255 * fade)
+					surface.SetDrawColor(200, 200, 200, 255 * fade)
 					draw_line(
-						pos.x - 5 - width2,
+						pos.x - width2 - 5,
 						pos.y,
 
-						pos.x + width - 5 - width2 + 2,
+						pos.x + width - width2 + 5,
 						pos.y,
 
 						height + 3,
 						true
 					)
 
-					surface.SetDrawColor(100, 100, 100, 255 * fade)
+					surface.SetDrawColor(50, 50, 50, 255 * fade)
 					draw_line(
-						pos.x - 5 - width2,
+						pos.x - width2,
 						pos.y,
 
-						pos.x + width - 5 - width2,
+						pos.x + width - width2,
 						pos.y,
 
 						height,
@@ -186,22 +186,22 @@ if CLIENT then
 
 					surface.SetDrawColor(255, 0, 0, 255 * fade)
 					draw_line(
-						pos.x - 5 - width2,
+						pos.x - width2,
 						pos.y,
 
-						(pos.x + (width * math.Clamp(last / max, 0, 1))) - 5 - width2,
+						(pos.x + (width * math.Clamp(last / max, 0, 1))) - width2,
 						pos.y,
 
 						height,
 						true
 					)
 
-					surface.SetDrawColor(0, 255, 100, 255 * fade)
+					surface.SetDrawColor(0, 255, 150, 255 * fade)
 					draw_line(
-						pos.x - 5 - width2,
+						pos.x - width2,
 						pos.y,
 
-						(pos.x + (width * math.Clamp(cur / max, 0, 1))) - 5 - width2,
+						(pos.x + (width * math.Clamp(cur / max, 0, 1))) - width2,
 						pos.y,
 
 						height,
@@ -453,27 +453,29 @@ if CLIENT then
 					ent.hm_last_wep = name
 				end
 
-				local seq_name = ent:GetSequenceName(ent:GetSequence()):lower()
+				if ent:IsNPC() then
+					local seq_name = ent:GetSequenceName(ent:GetSequence()):lower()
 
-				if not seq_name:find("idle") and not seq_name:find("run") and not seq_name:find("walk") then
-					local fixed = seq_name:gsub("shoot", "")
-					fixed = fixed:gsub("attack", "")
-					fixed = fixed:gsub("loop", "")
+					if not seq_name:find("idle") and not seq_name:find("run") and not seq_name:find("walk") then
+						local fixed = seq_name:gsub("shoot", "")
+						fixed = fixed:gsub("attack", "")
+						fixed = fixed:gsub("loop", "")
 
-					if fixed:Trim() == "" or not fixed:find("[a-Z]") then
-						name = seq_name
-					else
-						name = fixed
-					end
+						if fixed:Trim() == "" or not fixed:find("[a-Z]") then
+							name = seq_name
+						else
+							name = fixed
+						end
 
-					name = name:gsub("_", " ")
-					name = name:gsub("%d", "")
-					name = name:gsub("^%l", function(s) return s:upper() end)
-					name = name:gsub(" %l", function(s) return s:upper() end)
-					name = name:Trim()
+						name = name:gsub("_", " ")
+						name = name:gsub("%d", "")
+						name = name:gsub("^%l", function(s) return s:upper() end)
+						name = name:gsub(" %l", function(s) return s:upper() end)
+						name = name:Trim()
 
-					if name == "" then
-						name = seq_name
+						if name == "" then
+							name = seq_name
+						end
 					end
 				end
 
@@ -500,6 +502,7 @@ if CLIENT then
 		if not ent.hm_last_health_time or ent.hm_last_health_time < CurTime() then
 			ent.hm_last_health = ent.hm_cur_health or max
 		end
+
 		ent.hm_last_health_time = CurTime() + 3
 
 		ent.hm_cur_health = cur
@@ -553,26 +556,18 @@ if SERVER then
 				if ent.ee_cur_hp then
 					health = -(last_health - ent.ee_cur_hp)
 				elseif last_health == ent:Health() then
-					return
+					if ent:IsNPC() or ent:IsPlayer() then
+						health = 0
+					else
+						return
+					end
+				elseif (ent:Health() - last_health) ~= health then
+					health = ent:Health() - last_health
 				end
 
 				Hitmark(ent, health, pos, dmg:GetDamageType(), filter)
 			end
 		end)
-	end)
-
-	hook.Add("Think", "hitmarker", function()
-		for _, ent in ipairs(ents.GetAll()) do
-			if ent:IsPlayer() or ent:IsNPC() then
-				if ent.hm_last_health ~= ent:Health() then
-					local diff = ent:Health() - (ent.hm_last_health or 0)
-					if diff > 0 then
-						Hitmark(ent, diff)
-					end
-					ent.hm_last_health = ent:Health()
-				end
-			end
-		end
 	end)
 
 	if ACF_Damage then
@@ -592,4 +587,18 @@ if SERVER then
 			return unpack(res)
 		end
 	end
+
+	timer.Create("hitmarker",1, 0, function()
+		for _, ent in ipairs(ents.GetAll()) do
+			if ent:IsPlayer() or ent:IsNPC() then
+				if ent.hm_last_health ~= ent:Health() then
+					local diff = ent:Health() - (ent.hm_last_health or 0)
+					if diff > 0 then
+						Hitmark(ent, diff)
+					end
+					ent.hm_last_health = ent:Health()
+				end
+			end
+		end
+	end)
 end
