@@ -54,17 +54,19 @@ function battlecam.LimitAngles(pos, dir, fov, prevpos)
 end
 
 function battlecam.CalcTraceBlock(pos, ply)
-	local trace_forward = util.TraceHull({
-		start = ply:EyePos(),
+	local trace_forward = util.TraceLine({
+		start = ply:NearestPoint(pos),
 		endpos = pos,
-		mins = ply:OBBMins() / 2,
-		maxs = ply:OBBMaxs() / 2,
 		filter = {ply},
 		mask =  MASK_VISIBLE,
 	})
 
+	if trace_forward.Fraction == 0 then
+		return pos
+	end
+
 	if trace_forward.Hit and trace_forward.Entity ~= ply and not trace_forward.Entity:IsPlayer() and not trace_forward.Entity:IsVehicle() then
-		return trace_forward.HitPos + trace_forward.HitNormal * 1
+		return trace_forward.HitPos
 	end
 
 	return pos
@@ -249,7 +251,7 @@ do -- view
 			target_pos = target_pos + battlecam.aim_dir * - 175
 
 			delta = delta * 2
-		elseif battlecam.want_mouse_control then
+		elseif battlecam.want_mouse_control or ply:KeyDown(IN_DUCK) then
 			battlecam.aim_dir = ply:GetAimVector()
 			target_pos = target_pos + battlecam.aim_dir * - 100
 			target_pos = target_pos + ply:EyeAngles():Right() * 70
@@ -294,7 +296,7 @@ do -- view
 
 				hack = math.min((battlecam.cam_pos * Vector(1,1,0)):Distance(ply:EyePos() * Vector(1,1,0)) / 300, 1) ^ 1.5
 				battlecam.last_flip_walk = battlecam.last_flip_walk or 0
-				if hack < 0.015 and not battlecam.flip_walk and battlecam.last_flip_walk < RealTime() then
+				if hack < 0.01 and not battlecam.flip_walk and battlecam.last_flip_walk < RealTime() and ply:GetVelocity():Length() > 190 then
 					battlecam.flip_walk = true
 					battlecam.last_flip_walk = RealTime() + 0.1
 				end
@@ -320,6 +322,7 @@ do -- view
 		params.angles = smooth_dir:Angle()
 		params.angles.r = smooth_roll
 		params.fov = smooth_fov
+		params.znear = 20
 
 		return params
 	end
@@ -582,11 +585,11 @@ do
 		if battlecam.IsKeyDown("attack") and not ucmd:KeyDown(IN_ATTACK) then
 			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
 		end
-
+--[[
 		if ucmd:KeyDown(IN_SPEED) and ply:GetVelocity() == vector_origin then
 			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_USE))
 		end
-
+]]
 		if not ply:Alive() or vgui.CursorVisible() then return end
 
 		battlecam.CalcEnemySelect()
@@ -636,7 +639,7 @@ do
 			battlecam.want_mouse_control_time = RealTime() + 0.5
 		end
 
-		if not ucmd:KeyDown(IN_ATTACK) and not ucmd:KeyDown(IN_ATTACK2) and not ucmd:KeyDown(IN_WALK) and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not battlecam.want_mouse_control then
+		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and not ucmd:KeyDown(IN_WALK) and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not battlecam.want_mouse_control then
 
 			local dir = Vector()
 			local pos = ply:GetPos()
@@ -963,6 +966,8 @@ do
 end
 
 function battlecam.PreDrawHUD()
+	cam.IgnoreZ(true)
+
 	surface.SetDrawColor(255,255,255,255)
 	surface.SetAlphaMultiplier(1)
 	--[[
