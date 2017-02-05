@@ -159,6 +159,11 @@ if SERVER then
 									net.WriteString("")
 									net.WriteString(message)
 								net.Broadcast()
+							else
+								net.Start( "DiscordMessage" )
+									net.WriteString("")
+									net.WriteString("GitHub: "..embed.title)
+								net.Broadcast()
 							end 
 						end
 					elseif string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
