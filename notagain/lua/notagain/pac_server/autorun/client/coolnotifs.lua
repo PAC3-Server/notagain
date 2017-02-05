@@ -15,7 +15,7 @@ local PANEL = {
 		self:SetExpensiveShadow(1, Color(0, 0, 0, 150))
 		self:SetFont("NoticeFont")
 		self:SetTextColor(color_white)
-	end
+	end,
 
 	Paint = function ( self , w , h)
 
