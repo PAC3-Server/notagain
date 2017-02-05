@@ -80,7 +80,7 @@ if SERVER then
 
 		HTTP(HTTPRequest)
     end
-	function discordrelay.GetAvatar(steamid, ret)
+	function discordrelay.GetAvatar(steamid, callback)
 		local commid = util.SteamIDTo64(steamid)
 		http.Fetch("http://steamcommunity.com/profiles/" .. commid .. "?xml=1", function(content, size)
 			local ret = content:match("<avatarFull><!%[CDATA%[(.-)%]%]></avatarFull>")
