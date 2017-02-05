@@ -180,10 +180,6 @@ if SERVER then
 									[1] = {
 										["title"] = "Server status:",
 										["description"] = "**Hostname:** "..GetHostName().."\n**Map:** "..game.GetMap().."\n**Players online:** "..table.Count(player.GetAll()).."/"..game.MaxPlayers().."\n```"..onlineplys.." ```",
-										["author"] = {
-											["name"] = data.name,
-											["icon_url"] = ret
-										},
 										["type"] = "rich",
 										["color"] = 0x0040ff
 									}
