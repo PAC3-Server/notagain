@@ -266,7 +266,7 @@ if SERVER then
 					["embeds"] = {
 						[1] = {
 							["title"] = "",
-							["description"] = "left the Server.",
+							["description"] = "left the Server. \n\n".. (string.StartWith(data.reason ,"Map") or string.StartWith(data.reason ,data.name) or string.StartWith(data.reason ,"Client" ) and ":interrobang: "..data.reason or data.reason),
 							["author"] = {
 								["name"] = data.name,
 								["icon_url"] = ret
@@ -288,7 +288,7 @@ if SERVER then
 				["embeds"] = {
 					[1] = {
 						["title"] = "",
-						["description"] = ":warning: has shutdown. :warning:",
+						["description"] = "**Server has shutdown.**",
 						["type"] = "rich",
 						["color"] = 0xb30000
 					}
