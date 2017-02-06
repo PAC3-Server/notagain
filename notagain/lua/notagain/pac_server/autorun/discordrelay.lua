@@ -205,6 +205,11 @@ if SERVER then
 						end
 						
 					elseif v.author.bot ~= true then
+						if v.mentions then
+							for k,mention in pairs(v.mentions) do
+								v.content = string.gsub(v.content, "<@!?"..mention.id..">", "@"..mention.username)
+							end
+						end
 						net.Start( "DiscordMessage" )
 							net.WriteString(string.sub(v.author.username,1,14))
 							net.WriteString(string.sub(v.content,1,400))
