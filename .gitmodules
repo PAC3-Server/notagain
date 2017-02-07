@@ -25,3 +25,6 @@
 [submodule "falcos-prop-protection"]
 	path = falcos-prop-protection
 	url = https://github.com/FPtje/Falcos-Prop-protection.git
+[submodule "rebel1324"]
+	path = rebel1324
+	url = https://github.com/rebel1324/gmodstuffs
