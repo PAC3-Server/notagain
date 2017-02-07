@@ -1,8 +1,12 @@
 if SERVER then
+	local easylua = requirex('easylua')
+
 	util.AddNetworkString("DiscordMessage")
 
 	discordrelay = discordrelay or {} 
 	discordrelay.token = file.Read( "discordbot_token.txt", "DATA" )
+	discordrelay.guild = "260866188962168832"
+	discordrelay.admin_roles = {"260870255486697472", "260932947140411412"}
 	discordrelay.relayChannel = "273575417401573377"
     discordrelay.webhookid = "274957435091812352"
     discordrelay.webhooktoken = file.Read( "webhook_token.txt", "DATA" )
@@ -85,6 +89,25 @@ if SERVER then
 		http.Fetch("http://steamcommunity.com/profiles/" .. commid .. "?xml=1", function(content, size)
 			local ret = content:match("<avatarFull><!%[CDATA%[(.-)%]%]></avatarFull>")
 			callback(ret)
+		end)
+	end
+
+	function discordrelay.IsAdmin(userid, cb)
+		discordrelay.HTTPRequest({
+			["method"] = "get",
+			["url"] = discordrelay.endpoints.guilds.."/"..discordrelay.guild.."/members/"..userid
+		}, function(headers, body)
+			local tbl = util.JSONToTable(body)
+			if tbl.roles then
+				for k,role in pairs(discordrelay.admin_roles) do
+					for k,v in pairs(tbl.roles) do
+						if role == v then
+							return cb(true)
+						end	
+					end
+				end
+			end
+			cb(false)
 		end)
 	end
 
@@ -190,20 +213,79 @@ if SERVER then
 								}
 							})
 						else
-						discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
-							["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
-							["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
-							["embeds"] = {
-								[1] = {
-									["title"] = "Server status:",
-									["description"] = "No Players are currently on the Server...",
-									["type"] = "rich",
-									["color"] = 0x5a5a5a
+							discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+								["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
+								["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
+								["embeds"] = {
+									[1] = {
+										["title"] = "Server status:",
+										["description"] = "No Players are currently on the Server...",
+										["type"] = "rich",
+										["color"] = 0x5a5a5a
+									}
 								}
-							}
-						})
+							})
 						end
-						
+					elseif string.StartWith(v.content, ".l") then
+						discordrelay.IsAdmin(v.author.id, function(access)
+							if access then
+								local code = string.sub(v.content, 3, #v.content)
+								if code and code ~= "" then
+									local data = easylua.RunLua(nil, code)
+									if not data.error then
+										local res = unpack(data.args)
+										if res then
+											res = tostring(res)
+										else
+											res = ":ok_hand:"
+										end
+										discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+											["embeds"] = {
+												[1] = {
+												["description"] = res,
+													["type"] = "rich",
+													["color"] = 0x182687
+												}
+											}
+										})
+									else
+										discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+											["embeds"] = {
+												[1] = {
+												["description"] = ":interrobang: **Error: **"..data.error,
+													["type"] = "rich",
+													["color"] = 0xb30000
+												}
+											}
+										})
+									end
+								else
+									discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+										["embeds"] = {
+											[1] = {
+												["description"] = ":interrobang: **Cannot run nothing!**",
+												["type"] = "rich",
+												["color"] = 0xb30000
+											}
+										}
+									})
+								end
+							else
+								discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+									["embeds"] = {
+										[1] = {
+											["description"] = ":no_entry: **Access denied!**",
+											["type"] = "rich",
+											["color"] = 0xb30000
+										}
+									}
+								})
+							end
+						end)
+						net.Start( "DiscordMessage" )
+							net.WriteString(string.sub(v.author.username,1,14))
+							net.WriteString(string.sub(v.content,1,400))
+						net.Broadcast()					
 					elseif v.author.bot ~= true then
 						if v.mentions then
 							for k,mention in pairs(v.mentions) do
