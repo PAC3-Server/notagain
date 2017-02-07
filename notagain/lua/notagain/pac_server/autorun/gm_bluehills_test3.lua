@@ -44,7 +44,18 @@ easylua.EndEntity()
 
 if SERVER then
 	hook.Add("InitPostEntity", "SpawnTheaterScreen", function()
-		for k,v in pairs(ents.FindByClass("bluehill_theater_screen")) do v:Remove() end
+		local remove_these = {
+			trigger_soundscape = true,
+			env_soundscape_triggerable = true,
+		}
+
+		for _, ent in pairs(ents.GetAll()) do
+			local class = ent:GetClass()
+
+			if remove_these[ent:GetClass()] then
+				ent:Remove()
+			end
+		end
 
 		local screen = ents.Create( "bluehill_theater_screen" )
 		screen:SetPos(Vector(416,1176,352))
