@@ -106,7 +106,7 @@ if CLIENT then
 					name = ent:GetClass()
 
 					local npcs = ents.FindByClass(name)
-					if npcs[1] then
+					if npcs[2] then
 						for i, other in ipairs(npcs) do
 							other.hm_letter = string.char(64 + i%26)
 						end
