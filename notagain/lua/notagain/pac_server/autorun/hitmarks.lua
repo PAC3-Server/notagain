@@ -567,6 +567,10 @@ if SERVER then
 		local health = -dmg:GetDamage()
 		local pos = dmg:GetDamagePosition()
 
+		if pos == vector_origin then
+			pos = ent:GetPos()
+		end
+
 		if ent.ee_cur_hp then
 			last_health = ent.ee_cur_hp
 		end
