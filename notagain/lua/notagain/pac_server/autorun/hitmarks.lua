@@ -83,6 +83,41 @@ if CLIENT then
 		return false
 	end)
 
+	local function surface_DrawTexturedRectRotatedPoint( x, y, w, h, rot)
+
+		x = math.ceil(x)
+		y = math.ceil(y)
+		w = math.ceil(w)
+		h = math.ceil(h)
+
+		local y0 = -h/2
+		local x0 = -w/2
+
+		local c = math.cos( math.rad( rot ) )
+		local s = math.sin( math.rad( rot ) )
+
+		local newx = y0 * s - x0 * c
+		local newy = y0 * c + x0 * s
+
+		surface.DrawTexturedRectRotated( x + newx, y + newy, w, h, rot )
+
+	end
+
+	-- close enough
+	local function draw_RoundedBoxOutlined(border_size, x, y, w, h, color )
+		x = math.ceil(x)
+		y = math.ceil(y)
+		w = math.ceil(w)
+		h = math.ceil(h)
+		border_size = border_size/2
+		surface.SetDrawColor(color)
+		surface.DrawRect(x, y, border_size*2, h, color)
+		surface.DrawRect(x+border_size*2, y, w-border_size*4, border_size*2)
+
+		surface.DrawRect(x+w-border_size*2, y, border_size*2, h)
+		surface.DrawRect(x+border_size*2, y+h-border_size*2, w-border_size*4, border_size*2)
+	end
+
 	hook.Add("HUDPaint", "hitmarks", function()
 		if hook.Call("HideHitmarks") then
 			return
@@ -254,24 +289,28 @@ if CLIENT then
 					x = x - w / 2
 					y = y - h * 3
 
-					local border = 9
-					draw.RoundedBox(4, x - border, y - border, w + border*2, h + border*1.5, Color(150, 150, 150, 255 * fade))
-
-					border = math.Round(border / 1.5)
-
-					local bg = Color(200, 180, 180, 255 * fade)
-					local fg = Color(100, 50, 50, 255 * fade)
+					local bg
+					local fg
 
 					if ent == ply or (ent:IsPlayer() and (ent:GetFriendStatus() == "friend")) then
-						fg = Color(220, 220, 255, 255 * fade)
+						fg = Color(200, 220, 255, 255 * fade)
 						bg = Color(25, 75, 150, 255 * fade)
 					else
-						fg = Color(255, 220, 220, 255 * fade)
-						bg = Color(200, 50, 25, 255 * fade * 0.75)
+						fg = Color(255, 220, 200, 255 * fade)
+						bg = Color(200, 50, 25, 255)
 					end
 
-					draw.RoundedBox(4, x - border, y - border, w + border*2, h + border*1.5, bg)
-					prettytext.Draw(data.name, x, y, "Arial", 20, 800, 3, fg)
+					local border = 13
+					local scale_h = 0.5
+
+					surface.SetDrawColor(bg.r, bg.g, bg.b, 200*fade)
+					surface.SetMaterial(health_mat)
+					surface_DrawTexturedRectRotatedPoint(x - border, y - border*scale_h, h + border*2*scale_h, w + border*2, -90)
+
+					local border = border
+					draw_RoundedBoxOutlined(3, x - border, y - border*scale_h, w + border*2, h + border*2*scale_h, Color(150, 150, 150, 255 * fade))
+
+					prettytext.Draw(data.name, x, y, "Arial", 20, 600, 3, fg)
 				else
 					table.remove(weapon_info, i)
 				end
