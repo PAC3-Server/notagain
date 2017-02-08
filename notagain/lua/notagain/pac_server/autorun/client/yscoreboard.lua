@@ -119,12 +119,13 @@ local PLAYER_LINE = {
  
         local textColor = Color( 255, 255, 255, 255 )
        
-        self.Friend = self:Add( "DLabel" )
-        self.Friend:SetText("●")
-        self.Friend:Dock( LEFT )
-        self.Friend:SetFont( "Sfont" )
-        self.Friend:DockMargin( 30, 0, 0, 0 )
-        self.Friend:SetWidth( 20 )
+        self.Dot = self:Add( "DLabel" )
+        self.Dot:SetTextColor( Color( 255 , 255 , 255 ) )
+        self.Dot:SetText("●")
+        self.Dot:Dock( LEFT )
+        self.Dot:SetFont( "Sfont" )
+        self.Dot:DockMargin( 30, 0, 0, 0 )
+        self.Dot:SetWidth( 20 )
        
        
         self.AvatarButton = self:Add( "DButton" )
@@ -190,12 +191,6 @@ local PLAYER_LINE = {
             self.NumPing = self.Player:Ping()
             self.Ping:SetText( self.NumPing )
         end
-       
-        if self.Player:GetFriendStatus() == "friend" or self.Player==LocalPlayer() then
-            self.Friend:SetTextColor( Color(0,255,0,255) )
-        else
-            self.Friend:SetTextColor( Color(255,0,0,255) )
-        end
  
         if ( self.Muted == nil || self.Muted != self.Player:IsMuted() ) then
  
@@ -228,7 +223,21 @@ local PLAYER_LINE = {
         end
        
         draw.NoTexture()
-        surface.SetDrawColor( self:IsHovered() and Color(100, 175, 175, 200) or Color(0, 97, 155, 200) )
+        
+        if self:IsHovered() then
+            
+             surface.SetDrawColor( Color( 150 , 150 , 150 , 200 ) )
+        
+        elseif self.Player:GetFriendStatus() == "friend" then
+            
+            surface.SetDrawColor( Color( 0 , 97 , 155 , 200 ) )
+        
+        else
+            
+            surface.SetDrawColor( Color( 255 , 30 , 30 , 200 ) )
+        
+        end
+        
         surface.DrawPoly(Poly)
  
     end,
