@@ -9,7 +9,16 @@ end
 
 function META:SetMuted(b)
 	self:SetPData("perma_voice_mute", b and "1" or "0")
-	self:Old_SetMuted(b)
+
+	if b then
+		if not self:Old_IsMuted() then
+			self:Old_SetMuted(true)
+		end
+	else
+		if self:Old_IsMuted() then
+			self:Old_SetMuted(false)
+		end
+	end
 end
 
 hook.Add("PlayerStartVoice", "perma_voice_mute", function(ply)
