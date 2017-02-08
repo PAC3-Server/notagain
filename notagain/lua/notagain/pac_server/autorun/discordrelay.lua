@@ -287,14 +287,20 @@ if SERVER then
 							net.WriteString(string.sub(v.content,1,400))
 						net.Broadcast()					
 					elseif v.author.bot ~= true then
+						local ret = v.content
 						if v.mentions then
 							for k,mention in pairs(v.mentions) do
-								v.content = string.gsub(v.content, "<@!?"..mention.id..">", "@"..mention.username)
+								ret = string.gsub(v.content, "<@!?"..mention.id..">", "@"..mention.username)
+							end
+						end
+						if v.attachments then
+							for _,attachments in pairs(v.attachments) do
+								ret = ret .. "\n" .. attachments.url
 							end
 						end
 						net.Start( "DiscordMessage" )
 							net.WriteString(string.sub(v.author.username,1,14))
-							net.WriteString(string.sub(v.content,1,400))
+							net.WriteString(string.sub(ret,1,400))
 						net.Broadcast()
 					end
 
