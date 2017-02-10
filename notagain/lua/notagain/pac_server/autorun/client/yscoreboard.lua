@@ -23,20 +23,23 @@ surface.CreateFont( "InfoFont", {
     font      = "Arial",
     size      = 21,
     weight    = 600,
+    shadow    = true
 } )
 
 surface.CreateFont( "Sfont", {
     font      = "Arial",
     size      = 17,
-    weight  = 600,
+    weight    = 600,
     antialias = true,
-    additive = true,
+    additive  = true,
+    shadow    = true
 } )
 
 surface.CreateFont( "ScoreboardDefaultTitle", {
     font    = "Arial",
     size    = 32,
     weight  = 800,
+    shadow  = true
 } )
  
 local function formatTime (time)
@@ -217,18 +220,18 @@ local PLAYER_LINE = {
     Paint = function( self, w, h )
             
         local Poly = {
-            { x = (25/ resolutionScale),   y = h }, --100/200
-            { x = 0,                       y = 0 }, --100/100
-            { x = w-(25/ resolutionScale), y = 0 }, --200/100
-            { x = w,                       y = h }, --200/200
+            { x = (25/ resolutionScale),   y = h , u = 0 , v = 1 }, --100/200
+            { x = 0,                       y = 0 , u = 0 , v = 0 }, --100/100
+            { x = w-(25/ resolutionScale), y = 0 , u = 1 , v = 0 }, --200/100
+            { x = w,                       y = h , u = 1 , v = 1 }, --200/200
         }
         
         if ( !IsValid( self.Player ) ) then
             return
         end
        
-        draw.NoTexture()
-        surface.SetDrawColor( self:IsHovered() and Color(100, 175, 175, 200) or Color(0, 97, 155, 200) )
+        surface.SetTexture(surface.GetTextureID("gui/center_gradient"))
+        surface.SetDrawColor( self:IsHovered() and Color(100, 175, 175, 250) or Color(0, 97, 155, 250) )
         surface.DrawPoly(Poly)
  
     end,
