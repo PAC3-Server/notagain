@@ -294,7 +294,7 @@ local SCORE_BOARD = {
 
             surface.SetDrawColor(255, 255, 255, 255)
             draw.NoTexture()
-            surface.DrawRect(0,h-(22/ resolutionScale),w,(2/ resolutionScale))
+            surface.DrawRect(0,h-30,w,2)
         end
  
         self.Name = self.Header:Add( "DLabel" )
