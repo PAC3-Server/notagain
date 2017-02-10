@@ -95,10 +95,12 @@ if CLIENT then
 		render.SetColorModulation(r, g, b)
 		render.MaterialOverride(shiny)
 		for _, ent in ipairs(entities) do
-			if not ent:IsValid() or (ent:GetOwner():IsValid() and ent:GetParent():IsValid()) then
+			if not ent:IsValid() then
 				remove_ent(ent)
 				return
 			end
+
+			if (ent:GetOwner():IsValid() and ent:GetParent():IsValid()) then continue end
 
 			local pos = ent:WorldSpaceCenter()
 			ent.jrpg_items_pixvis = ent.jrpg_items_pixvis or util.GetPixelVisibleHandle()
@@ -106,7 +108,7 @@ if CLIENT then
 			local radius = ent:BoundingRadius()
 			local vis = util.PixelVisible(pos, radius*0.5, ent.jrpg_items_pixvis)
 
---			if vis == 0 and util.PixelVisible(pos, radius*5, ent.jrpg_items_pixvis2) == 0 then continue end
+			if vis == 0 and util.PixelVisible(pos, radius*5, ent.jrpg_items_pixvis2) == 0 then continue end
 
 			local time = RealTime()
 
@@ -243,11 +245,11 @@ end
 
 if SERVER then
 	local function disallow(ply, ent)
-		if ent:GetPos() == ply:GetPos() or ent:GetCreationTime() == CurTime() then
+		if ent:GetPos() == ply:GetPos() then
 			return
 		end
 
-		if not ply:KeyDown(IN_USE) or ply:GetEyeTrace().Entity ~= ent then
+		if not (ply:KeyDown(IN_USE) and ply:GetEyeTrace().Entity == ent) then
 			return false
 		end
 	end
