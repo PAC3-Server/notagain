@@ -123,16 +123,16 @@ if CLIENT then
 
 			local glow = math.sin(time*5)*0.5+0.5
 			local r = radius/8
-			render.DrawSprite(pos, r*10, r*10, Color(255, 225, 200, vis*255*glow))
-			render.DrawSprite(pos, r*20, r*20, Color(255, 225, 150, vis*255*(glow+0.25)))
-			render.DrawSprite(pos, r*30, r*30, Color(255, 200, 100, vis*150*(glow+0.5)))
+			render.DrawSprite(pos, r*10, r*10, Color(255, 225, 200, vis*170*glow))
+			render.DrawSprite(pos, r*20, r*20, Color(255, 225, 150, vis*170*(glow+0.25)))
+			render.DrawSprite(pos, r*30, r*30, Color(255, 200, 100, vis*120*(glow+0.5)))
 
 			cam.IgnoreZ(false)
 
 			ent:DrawModel()
 
 			render.SetMaterial(glare_mat)
-			render.DrawSprite(pos, r*200, r*100, Color(r*255, g*255, b*255, vis*50))
+			render.DrawSprite(pos, r*180, r*50, Color(r*255, g*255, b*255, vis*20))
 
 			if not ent.jrpg_items_next_emit2 or ent.jrpg_items_next_emit2 < time then
 
