@@ -24,6 +24,8 @@ if SERVER then
 	discordrelay.user.username = "GMod-Relay"
 	discordrelay.user.id = "276379732726251521"
 
+	discordrelay.AvatarCache = discordrelay.AvatarCache or {}
+
 	function discordrelay.HTTPRequest(ctx, callback, err)
 		local HTTPRequest = {}
 		HTTPRequest.method = ctx.method
@@ -86,10 +88,15 @@ if SERVER then
     end
 	function discordrelay.GetAvatar(steamid, callback)
 		local commid = util.SteamIDTo64(steamid)
-		http.Fetch("http://steamcommunity.com/profiles/" .. commid .. "?xml=1", function(content, size)
-			local ret = content:match("<avatarFull><!%[CDATA%[(.-)%]%]></avatarFull>")
-			callback(ret)
-		end)
+		if discordrelay.AvatarCache[commid] then
+			callback(discordrelay.AvatarCache[commid])
+		else
+			http.Fetch("http://steamcommunity.com/profiles/" .. commid .. "?xml=1", function(content, size)
+				local ret = content:match("<avatarFull><!%[CDATA%[(.-)%]%]></avatarFull>")
+				discordrelay.AvatarCache[commid] = ret;
+				callback(ret)
+			end)
+		end
 	end
 
 	function discordrelay.IsAdmin(userid, cb)
