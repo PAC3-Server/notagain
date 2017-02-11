@@ -38,7 +38,6 @@ hook.Add("PlayerInitialSpawn","SetPlayerCountry",function(ply)
     tbl.country_code = ply:GetCountryCode()
     tbl.country_name = ply:GetCountryName()
     tbl.country_city = ply:GetCity()
-    util.SetPData(ply:SteamID(),"CountryTable",tbl)
     CountryTable[ply:SteamID()] = tbl
 end)
 hook.Add("PlayerDisconnected","CountryTableCleanupPly",function(ply)
@@ -53,10 +52,10 @@ util.AddNetworkString("CountryRes")
 local lastrefresh = lastrefresh or CurTime()
 net.Receive("CountryReq",function(len,ply)
     if CurTime() - lastrefresh < 10 then return end -- never trust the client etc
-    lastrefresh = CurTime()
     net.Start("CountryRes")
     net.WriteTable(CountryTable)
     net.Send(ply)
+    lastrefresh = CurTime()
 end)
 
 
