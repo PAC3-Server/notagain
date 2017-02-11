@@ -23,7 +23,7 @@ local joystick_remap = {
 
 function battlecam.IsKeyDown(key)
 	if key == "target" then
-		return LocalPlayer():KeyDown(IN_USE) or input.IsButtonDown(KEY_XBUTTON_RIGHT_SHOULDER)
+		return LocalPlayer():KeyDown(IN_USE) or input.IsButtonDown(KEY_XBUTTON_STICK2)
 	elseif key == "select_left" then
 		return input.IsKeyDown(KEY_LEFT) or input.IsButtonDown(KEY_XBUTTON_LEFT)
 	elseif key == "select_right" then
