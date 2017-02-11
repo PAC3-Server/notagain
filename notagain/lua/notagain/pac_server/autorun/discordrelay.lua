@@ -1,16 +1,29 @@
 if SERVER then
 	local easylua = requirex('easylua')
 
+	local webhooktoken = file.Read( "webhook_token.txt", "DATA" )
+	local token = file.Read( "discordbot_token.txt", "DATA" )
+
+	if not token then
+		print("discordbot_token.txt", " not found")
+	end
+
+	if not webhooktoken then
+		print("webhook_token.txt", " not found")
+	end
+
+	if not token or not webhooktoken then return end
+
 	util.AddNetworkString("DiscordMessage")
 
-	discordrelay = discordrelay or {} 
-	discordrelay.token = file.Read( "discordbot_token.txt", "DATA" )
+	discordrelay = discordrelay or {}
+	discordrelay.token = token
 	discordrelay.guild = "260866188962168832"
 	discordrelay.admin_roles = {"260870255486697472", "260932947140411412"}
 	discordrelay.relayChannel = "273575417401573377"
     discordrelay.webhookid = "274957435091812352"
-    discordrelay.webhooktoken = file.Read( "webhook_token.txt", "DATA" )
-	
+    discordrelay.webhooktoken = webhooktoken
+
 	discordrelay.endpoints = discordrelay.endpoints or {}
 	discordrelay.endpoints.base = "https://discordapp.com/api/v6"
 	discordrelay.endpoints.users = discordrelay.endpoints.base.."/users"
@@ -33,7 +46,7 @@ if SERVER then
 			["Content-Type"] = "application/json",
 			["User-Agent"] = "GModRelay (https://datamats.com/, 1.0.0)"
 		}
-		
+
 		HTTPRequest.type = "application/json"
 
 		if ctx.body then
@@ -103,7 +116,7 @@ if SERVER then
 					for k,v in pairs(tbl.roles) do
 						if role == v then
 							return cb(true)
-						end	
+						end
 					end
 				end
 			end
@@ -144,7 +157,7 @@ if SERVER then
             ["method"] = "POST",
             ["url"] = discordrelay.endpoints.webhook.."/"..whid.."/"..whtoken,
             ["body"] = res
-            
+
         }, function(headers, body)
         if not cb then return end
 			local tbl = util.JSONToTable(body)
@@ -187,7 +200,7 @@ if SERVER then
 									net.WriteString("")
 									net.WriteString("GitHub: "..embed.title)
 								net.Broadcast()
-							end 
+							end
 						end
 					elseif v.author.bot ~= true and string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
 						local onlineplys = ""
@@ -285,7 +298,7 @@ if SERVER then
 						net.Start( "DiscordMessage" )
 							net.WriteString(string.sub(v.author.username,1,14))
 							net.WriteString(string.sub(v.content,1,400))
-						net.Broadcast()					
+						net.Broadcast()
 					elseif v.author.bot ~= true then
 						local ret = v.content
 						if v.mentions then
@@ -320,7 +333,7 @@ if SERVER then
 					["username"] = ply:Nick(),
 					["content"] = text,
 					["avatar_url"] = ret
-					}) 
+					})
 			end)
 	    end
 	end)
