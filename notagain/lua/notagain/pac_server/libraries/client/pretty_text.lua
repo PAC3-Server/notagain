@@ -41,6 +41,7 @@ local surface_SetFont = surface.SetFont
 local surface_SetTextColor = surface.SetTextColor
 local surface_SetTextPos = surface.SetTextPos
 local surface_DrawText = surface.DrawText
+local Color = Color
 
 local prettytext = {}
 
@@ -68,7 +69,7 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 	end
 
 	surface_SetFont(fonts[font][size][weight][blursize].blur)
-	surface_SetTextColor(color2)
+	surface_SetTextColor(Color(color2.r, color2.g, color2.b, color2.a * (color1.a/255)))
 
 	for i = 1, 5 do
 		surface_SetTextPos(x, y) -- this resets for some reason after drawing
