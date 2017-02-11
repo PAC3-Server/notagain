@@ -3,7 +3,78 @@ _G.hitmarkers = hitmarkers
 
 if CLIENT then
 	local draw_line = requirex("draw_line")
+	local draw_rect = requirex("draw_skewed_rect")
 	local prettytext = requirex("pretty_text")
+
+	local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
+		["$BaseTexture"] = "gui/center_gradient",
+		["$BaseTextureTransform"] = "center .5 .5 scale 1 1 rotate 90 translate 0 0",
+		["$VertexAlpha"] = 1,
+		["$VertexColor"] = 1,
+		["$Additive"] = 0,
+	})
+
+	local border = CreateMaterial(tostring({}), "UnlitGeneric", {
+		["$BaseTexture"] = "props/metalduct001a",
+		["$VertexAlpha"] = 1,
+		["$VertexColor"] = 1,
+	})
+
+	local function draw_health_bar(x,y, w,h, health, last_health, fade)
+		local skew = 0
+		surface.SetDrawColor(200, 200, 200, 50*fade)
+		draw.NoTexture()
+		draw_rect(x,y,w,h, skew)
+
+		surface.SetMaterial(gradient)
+
+		surface.SetDrawColor(255, 50, 50, 255*fade)
+		for _ = 1, 2 do
+			draw_rect(x,y,w*last_health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
+		end
+
+		surface.SetDrawColor(0, 255, 100, 255*fade)
+		for _ = 1, 2 do
+			draw_rect(x,y,w*health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
+		end
+
+		surface.SetDrawColor(150, 150, 150, 255*fade)
+		surface.SetMaterial(border)
+
+		for _ = 1, 2 do
+			draw_rect(x,y,w,h, skew, 1, 64,3, border:GetTexture("$BaseTexture"):Width(), true)
+		end
+	end
+
+
+	local gradient = Material("gui/gradient_up")
+	local border = CreateMaterial(tostring({}), "UnlitGeneric", {
+		["$BaseTexture"] = "props/metalduct001a",
+		["$VertexAlpha"] = 1,
+		["$VertexColor"] = 1,
+		["$Additive"] = 1,
+	})
+
+	local function draw_weapon_info(x,y, w,h, color, fade)
+		local skew = 0
+		surface.SetDrawColor(25, 25, 25, 200*fade)
+		draw.NoTexture()
+		draw_rect(x,y,w,h, skew)
+
+		surface.SetMaterial(gradient)
+
+		surface.SetDrawColor(color.r, color.g, color.b, 255*fade)
+		for _ = 1, 2 do
+			draw_rect(x,y,w,h, skew)
+		end
+
+		surface.SetDrawColor(200, 200, 200, 255*fade)
+		surface.SetMaterial(border)
+
+		for _ = 1, 2 do
+			draw_rect(x,y,w,h, skew, 3, 64,4, border:GetTexture("$BaseTexture"):Width(), true)
+		end
+	end
 
 	local hitmark_fonts = {
 		{
@@ -76,8 +147,6 @@ if CLIENT then
 
 	local health_bars = {}
 	local weapon_info = {}
-
-	local health_mat = Material("gui/gradient")
 
 	hook.Add("HUDDrawTargetID", "hitmarks", function()
 		return false
@@ -187,78 +256,14 @@ if CLIENT then
 
 					local w, h = prettytext.GetTextSize(name, "Candara", 20, 30, 2)
 
-					surface.SetMaterial(health_mat)
-
 					local width = math.max(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5)
 					local width2 = width/2
-					local height = 6
+					local height = 8
 					local text_x_offset = 15
---[[
-					if max >= 500 then
-						width = (ScrW() / 1.4)
-						width2 = width/2
-						height = 9
 
-						pos.x = ScrW()/2
+					draw_health_bar(pos.x - width2, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade)
 
-						if battlecam and battlecam.IsEnabled() then
-							pos.y = 100
-						else
-							pos.y = ScrH() - 100
-						end
-
-						text_x_offset = 0
-					end
-]]
-					surface.SetDrawColor(200, 200, 200, 255 * fade)
-					draw_line(
-						pos.x - width2 - 5,
-						pos.y,
-
-						pos.x + width - width2 + 5,
-						pos.y,
-
-						height + 3,
-						true
-					)
-
-					surface.SetDrawColor(50, 50, 50, 255 * fade)
-					draw_line(
-						pos.x - width2,
-						pos.y,
-
-						pos.x + width - width2,
-						pos.y,
-
-						height,
-						true
-					)
-
-					surface.SetDrawColor(255, 0, 0, 255 * fade)
-					draw_line(
-						pos.x - width2,
-						pos.y,
-
-						(pos.x + (width * math.Clamp(last / max, 0, 1))) - width2,
-						pos.y,
-
-						height,
-						true
-					)
-
-					surface.SetDrawColor(0, 255, 150, 255 * fade)
-					draw_line(
-						pos.x - width2,
-						pos.y,
-
-						(pos.x + (width * math.Clamp(cur / max, 0, 1))) - width2,
-						pos.y,
-
-						height,
-						true
-					)
-
-					prettytext.Draw(name, pos.x - width2 - text_x_offset, pos.y - 5, "Arial", 20, 800, 3, Color(200, 200, 200, 255 * fade), nil, 0, -1)
+					prettytext.Draw(name, pos.x - width2 - text_x_offset, pos.y - 5, "Arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
 				end
 
 				if fraction <= 0 then
@@ -303,12 +308,8 @@ if CLIENT then
 					local border = 13
 					local scale_h = 0.5
 
-					surface.SetDrawColor(bg.r, bg.g, bg.b, 200*fade)
-					surface.SetMaterial(health_mat)
-					surface_DrawTexturedRectRotatedPoint(x - border, y - border*scale_h, h + border*2*scale_h, w + border*2, -90)
-
 					local border = border
-					draw_RoundedBoxOutlined(3, x - border, y - border*scale_h, w + border*2, h + border*2*scale_h, Color(150, 150, 150, 255 * fade))
+					draw_weapon_info(x - border, y - border*scale_h, w + border*2, h + border*2*scale_h, bg, fade)
 
 					prettytext.Draw(data.name, x, y, "Arial", 20, 600, 3, fg)
 				else
