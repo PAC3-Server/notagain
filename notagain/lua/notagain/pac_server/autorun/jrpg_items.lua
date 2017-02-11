@@ -100,7 +100,7 @@ if CLIENT then
 				return
 			end
 
-			if (ent:GetOwner():IsValid() and ent:GetParent():IsValid()) then continue end
+			if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then continue end
 
 			local pos = ent:WorldSpaceCenter()
 			ent.jrpg_items_pixvis = ent.jrpg_items_pixvis or util.GetPixelVisibleHandle()
