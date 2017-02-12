@@ -1,4 +1,5 @@
-AddCSLuaFile()
+local prettytext = requirex("pretty_text")
+local draw_rect = requirex("draw_skewed_rect")
 
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
@@ -9,12 +10,6 @@ local mainMenuSize = {
 local line_height = 70
 local color_blue = Color(60, 127, 255, 255)
 local color_red = Color(255, 70, 0, 255)
-
-notagain.loaded_libraries.pretty_text = nil
-notagain.loaded_libraries.draw_skewed_rect = nil
-local prettytext = requirex("pretty_text")
-
-local draw_rect = requirex("draw_skewed_rect")
 
 local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
     ["$BaseTexture"] = "gui/center_gradient",
@@ -541,6 +536,4 @@ end
 hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
 hook.Add("ScoreboardHide","YScoreboardHide",YScoreboardHide)
 
-if LocalPlayer():IsValid() then
-	YScoreboardShow()
-end
+--if LocalPlayer():IsValid() then YScoreboardShow() end
