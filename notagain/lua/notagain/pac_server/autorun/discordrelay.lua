@@ -107,7 +107,7 @@ if SERVER then
 		else
 			http.Fetch("http://steamcommunity.com/profiles/" .. commid .. "?xml=1", function(content, size)
 				local ret = content:match("<avatarFull><!%[CDATA%[(.-)%]%]></avatarFull>")
-				discordrelay.AvatarCache[commid] = ret;
+				discordrelay.AvatarCache[commid] = ret
 				callback(ret)
 			end)
 		end
@@ -272,33 +272,48 @@ if SERVER then
 					elseif startsWith("l", v.content) or startsWith("print", v.content) or startsWith("table", v.content) then
 						discordrelay.IsAdmin(v.author.id, function(access)
 							if access then
-								local cmd = getType({"l", "lc", "print", "table"}, v.content)
+								local cmd = getType({"l", "lc", "ls", "print", "table"}, v.content)
 								local code = string.sub(v.content, #cmd + 2, #v.content)
 								if code and code ~= "" then
 									local data
 									if cmd == "l" then
 									 	data = easylua.RunLua(nil, code)
 									elseif cmd == "lc" then
-										print(code)
 										data = luadev.RunOnClients(code)
+									elseif cmd == "ls" then
+										data = luadev.RunOnShared(code)
 									elseif cmd == "print" then
 									 	data = easylua.RunLua(nil, "return "..code)
 									elseif cmd == "table" then
 									 	data = easylua.RunLua(nil, "return table.ToString("..code..")")
+									else
+										return
 									end
 
 									if type(data) ~= "table" then
-										discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
-											["embeds"] = {
-												[1] = {
-												["description"] = ":ok_hand:",
-													["type"] = "rich",
-													["color"] = 0x182687
+										local ok, returnvals = data
+										if returnvals then
+											discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+												["embeds"] = {
+													[1] = {
+													["description"] = returnvals,
+														["type"] = "rich",
+														["color"] = 0x182687
+													}
 												}
-											}
-										})
-
-										return;
+											})
+										else
+											discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+												["embeds"] = {
+													[1] = {
+													["description"] = ":ok_hand:",
+														["type"] = "rich",
+														["color"] = 0x182687
+													}
+												}
+											})
+										end
+										return
 									end
 
 									if not data.error then
