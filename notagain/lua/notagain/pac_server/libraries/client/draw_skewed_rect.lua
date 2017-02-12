@@ -170,9 +170,9 @@ return function(x,y,w,h, skew, border, uv_size, corner_size, texture_size, dont_
 
 	if skew ~= 0 then
 		m = Matrix()
-		m:Translate(Vector(x,y))
+		m:Translate(Vector(x + w/2,y + h/2))
 		skew_matrix(m, skew, 0)
-		m:Translate(-Vector(x,y))
+		m:Translate(-Vector(x + w/2,y + h/2))
 	end
 
 	x = x - border
