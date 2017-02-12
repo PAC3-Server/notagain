@@ -3,10 +3,15 @@ AddCSLuaFile()
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
 local mainMenuSize = {
-    w = scrW * .65,
-    h = scrH * .85
+    w = scrW * .75,
+    h = scrH * .8
 }
+local line_height = 70
+local color_blue = Color(60, 127, 255, 255)
+local color_red = Color(255, 70, 0, 255)
 
+notagain.loaded_libraries.pretty_text = nil
+notagain.loaded_libraries.draw_skewed_rect = nil
 local prettytext = requirex("pretty_text")
 
 local draw_rect = requirex("draw_skewed_rect")
@@ -24,6 +29,10 @@ local border = CreateMaterial(tostring({}), "UnlitGeneric", {
     ["$VertexAlpha"] = 1,
     ["$VertexColor"] = 1,
 })
+
+local sprite = Material("particle/fire")
+
+local background = Material("gui/gradient")
 
 hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
     if (ScrW() != scrW or ScrH() != scrH) then
@@ -137,13 +146,21 @@ local ScoreEntries = {}
 
 local PLAYER_LINE = {
     Init = function( self )
-        self:Dock( TOP )
-        self:SetHeight( 70 )
+        --self:Dock( TOP )
+        self:SetSize(0, line_height)
 		self:SetPaintedManually(true)
+		self:SetCursor("hand")
     end,
 
-    Setup = function( self, pl )
+    Setup = function( self, pl, friend )
         self.Player = pl
+		self.Friend = friend
+
+		local pnl = self:Add("AvatarImage")
+		pnl:SetPaintedManually(true)
+		pnl:SetPlayer(pl, 184)
+		self.Avatar = pnl
+
         self:Think( self )
     end,
 
@@ -160,65 +177,152 @@ local PLAYER_LINE = {
 
 	end,
 
-	Paint = function(self, w, h)
-		--cam.PushModelMatrix(m)
+	HUDPaint = function(self, w, h)
 		local player = self.Player
-		local x, y = self:LocalToScreen(0, 20)
+		local x, y = self:LocalToScreen(0, 0)
 
 		if ( !IsValid( player ) ) then
 			return
 		end
-		local w = w / 2
-		local h = h / 2
 		local ent = player
-		local skew = 30
+		local dir = self.Friend and 1 or -1
+		local skew = 30 * dir
+		--skew = skew * math.sin(os.clock()*5)
+		local size_div = 1.2
+		local spacing = 5
+		local border_size = 10
 
+		h = h - border_size - spacing
 
-		do
-			local y = y - h
-			local w = w / 4
-			local h = h * 1.5
+		local color = self.Friend and color_blue or color_red
+		local text_blur_color = Color(color.r*0.6, color.g*0.6, color.b*0.6, 150)
 
-			surface.SetDrawColor(25, 25, 25, 230)
-			draw.NoTexture()
-			draw_rect(x,y,w,h, skew, 0)
-
-			border:SetFloat("$additive", 1)
-			surface.SetDrawColor(255, 255, 255, 150)
-			surface.SetMaterial(border)
-			draw_rect(x,y,w,h, skew, 0, 128, 7, border:GetTexture("$BaseTexture"):Width(), true)
-
-			prettytext.Draw(ent:EntIndex(), x+w/6, y, "Candara", 80, 800, 3, Color(230, 230, 230, 80), Color(0,0,0,80), -0.5, -0.2)
+		if dir < 0 then
+			x = x + w - w / size_div
 		end
 
-		surface.SetDrawColor(25, 25, 25, 230)
-		draw.NoTexture()
-		draw_rect(x,y,w,h, skew)
+		w = w / size_div
 
-		surface.SetMaterial(gradient)
+		do
+			surface.DisableClipping(true)
+			render.ClearStencil()
+			render.SetStencilEnable(true)
+			render.SetStencilWriteMask(255)
+			render.SetStencilTestMask(255)
+			render.SetStencilReferenceValue(15)
+			render.SetStencilFailOperation(STENCILOPERATION_KEEP)
+			render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
+			render.SetStencilPassOperation(STENCILOPERATION_REPLACE)
+			render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_ALWAYS)
+			render.SetBlend(0)
+				surface.SetDrawColor(0,0,0,1)
+				draw.NoTexture()
+				draw_rect(x,y,w,h, skew, border_size-1)
+			render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
+		end
 
-		surface.SetDrawColor((ent:GetFriendStatus() == "friend" or ent == LocalPlayer()) and Color(30, 50, 255, 255) or Color(255, 50, 30, 255) )
 
-		for _ = 1, 2 do
+		do -- background
+			surface.SetDrawColor(25, 25, 25, 230)
+			draw.NoTexture()
+			draw_rect(x,y,w,h, skew)
+		end
+
+		do -- health gradient
+			surface.SetMaterial(gradient)
+			surface.SetDrawColor(color)
+
 			draw_rect(x, y, w/ent:GetMaxHealth() * (ent:Health() > 100 and 100 or (ent:Health() < 0 and 0 or ent:Health())) , h , skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
 
-		prettytext.Draw(ent:Nick(), x+w/2, y+h/2, "Arial", 26, 800, 3, Color(230, 230, 230, 255), Color(25,70,100,255), -0.5, -0.5)
+		do -- name
+			local text = ent:Nick()
+			local font = "Arial"
+			local size = 17
+			local weight = 500
+			local blursize = 2
+			local text_border = 3
 
-		surface.SetDrawColor(255, 255, 255, 15)
-		surface.SetMaterial(gradient)
-		draw_rect(x,y,w,h, skew, 0, 70, 10, gradient:GetTexture("$BaseTexture"):Width())
+			local str_w, str_h = prettytext.GetTextSize(text, font, size, weight, blursize)
 
+			local y = y + 8
 
-		border:SetFloat("$additive", 0)
-		surface.SetDrawColor(255, 255, 255, 255)
-		surface.SetMaterial(border)
+			surface.SetDrawColor(0,0,0,230)
+			surface.DrawRect(x-20,y,w+40,str_h + text_border)
 
-		for _ = 1, 2 do
-			draw_rect(x,y,w,h, skew, 0, 64, 5, border:GetTexture("$BaseTexture"):Width(), true)
+			local x = x + w/2 + 30*dir
+			local y = y + text_border/2
+			prettytext.Draw(text, x, y, font, size, weight, blursize, Color(230, 230, 230, 255), text_blur_color, -0.5)
 		end
 
-		prettytext.Draw(ent:Health().."/"..ent:GetMaxHealth(), x + w/10 , y + h/2 , "Arial", 23, 900, 4, Color(230, 230, 230, 255), Color(25,70,100,255),0,-0.5)
+		do -- ping
+			local bar_height = 10
+			local w = w
+			local x = x
+			local y = y + h - bar_height
+			local h = bar_height
+
+			local font = "Gabriola"
+			local size = 40
+			local weight = 1
+			local blursize = 1
+
+			surface.SetDrawColor(0,0,0,170)
+			surface.DrawRect(x-40,y,w+80, h)
+
+			local ping = string.format("00%x", player:Ping())
+
+			local str1_w = prettytext.GetTextSize("PING", font, size, weight, blursize)
+			local str2_w = prettytext.GetTextSize(ping, "Sylfaen", size*1.1, 1, blursize*5)
+
+			if dir > 0 then
+				x = x + w - str1_w - str2_w - 20
+			end
+
+
+
+			prettytext.Draw("PING", x, y - size/2, font, size, weight, blursize, Color(230, 230, 230, 255), text_blur_color)
+			prettytext.Draw(ping, x + 50, y, "Sylfaen", size*1.1, 1, blursize*5, Color(230, 230, 230, 255), text_blur_color, 0, -0.6)
+		end
+
+		do
+			local size = h * 1.6
+			local x = x - size / 2
+			local y = y - size / 2
+
+			y = y + h / 2
+			x = x + (size/4 * dir)
+
+			if dir < 0 then
+				x = x + w
+			end
+
+			self.Avatar:SetSize(size,size)
+			self.Avatar:PaintAt(x, y)
+		end
+
+		do -- frame
+			surface.SetDrawColor(255, 255, 255, 255)
+			surface.SetMaterial(border)
+
+			for _ = 1, 2 do
+				draw_rect(x,y,w,h, skew, 9, 128, border_size - 1, border:GetTexture("$BaseTexture"):Width(), true)
+			end
+		end
+
+		render.SetStencilEnable(false)
+		surface.DisableClipping(false)
+
+		do -- top gloss
+			if self:IsHovered() then
+				surface.SetDrawColor(255, 255, 255, 40)
+			else
+				surface.SetDrawColor(color.r, color.g, color.b, 30)
+			end
+			surface.SetMaterial(gradient)
+			gradient:SetFloat("$additive", 1)
+			draw_rect(x,y,w,h, skew, self:IsHovered() and 32 or 9, 4, 10, gradient:GetTexture("$BaseTexture"):Width())
+		end
 	end,
 
     OnMousePressed = function( self, num )
@@ -274,93 +378,72 @@ local PLAYER_LINE = {
 
 local SCORE_BOARD = {
     Init = function( self )
+		--self:DockMargin(5,5,5,5)
         self.Header = self:Add( "Panel" )
         self.Header:Dock( TOP )
-        self.Header:SetHeight( 70 )
-        self.Header.Paint = function()
-            local w,h = self.Header:GetWide(),self.Header:GetTall()
+        self.Header:SetHeight( 35 )
+        self.Header:DockMargin( 0,0,0,15)
+		self.Header.Paint = function(_, w, h)
+			local maxw, maxh = 0,0
 
-            surface.SetDrawColor(255, 255, 255, 255)
-            draw.NoTexture()
-            surface.DrawRect(0,h-30,w,2)
-        end
+			--local w, h = prettytext.Draw("FPS: " .. math.Round(1 / FrameTime()), 0, 0, "Arial", 30, 800, 3)
+			--maxw = math.max(maxh, w)
+			--maxh = math.max(maxh, h)
 
-        self.Name = self.Header:Add( "Panel" )
-        self.Name:Dock( TOP )
-        self.Name:SetHeight( 150 )
-		self.Name.Paint = function()
-			prettytext.Draw(self.Name.hostname or "aaaaaaaaaaaa", 0, 0, "Arial", 30, 800, 3, nil, nil, 0, 0)
+			--local w, h = prettytext.Draw("TIME: " .. os.date("%X"), 0, 0, "Arial", 30, 800, 3)
+			--maxw = math.max(maxh, w)
+			--maxh = math.max(maxh, h)
+
+
+
+			prettytext.Draw(GetHostName(), w/2, 0, "Arial", 30, 800, 3, nil, nil, -0.5)
 		end
 
-        self.Footer = self:Add( "Panel" )
-        self.Footer:Dock( TOP )
-        self.Footer:SetHeight( 30 )
+        self.Scroll = self:Add( "DScrollPanel" )
+        self.Scroll:Dock( FILL )
 
-        self.Footer.Fps = self.Footer:Add( "DLabel" )
-        self.Footer.Fps:SetFont( "Sfont" )
-        self.Footer.Fps:SetTextColor( Color( 255, 255, 255, 255 ) )
-        self.Footer.Fps:Dock( RIGHT )
-        self.Footer.Fps:DockMargin( 0, 0, 120, 0 )
-        self.Footer.Fps:SetWidth( 35 )
-        self.Footer.Fps:SetContentAlignment( 3 )
+		self.ScoresLeft = self.Scroll:Add("DListLayout")
+		self.ScoresLeft:Dock(LEFT)
+		self.ScoresLeft:DockPadding(40,0,0,0)
 
-        self.Footer.FpsName = self.Footer:Add( "DLabel" )
-        self.Footer.FpsName:SetFont( "Sfont" )
-        self.Footer.FpsName:SetTextColor( Color( 255, 255, 255, 255 ) )
-        self.Footer.FpsName:Dock( RIGHT )
-        self.Footer.FpsName:DockMargin( 0, 0, 0, 0 )
-        self.Footer.FpsName:SetWidth( 50 )
-        self.Footer.FpsName:SetText( "FPS: " )
-        self.Footer.FpsName:SetContentAlignment( 3 )
+		self.ScoresRight = self.Scroll:Add("DListLayout")
+		self.ScoresRight:Dock(RIGHT)
+		self.ScoresRight:DockPadding(0,0,40,0)
 
-        self.Footer.Time = self.Footer:Add( "DLabel" )
-        self.Footer.Time:SetFont( "Sfont" )
-        self.Footer.Time:SetTextColor( Color( 255, 255, 255, 255 ) )
-        self.Footer.Time:Dock( RIGHT )
-        self.Footer.Time:DockMargin( 0, 0, 20, 0 )
-        self.Footer.Time:SetWidth( 90 )
-        self.Footer.Time:SetContentAlignment( 3 )
-
-        self.Footer.TimeName = self.Footer:Add( "DLabel" )
-        self.Footer.TimeName:SetFont( "Sfont" )
-        self.Footer.TimeName:SetTextColor( Color( 255, 255, 255, 255 ) )
-        self.Footer.TimeName:Dock( RIGHT )
-        self.Footer.TimeName:DockMargin( 0, 0, 0, 0 )
-        self.Footer.TimeName:SetWidth( 120 )
-        self.Footer.TimeName:SetText( "Current time: " )
-        self.Footer.TimeName:SetContentAlignment( 3 )
-
-
-
-        self.Scores = self:Add( "DScrollPanel" )
-        self.Scores:Dock( FILL )
-
+		self.Scroll:AddItem(self.ScoresLeft)
+		self.Scroll:AddItem(self.ScoresRight)
     end,
 
     PerformLayout = function( self )
 
         self:SetSize( mainMenuSize.w, mainMenuSize.h )
+		self.ScoresLeft:SetWide(mainMenuSize.w/2)
+		self.ScoresRight:SetWide(mainMenuSize.w/2)
+		self.ScoresRight:SetTall(select(2, self.ScoresRight:ChildrenSize()))
+		self.ScoresLeft:SetTall(select(2, self.ScoresLeft:ChildrenSize()))
         self:Center()
 
     end,
 
     Think = function( self, w, h )
-
-        self.Footer.Time:SetText( os.date("%X") )
-        self.Footer.Fps:SetText( math.Round( 1/FrameTime() ) )
-        self.Name.hostname = GetHostName()
-
         for id, pl in pairs( player.GetAll() ) do
 
-            if ( IsValid( ScoreEntries[pl:EntIndex()] ) ) then continue end
+            if ( IsValid( ScoreEntries[pl:UniqueID()] ) ) then continue end
 
-            ScoreEntries[pl:EntIndex()] = vgui.CreateFromTable( PLAYER_LINE )
-            ScoreEntries[pl:EntIndex()]:Setup( pl )
+            local line = vgui.CreateFromTable( PLAYER_LINE )
+            line:Setup( pl, pl:GetFriendStatus() == "friend" or pl == LocalPlayer() )
 
-            self.Scores:AddItem( ScoreEntries[pl:EntIndex()] )
+			if line.Friend then
+				self.ScoresLeft:Add( line )
+			else
+				self.ScoresRight:Add( line )
+			end
+
+			ScoreEntries[pl:UniqueID()] = line
+
+			self:PerformLayout(true)
         end
-
-    end
+	end
 }
 
 PLAYER_LINE = vgui.RegisterTable( PLAYER_LINE, "DPanel" )
@@ -392,9 +475,50 @@ local function YScoreboardShow()
         w_Scoreboard:SetKeyboardInputEnabled( false )
 
 		hook.Add("HUDPaint", "scoreboard", function()
-			for _, pnl in ipairs(w_Scoreboard.Scores:GetCanvas():GetChildren()) do
-				pnl:Paint(pnl:GetWide(), pnl:GetTall())
+			if false then
+				local x, y = 0, 0
+				local w, h = ScrW(), ScrH()
+				surface.SetMaterial(gradient)
+
+				surface.SetAlphaMultiplier(0.05)
+				surface.SetDrawColor(color_red)
+				surface.DrawTexturedRectRotated(x + w,y,w,h*10,0)
+				surface.SetDrawColor(color_blue)
+				surface.DrawTexturedRectRotated(x,y,w,h*10,180)
+				surface.SetAlphaMultiplier(1)
 			end
+
+
+			do
+				local x, y = w_Scoreboard:GetPos()
+				local w, h = w_Scoreboard:GetSize()
+
+				surface.SetDrawColor(255, 255, 255, 255)
+
+				y = select(2, w_Scoreboard.Header:LocalToScreen()) + w_Scoreboard.Header:GetTall()
+				x = x + w / 2
+
+				surface.SetMaterial(sprite)
+				local size = w * 1.5
+				surface.DrawTexturedRect(x - size / 2, y, size, 6)
+				surface.DrawTexturedRect(x - size / 2, y, size, 6)
+			end
+
+			local x,y = w_Scoreboard.Scroll:LocalToScreen()
+			local w,h = w_Scoreboard.Scroll:GetSize()
+			x = x - 100
+			w = w + 200
+			render.SetScissorRect(x,y,x+w,y+h, true)
+
+			for _, pnl in ipairs(w_Scoreboard.ScoresLeft:GetChildren()) do
+				pnl:HUDPaint(pnl:GetWide(), pnl:GetTall())
+			end
+
+			for _, pnl in ipairs(w_Scoreboard.ScoresRight:GetChildren()) do
+				pnl:HUDPaint(pnl:GetWide(), pnl:GetTall())
+			end
+
+			render.SetScissorRect(0,0,0,0, false)
 		end)
 
         return false
@@ -416,3 +540,7 @@ end
 
 hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
 hook.Add("ScoreboardHide","YScoreboardHide",YScoreboardHide)
+
+if LocalPlayer():IsValid() then
+	YScoreboardShow()
+end
