@@ -1,5 +1,6 @@
 if SERVER then
 	local easylua = requirex('easylua')
+	local luadev = requirex('luadev')
 
 	local webhooktoken = file.Read( "webhook_token.txt", "DATA" )
 	local token = file.Read( "discordbot_token.txt", "DATA" )
@@ -172,6 +173,28 @@ if SERVER then
 		end,function(err) print(err) end)
     end
 
+    local prefixes = {".", "!"}
+
+    local function startsWith(name, msg, param)
+    	for k,v in pairs(prefixes) do
+    		if string.StartWith(msg, v..name) then
+    			return true
+    		end
+    	end
+    	return false
+    end
+
+    local function getType(cmds, msg)
+    	for k,v in pairs(prefixes) do
+    		for k,cmd in pairs(cmds) do
+    			if string.StartWith(msg, v..cmd.." ") then
+    				return cmd
+    			end
+    		end
+    	end
+    	return false
+    end   	
+
 	local after = 0
 	--It was either this or websockets. But this shouldn't be that bad of a solution
 	timer.Create("DiscordRelayFetchMessages", 1.5, 0, function()
@@ -209,7 +232,7 @@ if SERVER then
 								net.Broadcast()
 							end
 						end
-					elseif v.author.bot ~= true and string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or string.StartWith(v.content, ".status") then
+					elseif v.author.bot ~= true and string.StartWith(v.content, "<@"..discordrelay.user.id.."> status") or startsWith("status", v.content) then
 						local onlineplys = ""
 						local players = player.GetAll()
 						for k,v in pairs(players) do
@@ -246,15 +269,41 @@ if SERVER then
 								}
 							})
 						end
-					elseif string.StartWith(v.content, ".l") then
+					elseif startsWith("l", v.content) or startsWith("print", v.content) or startsWith("table", v.content) then
 						discordrelay.IsAdmin(v.author.id, function(access)
 							if access then
-								local code = string.sub(v.content, 3, #v.content)
+								local cmd = getType({"l", "lc", "print", "table"}, v.content)
+								local code = string.sub(v.content, #cmd + 2, #v.content)
 								if code and code ~= "" then
-									local data = easylua.RunLua(nil, code)
+									local data
+									if cmd == "l" then
+									 	data = easylua.RunLua(nil, code)
+									elseif cmd == "lc" then
+										print(code)
+										data = luadev.RunOnClients(code)
+									elseif cmd == "print" then
+									 	data = easylua.RunLua(nil, "return "..code)
+									elseif cmd == "table" then
+									 	data = easylua.RunLua(nil, "return table.ToString("..code..")")
+									end
+
+									if type(data) ~= "table" then
+										discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+											["embeds"] = {
+												[1] = {
+												["description"] = ":ok_hand:",
+													["type"] = "rich",
+													["color"] = 0x182687
+												}
+											}
+										})
+
+										return;
+									end
+
 									if not data.error then
 										local res = unpack(data.args)
-										if res then
+										if res and cmd ~= "lc" then
 											res = tostring(res)
 										else
 											res = ":ok_hand:"
@@ -290,6 +339,38 @@ if SERVER then
 										}
 									})
 								end
+							else
+								discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+									["embeds"] = {
+										[1] = {
+											["description"] = ":no_entry: **Access denied!**",
+											["type"] = "rich",
+											["color"] = 0xb30000
+										}
+									}
+								})
+							end
+						end)
+						net.Start( "DiscordMessage" )
+							net.WriteString(string.sub(v.author.username,1,14))
+							net.WriteString(string.sub(v.content,1,400))
+						net.Broadcast()
+
+
+					elseif startsWith("rcon", v.content) then
+						discordrelay.IsAdmin(v.author.id, function(access)
+							if access then
+								game.ConsoleCommand(string.sub(v.content, 6, #v.content).."\n")
+								discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+									["embeds"] = {
+										[1] = {
+										["description"] = ":ok_hand:",
+											["type"] = "rich",
+											["color"] = 0x182687
+										}
+									}
+								})
+
 							else
 								discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
 									["embeds"] = {
