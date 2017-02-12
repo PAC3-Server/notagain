@@ -22,6 +22,7 @@ if SERVER then
 	discordrelay.guild = "260866188962168832"
 	discordrelay.admin_roles = {"260870255486697472", "260932947140411412"}
 	discordrelay.relayChannel = "273575417401573377"
+	discordrelay.logChannel = "280436597248229376"
     discordrelay.webhookid = "274957435091812352"
     discordrelay.webhooktoken = webhooktoken
 
@@ -505,6 +506,26 @@ if SERVER then
 			})
 		end
 	end)
+
+	local blacklist = {"suicided", "Bad SetLocalOrigin"}
+	local logBuffer = ""
+	hook.Add("EngineSpew", "DiscordRelaySpew", function(spewType, msg, group, level)
+		for k,v in pairs(blacklist) do
+			if string.match(msg, v) then
+				return
+			end
+		end
+
+		logBuffer = logBuffer..msg
+	end )
+
+	timer.Create("DiscordRelayAddLog", 1.5, 0, function()
+		if logBuffer ~= "" then
+			discordrelay.CreateMessage(discordrelay.logChannel, "```"..logBuffer.."```")
+			logBuffer = ""
+		end
+	end)
+
 else
 	net.Receive( "DiscordMessage", function()
 		local nick = net.ReadString()
