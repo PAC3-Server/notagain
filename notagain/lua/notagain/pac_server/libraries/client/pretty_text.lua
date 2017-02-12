@@ -58,13 +58,12 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 	if not fonts[font][size][weight] then fonts[font][size][weight] = {} end
 	if not fonts[font][size][weight][blursize] then fonts[font][size][weight][blursize] = create_fonts(font, size, weight, blursize) end
 
+	local w, h = prettytext.GetTextSize(text, font, size, weight, blursize)
 	if x_align then
-		local w = prettytext.GetTextSize(text, font, size, weight, blursize)
 		x = x + (w * x_align)
 	end
 
 	if y_align then
-		local _, h = prettytext.GetTextSize(text, font, size, weight, blursize)
 		y = y + (h * y_align)
 	end
 
@@ -80,6 +79,8 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 	surface_SetTextColor(color1)
 	surface_SetTextPos(x, y)
 	surface_DrawText(text)
+
+	return w, h
 end
 
 function prettytext.GetTextSize(text, font, size, weight, blursize)
