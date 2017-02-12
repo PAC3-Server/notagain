@@ -270,7 +270,7 @@ local PLAYER_LINE = {
 			surface.SetDrawColor(0,0,0,170)
 			surface.DrawRect(x-40,y,w+80, h)
 
-			local ping = string.format("00%x", player:Ping())
+			local ping = string.format("%03d", player:Ping())
 
 			local str1_w = prettytext.GetTextSize("PING", font, size, weight, blursize)
 			local str2_w = prettytext.GetTextSize(ping, "Sylfaen", size*1.1, 1, blursize*5)
