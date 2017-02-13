@@ -5,10 +5,10 @@ local Tag="bluescreen"
 if SERVER then
 	util.AddNetworkString(Tag)
 	
-	aowl.AddCommand({"bloo","crash"}, function( player , line , cmd )
-		if cmd then
+	aowl.AddCommand({"bloo","crash"}, function( player , line , cmd , target )
+		if cmd and target then
 			net.Start(Tag)
-			net.Send(player)
+			net.Send(target)
 		end
 	end,"developers",true)
 end
