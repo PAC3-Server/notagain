@@ -436,7 +436,7 @@ local SCORE_BOARD = {
 
 			ScoreEntries[pl:UniqueID()] = line
 
-			self:PerformLayout(true)
+			self:InvalidateLayout()
         end
 	end
 }
@@ -536,4 +536,4 @@ end
 hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
 hook.Add("ScoreboardHide","YScoreboardHide",YScoreboardHide)
 
---if LocalPlayer():IsValid() then YScoreboardShow() end
+if LocalPlayer():IsValid() then YScoreboardShow() end
