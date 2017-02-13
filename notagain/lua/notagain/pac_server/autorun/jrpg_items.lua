@@ -1,4 +1,6 @@
 if CLIENT then
+	local prettytext = requirex("pretty_text")
+
 	local r,g,b = 3, 0.75, 0.5
 
 	local glare_mat = Material("sprites/light_ignorez")
@@ -91,13 +93,66 @@ if CLIENT then
 
 	hook.Add("EntityRemoved", "jrpg_items", remove)
 
+	local gradient = Material("gui/center_gradient")
+
+	hook.Add("HUDPaint", "jrpg_items", function()
+		for _, ent in ipairs(entities) do
+			if not ent:IsValid() then
+				remove_ent(ent)
+				break
+			end
+
+			if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then continue end
+
+			local pos = ent:WorldSpaceCenter() + Vector(0,0,30)
+			local dist = pos:Distance(EyePos())
+			pos = pos:ToScreen()
+			if pos.visible and dist < 100 then
+				surface.SetAlphaMultiplier((-(dist/100) + 1) ^ 0.25)
+				local name = ent:GetClass()
+
+				if language.GetPhrase(name) then
+					name = language.GetPhrase(name)
+				end
+
+				local w,h = prettytext.GetTextSize(name, "Gabriola", 40, 800, 3)
+				local bg_width = w + 100
+				surface.SetDrawColor(0,0,0,100)
+				surface.SetMaterial(gradient)
+				surface.DrawTexturedRect(pos.x - bg_width, pos.y, bg_width * 2, h)
+
+				prettytext.Draw(name, pos.x - w / 2, pos.y, "Gabriola", 40, 800, 3, Color(r*255,g*255,b*255,255))
+
+				local border = 20
+				local x = pos.x
+				local y = pos.y + 40
+				local key = input.LookupBinding("+use"):upper()
+				local str = key .. "  TAKE"
+				local w,h = prettytext.GetTextSize(str, "Gabriola", 40, 800, 3)
+				local key_width = prettytext.GetTextSize(key, "Gabriola", 40, 800, 3)
+				local bg_width = w + 100
+
+				surface.SetDrawColor(255,255,255,255)
+				draw.RoundedBox(4, x - 27 - border / 2, y + border / 2, border, border, Color(25,25,25,255))
+				prettytext.Draw(str, x - w / 2, y, "Gabriola", 40, 800, 3)
+
+				surface.SetDrawColor(0,0,0,100)
+				surface.SetMaterial(gradient)
+				surface.DrawTexturedRect(x - bg_width, y, bg_width * 2, h)
+
+
+				surface.SetAlphaMultiplier(1)
+			end
+		end
+	end)
+
 	hook.Add("PostDrawTranslucentRenderables", "jrpg_items", function()
 		render.SetColorModulation(r, g, b)
 		render.MaterialOverride(shiny)
 		for _, ent in ipairs(entities) do
 			if not ent:IsValid() then
 				remove_ent(ent)
-				return
+				break
 			end
 
 			if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then continue end
@@ -206,6 +261,9 @@ if CLIENT then
 
 			render.SetMaterial(fire_mat)
 
+			ent.jrpg_item_fade = ent.jrpg_item_fade or 0
+			ent.jrpg_item_random = ent.jrpg_item_random or math.Rand(0.5, 1)
+
 			for i2 = 1, 5 do
 				ent.jrpg_items_random[i2] = ent.jrpg_items_random[i2] or math.Rand(-1,1)
 				local f2 = i2/4
@@ -216,11 +274,26 @@ if CLIENT then
 					local f = i/max
 					local s = math.sin(f*math.pi*2)
 
-					local offset = Vector(
-						math.sin(f2+time+s*30/max*ent.jrpg_items_random[i2]),
-						math.cos(f2+time+s*30/max*ent.jrpg_items_random[i2]),
-						(radius/8)*math.abs(math.sin(f2 + time/5)*100)*f*0.5
-					)
+
+					local vel = ent:GetVelocity()
+
+					local fade = 1
+
+					if vel:Length() < 100 then
+						vel:Zero()
+						fade = math.min(time - ent.jrpg_item_fade, 1) ^ 0.5
+					else
+						ent.jrpg_item_fade = time
+					end
+
+					local ang = vel:Angle()
+					local offset = Vector()
+					offset = offset + ang:Up() * -math.sin(f2+time+s*30/max*ent.jrpg_items_random[i2])
+					offset = offset + ang:Right() * -math.sin(f2+time+s*30/max*ent.jrpg_items_random[i2])
+					offset = offset + ang:Forward() * -(radius/13)*math.abs(math.sin(f2 + time/5)*100)*f*0.5 / (1+vel:Length()/100)
+
+					offset = offset * fade * ent.jrpg_item_random
+
 					if i == 1 then
 						offset = offset * 0
 					end
