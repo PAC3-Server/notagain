@@ -1,6 +1,11 @@
 AddCSLuaFile()
 
+--TODO:
+--remove field and add plant gen on ground
+--Remove think and make it on touch
+
 local SAFE_ZONE_BASE = {}
+local SAFE_ZONE_SPHERE = {}
 
 SAFE_ZONE_BASE.Base 	 = "base_anim"
 SAFE_ZONE_BASE.Type 	 = "anim"
@@ -8,6 +13,9 @@ SAFE_ZONE_BASE.PrintName = "Safe Zone"
 SAFE_ZONE_BASE.Author	 = "Yara"
 SAFE_ZONE_BASE.Spawnable = true
 SAFE_ZONE_BASE.AdminOnly = true
+
+SAFE_ZONE_SPHERE.Base 	 = "base_anim"
+SAFE_ZONE_SPHERE.Type 	 = "anim"
 
 if CLIENT then
 
@@ -22,7 +30,7 @@ if CLIENT then
 	local LastSafeZoneRadius = 0
 	local ChatTag = "[SafeZone]:"
 
-	local r,g,b = 0.25,0.50,0.255
+	local r,g,b = 0,0.1,0
 	local GlareMat = Material("sprites/light_ignorez")
 	local WarpMat = Material("particle/warp2_warp")
 	local Emitter2D = ParticleEmitter(vector_origin)
@@ -81,7 +89,7 @@ if CLIENT then
 		["$VertexAlpha"] = 1,
 	})
 
-	local PANEL = {
+	local PANEL = { -- Probably will have to redo UI since it looks a bit ugly
 		
 		Init = function( self )
 			self.Header = self:Add( "Panel" )
@@ -271,7 +279,7 @@ if CLIENT then
 		render.SetColorModulation(r, g, b)
 		render.MaterialOverride(Shiny)
 
-		local Pos = self:WorldSpaceCenter() + Vector(0,0,45)
+		local Pos = self:WorldSpaceCenter() + Vector(0,0,50)
 		
 		self.PixelVisible = self.PixelVisible or util.GetPixelVisibleHandle()
 		self.PixelVisible2 = self.PixelVisible2 or util.GetPixelVisibleHandle()
@@ -279,19 +287,18 @@ if CLIENT then
 		local Radius = self:BoundingRadius()
 		local Visi = util.PixelVisible(Pos, Radius*0.5, self.PixelVisible)
 		local Time = RealTime()
-		local Glow = math.sin(Time)/4+10
+		local Glow = math.abs(math.sin(Time))
 		local r = Radius/8
 
 		cam.IgnoreZ(true)
 
 		render.SetMaterial(WarpMat)
-		render.DrawSprite(Pos, 13, 13, Color(r*255*2, g*255*2, b*255*2, Visi*20))
+		render.DrawSprite(Pos, 25, 25, Color(r*255*2, g*255*2, b*255*2, Visi*20))
 		render.SetMaterial(Glare2Mat)
-		render.DrawSprite(Pos, r*5, r*5, Color(200, 255, 200, Visi*255*Glow))
-		render.DrawSprite(Pos, r*7, r*7, Color(150, 255, 150, Visi*255*(Glow+0.25)))
-		render.DrawSprite(Pos, r*10, r*10, Color(100, 200, 100, Visi*150*(Glow+0.50)))
+		render.DrawSprite(Pos, r*10, r*10, Color(200, 255, 200, Visi*255*Glow+3))
+		render.DrawSprite(Pos, r*15, r*15, Color(150, 255, 150, Visi*255*(Glow+3.25)))
+		render.DrawSprite(Pos, r*20, r*20, Color(100, 200, 100, Visi*150*(Glow+3.50)))
 		render.SetMaterial(GlareMat)
-		render.DrawSprite(Pos, r*50, r*50, Color(r*255, g*255, b*255, Visi*50))
 		
 		cam.IgnoreZ(false)
 
@@ -304,7 +311,7 @@ if CLIENT then
 			p:SetDieTime(math.Rand(2,4))
 			p:SetLifeTime(1)
 
-			p:SetStartSize(math.Rand(2,4))
+			p:SetStartSize(math.Rand(16,32))
 			p:SetEndSize(0)
 
 			p:SetStartAlpha(0)
@@ -325,7 +332,7 @@ if CLIENT then
 				p:SetDieTime(math.Rand(1,3))
 				p:SetLifeTime(1)
 
-				p:SetStartSize(math.Rand(2,4))
+				p:SetStartSize(math.Rand(16,32))
 				p:SetEndSize(0)
 
 				p:SetStartAlpha(255)
@@ -364,6 +371,10 @@ if CLIENT then
 
 	function SAFE_ZONE_BASE:OnRemove()
 		hook.Remove( "PostDrawTranslucentRenderables", "SafeZone"..self:EntIndex() )
+	end
+
+	function SAFE_ZONE_SPHERE:Draw()
+		self:DrawModel()
 	end
 
 	net.Receive( "SafeZonePanel" , function()
@@ -409,7 +420,7 @@ if SERVER then
 	
 	end
 
- 	local function SafeZonePickup( ply , ent )
+ 	function SafeZonePickup( ply , ent )
 		if ent:GetClass() == "safe_zone" then
 			return false
 		end
@@ -419,20 +430,56 @@ if SERVER then
 	   	
 		if !tr.Hit or ply.SafeZone then return end 
 		
-		local SpawnPos = tr.HitPos + tr.HitNormal  
+		local SpawnPos = tr.HitPos --+ tr.HitNormal  
+
+		for k,v in pairs(ents.FindInSphere(	SpawnPos,1000)) do
+			if v:IsPlayer() and v != ply then
+				return
+			end
+		end
+
 		
 		local ent = ents.Create( "safe_zone" )
 		ent:SetPos( SpawnPos ) 
 		ent:SetModel("models/props_combine/CombineThumper002.mdl")
-		ent:SetMaterial("models/props_combine/tprings_lobe")
 		ent:SetModelScale(0.4)
 		ent:Spawn()
 		ent:Activate() 
+
 		ent.PlayersAllowed = {}
 		ent.PlayersAllowed[ply:EntIndex()] = ply
 		ent.Radius = 200
 		ply.LastSafeZone = ent
 		ply.SafeZone = true
+
+		local sphere = ents.Create( "prop_physics" )
+		sphere:SetModel("models/XQM/Rails/gumball_1.mdl")
+		sphere:SetMaterial("models/props_combine/portalball001_sheet")
+		sphere:SetPos(ent:GetPos())
+		sphere:SetParent( ent )
+		sphere:SetColor( Color(150,255,150,255) )
+		sphere:SetAngles(Angle(90,0,0))
+		sphere:Spawn()
+		sphere:Activate()
+		sphere:DrawShadow(false)
+		sphere.Protected = true
+
+		local sphere2 = ents.Create( "prop_physics" )
+		sphere2:SetModel("models/XQM/Rails/gumball_1.mdl")
+		sphere2:SetMaterial("models/props_combine/portalball001_sheet")
+		sphere2:SetPos(ent:GetPos())
+		sphere2:SetParent( ent )
+		sphere2:SetColor( Color(150,255,150,255) )
+		sphere2:SetAngles(Angle(-90,0,0))
+		sphere2:Spawn()
+		sphere2:Activate()
+		sphere2:DrawShadow(false)
+		sphere2.Protected = true
+		
+		timer.Create("SafeZoneModelScale"..ent:EntIndex(),1,0,function() 
+			sphere:SetModelScale(ent.Radius*2*sphere:GetModelScale()/sphere:BoundingRadius(),1)
+			sphere2:SetModelScale(ent.Radius*2*sphere2:GetModelScale()/sphere2:BoundingRadius(),1)
+		end)
 
 		return ent 
 		
@@ -446,9 +493,10 @@ if SERVER then
 		self:SetUnFreezable( true )
 
 	end
+
 	
 	function SAFE_ZONE_BASE:Use( activator , caller )
-		if self:IsAllowed( caller ) then
+		if self:IsAllowed( caller ) or caller:IsAdmin() then
 			caller.LastSafeZone = self
 			net.Start("SafeZonePanel")
 			net.Send(caller)
@@ -456,33 +504,27 @@ if SERVER then
 
 	end
 	 
-	function SAFE_ZONE_BASE:Think()
+	function SAFE_ZONE_BASE:Think() --stays like this for now
 		
 		for k,v in pairs(ents.FindInSphere(self:GetPos(),self.Radius)) do
 
 			if v:CPPIGetOwner() then
 				
-				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) then
+				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) and !v:CPPIGetOwner():IsAdmin() then
 					v:Dissolve()
 				end
 			
-			elseif v:IsPlayer() then
-				
-				if v:Alive() and !self:IsAllowed( v ) then
-					v:Kill()
-					v:GetRagdollEntity():Dissolve()
-				end
-			
-			else
-				
-				if !v:IsWeapon() and v:GetClass() != "predicted_viewmodel" then
-					v:Dissolve()
-				end
+			elseif v:IsPlayer() and !self:IsAllowed( v ) and !v:IsAdmin() then 
+
+					local dif = v:GetPos() - self:GetPos()
+					
+					v:SetPos( self:GetPos() + dif/self.Radius * (self.Radius +  v:GetPos():Distance(self:GetPos()))  )
+
 			end
 		
 		end
 
-		self:NextThink( CurTime() + 1 )
+		self:NextThink( CurTime() + 0.1 )
 		
 		return true
 
@@ -492,6 +534,8 @@ if SERVER then
 		if self:CPPIGetOwner() then
 			self:CPPIGetOwner().SafeZone = false
 		end
+		
+		timer.Destroy( "SafeZoneModelScale"..self:EntIndex() )
 	end
 
 	function SAFE_ZONE_BASE:AllowPlayer( ply )
