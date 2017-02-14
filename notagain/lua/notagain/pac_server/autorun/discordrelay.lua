@@ -469,6 +469,7 @@ if SERVER then
 	gameevent.Listen( "player_disconnect" )
 	hook.Add("player_disconnect", "DiscordRelayPlayerDisconnect", function(data)
 	    if discordrelay and discordrelay.enabled then
+			local reason = tostring(string.StartWith(data.reason ,"Map") or string.StartWith(data.reason ,data.name) or string.StartWith(data.reason ,"Client" ) and ":interrobang: "..data.reason or data.reason)
         	discordrelay.GetAvatar(data.networkid, function(ret)
 				discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
 					["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
@@ -476,13 +477,20 @@ if SERVER then
 					["embeds"] = {
 						[1] = {
 							["title"] = "",
-							["description"] = "left the Server. \n\n" .. tostring(string.StartWith(data.reason ,"Map") or string.StartWith(data.reason ,data.name) or string.StartWith(data.reason ,"Client" ) and ":interrobang: "..data.reason or data.reason),
+							["description"] = "left the Server.",
 							["author"] = {
 								["name"] = data.name,
 								["icon_url"] = ret
 							},
 							["type"] = "rich",
-							["color"] = 0xb30000
+							["color"] = 0xb30000,
+							["fields"] = {
+								[1] = {
+									["name"] = "Reason:",
+									["value"] = reason,
+									["inline"] = false
+								}                
+							}
 						}
                 	}
 				})
