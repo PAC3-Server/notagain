@@ -179,12 +179,24 @@ local PLAYER_LINE = {
 		if ( !IsValid( player ) ) then
 			return
 		end
+
+		self.hover_fade = self.hover_fade or 1
+
+		if self:IsHovered() then
+			self.hover_fade = math.min(self.hover_fade + FrameTime() * 10, 1)
+		else
+			self.hover_fade = math.max(self.hover_fade - FrameTime() * 10, 0)
+		end
+
+		local hover = self.hover_fade
+		local open_fade = math.min(RealTime() - w_Scoreboard.scoreboard_open_time - (player:EntIndex()/30), 1)
+
 		local ent = player
 		local dir = self.Friend and 1 or -1
 		local skew = 30 * dir
 		--skew = skew * math.sin(os.clock()*5)
 		local size_div = 1.2
-		local spacing = 5
+		local spacing = 8
 		local border_size = 10
 
 		h = h - border_size - spacing
@@ -234,35 +246,35 @@ local PLAYER_LINE = {
 			local text = ent:Nick()
 			local font = "Arial"
 			local size = 17
-			local weight = 500
+			local weight = 800
 			local blursize = 2
-			local text_border = 3
+			local text_border = 5
 
 			local str_w, str_h = prettytext.GetTextSize(text, font, size, weight, blursize)
 
-			local y = y + 8
+			local y = y + 10
 
 			surface.SetDrawColor(0,0,0,230)
 			surface.DrawRect(x-20,y,w+40,str_h + text_border)
 
 			local x = x + w/2 + 30*dir
 			local y = y + text_border/2
-			prettytext.Draw(text, x, y, font, size, weight, blursize, Color(230, 230, 230, 255), text_blur_color, -0.5)
+			prettytext.Draw(text, x, y, font, size, weight, blursize, Color(255, 255, 255, 200), nil, -0.5)
 		end
 
 		do -- ping
-			local bar_height = 10
+			local bar_height = 12
 			local w = w
 			local x = x
 			local y = y + h - bar_height
 			local h = bar_height
 
 			local font = "Gabriola"
-			local size = 40
-			local weight = 1
+			local size = 34
+			local weight = 800
 			local blursize = 1
 
-			surface.SetDrawColor(0,0,0,170)
+			surface.SetDrawColor(0,0,0,100)
 			surface.DrawRect(x-40,y,w+80, h)
 
 			local ping = string.format("%03d", player:Ping())
@@ -271,26 +283,31 @@ local PLAYER_LINE = {
 			local str2_w = prettytext.GetTextSize(ping, "Sylfaen", size*1.1, 1, blursize*5)
 
 			if dir > 0 then
-				x = x + w - str1_w - str2_w - 20
+				x = x + w - str1_w - str2_w - 20 - 15
+			else
+				x = x + 20
 			end
 
 
 
-			prettytext.Draw("PING", x, y - size/2, font, size, weight, blursize, Color(230, 230, 230, 255), text_blur_color)
-			prettytext.Draw(ping, x + 50, y, "Sylfaen", size*1.1, 1, blursize*5, Color(230, 230, 230, 255), text_blur_color, 0, -0.6)
+			prettytext.Draw("PING", x, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
+			prettytext.Draw(ping, x + 45, y, "Sylfaen", size*0.9, 1, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
+			prettytext.Draw("ms", x + str1_w + str2_w + 10, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
 		end
 
 		do
-			local size = h * 1.6
+			local size = h * 1.15
 			local x = x - size / 2
 			local y = y - size / 2
 
 			y = y + h / 2
-			x = x + (size/4 * dir)
+			x = x + (size/3.7 * dir)
 
 			if dir < 0 then
 				x = x + w
 			end
+
+			--cam.PushModelMatrix
 
 			self.Avatar:SetSize(size,size)
 			self.Avatar:PaintAt(x, y)
@@ -309,14 +326,12 @@ local PLAYER_LINE = {
 		surface.DisableClipping(false)
 
 		do -- top gloss
-			if self:IsHovered() then
-				surface.SetDrawColor(255, 255, 255, 40)
-			else
-				surface.SetDrawColor(color.r, color.g, color.b, 30)
-			end
+			local hover = hover ^ 0.5
+
+			surface.SetDrawColor(Lerp(hover, color.r, color.r*3.5), Lerp(hover, color.g, color.g*3.5), Lerp(hover, color.b, color.b*3.5), Lerp(hover, 30, 40))
 			surface.SetMaterial(gradient)
 			gradient:SetFloat("$additive", 1)
-			draw_rect(x,y,w,h, skew, self:IsHovered() and 32 or 9, 4, 10, gradient:GetTexture("$BaseTexture"):Width())
+			draw_rect(x,y,w,h, skew, Lerp(hover, 9, 40), 4, 10, gradient:GetTexture("$BaseTexture"):Width())
 		end
 	end,
 
@@ -376,7 +391,7 @@ local SCORE_BOARD = {
 		--self:DockMargin(5,5,5,5)
         self.Header = self:Add( "Panel" )
         self.Header:Dock( TOP )
-        self.Header:SetHeight( 35 )
+        self.Header:SetHeight( 100 )
         self.Header:DockMargin( 0,0,0,15)
 		self.Header.Paint = function(_, w, h)
 			local maxw, maxh = 0,0
@@ -391,7 +406,7 @@ local SCORE_BOARD = {
 
 
 
-			prettytext.Draw(GetHostName(), w/2, 0, "Arial", 30, 800, 3, nil, nil, -0.5)
+			prettytext.Draw(GetHostName(), w/2, 0, "Gabriola", 120, 800, 10, Color(255, 255, 255, 200), Color(75,75, 75, 50), -0.5)
 		end
 
         self.Scroll = self:Add( "DScrollPanel" )
@@ -436,7 +451,7 @@ local SCORE_BOARD = {
 
 			ScoreEntries[pl:UniqueID()] = line
 
-			self:PerformLayout(true)
+			self.Scroll:InvalidateLayout()
         end
 	end
 }
@@ -461,6 +476,7 @@ local function YScoreboardShow()
         end
 
         if ( IsValid( w_Scoreboard ) ) then
+			w_Scoreboard.scoreboard_open_time = RealTime()
             w_Scoreboard:Show()
             w_Scoreboard:SetKeyboardInputEnabled( false )
             w_Scoreboard:SetMouseInputEnabled( true )
@@ -469,7 +485,7 @@ local function YScoreboardShow()
         w_Scoreboard:MakePopup()
         w_Scoreboard:SetKeyboardInputEnabled( false )
 
-		hook.Add("HUDPaint", "scoreboard", function()
+		hook.Add("HUDDrawScoreBoard", "scoreboard", function()
 			if false then
 				local x, y = 0, 0
 				local w, h = ScrW(), ScrH()
@@ -503,6 +519,8 @@ local function YScoreboardShow()
 			local w,h = w_Scoreboard.Scroll:GetSize()
 			x = x - 100
 			w = w + 200
+			y = y - 50
+			h = h + 50
 			render.SetScissorRect(x,y,x+w,y+h, true)
 
 			for _, pnl in ipairs(w_Scoreboard.ScoresLeft:GetChildren()) do
@@ -527,7 +545,7 @@ local function YScoreboardHide()
             w_Scoreboard:SetMouseInputEnabled( false )
             w_Scoreboard:Hide()
 
-            hook.Remove("HUDPaint","scoreboard")
+            hook.Remove("HUDDrawScoreBoard","scoreboard")
         end
         CloseDermaMenus()
     end
@@ -536,4 +554,4 @@ end
 hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
 hook.Add("ScoreboardHide","YScoreboardHide",YScoreboardHide)
 
---if LocalPlayer():IsValid() then YScoreboardShow() end
+if LocalPlayer() == me then YScoreboardShow() end
