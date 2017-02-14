@@ -450,8 +450,6 @@ local SCORE_BOARD = {
 			end
 
 			ScoreEntries[pl:UniqueID()] = line
-
-			self.Scroll:InvalidateLayout()
         end
 	end
 }
@@ -480,6 +478,7 @@ local function YScoreboardShow()
             w_Scoreboard:Show()
             w_Scoreboard:SetKeyboardInputEnabled( false )
             w_Scoreboard:SetMouseInputEnabled( true )
+			w_Scoreboard.Scroll:InvalidateLayout()
         end
 
         w_Scoreboard:MakePopup()
