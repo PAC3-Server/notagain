@@ -11,11 +11,18 @@ hook.Add("DoPlayerDeath", "drop_weapon_on_death", function(ply)
 	local wep = ply:GetActiveWeapon()
 	if wep:IsValid() then
 		ply:DropWeapon(wep)
-		timer.Simple(0, function()
-			wep.death_drop_pos = wep:GetPos()
-			wep.death_drop_ang = wep:GetAngles()
-		end)
 		remove_me[ply] = wep
+
+		local atch = ply:GetAttachment(ply:LookupAttachment("anim_attachment_RH"))
+		if atch then
+			wep:SetPos(atch.Pos)
+			wep:SetAngles(atch.Ang)
+
+			wep.death_drop_pos = atch.Pos
+			wep.death_drop_ang = atch.Ang
+
+			wep:GetPhysicsObject():SetVelocity(Vector(0,0,0))
+		end
 	end
 end)
 
