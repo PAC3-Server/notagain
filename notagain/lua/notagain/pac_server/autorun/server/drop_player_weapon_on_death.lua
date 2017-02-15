@@ -1,6 +1,6 @@
 local remove_me = {}
 
-hook.Add("DoPlayerDeath", "drop_weapon_on_death", function(ply)
+hook.Add("DoPlayerDeath", "drop_player_weapon_on_death", function(ply)
 	if remove_me[ply] and remove_me[ply]:IsValid() and not remove_me[ply]:GetOwner():IsValid() then
 		if remove_me[ply].death_drop_pos then
 			remove_me[ply]:SetPos(remove_me[ply].death_drop_pos)
@@ -26,7 +26,7 @@ hook.Add("DoPlayerDeath", "drop_weapon_on_death", function(ply)
 	end
 end)
 
-hook.Add("PlayerSpawn", "drop_weapon_on_death", function(ply)
+hook.Add("PlayerSpawn", "drop_player_weapon_on_death", function(ply)
 	if remove_me[ply] and remove_me[ply]:IsValid() and not remove_me[ply]:GetOwner():IsValid() then
 		remove_me[ply]:Remove()
 	end
