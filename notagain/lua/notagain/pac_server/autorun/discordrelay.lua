@@ -211,7 +211,7 @@ if SERVER then
 
 			if after ~= 0 then
 				for k,v in pairs(json) do
-					if discordrelay.user.id == v.author.id then continue end
+					if not (v and v.author) and discordrelay.user.id == v.author.id then continue end
 
 					if v.author.bot and v.webhook_id then
 						if string.lower(v.author.username) == "github" and v.embeds and v.embeds[1] then
