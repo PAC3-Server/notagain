@@ -7,8 +7,8 @@ do
 	}
 
 	local map = game.GetMap():lower()
-
-	if map_content[map] then
+	
+	if map_content[map] and not file.Exists("maps/" .. map .. ".bz2", "GAME") then
 		for _, id in ipairs(map_content[map]) do
 			resource.AddWorkshop(id)
 		end
