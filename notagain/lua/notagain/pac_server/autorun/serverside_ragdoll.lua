@@ -55,6 +55,7 @@ if SERVER then
 					break
 				end
 			end
+			ply:SetMoveType(MOVETYPE_FLYGRAVITY)
 		end)
 	end)
 
