@@ -194,7 +194,7 @@ if SERVER then
     		end
     	end
     	return false
-    end   	
+    end
 
 	local after = 0
 	--It was either this or websockets. But this shouldn't be that bad of a solution
@@ -489,7 +489,7 @@ if SERVER then
 									["name"] = "Reason:",
 									["value"] = reason,
 									["inline"] = false
-								}                
+								}
 							}
 						}
                 	}
@@ -538,6 +538,11 @@ else
 	net.Receive( "DiscordMessage", function()
 		local nick = net.ReadString()
 		local message = net.ReadString()
+
+		if ChathudImage then
+			ChathudImage(message)
+		end
+
 		if nick ~= "" then
 			chat.AddText(Color(114,137,218),nick,Color(255,255,255,255),": ",message)
 		else

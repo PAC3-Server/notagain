@@ -1,7 +1,7 @@
-if _G.chathud_image_html and _G.chathud_image_html:IsValid() then 
-	_G.chathud_image_html:Remove() 
+if _G.chathud_image_html and _G.chathud_image_html:IsValid() then
+	_G.chathud_image_html:Remove()
 end
-	
+
 _G.chathud_image_html = NULL
 
 local urlRewriters =
@@ -26,27 +26,27 @@ local hDCvar = CreateClientConVar("chathud_image_holdduration","5")
 
 local function show_image(url)
 	busy = true
-	if chathud_image_html:IsValid() then 
-		chathud_image_html:Remove() 
+	if chathud_image_html:IsValid() then
+		chathud_image_html:Remove()
 	end
-	
+
 	chathud_image_html = vgui.Create("DHTML")
 	chathud_image_html:SetVisible(false)
 	chathud_image_html:SetSize(ScrW(), ScrH())
 	chathud_image_html:ParentToHUD()
 	chathud_image_html:SetHTML(
-		[[				
+		[[
 			<body>
 				<img src="]] .. url .. [[" height="30%" />
 			</body>
 		]]
 	)
-	
+
 	-- Animation parameters
 	local slideDuration = sDCvar:GetInt()
 	local holdDuration = hDCvar:GetInt()
 	local totalDuration = slideDuration * 2 + holdDuration
-	
+
 	-- Returns a value from 0 to 1
 	-- 0: Fully off-screen
 	-- 1: Fully on-screen
@@ -65,16 +65,16 @@ local function show_image(url)
 			return math.cos(normalizedT * math.pi / 4)
 		end
 	end
-	
+
 	local start = nil
 	hook.Add("Think", "chathud_image_url", function()
 		if chathud_image_html:IsLoading() then return end
-		
+
 		if not chathud_image_html:IsVisible() then
 			start = RealTime()
 			chathud_image_html:SetVisible(true)
 		end
-		
+
 		local t = RealTime() - start
 		if t > totalDuration then
 			if chathud_image_html:IsValid() then
@@ -85,63 +85,60 @@ local function show_image(url)
 			busy = false
 			return
 		end
-		
+
 		chathud_image_html:SetPos(ScrW() * (getPositionFraction(t) - 1), 200)
-	end)	
+	end)
 end
 
 timer.Create("chathud_image_url_queue", 0.25, 0, function()
 	if busy then return end
 	local url = queue[1]
 	if url then
-		show_image(url)	
+		show_image(url)
 	end
 end)
 
 local cvar = CreateClientConVar("chathud_image_url", "1")
 
-hook.Add("OnPlayerChat", "chathud_image_url", function(ply, str)
-	
-	if not IsValid(ply) or str=="" then return end
-	
-	local num = cvar:GetInt()
-		
-	if num == 0 then return end
-	
-	if num == 1 and ply.IsFriend and not ply:IsFriend(LocalPlayer()) and ply ~= LocalPlayer() then 
+function ChathudImage(str)
+	if cvar:GetInt() == 0 then
 		return
 	end
-	
+
 	if str == "sh" then
 		if chathud_image_html:IsValid() then
 			chathud_image_html:Remove()
 		end
 		hook.Remove("Think", "chathud_image_url")
 		queue = {}
-		
+
 		return
 	end
-		
+
 	if str:find("http") then
 		str = str:gsub("https:", "http:")
-		
+
 		str = str .. " "
 		local url = str:match("(http://.-)%s")
 		if not url then return end
-		
+
 		for _, rewriteRule in ipairs(urlRewriters) do
 			url = string.gsub(url, rewriteRule[1], rewriteRule[2])
 		end
-		
+
 		local ext = url:match(".+%.(.+)")
 		if not ext then return end
-		
+
 		if not allowed[ext] then return end
-		
+
 		for k,v in pairs(queue) do
-			if v == url then return end	
+			if v == url then return end
 		end
-		
+
 		table.insert(queue, url)
 	end
+end
+
+hook.Add("OnPlayerChat", "chathud_image_url", function(ply, str)
+	ChathudImage(str)
 end)
