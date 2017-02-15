@@ -2,6 +2,18 @@ local hitmarkers = _G.hitmarkers or {}
 _G.hitmarkers = hitmarkers
 
 if CLIENT then
+	local function set_blend_mode(how)
+		if not render.OverrideBlendFunc then return end
+
+		if how == "additive" then
+			render.OverrideBlendFunc(true, BLEND_SRC_ALPHA, BLEND_ONE, BLEND_SRC_ALPHA, BLEND_ONE)
+		elseif how == "multiplicative" then
+			render.OverrideBlendFunc(true, BLEND_DST_COLOR, BLEND_ZERO, BLEND_DST_COLOR, BLEND_ZERO)
+		else
+			render.OverrideBlendFunc(false)
+		end
+	end
+
 	local draw_line = requirex("draw_line")
 	local draw_rect = requirex("draw_skewed_rect")
 	local prettytext = requirex("pretty_text")
@@ -56,6 +68,7 @@ if CLIENT then
 	})
 
 	local function draw_weapon_info(x,y, w,h, color, fade)
+		set_blend_mode("additive")
 		local skew = 0
 		surface.SetDrawColor(25, 25, 25, 200*fade)
 		draw.NoTexture()
@@ -74,6 +87,7 @@ if CLIENT then
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew, 3, 64,4, border:GetTexture("$BaseTexture"):Width(), true)
 		end
+		set_blend_mode()
 	end
 
 	local hitmark_fonts = {
