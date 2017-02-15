@@ -1,4 +1,10 @@
-if game.GetMap():lower():find("ze_ffvii_mako_reactor_v5_3") then return end
+local whitelist = {
+	gm_bluehills_test3 = true,
+	gm_flatgrass = true,
+	gm_construct = true,
+}
+
+if not whitelist[game.GetMap():lower()] then return end
 
 AddCSLuaFile()
 
