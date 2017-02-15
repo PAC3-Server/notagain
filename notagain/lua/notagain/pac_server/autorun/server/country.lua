@@ -1,6 +1,38 @@
 -- meta --
 local meta = FindMetaTable("Player")
 
+function meta:IP()
+    return string.Split(self:IPAddress(), ":")[1]
+end
+
+function meta:GeoIP()
+	if not GeoIP then
+		pcall(require, "geoip")
+	end
+
+	if not GeoIP then
+		return {
+			longitude = 0,
+			latitude = 0,
+			city = "GeoIP Not Found",
+			org = "GeoIP Not Found",
+			region = "00",
+			speed = 0,
+			netmask = 0,
+			country_code = "XX",
+			country_name = "GeoIP NotFound",
+			postal_code = "00000",
+			asn = "GeoIP NotFound",
+		}
+	end
+
+	if not self:IP() then
+		error(self:Nick().." has no IP address??")
+	end
+
+	return GeoIP.Get(self:IP())
+end
+
 function meta:GetCountryCode()
     return self:GeoIP().country_code
 end
