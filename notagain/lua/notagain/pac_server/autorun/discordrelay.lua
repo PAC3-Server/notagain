@@ -472,7 +472,6 @@ if SERVER then
 			local reason = "???"
 			if isbool(data.reason) then
 				reason = ":interrobang: crashed"
-			end
 			else
 				reason = tostring(string.StartWith(data.reason ,"Map") or string.StartWith(data.reason ,data.name) or string.StartWith(data.reason ,"Client" ) and ":interrobang: "..data.reason or data.reason)
 			end
