@@ -469,12 +469,9 @@ if SERVER then
 	gameevent.Listen( "player_disconnect" )
 	hook.Add("player_disconnect", "DiscordRelayPlayerDisconnect", function(data)
 	    if discordrelay and discordrelay.enabled then
-			local reason = "???"
-			if isbool(data.reason) then
-				reason = ":interrobang: crashed"
-			else
-				reason = tostring(string.StartWith(data.reason ,"Map") or string.StartWith(data.reason ,data.name) or string.StartWith(data.reason ,"Client" ) and ":interrobang: "..data.reason or data.reason)
-			end
+			
+			local reason = (string.StartWith(data.reason ,"Map") or string.StartWith(data.reason ,data.name) or string.StartWith(data.reason ,"Client" )) and ":interrobang: "..data.reason or data.reason
+        	
         	discordrelay.GetAvatar(data.networkid, function(ret)
 				discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
 					["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
