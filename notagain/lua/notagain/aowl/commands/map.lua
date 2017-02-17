@@ -49,13 +49,13 @@ end, "developers")
 aowl.AddCommand("maps", function(ply, line)
 	local files = file.Find("maps/" .. (line or ""):gsub("[^%w_]", "") .. "*.bsp", "GAME")
 	for _, fn in pairs( files ) do
-		ply:ChatPrint(fn)
+		PrintMessage(HUD_PRINTCONSOLE,fn)
 	end
 
 	local msg="Total maps found: "..#files
 
-	ply:ChatPrint(("="):rep(msg:len()))
-	ply:ChatPrint(msg)
+	PrintMessage(HUD_PRINTCONSOLE,("="):rep(msg:len()))
+	PrintMessage(HUD_PRINTCONSOLE,msg)
 end, "developers")
 
 aowl.AddCommand("resetall", function(player, line)
