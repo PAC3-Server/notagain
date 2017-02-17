@@ -52,11 +52,17 @@ if CLIENT then
 			end
 		end
 	end)
+
+	net.Receive("cl_godmode_clear_decals", function()
+		local ent = net.ReadEntity()
+		if ent:IsValid() then
+			ent:RemoveAllDecals()
+		end
+	end)
 end
 
 hook.Add("PlayerTraceAttack", "cl_godmode", function(victim, dmginfo)
 	if victim:GetNWBool("cl_godmode", 1) == true  then
-		timer.Simple(0, function() victim:RemoveAllDecals() end)
 		return false
 	end
 end)
@@ -65,6 +71,7 @@ if SERVER then
 	RunConsoleCommand("sbox_godmode", "0")
 
 	util.AddNetworkString("cl_godmode_ask")
+	util.AddNetworkString("cl_godmode_clear_decals")
 
 	net.Receive("cl_godmode_ask", function(len, attacker)
 		local victim = net.ReadEntity()
@@ -120,6 +127,8 @@ if SERVER then
 
 				dmginfo:SetDamage(0)
 				dmginfo:SetDamageForce(vector_origin)
+
+				net.Start("cl_godmode_clear_decals", true) net.WriteEntity(victim) net.Broadcast()
 
 				-- no blood
 				if not victim.damage_mode_bleed_color then
