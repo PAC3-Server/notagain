@@ -101,8 +101,8 @@ if SERVER then
 
 		HTTP(HTTPRequest)
     end
-	function discordrelay.GetAvatar(commid, callback) 
-		local commid = commid
+	function discordrelay.GetAvatar(steamid, callback) 
+		local commid = util.SteamIDTo64(steamid)
 		if discordrelay.AvatarCache[commid] then
 			callback(discordrelay.AvatarCache[commid])
 		else
@@ -445,8 +445,8 @@ if SERVER then
     gameevent.Listen( "player_connect" )
 	hook.Add("player_connect", "DiscordRelayPlayerConnect", function(data)
 	    if discordrelay and discordrelay.enabled then
+            discordrelay.GetAvatar(data.networkid, function(ret)
 			local commid = util.SteamIDTo64(data.networkid)
-            discordrelay.GetAvatar(commid, function(ret)
 				discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
 					["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
 					["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
