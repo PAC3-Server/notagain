@@ -1,21 +1,18 @@
-if not game.GetMap():lower():find("ze_ffvii_mako_reactor") then return end
+if game.GetMap():match("gm_*") then return end
 
 hook.Add("InitPostEntity", "fixmap", function()
 	if SERVER then
 		local remove_these = {
-			trigger_teleport = true,
 			point_teleport = true,
 			info_teleport_destination = true,
 			func_physbox_multiplayer = true,
-			trigger_once = true,
 			info_particle_system = true,
-			trigger_hurt = true,
 		}
 
 		for _, ent in pairs(ents.GetAll()) do
 			local class = ent:GetClass()
 
-			if remove_these[ent:GetClass()] then
+			if remove_these[ent:GetClass()] or ent:GetClass():match("trigger_*") then
 				ent:Remove()
 			end
 		end
