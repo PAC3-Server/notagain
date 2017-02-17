@@ -1,6 +1,6 @@
 [submodule "gmod-xp-chat"]
 	path = gmod-xp-chat
-	url = https://github.com/Techbot121/gmod-xp-chat.git
+	url = https://github.com/PAC3-Server/gmod-xp-chat.git
 [submodule "wire"]
 	path = wire
 	url = https://github.com/wiremod/wire.git
@@ -28,3 +28,6 @@
 [submodule "rebel1324"]
 	path = rebel1324
 	url = https://github.com/rebel1324/gmodstuffs
+[submodule "picker"]
+	path = picker
+	url = https://github.com/TomyLobo/picker
