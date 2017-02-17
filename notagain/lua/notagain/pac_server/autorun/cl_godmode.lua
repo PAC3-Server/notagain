@@ -1,37 +1,139 @@
 local dmgvar = CreateClientConVar("cl_godmode", "1", true, true)
 
-hook.Add("PlayerTraceAttack", "cl_godmode", function(ply, dmginfo)
-	if SERVER then
-		ply:SetNWBool("cl_godmode", ply:GetInfoNum("cl_godmode", 1))
-	end
+if CLIENT then
+	local victim = NULL
 
-	if ply:GetNWBool("cl_godmode", 1) == 1  then
-		ply.damage_mode_bleed_color = ply:GetBloodColor()
-		ply:SetBloodColor(DONT_BLEED)
-		timer.Simple(0, function() ply:RemoveAllDecals() end)
+	timer.Create("cl_godmode", 0.1, 0, function()
+		local ply = LocalPlayer()
+		victim = ply:GetEyeTrace().Entity -- todo: fatter trace?
+	end)
+
+	local last_play = 0
+	local mat = CreateMaterial("cl_dmg_mode_block", "UnlitGeneric", {
+		["$BaseTexture"] = "vgui/cursors/no",
+		["$VertexColor"] = 1,
+		["$VertexAlpha"] = 1,
+	})
+
+
+	hook.Add("PostDrawHUD", "cl_godmode", function()
+		if last_play > RealTime() then
+			surface.SetDrawColor(255,0,0,200 + math.sin(RealTime()*10)*50)
+			surface.SetMaterial(mat)
+			surface.DrawTexturedRect(ScrW()/2 - 32, ScrH()/2 - 32, 64, 64)
+		end
+	end)
+
+	hook.Add("CreateMove", "cl_godmode", function(cmd)
+		if not victim:IsPlayer() or victim:GetNWBool("cl_godmode", 1) == false then return end
+
+		local attacker = LocalPlayer()
+		local wep = attacker:GetActiveWeapon()
+
+		if wep:GetNWBool("cl_godmode_lethal") then
+			if cmd:KeyDown(IN_ATTACK) or cmd:KeyDown(IN_ATTACK2) then
+				local buttons = cmd:GetButtons()
+				if cmd:KeyDown(IN_ATTACK) then
+					buttons = bit.band(buttons, bit.bnot(IN_ATTACK))
+				end
+				if cmd:KeyDown(IN_ATTACK2) then
+					buttons = bit.band(buttons, bit.bnot(IN_ATTACK2))
+				end
+				cmd:SetButtons(buttons)
+				if last_play < RealTime() then
+					surface.PlaySound("buttons/button11.wav")
+					last_play = RealTime() + 0.5
+
+					net.Start("cl_godmode_ask")
+					net.WriteEntity(victim)
+					net.SendToServer()
+				end
+				return true
+			end
+		end
+	end)
+end
+
+hook.Add("PlayerTraceAttack", "cl_godmode", function(victim, dmginfo)
+	if victim:GetNWBool("cl_godmode", 1) == true  then
+		timer.Simple(0, function() victim:RemoveAllDecals() end)
 		return false
-	elseif ply.damage_mode_bleed_color then
-		ply:SetBloodColor(ply.damage_mode_bleed_color)
-		ply.damage_mode_bleed_color = nil
 	end
 end)
 
 if SERVER then
 	RunConsoleCommand("sbox_godmode", "0")
 
-	hook.Add("EntityTakeDamage", "cl_godmode", function(ply, dmginfo)
-		local attacker = dmginfo:GetAttacker()
-		if
-			ply:IsPlayer() and
-			(
-				ply:GetInfoNum("cl_godmode", 1) == 1 or
-				attacker:IsValid() and (attacker.cl_godmode_dropped or (attacker:IsPlayer() and attacker:GetInfoNum("cl_godmode", 1) == 1))
-			)
-		then
-			dmginfo:SetDamage(0)
-			dmginfo:SetDamageForce(vector_origin)
+	util.AddNetworkString("cl_godmode_ask")
 
-			return false
+	net.Receive("cl_godmode_ask", function(len, attacker)
+		local victim = net.ReadEntity()
+		if victim:IsValid() and attacker:GetEyeTrace().Entity == victim then
+			attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
+			attacker.cl_dmg_mode_want_attack[victim] = true
+
+			if victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
+				victim:SetNWBool("cl_godmode", false)
+			end
+		end
+	end)
+
+	hook.Add("PlayerSpawn", "cl_godmode", function(ply)
+		ply.cl_dmg_mode_want_attack = nil
+	end)
+
+	local suppress = false
+
+	hook.Add("EntityTakeDamage", "cl_godmode", function(victim, dmginfo)
+		if suppress then print("oh") return end
+
+		local attacker = dmginfo:GetAttacker()
+
+		if victim:IsPlayer() then
+			if attacker:IsPlayer() then
+				attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
+				attacker.cl_dmg_mode_want_attack[victim] = true
+			end
+
+			if attacker:IsPlayer() and victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
+				victim:SetNWBool("cl_godmode", false)
+				return
+			else
+				victim:SetNWBool("cl_godmode", victim:GetInfoNum("cl_godmode", 1) == 1)
+			end
+
+			if victim:GetInfoNum("cl_godmode", 1) == 1 then
+				if attacker:IsPlayer() then
+					attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
+					attacker.cl_dmg_mode_want_attack[victim] = true
+
+					local wep = attacker:GetActiveWeapon()
+					if wep:IsValid() then
+						wep:SetNWBool("cl_godmode_lethal", true)
+					end
+
+					suppress = true
+					dmginfo:SetAttacker(victim)
+					attacker:TakeDamageInfo(dmginfo)
+					suppress = false
+				end
+
+				dmginfo:SetDamage(0)
+				dmginfo:SetDamageForce(vector_origin)
+
+				-- no blood
+				if not victim.damage_mode_bleed_color then
+					victim.damage_mode_bleed_color = victim:GetBloodColor()
+					victim:SetBloodColor(DONT_BLEED)
+				end
+
+				return false
+			end
+
+			if victim.damage_mode_bleed_color then
+				victim:SetBloodColor(victim.damage_mode_bleed_color)
+				victim.damage_mode_bleed_color = nil
+			end
 		end
 	end)
 
@@ -67,7 +169,7 @@ if SERVER then
 
 	local function AddGoddedVarToSpawnedProps(ply, mdl, ent)
 		if ply:GetInfoNum("cl_godmode",1) == 1 then
-			if !ent.cl_godmode_dropped then
+			if not ent.cl_godmode_dropped then
 				ent.cl_godmode_dropped = true
 				local phys = ent:GetPhysicsObject()
 				if IsValid(phys) then
