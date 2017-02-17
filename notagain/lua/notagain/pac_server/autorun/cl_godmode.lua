@@ -196,6 +196,6 @@ if SERVER then
 	hook.Add("PlayerSpawnedVehicle", "cl_godmode", PreventGoddedPropKills)
 	hook.Add("PlayerSpawnedProp", "cl_godmode", AddGoddedVarToSpawnedProps)
 	hook.Add("PlayerSpawnedRagdoll", "cl_godmode", AddGoddedVarToSpawnedProps)
-	hook.Add("PlayerSpawnedSWEP", "cl_godmode", AddGoddedVarToSpawnedProps)
+	hook.Add("PlayerSpawnedSWEP", "cl_godmode", function(ply, ent) AddGoddedVarToSpawnedProps(ply, _, ent) end)
 
 end
