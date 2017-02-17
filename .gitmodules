@@ -28,3 +28,6 @@
 [submodule "rebel1324"]
 	path = rebel1324
 	url = https://github.com/rebel1324/gmodstuffs
+[submodule "picker"]
+	path = picker
+	url = https://github.com/TomyLobo/picker
