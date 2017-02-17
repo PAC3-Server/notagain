@@ -85,7 +85,7 @@ if SERVER then
 	local suppress = false
 
 	hook.Add("EntityTakeDamage", "cl_godmode", function(victim, dmginfo)
-		if suppress then print("oh") return end
+		if suppress then return end
 
 		local attacker = dmginfo:GetAttacker()
 
