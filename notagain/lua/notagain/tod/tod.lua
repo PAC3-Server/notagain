@@ -2,6 +2,7 @@ local whitelist = {
 	gm_bluehills_test3 = true,
 	gm_flatgrass = true,
 	gm_construct = true,
+	gm_abstraction_extended = true,
 }
 
 if not whitelist[game.GetMap():lower()] then return end
