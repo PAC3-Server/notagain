@@ -5,8 +5,8 @@ aowl.AddCommand("fixpac", function(ply)
 	end
 end)
 
-aowl.AddCommand("wear", function(ply,filename)
-	if IsValid(ply) then
-		ply:ConCommand("pac_wear_parts " .. filename)
+aowl.AddCommand("wear", function(ply,line,file)
+	if IsValid(ply) and file then
+		ply:ConCommand("pac_wear_parts \"" .. file.."\"")
 	end
 end)
