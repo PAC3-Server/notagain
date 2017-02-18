@@ -1,5 +1,3 @@
-
-
 local tag = "player_info"
 
 if SERVER then
