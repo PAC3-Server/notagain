@@ -1,5 +1,5 @@
 AddCSLuaFile()
-
+local easylua = requirex("easylua")
 local Tag="bluescreen"
 
 if SERVER then
@@ -8,7 +8,7 @@ if SERVER then
 	aowl.AddCommand({"bloo","crash"}, function( player , line , cmd , target )
 		if cmd and target then
 			net.Start(Tag)
-			net.Send(target)
+			net.Send(easylua.FindEntity(target))
 		end
 	end,"developers",true)
 end
