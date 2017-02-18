@@ -21,15 +21,34 @@ local joystick_remap = {
 	[KEY_XBUTTON_LTRIGGER] = IN_ATTACK2,
 }
 
+local mouse_buttons = {
+	[MOUSE_MIDDLE] = true,
+}
+
+local name_to_key = {}
+
+for i = 1, 256 do
+	local name = input.GetKeyName(i)
+	if name then
+		name_to_key[name] = i
+	end
+end
+
 function battlecam.IsKeyDown(key)
 	if key == "target" then
-		return LocalPlayer():KeyDown(IN_USE) or input.IsButtonDown(KEY_XBUTTON_STICK2)
+		return input.IsButtonDown(KEY_XBUTTON_STICK2) or input.IsMouseDown(MOUSE_MIDDLE)
 	elseif key == "select_left" then
+		if battlecam.select_left then
+			return true
+		end
 		return input.IsKeyDown(KEY_LEFT) or input.IsButtonDown(KEY_XBUTTON_LEFT)
 	elseif key == "select_right" then
+		if battlecam.select_right then
+			return true
+		end
 		return input.IsKeyDown(KEY_RIGHT) or input.IsButtonDown(KEY_XBUTTON_RIGHT)
 	elseif key == "attack" then
-		return input.IsKeyDown(KEY_ENTER) or input.IsButtonDown(KEY_XBUTTON_RTRIGGER) or input.IsButtonDown(KEY_XBUTTON_LTRIGGER)
+		return input.IsButtonDown(KEY_XBUTTON_RTRIGGER) or input.IsButtonDown(KEY_XBUTTON_LTRIGGER)
 	end
 end
 
@@ -130,16 +149,18 @@ function battlecam.Enable()
 	end
 
 	HOOK("CalcView")
+	HOOK("InputMouseApply")
 	HOOK("CreateMove")
 	HOOK("PlayerBindPress")
 	HOOK("HUDShouldDraw")
 	HOOK("ShouldDrawLocalPlayer")
 	HOOK("PreDrawHUD")
+	HOOK("PostDrawHUD")
 
 	battlecam.enabled = true
 	battlecam.aim_pos = Vector()
 	battlecam.aim_dir = Vector()
-	battlecam.CreateCrosshair()
+	--battlecam.CreateCrosshair()
 	battlecam.CreateHUD()
 
 	battlecam.enemy_visibility = 0
@@ -151,18 +172,18 @@ end
 
 function battlecam.Disable()
 	UNHOOK("CalcView")
+	UNHOOK("InputMouseApply")
 	UNHOOK("CreateMove")
 	UNHOOK("PlayerBindPress")
 	UNHOOK("HUDShouldDraw")
 	UNHOOK("ShouldDrawLocalPlayer")
 	UNHOOK("PreDrawHUD")
-
-	UNHOOK("HUDPaint")
+	UNHOOK("PostDrawHUD")
 
 	battlecam.enabled = false
 
-	SafeRemoveEntity(battlecam.crosshair_ent)
-	battlecam.crosshair_ent = NULL
+	--SafeRemoveEntity(battlecam.crosshair_ent)
+	--battlecam.crosshair_ent = NULL
 	battlecam.selected_enemy = NULL
 	battlecam.want_select = false
 
@@ -176,7 +197,7 @@ end
 -- hooks
 
 do -- view
-	battlecam.cam_speed = 10
+	battlecam.cam_speed = 6
 
 	battlecam.cam_pos = Vector()
 	battlecam.cam_dir = Vector()
@@ -195,18 +216,13 @@ do -- view
 	function battlecam.CalcView()
 		local ply = LocalPlayer()
 		battlecam.aim_pos = ply:GetShootPos()
+		battlecam.aim_dir = (ply:EyePos() - battlecam.cam_pos):GetNormalized()
 
-		if battlecam.want_mouse_control then
-			battlecam.aim_dir = ply:GetAimVector()
-		else
-			battlecam.aim_dir = (ply:EyePos() - battlecam.cam_pos):GetNormalized()
-		end
+		--if not battlecam.crosshair_ent:IsValid() then
+			--battlecam.CreateCrosshair()
+		--end
 
-		if not battlecam.crosshair_ent:IsValid() then
-			battlecam.CreateCrosshair()
-		end
-
-		battlecam.SetupCrosshair(battlecam.crosshair_ent)
+		--battlecam.SetupCrosshair(battlecam.crosshair_ent)
 
 		local delta = FrameTime()
 		local target_pos = battlecam.aim_pos * 1
@@ -220,14 +236,7 @@ do -- view
 		local lerp_thing = 0
 
 		-- do a more usefull and less cinematic view if we're holding ctrl
-		if ply:KeyDown(IN_WALK) or ply:GetMoveType() == MOVETYPE_NOCLIP then
-			battlecam.aim_dir = ply:GetAimVector()
-			target_dir = battlecam.aim_dir * 1
-			target_pos = target_pos + battlecam.aim_dir * - 50
-			target_fov = 90
-
-			delta = delta * 2
-		elseif (input.IsButtonDown(KEY_PAD_5) or input.IsButtonDown(KEY_XBUTTON_STICK2)) and not battlecam.selected_enemy:IsValid() then
+		if (input.IsButtonDown(KEY_PAD_5) or input.IsMouseDown(MOUSE_MIDDLE) or input.IsButtonDown(KEY_XBUTTON_STICK2)) and not battlecam.selected_enemy:IsValid() then
 			battlecam.aim_dir = ply:GetAimVector()
 			target_dir = battlecam.aim_dir * 1
 			target_pos = target_pos + battlecam.aim_dir * - 175
@@ -260,13 +269,6 @@ do -- view
 				smooth_visible = smooth_visible + ((-visible - smooth_visible) * delta)
 
 				target_fov = target_fov + math.Clamp(smooth_visible*50, -40, 20) - 30
-			elseif battlecam.want_mouse_control then
-				battlecam.aim_dir = ply:GetAimVector()
-				target_pos = target_pos + battlecam.aim_dir * - 100
-				target_pos = target_pos + ply:EyeAngles():Right() * 70
-				target_dir = ply:GetEyeTrace().HitPos - target_pos
-
-				delta = delta * 2
 			else
 				local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 230), 0, 1) ^ 10 - 0.05, 0)
 				target_pos = Lerp(inside_sphere, smooth_pos, ply:EyePos())
@@ -282,7 +284,7 @@ do -- view
 				local up = cam_ang:Up() * FrameTime() * battlecam.cam_rotation_velocity.x
 
 				smooth_pos = smooth_pos + right*400 + up*400
-				smooth_dir = smooth_dir - right*3 - up*3
+				smooth_dir = smooth_dir - right*3.5 - up*3.5
 
 
 				do -- trace block
@@ -350,7 +352,7 @@ end
 function battlecam.SetupCrosshair(ent)
 	local enemy = battlecam.selected_enemy
 
-	if enemy:IsValid() and not battlecam.want_mouse_control then
+	if enemy:IsValid() then
 		ent:SetPos(battlecam.FindHeadPos(enemy) + enemy:GetUp() * (15 + math.sin(RealTime() * 20)))
 		ent:SetAngles(Angle(-90,0,0))
 	else
@@ -540,7 +542,6 @@ end
 
 do
 	local smooth_dir = Vector()
-	battlecam.want_mouse_control_time = 0
 	battlecam.target_cam_rotation = Angle()
 	battlecam.cam_rotation_velocity = Vector()
 
@@ -559,7 +560,45 @@ do
 				return true
 			end
 		end
+
+		for a, b in pairs(mouse_buttons) do
+			if input.IsMouseDown(a) then
+				return true
+			end
+		end
 	end
+
+	local smooth_x = 0
+	local smooth_y = 0
+	local last_select = 0
+
+	function battlecam.InputMouseApply(ucmd, x, y, ang)
+		smooth_x = smooth_x + ((x - smooth_x) * FrameTime() * 10)
+		smooth_y = smooth_y + ((y - smooth_y) * FrameTime() * 10)
+
+		battlecam.cam_rotation_velocity.y = smooth_x / 60
+		battlecam.cam_rotation_velocity.x = smooth_y / 60
+
+		local ent = battlecam.selected_enemy
+
+		if ent:IsValid() and last_select < RealTime() then
+			if x > 250 then
+				battlecam.select_right = true
+				last_select = RealTime() + 0.5
+			elseif x < -250 then
+				battlecam.select_left = true
+				last_select = RealTime() + 0.5
+			end
+		else
+			battlecam.select_left = nil
+			battlecam.select_right = nil
+		end
+
+		return true
+	end
+
+	local smooth_forward = 0
+	local reset_forward = false
 
 	function battlecam.CreateMove(ucmd)
 		local ply = LocalPlayer()
@@ -626,7 +665,7 @@ do
 
 		local ent = battlecam.selected_enemy
 
-		if ent:IsValid() and not battlecam.want_mouse_control then
+		if ent:IsValid() then
 
 			if ent:IsPlayer() and (not ent:Alive() or not ply:Alive()) then
 				battlecam.SelectTarget()
@@ -664,12 +703,7 @@ do
 			ucmd:SelectWeapon(wep)
 		end
 
-		if ucmd:GetMouseX() ~= 0 or ucmd:GetMouseY() ~= 0 then
-			battlecam.want_mouse_control = true
-			battlecam.want_mouse_control_time = RealTime() + 0.5
-		end
-
-		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and not ucmd:KeyDown(IN_WALK) and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not battlecam.want_mouse_control then
+		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and (not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) then
 
 			local dir = Vector()
 			local pos = ply:GetPos()
@@ -701,21 +735,25 @@ do
 			--dir = dir - ply:LocalToWorldAngles(Vector(joy_forward/10000, joy_side/10000, 0):Angle()):Right()
 			--dir:Normalize()
 
+			if (smooth_dir - dir):Length() > 1.5 then
+				smooth_forward = 0
+			end
+
 			if dir ~= Vector(0,0,0) then
 				smooth_dir = smooth_dir + ((dir - smooth_dir) * FrameTime() * 10)
 				ucmd:SetViewAngles(smooth_dir:Angle())
 
-				ucmd:SetForwardMove(10000)
+				ucmd:SetForwardMove(smooth_forward)
 				ucmd:SetSideMove(0)
+
+				smooth_forward = smooth_forward + ((1000 - smooth_forward) * FrameTime()*0.25)
+			else
+				smooth_forward = smooth_forward + ((0 - smooth_forward) * FrameTime()*0.25)
 			end
 		end
 
-		if not ent:IsValid() and (ucmd:KeyDown(IN_ATTACK) or ucmd:KeyDown(IN_ATTACK2)) and not battlecam.want_mouse_control then
-			ucmd:SetViewAngles(battlecam.cam_dir:Angle())
-		end
-
-		if battlecam.want_mouse_control and not ucmd:KeyDown(IN_MOVELEFT) and not ucmd:KeyDown(IN_MOVERIGHT) and not ucmd:KeyDown(IN_FORWARD) and not ucmd:KeyDown(IN_BACK) and battlecam.want_mouse_control_time < RealTime() then
-			battlecam.want_mouse_control = false
+		if pac and pac.CreateMove then
+			pac.CreateMove(ucmd)
 		end
 	end
 end
@@ -994,6 +1032,30 @@ do
 						end
 					end
 				cam.EndOrthoView()
+			end
+		end
+	end
+end
+
+do
+	local ring_mat = CreateMaterial("battlecam_select_ring_" .. os.clock(), "UnlitGeneric", {
+		["$BaseTexture"] = "effects/splashwake3",
+		["$VertexColor"] = 1,
+		["$VertexAlpha"] = 1,
+	})
+
+	local size = 40
+
+	function battlecam.PostDrawHUD()
+		local enemy = battlecam.selected_enemy
+
+		if enemy:IsValid() then
+			local pos = enemy:WorldSpaceCenter()
+			pos = pos:ToScreen()
+			if true or pos.Visible then
+				surface.SetDrawColor(255, 255, 255, 255)
+				surface.SetMaterial(ring_mat)
+				surface.DrawTexturedRectRotated(pos.x, pos.y, size, size, os.clock()*10)
 			end
 		end
 	end

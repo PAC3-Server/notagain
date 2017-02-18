@@ -32,20 +32,19 @@ if CLIENT then
 		["$VertexColor"] = 1,
 	})
 
-	local function draw_health_bar(x,y, w,h, health, last_health, fade)
-		local skew = 0
+	local function draw_health_bar(x,y, w,h, health, last_health, fade, border_size, skew)
 		surface.SetDrawColor(200, 200, 200, 50*fade)
 		draw.NoTexture()
 		draw_rect(x,y,w,h, skew)
 
 		surface.SetMaterial(gradient)
 
-		surface.SetDrawColor(255, 50, 50, 255*fade)
+		surface.SetDrawColor(200, 50, 50, 255*fade)
 		for _ = 1, 2 do
 			draw_rect(x,y,w*last_health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
 
-		surface.SetDrawColor(0, 255, 100, 255*fade)
+		surface.SetDrawColor(0, 200, 100, 255*fade)
 		for _ = 1, 2 do
 			draw_rect(x,y,w*health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
@@ -54,7 +53,7 @@ if CLIENT then
 		surface.SetMaterial(border)
 
 		for _ = 1, 2 do
-			draw_rect(x,y,w,h, skew, 1, 64,3, border:GetTexture("$BaseTexture"):Width(), true)
+			draw_rect(x,y,w,h, skew, 1, 64,border_size, border:GetTexture("$BaseTexture"):Width(), true)
 		end
 	end
 
@@ -207,6 +206,7 @@ if CLIENT then
 		end
 
 		local ply = LocalPlayer()
+		local boss_bar_y = 0
 
 		for i = #health_bars, 1, -1 do
 			local data = health_bars[i]
@@ -270,12 +270,26 @@ if CLIENT then
 
 					local w, h = prettytext.GetTextSize(name, "Candara", 20, 30, 2)
 
-					local width = math.max(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5)
-					local width2 = width/2
 					local height = 8
+					local border_size = 3
+					local skew = 0
+					local width = math.Clamp(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5,  ScrW()/2)
+
+					if max > 1000 then
+						height = 35
+						height = 35
+						pos.x = ScrW() / 2
+						pos.y = 50 + boss_bar_y
+						width = ScrW() / 1.1
+						skew = 30
+						border_size = 10
+						boss_bar_y = boss_bar_y + height + 20
+					end
+
+					local width2 = width/2
 					local text_x_offset = 15
 
-					draw_health_bar(pos.x - width2, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade)
+					draw_health_bar(pos.x - width2, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, skew)
 
 					prettytext.Draw(name, pos.x - width2 - text_x_offset, pos.y - 5, "Arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
 				end
