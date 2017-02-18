@@ -7,6 +7,7 @@ hook.Add("InitPostEntity", "fixmap", function()
 			info_teleport_destination = true,
 			func_physbox_multiplayer = true,
 			info_particle_system = true,
+			game_text = true,
 		}
 			
 		local open_these = {
