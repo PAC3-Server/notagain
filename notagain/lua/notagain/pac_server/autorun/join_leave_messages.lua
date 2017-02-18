@@ -72,8 +72,8 @@ if CLIENT then
 
 	end)
 
-	hook.Add("ChatText",tag,function(some,very,special,shit)
-		if shit == "joinleave" then 
+	hook.Add("ChatText",tag,function(_,_,_,mode)
+		if mode == "joinleave" then 
 			return true
 		end
 	end)
