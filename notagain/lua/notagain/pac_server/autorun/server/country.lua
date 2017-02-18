@@ -1,36 +1,13 @@
 -- meta --
 local meta = FindMetaTable("Player")
-
-function meta:IP()
-    return string.Split(self:IPAddress(), ":")[1]
-end
+local GeoIP = requirex("geoip")
 
 function meta:GeoIP()
 	if not GeoIP then
-		pcall(require, "geoip")
+		error("[Country] GeoIP not found")
 	end
 
-	if not GeoIP then
-		return {
-			longitude = 0,
-			latitude = 0,
-			city = "GeoIP Not Found",
-			org = "GeoIP Not Found",
-			region = "00",
-			speed = 0,
-			netmask = 0,
-			country_code = "XX",
-			country_name = "GeoIP NotFound",
-			postal_code = "00000",
-			asn = "GeoIP NotFound",
-		}
-	end
-
-	if not self:IP() then
-		error(self:Nick().." has no IP address??")
-	end
-
-	return GeoIP.Get(self:IP())
+	return GeoIP.Get(self)
 end
 
 function meta:GetCountryCode()
@@ -49,21 +26,6 @@ end
 -- country table thing --
 local CountryTable = {}
 
--- local function DebugInitializeCountryData()
---     local players = player.GetAll()
---     if not players then return end
---     for _,ply in ipairs(players) do
---         local tbl = {}
---         tbl.country_code = ply:GetCountryCode()
---         tbl.country_name = ply:GetCountryName()
---         tbl.country_city = ply:GetCity()
---         util.SetPData(ply:SteamID(),"CountryTable",tbl)
---         CountryTable[ply:SteamID()] = tbl
---     end
--- end
-
--- DebugInitializeCountryData()
-
 hook.Add("PlayerInitialSpawn","SetPlayerCountry",function(ply)
     if CountryTable[ply:SteamID()] or not IsValid(ply) then return end -- don't need to store multiple times
     local tbl = {}
@@ -72,6 +34,7 @@ hook.Add("PlayerInitialSpawn","SetPlayerCountry",function(ply)
     tbl.country_city = ply:GetCity()
     CountryTable[ply:SteamID()] = tbl
 end)
+
 hook.Add("PlayerDisconnected","CountryTableCleanupPly",function(ply)
     if not CountryTable or not IsValid(ply) then return end
     CountryTable[ply:SteamID()] = nil
