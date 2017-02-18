@@ -245,7 +245,7 @@ if SERVER then
                                     ["name"] = ply:Nick(),["icon_url"] = cache[commid],
                                     ["url"] = "http://steamcommunity.com/profiles/" .. commid
                                 },
-                                ["color"] = 0x00b300 -- ply:isAFK() and 0xb30000 or 0x00b300, -- todo replace with afk color or something
+                                ["color"] = ply:IsAFK() and 0xffff00 or 0x00b300
                             }
                         end
 						if #players > 0 then
