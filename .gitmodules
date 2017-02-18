@@ -31,3 +31,6 @@
 [submodule "picker"]
 	path = picker
 	url = https://github.com/TomyLobo/picker
+[submodule "drvrej_npc_base"]
+	path = drvrej_npc_base
+	url = https://github.com/DrVrej/VJ-Base
