@@ -1,4 +1,4 @@
-if game.GetMap():match("gm_*") then return end
+if not game.GetMap():lower():StartWith("ze_") then return end
 
 hook.Add("InitPostEntity", "fixmap", function()
 	if SERVER then
