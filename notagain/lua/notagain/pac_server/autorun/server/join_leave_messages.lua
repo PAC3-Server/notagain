@@ -33,10 +33,10 @@ if SERVER then
 		local name = data.name
 		local ip = data.address
 		local steamid = data.networkid
-		local geoipres = GeoIP.Get(ip:Split(":")[1])
-		local geoipinfo = table.ClearKeys({country_name = geoipres.country_name or "no country?",city = geoipres.city or "no city?",asn = geoipres.asn or "no asn?"})
+		local geoipres = geoip.Get(ip:Split(":")[1])
+		local geoipinfo = {geoipres.country_name,geoipres.city,geoipres.asn}
 
-		MsgC(Color(0,255,0),"[Join] ") print(name.." ("..steamid..") is connecting to the server! ["..ip..(geopipinfo and table.Count(geoipinfo) ~= 0 and " | "..table.concat(geoipinfo,", ").."]" or "]"))
+		MsgC(Color(0,255,0),"[Join] ") print(name.." ("..steamid..") is connecting to the server! ["..ip..(steamid ~= "BOT" and table.Count(geoipinfo) ~= 0 and " | "..table.concat(geoipinfo,", ").."]" or "]"))
 
 		JoinMessage(name,steamid)
 
