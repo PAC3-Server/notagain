@@ -47,9 +47,9 @@ aowl.AddCommand("maprand", function(player, line, map, time)
 end, "developers")
 
 aowl.AddCommand("maps", function(ply, line)
-	local files = file.Find("maps/" .. (line or ""):gsub("[^%w_]", "") .. "*.bsp", "GAME")
+	local files = file.Find("maps/" .. (line or ""):gsub("[^%w_]", "") .. "*.bsp", "MOD")
 	for _, fn in pairs( files ) do
-		ply:ChatPrint(fn)
+		ply:ChatPrint(fn:match("(.+)%.bsp"))
 	end
 
 	local msg="Total maps found: "..#files
