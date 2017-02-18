@@ -322,9 +322,15 @@ if SERVER then
 			return
 		end
 
-		if not (ply:KeyDown(IN_USE) and ply:GetEyeTrace().Entity == ent) then
-			return false
+		if ply:KeyDown(IN_USE) then
+			local dir = ent:NearestPoint(ply:GetShootPos()) - ply:GetShootPos()
+			local dot = ply:GetAimVector():Dot(dir) / dir:Length()
+			if dot > 0 then
+				return
+			end
 		end
+
+		return false
 	end
 
 	hook.Add("PlayerCanPickupItem", "jrpg_items", disallow)
