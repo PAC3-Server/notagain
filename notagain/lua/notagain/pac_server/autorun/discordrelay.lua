@@ -251,6 +251,7 @@ if SERVER then
 						if #players > 0 then
 							discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
 								["username"] = "Server status:",
+								["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
 								["content"] = "**Hostname:** "..GetHostName().."\n**Map:** `"..game.GetMap().."`\n**Players:** "..#players.."/"..game.MaxPlayers(),
 								["embeds"] = embeds
 							})
