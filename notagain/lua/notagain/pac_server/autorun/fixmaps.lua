@@ -9,12 +9,21 @@ hook.Add("InitPostEntity", "fixmap", function()
 			info_particle_system = true,
 			game_text = true,
 		}
+			
+		local open_these = {
+			func_door = true,
+			func_linear = true,
+		}
 
 		for _, ent in pairs(ents.GetAll()) do
 			local class = ent:GetClass()
 
 			if remove_these[ent:GetClass()] or ent:GetClass():match("trigger_*") then
 				ent:Remove()
+			end
+			
+			if open_these[ent:GetClass()] then
+				ent:Fire("Open")
 			end
 		end
 	end
