@@ -540,8 +540,8 @@ if SERVER then
 	net.Receive( "SafeZoneSetRadius" , function( len , ply )
 		local int = tonumber(net.ReadString())
 		
-		int = int > 500 and 500 or int --Clamping like a pro or not
-	    int = int < 0 and 0 or int
+		int = int >= 500 and 500 or int --Clamping like a pro or not
+	    int = int <= 0 and 1 or int
 
 		if IsValid( ply ) and ply:IsPlayer() and ply.LastSafeZone and ply.LastSafeZone:GetClass() == "safe_zone" and ply.LastSafeZone:IsAllowed( ply ) then
 			ply.LastSafeZone.Radius = int
