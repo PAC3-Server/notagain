@@ -29,6 +29,12 @@ if CLIENT then
 	local Emitter2D = ParticleEmitter(vector_origin)
 	Emitter2D:SetNoDraw(true)
 
+
+	local WarnMat = CreateMaterial(tostring{}, "UnlitGeneric", {
+		["$BaseTexture"] = "phoenix_storms/stripes",
+
+	})
+	
 	local Shiny = CreateMaterial(tostring({}) .. os.clock(), "VertexLitGeneric", {
 		["$Additive"] = 1,
 		["$Translucent"] = 1,
@@ -96,7 +102,7 @@ if CLIENT then
 	 		
 	 		self.Frame.Paint = function()
 	 			surface.SetDrawColor( 255 , 255 , 255 )
-	 			surface.SetTexture(surface.GetTextureID("phoenix_storms/stripes"))
+	 			surface.SetMaterial(WarnMat)
 	 			surface.DrawTexturedRect(0,0,self.Frame:GetWide(),self.Frame:GetTall())
 	 			surface.SetDrawColor(0,0,0)
 	 			surface.DrawOutlinedRect(0,0,self.Frame:GetWide(),self.Frame:GetTall())
@@ -143,7 +149,6 @@ if CLIENT then
 	        self.PList:SetValue( "-------------" )
 	        self.PList:SetWide( 200 )
 	        self.PList:SetPos( 125 - self.PList:GetWide() / 2 , 100 - self.PList:GetTall() / 2 )
-	        self.PList:SetTextColor( Color( 255 , 255 , 255 ) )
 	        
 	        for k,v in pairs(player.GetAll()) do
 	        	self.PList:AddChoice( v:EntIndex().." -- "..v:Nick():gsub("<(.+)=(.+)>","") )
