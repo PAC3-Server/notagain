@@ -128,7 +128,7 @@ if CLIENT then
 
 	    	self.RSet = self.Frame:Add( "DButton" )
 	        self.RSet:SetTextColor( Color( 255 , 255 , 255 ) )
-	        self.RSet:SetText( "Set" )
+	        self.RSet:SetText( "Set Radius" )
 	        self.RSet:SetWide( 125 )
 	        self.RSet:SetPos( 315 - self.RSet:GetWide() / 2 , 50 - self.RSet:GetTall() / 2 )
 	        self.RSet.Paint = function()
@@ -146,7 +146,7 @@ if CLIENT then
 	    	end
 
 			self.PList = self.Frame:Add( "DComboBox" )
-	        self.PList:SetValue( "-------------" )
+	        self.PList:SetValue( "----player----" )
 	        self.PList:SetWide( 200 )
 	        self.PList:SetPos( 125 - self.PList:GetWide() / 2 , 100 - self.PList:GetTall() / 2 )
 	        
@@ -158,7 +158,7 @@ if CLIENT then
 	        self.PAdd = self.Frame:Add( "DButton" )
 	        self.PAdd:SetTextColor( Color( 255 , 255 , 255 ) )
 	        self.PAdd:SetText( "Allow" )
-	        self.PAdd:SetWide( 50 )
+	        self.PAdd:SetWide( 60 )
 	        self.PAdd:SetPos( 275 - self.PAdd:GetWide() / 2 , 100 - self.PAdd:GetTall() / 2 )
 	        self.PAdd.Paint = function()
     			surface.SetDrawColor(0,0,0)
@@ -180,7 +180,7 @@ if CLIENT then
 	    	self.PRemove = self.Frame:Add( "DButton" )
 	        self.PRemove:SetTextColor( Color( 255 , 255 , 255 ) )
 	        self.PRemove:SetText( "Disallow" )
-	        self.PRemove:SetWide( 50 )
+	        self.PRemove:SetWide( 60 )
 	        self.PRemove:SetPos( 350 - self.PRemove:GetWide() / 2 , 100 - self.PRemove:GetTall() / 2 )
 	        self.PRemove.Paint = function()
     			surface.SetDrawColor(0,0,0)
