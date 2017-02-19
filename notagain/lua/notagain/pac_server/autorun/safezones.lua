@@ -8,6 +8,7 @@ SAFE_ZONE_BASE.PrintName = "Safe Zone"
 SAFE_ZONE_BASE.Author	 = "Yara"
 SAFE_ZONE_BASE.Spawnable = true
 SAFE_ZONE_BASE.AdminOnly = false -- Lets see what happens
+SAFE_ZONE_BASE.Category  = "SafeZone"
 
 if CLIENT then
 
@@ -169,11 +170,16 @@ if CLIENT then
 	    	
 	    	self.PAdd.DoClick = function()
 	    		local str,_ = self.PList:GetSelected() 
-	    		local plindex = string.Split( str , " -- "  )[1]
-	    		net.Start( "SafeZoneAllowPlayer" )
-	    		net.WriteString( plindex )
-	    		net.SendToServer()
-	    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was added to trusted players" )
+	    		local plindex = string.Split( str or "-2" , " -- "  )[1]
+	    		
+	    		if IsValid( Entity( tonumber( plindex ) ) ) then
+		    		
+		    		net.Start( "SafeZoneAllowPlayer" )
+		    		net.WriteString( plindex )
+		    		net.SendToServer()
+		    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was added to trusted players" )
+		    	
+		    	end
 
 	    	end
 
@@ -191,11 +197,16 @@ if CLIENT then
 	    
 	    	self.PRemove.DoClick = function()
 	    		local str,_ = self.PList:GetSelected() 
-	    		local plindex = string.Split( str , " -- "  )[1]
-	    		net.Start( "SafeZoneDisallowPlayer" )
-	    		net.WriteString( plindex )
-	    		net.SendToServer()
-	    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was removed from trusted players" )
+	    		local plindex = string.Split( str or "-2" , " -- "  )[1]
+
+	    		if IsValid( Entity( tonumber( plindex ) ) ) then
+		    		
+		    		net.Start( "SafeZoneDisallowPlayer" )
+		    		net.WriteString( plindex )
+		    		net.SendToServer()
+		    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was removed from trusted players" )
+
+		    	end
 
 	    	end
 
