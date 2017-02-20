@@ -13,13 +13,24 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 			params.maxs = ply:OBBMaxs()
 			local res = util.TraceHull(params)
 
+			local dmg = (len - 500) / 4
+
+			if not res.HitWorld and res.Entity:IsValid() then
+				local info = DamageInfo()
+				info:SetDamagePosition(data:GetOrigin())
+				info:SetDamage(dmg)
+				info:SetDamageType(DMG_FALL)
+				info:SetAttacker(ply)
+				info:SetInflictor(ply)
+				info:SetDamageForce(ply.fdmg_last_vel)
+				res.Entity:TakeDamageInfo(info)
+			end
+
 			local z = math.abs(res.HitNormal.z)
 
 			if res.Hit and (z < 0.1 or z > 0.9) then
 				local fall_damage = hook.Run("GetFallDamage", ply, len)
 				if fall_damage ~= 0 then
-					local dmg = (len - 500) / 4
-
 					if fall_damage < dmg then
 						local info = DamageInfo()
 						info:SetDamagePosition(data:GetOrigin())
