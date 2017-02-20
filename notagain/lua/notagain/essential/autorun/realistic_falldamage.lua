@@ -142,7 +142,6 @@ if SERVER then
 					local fall_damage = hook.Run("GetFallDamage", ply, len)
 					if fall_damage ~= 0 then
 						if fall_damage < dmg then
-							print(ply, len)
 							if len > 2000 then
 								local info = DamageInfo()
 								info:SetDamagePosition(data:GetOrigin())
