@@ -40,6 +40,12 @@ if CLIENT then
 end
 
 if SERVER then
+	hook.Add("DoPlayerDeath", "serverside_ragdoll", function(ply, attacker, dmginfo)
+		if dmginfo:GetDamageForce() ~= vector_origin then
+			ply.serverside_ragdoll_vel = dmginfo:GetDamageForce()
+		end
+	end)
+
 	hook.Add("PlayerDeath", "serverside_ragdoll", function(ply)
 		SafeRemoveEntity(ply:GetRagdollEntity())
 		for _, ent in ipairs(ents.FindByClass("prop_ragdoll")) do
@@ -48,14 +54,20 @@ if SERVER then
 			end
 		end
 
-		timer.Simple(0.1, function()
-			for _, ent in ipairs(ents.FindByClass("prop_ragdoll")) do
+		timer.Simple(0, function() if ply:IsValid() then ply:SetMoveType(MOVETYPE_FLYGRAVITY) end end)
+
+		hook.Add("OnEntityCreated", "serverside_ragdoll", function(ent)
+			if ply:IsValid()  then
 				if ent:GetOwner() == ply then
 					ply:SetNWEntity("serverside_ragdoll", ent)
-					break
+					for i = 1, ent:GetPhysicsObjectCount() - 1 do
+						local phys = ent:GetPhysicsObjectNum(i)
+						phys:SetVelocity(ply.serverside_ragdoll_vel or ply:GetVelocity())
+					end
 				end
+				ply.serverside_ragdoll_vel = nil
 			end
-			ply:SetMoveType(MOVETYPE_FLYGRAVITY)
+			hook.Remove("OnEntityCreated", "serverside_ragdoll")
 		end)
 	end)
 
