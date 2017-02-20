@@ -37,7 +37,7 @@ local function show_image(url)
 	chathud_image_html:SetHTML(
 		[[
 			<body>
-				<img src="]] .. url .. [[" style="max-height: 100%; max-width: 100%" />
+				<img src="]] .. url .. [[" style="max-height: 30%; max-width: 30%" />
 			</body>
 		]]
 	)
@@ -68,7 +68,7 @@ local function show_image(url)
 
 	local start = nil
 	hook.Add("Think", "chathud_image_url", function()
-		if chathud_image_html and chathud_image_html:IsLoading() then return end
+		if chathud_image_html:IsLoading() then return end
 
 		if not chathud_image_html:IsVisible() then
 			start = RealTime()
