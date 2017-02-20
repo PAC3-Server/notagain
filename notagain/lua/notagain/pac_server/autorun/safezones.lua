@@ -1,21 +1,14 @@
 AddCSLuaFile()
 
---TODO:
---remove field and add plant gen on ground
---Remove think and make it on touch
-
 local SAFE_ZONE_BASE = {}
-local SAFE_ZONE_SPHERE = {}
 
 SAFE_ZONE_BASE.Base 	 = "base_anim"
 SAFE_ZONE_BASE.Type 	 = "anim"
 SAFE_ZONE_BASE.PrintName = "Safe Zone"
 SAFE_ZONE_BASE.Author	 = "Yara"
 SAFE_ZONE_BASE.Spawnable = true
-SAFE_ZONE_BASE.AdminOnly = true
-
-SAFE_ZONE_SPHERE.Base 	 = "base_anim"
-SAFE_ZONE_SPHERE.Type 	 = "anim"
+SAFE_ZONE_BASE.AdminOnly = false -- Lets see what happens
+SAFE_ZONE_BASE.Category  = "SafeZone"
 
 if CLIENT then
 
@@ -28,6 +21,7 @@ if CLIENT then
 	local scrW, scrH = ScrW(), ScrH()
 	local resolutionScale = math.Min(scrW/1600 , scrH/900)
 	local LastSafeZoneRadius = 0
+	local PanelOpened = false
 	local ChatTag = "[SafeZone]:"
 
 	local r,g,b = 0,0.1,0
@@ -36,6 +30,12 @@ if CLIENT then
 	local Emitter2D = ParticleEmitter(vector_origin)
 	Emitter2D:SetNoDraw(true)
 
+
+	local WarnMat = CreateMaterial(tostring{}, "UnlitGeneric", {
+		["$BaseTexture"] = "phoenix_storms/stripes",
+
+	})
+	
 	local Shiny = CreateMaterial(tostring({}) .. os.clock(), "VertexLitGeneric", {
 		["$Additive"] = 1,
 		["$Translucent"] = 1,
@@ -89,83 +89,54 @@ if CLIENT then
 		["$VertexAlpha"] = 1,
 	})
 
-	local PANEL = { -- Probably will have to redo UI since it looks a bit ugly
-		
-		Init = function( self )
-			self.Header = self:Add( "Panel" )
-        	self.Header:Dock( TOP )
-        	self.Header:SetHeight( 40 )
-       		self.Header.Paint = function()
-            	local w,h = self.Header:GetWide(),self.Header:GetTall()
+	local PANEL = {
+	 	
+	 	Init = function( self )
+	 		
+	 		self.Frame = self:Add( "DFrame" )
+	 		self.Frame:SetSize( 400 , 175 )
+	 		self.Frame:SetPos( scrW / 2 - self.Frame:GetWide() / 2 , scrH / 2 - self.Frame:GetTall() / 2 )
+	 		self.Frame:ShowCloseButton( false )
+	 		self.Frame:SetDraggable( true )
+	 		self.Frame:SetTitle( "Safe Zone Settings" )
+	 		self.Frame:MakePopup()
+	 		
+	 		self.Frame.Paint = function()
+	 			surface.SetDrawColor( 255 , 255 , 255 )
+	 			surface.SetMaterial(WarnMat)
+	 			surface.DrawTexturedRect(0,0,self.Frame:GetWide(),self.Frame:GetTall())
+	 			surface.SetDrawColor(0,0,0)
+	 			surface.DrawOutlinedRect(0,0,self.Frame:GetWide(),self.Frame:GetTall())
+	 			surface.DrawRect(0,0,self.Frame:GetWide(),25)
+	 		end
 
-            	surface.SetDrawColor( 255 , 255 , 255 , 255 )
-           		draw.NoTexture()
-            	surface.DrawRect( 0 , h - 2 , w , 2)
-        	end
-
-        	self.Title = self.Header:Add( "DLabel" )
-	        self.Title:SetFont( "DermaLarge" )
-	        self.Title:SetTextColor( Color( 255, 255, 255, 255 ) )
-	        self.Title:Dock( TOP )
-	        self.Title:SetHeight( 40 )
-	        self.Title:SetContentAlignment( 2 )
-	        self.Title:SetText( "Safe Zone" )
-
-	        self.Radius = self:Add( "Panel" )
-	        self.Radius:Dock( TOP )
-	        self.Radius:DockMargin( 0 , 10 , 0 , 0 )
-	        self.Radius:SetHeight( 30 )
-	        self.Radius:SetWide( self:GetWide() )
-	        self.Radius.Paint = function()
-	        	local w,h = self.Radius:GetWide(),self.Radius:GetTall()
-	            local Poly = {
-		            { x = ( 20 / resolutionScale ),   y = h }, --100/200
-		            { x = 0,					      y = 0 }, --100/100
-		            { x = w-( 20 / resolutionScale ), y = 0 }, --200/100
-		            { x = w,                          y = h }, --200/200
-		        }
-	        	
-	        	surface.SetDrawColor( Color( 0 , 97 , 155 , 220 ) )
-	        	draw.NoTexture()
-	        	surface.DrawPoly(Poly)
-	        end
-
-	        self.RName = self.Radius:Add( "DLabel" )
-	        self.RName:SetFont( "SZFont" )
-	        self.RName:SetTextColor( Color( 255, 255, 255, 255 ) )
-	        self.RName:Dock( LEFT )
-	        self.RName:SetContentAlignment( 5 )
-	        self.RName:DockMargin( 25 , 0 , 0 , 0 )
-	        self.RName:SetText( "Radius:" )
-
-	        self.RSlider = self.Radius:Add( "DNumSlider" )
-	        self.RSlider:Dock( RIGHT)
-	        self.RSlider:SetContentAlignment( 5 )
-	        self.RSlider:DockMargin( 0 , 0 , 90 , 0 )
-	        self.RSlider:SetSize( 350, 20 )
+	 		self.RSlider = self.Frame:Add( "DNumSlider" )
+	        self.RSlider:SetSize( 400 , 50 )
+	        self.RSlider:SetPos( 60 - self.RSlider:GetWide() / 2 , 50 - self.RSlider:GetTall() / 2 )
 	        self.RSlider:SetMin( 0 )
-	        self.RSlider:SetMax( 1000 )
+	        self.RSlider:SetMax( 500 )
 	        self.RSlider:SetDecimals( 0 )
 	        self.RSlider.OnValueChanged = function( _ , int )
-	        	int = int > 1000 and 1000 or int 
-	        	int = int < 0 and 0 or int
 	        	LastSafeZoneRadius = math.Round( int )
 	        end
 
+	        self.RSlider.Paint = function()
+	        	surface.SetDrawColor( 255 , 255 , 255 )
+	        	surface.DrawRect(165,13,self.RSlider:GetWide()-185,self.RSlider:GetTall()-20)
+	        	surface.SetDrawColor( 0 , 0 , 0 )
+	        	surface.DrawOutlinedRect(165,13,self.RSlider:GetWide()-185,self.RSlider:GetTall()-20)
+	    	end
 
-	        self.RSet = self.Radius:Add( "DButton" )
-	        self.RSet:Dock( LEFT )
-	        self.RSet:SetContentAlignment( 5 )
-	        self.RSet:DockMargin( 205 , 0 , 0 , 0 )
+	    	self.RSet = self.Frame:Add( "DButton" )
 	        self.RSet:SetTextColor( Color( 255 , 255 , 255 ) )
-	        self.RSet:SetText( "Set" )
-	        self.RSet:SetWide( 80 )
-
+	        self.RSet:SetText( "Set Radius" )
+	        self.RSet:SetWide( 125 )
+	        self.RSet:SetPos( 315 - self.RSet:GetWide() / 2 , 50 - self.RSet:GetTall() / 2 )
 	        self.RSet.Paint = function()
-	        	local w,h = self.RSet:GetWide(),self.RSet:GetTall()
-	        	draw.NoTexture()
-	        	surface.SetDrawColor( Color( 100 , 175 , 175 , 225 ) )
-	        	surface.DrawRect( 3 , 3 , w-6 , h-6 )
+    			surface.SetDrawColor(0,0,0)
+    			surface.DrawRect(0,0,self.RSet:GetWide(),self.RSet:GetTall())
+    			surface.SetDrawColor( 255 , 255 , 255 )
+    			surface.DrawOutlinedRect(0,0,self.RSet:GetWide(),self.RSet:GetTall())
 	    	end
 
 	    	self.RSet.DoClick = function()
@@ -175,100 +146,89 @@ if CLIENT then
 	    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag .. " radius set to "..LastSafeZoneRadius )
 	    	end
 
-	        self.Players = self:Add( "Panel" )
-	        self.Players:Dock( TOP )
-	        self.Players:DockMargin( 0 , 10 , 0 , 0 )
-	        self.Players:SetHeight( 30 )
-	        self.Players:SetWide( self:GetWide() )
-	        self.Players.Paint = function()
-	        	local w,h = self.Players:GetWide(),self.Players:GetTall()
-	            local Poly = {
-		            { x = ( 20 / resolutionScale ),   y = h }, --100/200
-		            { x = 0,					      y = 0 }, --100/100
-		            { x = w-( 20 / resolutionScale ), y = 0 }, --200/100
-		            { x = w,                          y = h }, --200/200
-		        }
-	        	
-	        	surface.SetDrawColor( Color( 0 , 97 , 155 , 220 ) )
-	        	draw.NoTexture()
-	        	surface.DrawPoly(Poly)
-	        end
-
-	        self.PName = self.Players:Add( "DLabel" )
-	        self.PName:SetFont( "SZFont" )
-	        self.PName:SetTextColor( Color( 255, 255, 255, 255 ) )
-	        self.PName:Dock( LEFT )
-	        self.PName:SetContentAlignment( 6 )
-	        self.PName:DockMargin( 30 , 0 , 0 , 0 )
-	        self.PName:SetText( "Players:" )
-
-	        self.PList = self.Players:Add( "DComboBox" )
-	        self.PList:Dock( LEFT )
-	        self.PList:DockMargin( 10 , 0 , 0 , 0 )
-	        self.PList:SetValue( "-------------" )
-	        self.PList:SetWide( 100 )
-	        self.PList:SetTextColor( Color( 255 , 255 , 255 ) )
+			self.PList = self.Frame:Add( "DComboBox" )
+	        self.PList:SetValue( "----player----" )
+	        self.PList:SetWide( 200 )
+	        self.PList:SetPos( 125 - self.PList:GetWide() / 2 , 100 - self.PList:GetTall() / 2 )
 	        
-	        for k,v in ipairs(player.GetAll()) do
+	        for k,v in pairs(player.GetAll()) do
 	        	self.PList:AddChoice( v:EntIndex().." -- "..v:Nick():gsub("<(.+)=(.+)>","") )
 	        end
-	        
-	        self.PList.Paint = function()
-	        	local w,h = self.PList:GetWide(),self.PList:GetTall()
-	        	draw.NoTexture()
-	        	surface.SetDrawColor( Color( 100 , 175 , 175 , 225 ) )
-	        	surface.DrawRect( 3 , 3 , w-6 , h-6 )
-	        end
 
-	        self.PAdd = self.Players:Add( "DButton" )
-	        self.PAdd:Dock( LEFT )
-	        self.PAdd:DockMargin( 5 , 0 , 0 , 0 )
+
+	        self.PAdd = self.Frame:Add( "DButton" )
 	        self.PAdd:SetTextColor( Color( 255 , 255 , 255 ) )
 	        self.PAdd:SetText( "Allow" )
-	        self.PAdd:SetWide( 80 )
-	        
+	        self.PAdd:SetWide( 60 )
+	        self.PAdd:SetPos( 275 - self.PAdd:GetWide() / 2 , 100 - self.PAdd:GetTall() / 2 )
 	        self.PAdd.Paint = function()
-	        	local w,h = self.PAdd:GetWide(),self.PAdd:GetTall()
-	        	draw.NoTexture()
-	        	surface.SetDrawColor( Color( 100 , 175 , 175 , 225 ) )
-	        	surface.DrawRect( 3 , 3 , w-6 , h-6 )
+    			surface.SetDrawColor(0,0,0)
+    			surface.DrawRect(0,0,self.PAdd:GetWide(),self.PAdd:GetTall())
+    			surface.SetDrawColor( 255 , 255 , 255 )
+    			surface.DrawOutlinedRect(0,0,self.PAdd:GetWide(),self.PAdd:GetTall())
 	    	end
 	    	
 	    	self.PAdd.DoClick = function()
 	    		local str,_ = self.PList:GetSelected() 
-	    		local plindex = string.Split( str , " -- "  )[1]
-	    		net.Start( "SafeZoneAllowPlayer" )
-	    		net.WriteString( plindex )
-	    		net.SendToServer()
-	    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was added to trusted players" )
+	    		local plindex = string.Split( str or "-2" , " -- "  )[1]
+	    		
+	    		if IsValid( Entity( tonumber( plindex ) ) ) then
+		    		
+		    		net.Start( "SafeZoneAllowPlayer" )
+		    		net.WriteString( plindex )
+		    		net.SendToServer()
+		    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was added to trusted players" )
+		    	
+		    	end
 
 	    	end
 
-	    	self.PRemove = self.Players:Add( "DButton" )
-	        self.PRemove:Dock( LEFT )
-	        self.PRemove:DockMargin( 5 , 0 , 0 , 0 )
+	    	self.PRemove = self.Frame:Add( "DButton" )
 	        self.PRemove:SetTextColor( Color( 255 , 255 , 255 ) )
 	        self.PRemove:SetText( "Disallow" )
-	        self.PRemove:SetWide( 80 )
-	        
+	        self.PRemove:SetWide( 60 )
+	        self.PRemove:SetPos( 350 - self.PRemove:GetWide() / 2 , 100 - self.PRemove:GetTall() / 2 )
 	        self.PRemove.Paint = function()
-	        	local w,h = self.PRemove:GetWide(),self.PRemove:GetTall()
-	        	draw.NoTexture()
-	        	surface.SetDrawColor( Color( 100 , 175 , 175 , 225 ) )
-	        	surface.DrawRect( 3 , 3 , w-6 , h-6 )
+    			surface.SetDrawColor(0,0,0)
+    			surface.DrawRect(0,0,self.PRemove:GetWide(),self.PRemove:GetTall())
+    			surface.SetDrawColor( 255 , 255 , 255 )
+    			surface.DrawOutlinedRect(0,0,self.PRemove:GetWide(),self.PRemove:GetTall())
 	    	end
-	    	
+	    
 	    	self.PRemove.DoClick = function()
 	    		local str,_ = self.PList:GetSelected() 
-	    		local plindex = string.Split( str , " -- "  )[1]
-	    		net.Start( "SafeZoneDisallowPlayer" )
-	    		net.WriteString( plindex )
-	    		net.SendToServer()
-	    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was removed from trusted players" )
+	    		local plindex = string.Split( str or "-2" , " -- "  )[1]
+
+	    		if IsValid( Entity( tonumber( plindex ) ) ) then
+		    		
+		    		net.Start( "SafeZoneDisallowPlayer" )
+		    		net.WriteString( plindex )
+		    		net.SendToServer()
+		    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was removed from trusted players" )
+
+		    	end
 
 	    	end
- 
-		end,
+
+
+	    	self.Exit = self.Frame:Add( "DButton" )
+	        self.Exit:SetTextColor( Color( 255 , 255 , 255 ) )
+	        self.Exit:SetText( "Exit" )
+	        self.Exit:SetWide( 100 )
+	        self.Exit:SetPos( 200 - self.Exit:GetWide() / 2 , 150 - self.Exit:GetTall() / 2 )
+	       	self.Exit.Paint = function()
+    			surface.SetDrawColor(0,0,0)
+    			surface.DrawRect(0,0,self.Exit:GetWide(),self.Exit:GetTall())
+    			surface.SetDrawColor( 255 , 255 , 255 )
+    			surface.DrawOutlinedRect(0,0,self.Exit:GetWide(),self.Exit:GetTall())
+	    	end
+	    	
+	    	self.Exit.DoClick = function()
+	    		self.Frame:Close()
+	    		PanelOpened = false
+	    	end
+	 	
+	 	end,
 
 	}
 	
@@ -373,18 +333,12 @@ if CLIENT then
 		hook.Remove( "PostDrawTranslucentRenderables", "SafeZone"..self:EntIndex() )
 	end
 
-	function SAFE_ZONE_SPHERE:Draw()
-		self:DrawModel()
-	end
-
 	net.Receive( "SafeZonePanel" , function()
-
-		local SafeZonePanel = vgui.CreateFromTable( SAFE_ZONE_PANEL )
-		SafeZonePanel:SetSize( 400 , 200 )
-		SafeZonePanel:SetPos( scrW/2-SafeZonePanel:GetWide()/2 , scrH/2-SafeZonePanel:GetTall()/2 )
-		SafeZonePanel:MakePopup()
-
-		timer.Simple( 5 , function() SafeZonePanel:Remove() end )
+		
+		if PanelOpened then return end 
+		
+		vgui.CreateFromTable( SAFE_ZONE_PANEL )
+		PanelOpened = true
 	
 	end)
 
@@ -420,7 +374,7 @@ if SERVER then
 	
 	end
 
- 	function SafeZonePickup( ply , ent )
+ 	function SafeZoneBlackList( ply , ent )
 		if ent:GetClass() == "safe_zone" then
 			return false
 		end
@@ -430,9 +384,9 @@ if SERVER then
 	   	
 		if !tr.Hit or ply.SafeZone then return end 
 		
-		local SpawnPos = tr.HitPos --+ tr.HitNormal  
+		local SpawnPos = tr.HitPos 
 
-		for k,v in pairs(ents.FindInSphere(	SpawnPos,1000)) do
+		for k,v in pairs(ents.FindInSphere(	SpawnPos + Vector( 0 , 0 , 50 ) , 500 ) ) do
 			if v:IsPlayer() and v != ply then
 				return
 			end
@@ -441,8 +395,8 @@ if SERVER then
 		
 		local ent = ents.Create( "safe_zone" )
 		ent:SetPos( SpawnPos ) 
-		ent:SetModel("models/props_combine/CombineThumper002.mdl")
-		ent:SetModelScale(0.4)
+		ent:SetModel( "models/props_combine/CombineThumper002.mdl" )
+		ent:SetModelScale( 0.4 )
 		ent:Spawn()
 		ent:Activate() 
 
@@ -452,34 +406,33 @@ if SERVER then
 		ply.LastSafeZone = ent
 		ply.SafeZone = true
 
-		local sphere = ents.Create( "prop_physics" )
-		sphere:SetModel("models/XQM/Rails/gumball_1.mdl")
-		sphere:SetMaterial("models/props_combine/portalball001_sheet")
-		sphere:SetPos(ent:GetPos())
-		sphere:SetParent( ent )
-		sphere:SetColor( Color(150,255,150,255) )
-		sphere:SetAngles(Angle(90,0,0))
-		sphere:Spawn()
-		sphere:Activate()
-		sphere:DrawShadow(false)
-		sphere.Protected = true
+		local Sphere = ents.Create( "prop_physics" )
+		Sphere:SetModel( "models/XQM/Rails/gumball_1.mdl" )
+		Sphere:SetMaterial( "models/props_combine/portalball001_sheet" )
+		Sphere:SetPos( ent:WorldSpaceCenter() + Vector( 0 , 0 , 50 ) )
+		Sphere:SetParent( ent )
+		Sphere:SetColor( Color( 150 , 255 , 150 , 100 ) )
+		Sphere:SetAngles( Angle( 90 , 0 , 0 ) )
+		Sphere:Spawn()
+		Sphere:Activate()
+		Sphere:DrawShadow( false )
+		Sphere.Protected = true
 
-		local sphere2 = ents.Create( "prop_physics" )
-		sphere2:SetModel("models/XQM/Rails/gumball_1.mdl")
-		sphere2:SetMaterial("models/props_combine/portalball001_sheet")
-		sphere2:SetPos(ent:GetPos())
-		sphere2:SetParent( ent )
-		sphere2:SetColor( Color(150,255,150,255) )
-		sphere2:SetAngles(Angle(-90,0,0))
-		sphere2:Spawn()
-		sphere2:Activate()
-		sphere2:DrawShadow(false)
-		sphere2.Protected = true
-		
-		timer.Create("SafeZoneModelScale"..ent:EntIndex(),1,0,function() 
-			sphere:SetModelScale(ent.Radius*2*sphere:GetModelScale()/sphere:BoundingRadius(),1)
-			sphere2:SetModelScale(ent.Radius*2*sphere2:GetModelScale()/sphere2:BoundingRadius(),1)
-		end)
+		local Sphere2 = ents.Create( "prop_physics" )
+		Sphere2:SetModel( "models/XQM/Rails/gumball_1.mdl" )
+		Sphere2:SetMaterial( "models/props_combine/portalball001_sheet" )
+		Sphere2:SetPos( ent:WorldSpaceCenter() + Vector( 0 , 0 , 50 ) )
+		Sphere2:SetParent( ent )
+		Sphere2:SetColor( Color( 150 , 255 , 150 , 100 ) )
+		Sphere2:SetAngles( Angle( -90 , 0 , 0 ) )
+		Sphere2:Spawn()
+		Sphere2:Activate()
+		Sphere2:DrawShadow( false )
+		Sphere2.Protected = true
+
+		ent.Sphere = Sphere 
+		ent.Sphere2 = Sphere2
+		ent.TempRadius = 0
 
 		return ent 
 		
@@ -487,8 +440,8 @@ if SERVER then
 
 	function SAFE_ZONE_BASE:Initialize()
 	
-		self:SetMoveType(MOVETYPE_NONE)
-		self:SetSolid(SOLID_VPHYSICS)
+		self:SetMoveType( MOVETYPE_NONE )
+		self:SetSolid( SOLID_VPHYSICS )
 		
 		self:SetUnFreezable( true )
 
@@ -496,17 +449,23 @@ if SERVER then
 
 	
 	function SAFE_ZONE_BASE:Use( activator , caller )
-		if self:IsAllowed( caller ) or caller:IsAdmin() then
+		if self:IsAllowed( caller ) then
 			caller.LastSafeZone = self
-			net.Start("SafeZonePanel")
-			net.Send(caller)
+			net.Start( "SafeZonePanel" )
+			net.Send( caller )
 		end
 
 	end
 	 
 	function SAFE_ZONE_BASE:Think() --stays like this for now
+
+
+		local scale = self.Sphere:GetModelScale() / self.Sphere:BoundingRadius()
+
+		self.Sphere:SetModelScale( self.Radius * 2 * scale , 0 )
+		self.Sphere2:SetModelScale( self.Radius * 2 * scale , 0 )
 		
-		for k,v in pairs(ents.FindInSphere(self:GetPos(),self.Radius)) do
+		for _,v in pairs( ents.FindInSphere( self:WorldSpaceCenter() + Vector( 0 , 0 , 50 ) , self.Radius ) ) do
 
 			if v:CPPIGetOwner() then
 				
@@ -518,13 +477,13 @@ if SERVER then
 
 					local dif = v:GetPos() - self:GetPos()
 					
-					v:SetPos( self:GetPos() + dif/self.Radius * (self.Radius +  v:GetPos():Distance(self:GetPos()))  )
+					v:SetPos( self:GetPos() + dif / self.Radius * ( self.Radius +  v:GetPos():Distance( self:GetPos() ) ) )
 
 			end
 		
 		end
 
-		self:NextThink( CurTime() + 0.1 )
+		self:NextThink( CurTime() )
 		
 		return true
 
@@ -535,7 +494,6 @@ if SERVER then
 			self:CPPIGetOwner().SafeZone = false
 		end
 		
-		timer.Destroy( "SafeZoneModelScale"..self:EntIndex() )
 	end
 
 	function SAFE_ZONE_BASE:AllowPlayer( ply )
@@ -558,7 +516,8 @@ if SERVER then
 		end
 	end
 	
-	hook.Add( "PhysgunPickup" , "SafeZoneAntiPickup" , SafeZonePickup )
+	hook.Add( "PhysgunPickup" , "SafeZoneAntiPickup" , SafeZoneBlackList )
+	hook.Add( "CanDrive" , "SafeZoneAntiDrive" , SafeZoneBlackList )
 
 	net.Receive( "SafeZoneAllowPlayer" , function( len , ply )
 		local index = net.ReadString()
@@ -579,10 +538,13 @@ if SERVER then
 	end )
 
 	net.Receive( "SafeZoneSetRadius" , function( len , ply )
-		local int = net.ReadString()
+		local int = tonumber(net.ReadString())
+		
+		int = int >= 500 and 500 or int --Clamping like a pro or not
+	    int = int <= 0 and 1 or int
 
 		if IsValid( ply ) and ply:IsPlayer() and ply.LastSafeZone and ply.LastSafeZone:GetClass() == "safe_zone" and ply.LastSafeZone:IsAllowed( ply ) then
-			ply.LastSafeZone.Radius = tonumber( int ) 
+			ply.LastSafeZone.Radius = int
 		end
 
 	end )

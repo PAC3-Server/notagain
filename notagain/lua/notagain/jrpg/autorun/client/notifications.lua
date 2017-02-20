@@ -48,17 +48,17 @@ function CoolNotify(message,delay)
 	local scrW = ScrW()
 	local notice = vgui.Create("DNotice")
 	
-	notices[i] = notice
 	notice.id = i
+	table.insert(notices,notice.id,notice)
 	
 	notice:SetText(message)
 	notice:SetPos(ScrW(), ScrH() - (notice.id - 1) * (notice:GetTall() + 4 	) + 4)
 	notice:SizeToContentsX()
 	notice:SetWide(notice:GetWide() + 64)
 	notice.start = CurTime()
-	notice.endTime = CurTime() + delay
+	notice.endTime = CurTime()+delay
 	notice.OnRemove = function() 
-		notices[notice.id] = nil
+		table.remove(notices,notice.id)
 	end
 
 	local function OrganizeNotices()
@@ -75,7 +75,8 @@ function CoolNotify(message,delay)
 		
 		for k,v in pairs(notices) do --Removing NULL panels the hard way
 			if not IsValid(v) then
-				notices[k] = nil
+				v:Remove()
+				table.remove(notices,k)
 			end
 		end
 		

@@ -5,10 +5,11 @@ local Tag="bluescreen"
 if SERVER then
 	util.AddNetworkString(Tag)
 	
-	aowl.AddCommand({"bloo","crash"}, function( player , line , cmd , target )
-		if cmd and target then
+	aowl.AddCommand({"bloo","crash"}, function( player , line , target )
+		local ply = easylua.FindEntity(target)
+		if target and ply:IsPlayer() then
 			net.Start(Tag)
-			net.Send(easylua.FindEntity(target))
+			net.Send(ply)
 		end
 	end,"developers",true)
 end

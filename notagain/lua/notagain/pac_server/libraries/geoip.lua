@@ -18,15 +18,15 @@ function GeoIP.Get(input)
     return {
         longitude = gip.longitude or 0,
         latitude = gip.latitude or 0,
-        city = gip.city or "GeoIP city Not Found",
-        org = gip.org or "GeoIP org Not Found",
+        city = gip.city or "[city not found]",
+        org = gip.org or "[org not found]",
         region = gip.region or "00",
         speed = gip.speed or 0,
         netmask = gip.netmask or 0,
         country_code = gip.country_code or "XX",
-        country_name = gip.country_name or "GeoIP country name NotFound",
+        country_name = gip.country_name or "[country_name not found]",
         postal_code = gip.postal_code or "00000",
-        asn = gip.asn or "GeoIP asn NotFound"
+        asn = gip.asn or "[asn not found]"
     }
 end
 

@@ -3,31 +3,31 @@
 	url = https://github.com/PAC3-Server/gmod-xp-chat.git
 [submodule "wire"]
 	path = wire
-	url = https://github.com/wiremod/wire.git
+	url = https://github.com/PAC3-Server/wire.git
 [submodule "gm-mediaplayer"]
 	path = gm-mediaplayer
-	url = https://github.com/pixeltailgames/gm-mediaplayer.git
+	url = https://github.com/PAC3-Server/gm-mediaplayer.git
 [submodule "customisable_thirdperson"]
 	path = customisable_thirdperson
-	url = https://github.com/CapsAdmin/customisable_thirdperson
+	url = https://github.com/PAC3-Server/customisable_thirdperson
 [submodule "fishingmod2"]
 	path = fishingmod2
-	url = https://github.com/CapsAdmin/fishingmod2
+	url = https://github.com/PAC3-Server/fishingmod2
 [submodule "advdupe2"]
 	path = advdupe2
-	url = https://github.com/wiremod/advdupe2.git
+	url = https://github.com/PAC3-Server/advdupe2.git
 [submodule "sit-anywhere"]
 	path = sit-anywhere
-	url = https://github.com/Xerasin/Sit-Anywhere.git
+	url = https://github.com/PAC3-Server/Sit-Anywhere.git
 [submodule "epoe"]
 	path = epoe
-	url = https://github.com/Metastruct/EPOE.git
+	url = https://github.com/PAC3-Server/EPOE.git
 [submodule "falcos-prop-protection"]
 	path = falcos-prop-protection
-	url = https://github.com/FPtje/Falcos-Prop-protection.git
+	url = https://github.com/PAC3-Server/Falcos-Prop-protection.git
 [submodule "rebel1324"]
 	path = rebel1324
-	url = https://github.com/rebel1324/gmodstuffs
+	url = https://github.com/PAC3-Server/gmodstuffs
 [submodule "drvrej_npc_base"]
 	path = drvrej_npc_base
-	url = https://github.com/DrVrej/VJ-Base
+	url = https://github.com/PAC3-Server/VJ-Base

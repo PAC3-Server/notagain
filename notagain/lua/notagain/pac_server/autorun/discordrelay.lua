@@ -245,12 +245,13 @@ if SERVER then
                                     ["name"] = ply:Nick(),["icon_url"] = cache[commid],
                                     ["url"] = "http://steamcommunity.com/profiles/" .. commid
                                 },
-                                ["color"] = 0x00b300 -- ply:isAFK() and 0xb30000 or 0x00b300, -- todo replace with afk color or something
+                                ["color"] = ply:IsAFK() and 0xffff00 or 0x00b300
                             }
                         end
 						if #players > 0 then
 							discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
 								["username"] = "Server status:",
+								["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
 								["content"] = "**Hostname:** "..GetHostName().."\n**Map:** `"..game.GetMap().."`\n**Players:** "..#players.."/"..game.MaxPlayers(),
 								["embeds"] = embeds
 							})
