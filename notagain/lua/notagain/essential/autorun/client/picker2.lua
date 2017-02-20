@@ -39,7 +39,8 @@
 
 if not CLIENT then return end -- to avoid stupidity
 
-local validEntity = _R.Entity.IsValid
+--local validEntity = _R.Entity.IsValid
+local validEntity = FindMetaTable("Entity").IsValid
 
 -- configuration is now done via cvars:
 picker2_centerdist = CreateClientConVar("picker2_centerdist", 16, true, false)
@@ -98,7 +99,7 @@ hook.Add("EntityRemoved", "picker2", function(ent)
 end)
 
 --local LocalToWorld = FindMetaTable("Entity").LocalToWorld
-local ToScreen = _R.Vector.ToScreen
+local ToScreen = FindMetaTable("Vector").ToScreen
 local SetDrawColor = surface.SetDrawColor
 local DrawLine = surface.DrawLine
 
