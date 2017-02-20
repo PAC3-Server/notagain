@@ -107,7 +107,7 @@ if SERVER then
 			callback(discordrelay.AvatarCache[commid])
 		else
 			http.Fetch("http://steamcommunity.com/profiles/" .. commid .. "?xml=1", function(content, size)
-				local ret = content:match("<avatarFull><!%[CDATA%[(.-)%]%]></avatarFull>")
+				local ret = content:match("<avatarFull><!%[CDATA%[(.-)%]%]></avatarFull>") or "http://i.imgur.com/ovW4MBM.png"
 				discordrelay.AvatarCache[commid] = ret
 				callback(ret)
 			end)
