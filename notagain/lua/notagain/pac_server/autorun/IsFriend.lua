@@ -10,6 +10,9 @@ if SERVER then
 	hook.Add( "PlayerInitialSpawn" , Tag.." InitTable" , function( ply )
 		
 		ply.Friends = {}
+
+		net.Start( Tag.." Start" )
+		net.Send( ply )
 	
 	end)
 
