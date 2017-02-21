@@ -32,6 +32,15 @@ else
         Decoding errors
         Missing textures
         Fails
+        999999999 Mass and Damage
+        Failed to load backup
+        Loading lag
+        Laggy particles
+        Sunbeams
+        Download aborted
+        Downloading 8753 verticies...
+        Loading 2917 faces..
+        Downloading 87 models
     ]]
 end
 
