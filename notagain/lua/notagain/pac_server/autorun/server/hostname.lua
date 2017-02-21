@@ -27,6 +27,11 @@ else
         34.21 ms
         TimerX frustration
         MEGALOVANIA
+        Weaboos
+        No backups
+        Decoding errors
+        Missing textures
+        Fails
     ]]
 end
 
