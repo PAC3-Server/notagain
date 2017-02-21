@@ -50,8 +50,10 @@ if SERVER then
 		
 	end)
 
-	function GAMEMODE:PlayerConnect() end
-	function GAMEMODE:PlayerDisconnected() end
+	hook.Add("Initialize",tag,function()
+		function GAMEMODE:PlayerConnect() end
+		function GAMEMODE:PlayerDisconnected() end
+	end)
 
 end
 
