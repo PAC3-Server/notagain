@@ -37,7 +37,7 @@ local function show_image(url)
 	chathud_image_html:SetHTML(
 		[[
 			<body>
-				<img src="]] .. url .. [[" height="30%" />
+				<img src="]] .. string.JavascriptSafe(url) .. [[" style="max-height: 30%; max-width: 30%" />
 			</body>
 		]]
 	)
