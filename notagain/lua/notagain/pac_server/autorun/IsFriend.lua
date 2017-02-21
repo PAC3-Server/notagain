@@ -13,7 +13,7 @@ if SERVER then
 	hook.Add( "PlayerDisconnected" , "RemoveUselessFriend" , function( ply )
 
 		for _ , v in pairs( player.GetAll() ) do
-			table.remove( v.Friends , ply:EntIndex() )
+			v:RemoveFriend( ply )
 		end
 
 	end )
