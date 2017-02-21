@@ -513,13 +513,14 @@ do -- groups
 		return self:GetNetworkedString("UserGroup"):lower()
 	end
 
-	team.SetUp(1, "players", 		Color(68, 	112, 146))
+	team.SetUp(1, "players", Color(255, 70, 0, 255))
+	team.SetUp(2, "friends", Color(60, 127, 255, 255))
+
 	--[[
 	team.SetUp(2, "developers", 	Color(147, 63,  147))
 	team.SetUp(3, "owners", 		Color(207, 110, 90))
 	team.SetUp(4, "emeritus", 		Color(98, 107, 192))
 	]]
-	team.SetUp(3002, "Players", Color(68, 112, 146))
 
 	if SERVER then
 		local dont_store =
@@ -555,7 +556,7 @@ do -- groups
 			name = name:Trim()
 			name = alias[name] or name
 
-			self:SetTeam(9003)
+			self:SetTeam(1)
 			self:SetNetworkedString("UserGroup", name)
 			--[[
 			umsg.Start("aowl_join_team")
