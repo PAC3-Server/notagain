@@ -53,7 +53,7 @@ if SERVER then
 	hook.Add("Initialize",tag,function()
 		function GAMEMODE:PlayerConnect() end
 		function GAMEMODE:PlayerDisconnected() end
-	end
+	end)
 
 end
 
