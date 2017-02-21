@@ -28,3 +28,6 @@
 [submodule "rebel1324"]
 	path = rebel1324
 	url = https://github.com/PAC3-Server/gmodstuffs
+[submodule "vj-base"]
+	path = vj-base
+	url = https://github.com/PAC3-Server/VJ-Base.git
