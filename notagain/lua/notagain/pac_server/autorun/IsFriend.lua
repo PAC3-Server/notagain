@@ -4,6 +4,7 @@ if SERVER then
 
 	local META = FindMetaTable( "Player" )
 	
+	util.AddNetworkString( Tag.." Start" )
 	util.AddNetworkString( Tag )
 
 	hook.Add( "PlayerInitialSpawn" , Tag.." InitTable" , function( ply )
@@ -69,7 +70,7 @@ if CLIENT then
 
 	local Friends = Friends or {}
 	
-	hook.Add( "Initialize" , Tag.." Check" , function()
+	net.Receive( Tag.." Start" , function()
 		
 		for _ , v in pairs( player.GetAll() ) do
 			if v:GetFriendStatus() == "friend" then
