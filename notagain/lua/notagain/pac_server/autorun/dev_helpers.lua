@@ -1,8 +1,7 @@
 function Say(string)
-	string.Replace( string, '"', '\"' )
 	if CLIENT then
-		LocalPlayer():ConCommand("say \""..string.."\"")
+		RunConsoleCommand("say", string)
 	elseif SERVER then
-		game.ConsoleCommand( "say "..string.."\n")	
+		game.ConsoleCommand("say "..string.."\n")	
 	end
 end
