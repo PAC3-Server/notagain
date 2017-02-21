@@ -1,7 +1,7 @@
 local Tag = "FriendSystem"
 
 if SERVER then
-
+	AddCSLuaFile()
 	local META = FindMetaTable( "Player" )
 	
 	util.AddNetworkString( Tag )
