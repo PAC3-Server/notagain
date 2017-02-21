@@ -548,9 +548,9 @@ else
 		end
 
 		if nick ~= "" then
-			chat.AddText(Color(114,137,218),nick,Color(255,255,255,255),": ",message)
+			chat.AddText(Color(222,129,199),"[Discord] "..nick, Color(255,255,255,255),": ",message)
 		else
-			chat.AddText(Color(255,255,255,255), message)
+			chat.AddText(Color(222,129,199),"[Discord] ", Color(255,255,255,255), message)
 		end
 	end)
 end
