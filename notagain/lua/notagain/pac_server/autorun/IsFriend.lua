@@ -1,16 +1,18 @@
+local Tag = "FriendSystem"
+
 if SERVER then
 
 	local META = FindMetaTable( "Player" )
 	
-	util.AddNetworkString( "StoreFriends" )
+	util.AddNetworkString( Tag )
 
-	hook.Add( "PlayerInitialSpawn" , "FriendTable" , function( ply )
+	hook.Add( "PlayerInitialSpawn" , Tag.." InitTable" , function( ply )
 		
 		ply.Friends = {}
 	
 	end)
 
-	hook.Add( "PlayerDisconnected" , "RemoveUselessFriend" , function( ply )
+	hook.Add( "PlayerDisconnected" , Tag.." InValidEntRemoval" , function( ply )
 
 		for _ , v in pairs( player.GetAll() ) do
 			v:RemoveFriend( ply )
@@ -20,8 +22,7 @@ if SERVER then
 
 	function META:AddFriend( ply )
 
-		if IsValid( ply ) and ply:IsPlayer() then
-			self.Friends = self.Friends or {}
+		if IsValid( ply ) and ply:IsPlayer() and self.Friends then
 			table.insert( self.Friends , ply:EntIndex() , ply )
 		end
 
@@ -68,7 +69,7 @@ if CLIENT then
 
 	local Friends = Friends or {}
 	
-	hook.Add( "Initialize" , "FriendCheck" , function()
+	hook.Add( "Initialize" , Tag.." Check" , function()
 		
 		for _ , v in pairs( player.GetAll() ) do
 			if v:GetFriendStatus() == "friend" then
@@ -76,7 +77,7 @@ if CLIENT then
 			end
 		end
 
-		net.Start( "StoreFriends" )
+		net.Start( Tag )
 		net.WriteTable( Friends )
 		net.SendToServer()
 	
