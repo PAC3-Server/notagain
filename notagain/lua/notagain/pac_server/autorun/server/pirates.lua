@@ -1,5 +1,8 @@
 if not system.IsLinux() then return end
 
+require("weed") -- magic
+require("gameserver") -- more magic
+
 local Tag = "pirates"
 
 local pirates={}
