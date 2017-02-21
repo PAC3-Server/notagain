@@ -467,13 +467,13 @@ if SERVER then
 		
 		for _,v in pairs( ents.FindInSphere( self:WorldSpaceCenter() + Vector( 0 , 0 , 50 ) , self.Radius ) ) do
 
-			if v:CPPIGetOwner() then
+			if IsValid(v) and v:CPPIGetOwner() then
 				
 				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) and !v:CPPIGetOwner():IsAdmin() then
 					v:Dissolve()
 				end
 			
-			elseif v:IsPlayer() and !self:IsAllowed( v ) and !v:IsAdmin() then 
+			elseif IsValid(v) and v:IsPlayer() and !self:IsAllowed( v ) and !v:IsAdmin() then 
 
 					local dif = v:GetPos() - self:GetPos()
 					
