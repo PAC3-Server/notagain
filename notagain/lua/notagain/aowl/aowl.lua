@@ -498,6 +498,20 @@ do -- groups
 		end
 
 		if CLIENT then
+			function META:IsFriend(ply)
+				return ply:GetFriendStatus() == "friend"
+			end
+
+			function META:GetFriends()
+				local out = {}
+				for i, ply in ipairs(player.GetAll()) do
+					if ply:IsFriend() then
+						table.insert(out, ply)
+					end
+				end
+				return out
+			end
+
 			hook.Add("OnEntityCreated", tag, function(ply)
 				-- might be too early if the player has just spawned?
 				timer.Simple(1, function()
