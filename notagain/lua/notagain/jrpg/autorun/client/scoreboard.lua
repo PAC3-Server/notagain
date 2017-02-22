@@ -367,7 +367,7 @@ local PLAYER_LINE = {
             end
 
             if pac then
-                local SubPac,pic = self.Menu:AddSubMenu("PAC3")
+                local SubPac = self.Menu:AddSubMenu("PAC3")
 
                 SubPac:AddOption( "Ignore",function() pac.IgnoreEntity(self.Player) end):SetImage("icon16/cancel.png")
                 SubPac:AddOption( "Unignore",function() pac.UnIgnoreEntity(self.Player) end):SetImage("icon16/accept.png")
