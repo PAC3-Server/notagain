@@ -552,5 +552,3 @@ end
 
 hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
 hook.Add("ScoreboardHide","YScoreboardHide",YScoreboardHide)
-
-if LocalPlayer() == me then YScoreboardShow() end
