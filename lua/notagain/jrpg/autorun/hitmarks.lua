@@ -93,7 +93,7 @@ if CLIENT then
 		{
 			min = 0,
 			max = 0.25,
-			font = "Gabriola",
+			font = "gabriola.ttf",
 			blur_size = 4,
 			weight = 30,
 			size = 100,
@@ -102,7 +102,7 @@ if CLIENT then
 		{
 			min = 0.25,
 			max = 0.5,
-			font = "Gabriola",
+			font = "gabriola.ttf",
 			blur_size = 4,
 			weight = 30,
 			size = 200,
@@ -111,7 +111,7 @@ if CLIENT then
 		{
 			min = 0.5,
 			max = 1,
-			font = "Gabriola",
+			font = "gabriola.ttf",
 			blur_size = 4,
 			weight = 30,
 			size = 300,
@@ -120,7 +120,7 @@ if CLIENT then
 		{
 			min = 1,
 			max = math.huge,
-			font = "Gabriola",
+			font = "gabriola.ttf",
 			blur_size = 4,
 			weight = 100,
 			size = 400,
@@ -268,7 +268,7 @@ if CLIENT then
 
 					local fade = math.Clamp(fraction ^ 0.25, 0, 1)
 
-					local w, h = prettytext.GetTextSize(name, "Candara", 20, 30, 2)
+					local w, h = prettytext.GetTextSize(name, "candara.ttf", 20, 30, 2)
 
 					local height = 8
 					local border_size = 3
@@ -291,7 +291,7 @@ if CLIENT then
 
 					draw_health_bar(pos.x - width2, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, skew)
 
-					prettytext.Draw(name, pos.x - width2 - text_x_offset, pos.y - 5, "Arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
+					prettytext.Draw(name, pos.x - width2 - text_x_offset, pos.y - 5, "arial.ttf", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
 				end
 
 				if fraction <= 0 then
@@ -316,7 +316,7 @@ if CLIENT then
 
 				if data.time > time then
 					local fade = math.min(((data.time - time) / data.length) + 0.75, 1)
-					local w, h = prettytext.GetTextSize(data.name, "Arial", 20, 800, 2)
+					local w, h = prettytext.GetTextSize(data.name, "arial.ttf", 20, 800, 2)
 
 					local x, y = pos.x, pos.y
 					x = x - w / 2
@@ -339,7 +339,7 @@ if CLIENT then
 					local border = border
 					draw_weapon_info(x - border, y - border*scale_h, w + border*2, h + border*2*scale_h, bg, fade)
 
-					prettytext.Draw(data.name, x, y, "Arial", 20, 600, 3, fg)
+					prettytext.Draw(data.name, x, y, "arial.ttf", 20, 600, 3, fg)
 				else
 					table.remove(weapon_info, i)
 				end

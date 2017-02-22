@@ -46,7 +46,7 @@ local Color = Color
 local prettytext = {}
 
 function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color2, x_align, y_align)
-	font = font or "Arial"
+	font = font or "arial.ttf"
 	size = size or 14
 	weight = weight or 0
 	blursize = blursize or 1
@@ -84,7 +84,7 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 end
 
 function prettytext.GetTextSize(text, font, size, weight, blursize)
-	font = font or "Arial"
+	font = font or "arial.ttf"
 	size = size or 14
 	weight = weight or 0
 	blursize = blursize or 1

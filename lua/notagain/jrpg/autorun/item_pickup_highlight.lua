@@ -115,26 +115,26 @@ if CLIENT then
 					name = language.GetPhrase(name)
 				end
 
-				local w,h = prettytext.GetTextSize(name, "Gabriola", 40, 800, 3)
+				local w,h = prettytext.GetTextSize(name, "gabriola.ttf", 40, 800, 3)
 				local bg_width = w + 100
 				surface.SetDrawColor(0,0,0,100)
 				surface.SetMaterial(gradient)
 				surface.DrawTexturedRect(pos.x - bg_width, pos.y, bg_width * 2, h)
 
-				prettytext.Draw(name, pos.x - w / 2, pos.y, "Gabriola", 40, 800, 3, Color(r*255,g*255,b*255,255))
+				prettytext.Draw(name, pos.x - w / 2, pos.y, "gabriola.ttf", 40, 800, 3, Color(r*255,g*255,b*255,255))
 
 				local border = 20
 				local x = pos.x
 				local y = pos.y + 40
 				local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
 				local str = key .. "  TAKE"
-				local w,h = prettytext.GetTextSize(str, "Gabriola", 40, 800, 3)
-				local key_width = prettytext.GetTextSize(key, "Gabriola", 40, 800, 3)
+				local w,h = prettytext.GetTextSize(str, "gabriola.ttf", 40, 800, 3)
+				local key_width = prettytext.GetTextSize(key, "gabriola.ttf", 40, 800, 3)
 				local bg_width = w + 100
 
 				surface.SetDrawColor(255,255,255,255)
 				draw.RoundedBox(4, x - 27 - border / 2, y + border / 2, border, border, Color(25,25,25,255))
-				prettytext.Draw(str, x - w / 2, y, "Gabriola", 40, 800, 3)
+				prettytext.Draw(str, x - w / 2, y, "gabriola.ttf", 40, 800, 3)
 
 				surface.SetDrawColor(0,0,0,100)
 				surface.SetMaterial(gradient)

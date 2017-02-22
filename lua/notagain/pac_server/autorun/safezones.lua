@@ -13,7 +13,7 @@ SAFE_ZONE_BASE.Category  = "SafeZone"
 if CLIENT then
 
 	surface.CreateFont( "SZFont" , {
-    	font      = "Arial",
+    	font      = "arial.ttf",
     	size      = 18,
     	weight    = 600,
 	} )
