@@ -8,8 +8,9 @@ local mainMenuSize = {
     h = scrH * .8
 }
 local line_height = 70
-local color_blue = Color(60, 127, 255, 255)
-local color_red = Color(255, 70, 0, 255)
+
+local color1 = team.GetColor(2)
+local color2 = team.GetColor(1)
 
 local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
     ["$BaseTexture"] = "gui/center_gradient",
@@ -201,7 +202,7 @@ local PLAYER_LINE = {
 
 		h = h - border_size - spacing
 
-		local color = self.Friend and color_blue or color_red
+		local color = self.Friend and color1 or color2
 		local text_blur_color = Color(color.r*0.6, color.g*0.6, color.b*0.6, 150)
 
 		if dir < 0 then
@@ -357,6 +358,7 @@ local PLAYER_LINE = {
                 pic:SetImage("icon16/shield.png")
                 SubAdmin:AddOption( "Kick",function() cinputs( "aowl kick "..PlayerID  , 1) end):SetImage("icon16/door_in.png")
                 SubAdmin:AddOption( "Ban",function() cinputs( "aowl ban "..PlayerID  , 2) end):SetImage("icon16/stop.png")
+                SubAdmin:AddOption( "Cleanup",function() RunConsoleCommand( "aowl", "cleanup", PlayerID) end):SetImage("icon16/arrow_rotate_clockwise.png")
                 SubAdmin:AddSpacer()
                 SubAdmin:AddOption( "Reconnect",function() RunConsoleCommand( "aowl", "cexec", PlayerID , "retry") end):SetImage("icon16/arrow_refresh.png")
 
@@ -365,15 +367,17 @@ local PLAYER_LINE = {
             end
 
             if pac then
-                local SubPac = self.Menu:AddSubMenu("PAC3")
+                local SubPac,pic = self.Menu:AddSubMenu("PAC3")
 
-                SubPac:AddOption( "Ignore",function() pac.IgnoreEntity(self.Player) end)
-                SubPac:AddOption( "Unignore",function() pac.UnIgnoreEntity(self.Player) end)
+                SubPac:AddOption( "Ignore",function() pac.IgnoreEntity(self.Player) end):SetImage("icon16/cancel.png")
+                SubPac:AddOption( "Unignore",function() pac.UnIgnoreEntity(self.Player) end):SetImage("icon16/accept.png")
 
                 self.Menu:AddSpacer()
             end
 
             self.Menu:AddOption("Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end):SetImage("icon16/tab_edit.png")
+            self.Menu:AddOption("Open Profile",function() self.Player:ShowProfile() end):SetImage("icon16/world.png")
+
 
             RegisterDermaMenuForClose( self.Menu )
             self.Menu:Open()
@@ -477,12 +481,13 @@ local function YScoreboardShow()
 			w_Scoreboard.scoreboard_open_time = RealTime()
             w_Scoreboard:Show()
             w_Scoreboard:SetKeyboardInputEnabled( false )
-            w_Scoreboard:SetMouseInputEnabled( true )
+            w_Scoreboard:SetMouseInputEnabled( false )
 			w_Scoreboard.Scroll:InvalidateLayout()
         end
 
         w_Scoreboard:MakePopup()
         w_Scoreboard:SetKeyboardInputEnabled( false )
+        w_Scoreboard:SetMouseInputEnabled( false )
 
 		hook.Add("HUDDrawScoreBoard", "scoreboard", function()
 			if false then
@@ -491,9 +496,9 @@ local function YScoreboardShow()
 				surface.SetMaterial(gradient)
 
 				surface.SetAlphaMultiplier(0.05)
-				surface.SetDrawColor(color_red)
+				surface.SetDrawColor(color1)
 				surface.DrawTexturedRectRotated(x + w,y,w,h*10,0)
-				surface.SetDrawColor(color_blue)
+				surface.SetDrawColor(color2)
 				surface.DrawTexturedRectRotated(x,y,w,h*10,180)
 				surface.SetAlphaMultiplier(1)
 			end
@@ -550,5 +555,18 @@ local function YScoreboardHide()
     end
 end
 
+local function PlyBindPress(_,bind,pressed)
+
+	if pressed and bind == "+attack2" and w_Scoreboard and w_Scoreboard:IsVisible() then
+
+		w_Scoreboard:SetMouseInputEnabled(true)
+
+		return true
+
+	end
+
+end
+
 hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
 hook.Add("ScoreboardHide","YScoreboardHide",YScoreboardHide)
+hook.Add("PlayerBindPress","YScoreboardPress",PlyBindPress)
