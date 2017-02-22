@@ -452,6 +452,67 @@ do -- groups
 
 	local META = FindMetaTable("Player")
 
+	do -- friends
+		local tag = "aowl_friends"
+
+		if SERVER then
+			util.AddNetworkString(tag)
+
+			function META:AddFriend(ply)
+				if IsValid(ply) and ply:IsPlayer() then
+					self.aowl_friends = self.aowl_friends or {}
+					self.aowl_friends[ply] = ply
+				end
+			end
+
+			function META:RemoveFriend(ply)
+				if IsValid(ply) and ply:IsPlayer() and self.aowl_friends then
+					self.aowl_friends[ply] = nil
+				end
+			end
+
+			function META:IsFriend(ply)
+				return self.aowl_friends and self.aowl_friends[ply] ~= nil
+			end
+
+			function META:GetFriends()
+				self.aowl_friends = self.aowl_friends or {}
+				return self.aowl_friends
+			end
+
+			net.Receive(tag, function(len , ply)
+				if not ply:IsValid() then return end
+
+				local friend = net.ReadEntity()
+				if friend:IsValid() then
+					friend:AddFriend(ply)
+					ply:AddFriend(friend)
+				end
+			end)
+
+			hook.Add("PlayerDisconnected" , tag, function(friend)
+				for _, ply in ipairs(player.GetAll()) do
+					ply:RemoveFriend(friend)
+				end
+			end)
+		end
+
+		if CLIENT then
+			hook.Add("OnEntityCreated", tag, function(ply)
+				-- might be too early if the player has just spawned?
+				timer.Simple(1, function()
+					if not ply:IsValid() or not ply:IsPlayer() then return end
+
+					if ply:GetFriendStatus() == "friend" then
+						net.Start(tag)
+						net.WriteEntity(ply)
+						net.SendToServer()
+					end
+				end)
+			end)
+		end
+	end
+
 	function META:CheckUserGroupLevel(name)
 
 		--Console?
@@ -480,6 +541,22 @@ do -- groups
 			return false
 		end
 		return self:CheckUserGroupLevel("developers")
+	end
+
+	function META:IsSudo()
+		return self.aowl_sudo
+	end
+
+	function META.CanAlter(a, b)
+		if a:IsSudo() then
+			return true
+		end
+
+		if not b:IsPlayer() and b.CPPIGetOwner then
+			return a:CanAlter(b:CPPIGetOwner())
+		end
+
+		return b:IsFriend(a)
 	end
 
 	function META:IsSuperAdmin()
@@ -647,13 +724,18 @@ do -- groups
 			end
 		end, "owners")
 
-		aowl.AddCommand("administrate",function(pl,line, yesno)
+		aowl.AddCommand("hiderank",function(pl,line, yesno)
 			local administrate=util.tobool(yesno)
 			if administrate then
 				pl.hideadmins=nil
 			elseif pl:IsAdmin() then
 				pl.hideadmins=true
 			end
+		end)
+
+		aowl.AddCommand("sudo", function(ply, _, b)
+			b = util.tobool(b)
+			ply.aowl_sudo = b
 		end)
 	end
 end

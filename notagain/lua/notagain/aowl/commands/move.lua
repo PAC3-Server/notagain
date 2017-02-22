@@ -11,27 +11,11 @@ local function IsStuck(ply)
 
 end
 
-hook.Add("CanPlyGotoPly", "aowl_togglegoto",function(ply, ply2)
-
-	if ply2.ToggleGoto_NoGoto and (ply2.IsBanned and ply2:IsBanned() or true) then
-		if ply2.IsFriend and ply2:IsFriend(ply) then return end
-
-		return false, (ply2 and ply2.IsPlayer and ply2:IsValid() and ply2:IsPlayer() and ply2:Nick() or tostring(ply2))
-						.." doesn't want to be disturbed!"
-	end
-end)
-
 -- helper
 local function SendPlayer( from, to )
-	local ok, reason = hook.Run("CanPlyGotoPly", from, to)
-	if ok == false then
-		return "HOOK", reason or ""
-	end
-
 	if not to:IsInWorld() then
 		return false
 	end
-
 
 	local times=16
 
@@ -436,7 +420,7 @@ aowl.AddCommand("bring", function(ply, line, target, yes)
 	local ent = easylua.FindEntity(target)
 
 	if ent:IsValid() and ent ~= ply then
-		if ply:CheckUserGroupLevel("developers") or (ply.IsBanned and ply:IsBanned()) then
+		if ply:CheckUserGroupLevel("developers") or (ply.IsBanned and ply:IsBanned()) or ply.CanAlter and ply:CanAlter(ent) then
 
 			if ent:IsPlayer() and not ent:Alive() then ent:Spawn() end
 			if ent:IsPlayer() and ent:InVehicle() then
@@ -444,7 +428,6 @@ aowl.AddCommand("bring", function(ply, line, target, yes)
 			end
 
 			ent.aowl_tpprevious = ent:GetPos()
-
 
 			local pos = ply:GetEyeTrace().HitPos + (ent:IsVehicle() and Vector(0, 0, ent:BoundingRadius()) or Vector(0, 0, 0))
 
@@ -464,33 +447,8 @@ aowl.AddCommand("bring", function(ply, line, target, yes)
 			end
 
 			aowlMsg("bring", tostring(ply) .." <- ".. tostring(ent))
-		elseif ent:IsPlayer() and ent.IsFriend and ent:IsFriend(ply) then
-			if ent:TeleportingBlocked() then return false,"Teleport blocked" end
-			if ply.__is_on_bring_cooldown then return false,"You're still on bring cooldown" end
-
-			if not ent:Alive() then ent:Spawn() end
-			if ent:InVehicle() then ent:ExitVehicle() end
-
-			ent.aowl_tpprevious = ent:GetPos()
-
-			ent:SetPos(ply:GetEyeTrace().HitPos)
-			ent:SetEyeAngles((ply:EyePos() - ent:EyePos()):Angle())
-
-			aowlMsg("friend bring", tostring(ply) .." <- ".. tostring(ent))
-
-			if co then
-				co(function()
-					ply.__is_on_bring_cooldown = true
-					co.wait(25)
-					ply.__is_on_bring_cooldown = false
-				end)
-			else
-				ply.__is_on_bring_cooldown = true
-				timer.Simple(25,function()
-					ply.__is_on_bring_cooldown = false
-				end)
-			end
 		end
+
 		return
 	end
 
