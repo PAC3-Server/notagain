@@ -40,14 +40,14 @@ end)
 
 
 surface.CreateFont( "InfoFont", {
-    font      = "Arial",
+    font      = "arial.ttf",
     size      = 21,
     weight    = 600,
     shadow    = true
 } )
 
 surface.CreateFont( "Sfont", {
-    font      = "Arial",
+    font      = "arial.ttf",
     size      = 17,
     weight    = 600,
     antialias = true,
@@ -56,7 +56,7 @@ surface.CreateFont( "Sfont", {
 } )
 
 surface.CreateFont( "ScoreboardDefaultTitle", {
-    font    = "Arial",
+    font    = "arial.ttf",
     size    = 32,
     weight  = 800,
     shadow  = true
@@ -242,7 +242,7 @@ local PLAYER_LINE = {
 
 		do -- name
 			local text = ent:Nick()
-			local font = "Arial"
+			local font = "arial.ttf"
 			local size = 17
 			local weight = 800
 			local blursize = 2
@@ -267,7 +267,7 @@ local PLAYER_LINE = {
 			local y = y + h - bar_height
 			local h = bar_height
 
-			local font = "Gabriola"
+			local font = "gabriola.ttf"
 			local size = 34
 			local weight = 800
 			local blursize = 1
@@ -278,7 +278,7 @@ local PLAYER_LINE = {
 			local ping = string.format("%03d", player:Ping())
 
 			local str1_w = prettytext.GetTextSize("PING", font, size, weight, blursize)
-			local str2_w = prettytext.GetTextSize(ping, "Sylfaen", size*1.1, 1, blursize*5)
+			local str2_w = prettytext.GetTextSize(ping, "sylfaen.ttf", size*1.1, 1, blursize*5)
 
 			if dir > 0 then
 				x = x + w - str1_w - str2_w - 20 - 15
@@ -289,7 +289,7 @@ local PLAYER_LINE = {
 
 
 			prettytext.Draw("PING", x, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
-			prettytext.Draw(ping, x + 45, y, "Sylfaen", size*0.9, 1, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
+			prettytext.Draw(ping, x + 45, y, "sylfaen.ttf", size*0.9, 1, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
 			prettytext.Draw("ms", x + str1_w + str2_w + 10, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
 		end
 
@@ -397,17 +397,17 @@ local SCORE_BOARD = {
 		self.Header.Paint = function(_, w, h)
 			local maxw, maxh = 0,0
 
-			--local w, h = prettytext.Draw("FPS: " .. math.Round(1 / FrameTime()), 0, 0, "Arial", 30, 800, 3)
+			--local w, h = prettytext.Draw("FPS: " .. math.Round(1 / FrameTime()), 0, 0, "arial.ttf", 30, 800, 3)
 			--maxw = math.max(maxh, w)
 			--maxh = math.max(maxh, h)
 
-			--local w, h = prettytext.Draw("TIME: " .. os.date("%X"), 0, 0, "Arial", 30, 800, 3)
+			--local w, h = prettytext.Draw("TIME: " .. os.date("%X"), 0, 0, "arial.ttf", 30, 800, 3)
 			--maxw = math.max(maxh, w)
 			--maxh = math.max(maxh, h)
 
 
 
-			prettytext.Draw(GetHostName(), w/2, 0, "Gabriola", 120, 800, 10, Color(255, 255, 255, 200), Color(75,75, 75, 50), -0.5)
+			prettytext.Draw(GetHostName(), w/2, 0, "gabriola.ttf", 120, 800, 10, Color(255, 255, 255, 200), Color(75,75, 75, 50), -0.5)
 		end
 
         self.Scroll = self:Add( "DScrollPanel" )

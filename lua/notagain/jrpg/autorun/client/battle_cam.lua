@@ -913,8 +913,8 @@ do
 
 					render.SetColorModulation(1,1,1)
 
-					prettytext.Draw("HP", x + 260, y + 7, "Candara", 30, 30, 2, Color(100, 255, 100, 200))
-					prettytext.Draw(math.Round(smooth_hp), x + 300, y + 5, "Candara", 30, 30, 2, Color(255, 255, 255, 200))
+					prettytext.Draw("HP", x + 260, y + 7, "candara.ttf", 30, 30, 2, Color(100, 255, 100, 200))
+					prettytext.Draw(math.Round(smooth_hp), x + 300, y + 5, "candara.ttf", 30, 30, 2, Color(255, 255, 255, 200))
 
 				cam.EndOrthoView()
 			end
@@ -996,7 +996,7 @@ do
 
 							render.CullMode(MATERIAL_CULLMODE_CCW)
 								surface.SetAlphaMultiplier(math.abs(math.sin(i)) ^ 3)
-								prettytext.Draw(name, x-120, y-19, "Candara", 26, 0, 4, Color(255, 255, 255, 150))
+								prettytext.Draw(name, x-120, y-19, "candara.ttf", 26, 0, 4, Color(255, 255, 255, 150))
 								surface.SetAlphaMultiplier(1)
 							render.CullMode(MATERIAL_CULLMODE_CW)
 						end
