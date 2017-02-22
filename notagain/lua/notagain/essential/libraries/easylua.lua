@@ -364,6 +364,21 @@ function easylua.Start(ply)
 		vars.create = easylua.CreateEntity
 		vars.prints = easylua.PrintOnServer
 
+		vars.Say = function(...)
+			local args = {...}
+			local new = {}
+
+			for key, value in pairs(args) do
+			    table.insert(new, luadata and luadata.ToString(value) or tostring(value))
+			end
+			local str = table.concat(new," ")		
+			if CLIENT then
+				RunConsoleCommand("say", str)
+			elseif SERVER then
+				game.ConsoleCommand("say "..str.."\n")	
+			end
+		end
+
 		if vars.this:IsValid() then
 			vars.phys = vars.this:GetPhysicsObject()
 			vars.model = vars.this:GetModel()
