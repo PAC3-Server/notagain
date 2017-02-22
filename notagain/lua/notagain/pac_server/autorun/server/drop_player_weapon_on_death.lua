@@ -20,8 +20,9 @@ hook.Add("DoPlayerDeath", "drop_player_weapon_on_death", function(ply)
 
 			wep.death_drop_pos = atch.Pos
 			wep.death_drop_ang = atch.Ang
-
-			wep:GetPhysicsObject():SetVelocity(Vector(0,0,0))
+			if wep:GetPhysicsObject():IsValid() then
+				wep:GetPhysicsObject():SetVelocity(Vector(0,0,0))
+			end
 		end
 	end
 end)
@@ -33,4 +34,3 @@ hook.Add("PlayerSpawn", "drop_player_weapon_on_death", function(ply)
 
 	remove_me[ply] = nil
 end)
-
