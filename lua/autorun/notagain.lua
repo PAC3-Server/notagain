@@ -100,6 +100,37 @@ function notagain.UnloadLibrary(name)
 	notagain.loaded_libraries[name] = nil
 end
 
+local function run_dir(dir)
+	for _, name in pairs((file.Find(dir .. "*.lua", "LUA"))) do
+		local path = dir .. name
+
+		include(path)
+
+		if SERVER then
+			AddCSLuaFile(path)
+		end
+	end
+
+	for _, name in pairs((file.Find(dir .. "client/*.lua", "LUA"))) do
+		local path = dir .. "client/" .. name
+
+		if CLIENT then
+			include(path)
+		end
+
+		if SERVER then
+			AddCSLuaFile(path)
+		end
+	end
+
+	if SERVER then
+		for _, name in pairs((file.Find(dir .. "server/*.lua", "LUA"))) do
+			include(dir .. "server/" .. name)
+		end
+	end
+end
+
+
 function notagain.Load()
 	--local include = function(path) print("INCLUDE: ", path) return _G.include(path) end
 	--local AddCSLuaFile = function(path) print("AddCSLuaFile: ", path) return AddCSLuaFile(path) end
@@ -114,38 +145,13 @@ function notagain.Load()
 		notagain.directories = dirs
 	end
 
+	-- preload
 	for addon_name, addon_dir in pairs(notagain.directories) do
-		do -- autorun
-			local dir = addon_dir .. "/autorun/"
+		run_dir(addon_dir .. "/preload/")
+	end
 
-			for _, name in pairs((file.Find(dir .. "*.lua", "LUA"))) do
-				local path = dir .. name
-
-				include(path)
-
-				if SERVER then
-					AddCSLuaFile(path)
-				end
-			end
-
-			for _, name in pairs((file.Find(dir .. "client/*.lua", "LUA"))) do
-				local path = dir .. "client/" .. name
-
-				if CLIENT then
-					include(path)
-				end
-
-				if SERVER then
-					AddCSLuaFile(path)
-				end
-			end
-
-			if SERVER then
-				for _, name in pairs((file.Find(dir .. "server/*.lua", "LUA"))) do
-					include(dir .. "server/" .. name)
-				end
-			end
-		end
+	for addon_name, addon_dir in pairs(notagain.directories) do
+		run_dir(addon_dir .. "/autorun/")
 
 		if SERVER then -- libraries
 			local dir = addon_dir .. "/libraries/"
