@@ -211,7 +211,7 @@ if SERVER then
 
 			if after ~= 0 then
 				for k,v in pairs(json) do
-					if not (v and v.author) and discordrelay.user.id == v.author.id then continue end
+					if not (v and v.author) and discordrelay.user.id == v.author.id or type(v) == "number" then continue end
 
 					if v.author.bot and v.webhook_id then
 						if string.lower(v.author.username) == "github" and v.embeds and v.embeds[1] then
@@ -548,9 +548,9 @@ else
 		end
 
 		if nick ~= "" then
-			chat.AddText(Color(114,137,218),nick,Color(255,255,255,255),": ",message)
+			chat.AddText(Color(222,129,199),"[Discord] "..nick, Color(255,255,255,255),": ",message)
 		else
-			chat.AddText(Color(255,255,255,255), message)
+			chat.AddText(Color(222,129,199),"[Discord] ", Color(255,255,255,255), message)
 		end
 	end)
 end

@@ -469,11 +469,11 @@ if SERVER then
 
 			if IsValid(v) and v:CPPIGetOwner() then
 				
-				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) and !v:CPPIGetOwner():IsAdmin() then
+				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) and  v.IsFriend() and !v:CPPIGetOwner():IsFriend( self:CPPIGetOwner() ) then
 					v:Dissolve()
 				end
 			
-			elseif IsValid(v) and v:IsPlayer() and !self:IsAllowed( v ) and !v:IsAdmin() then 
+			elseif IsValid(v) and v:IsPlayer() and !self:IsAllowed( v ) and and v.IsFriend()  and !v:IsFriend( self:CPPIGetOwner() ) then 
 
 					local dif = v:GetPos() - self:GetPos()
 					
