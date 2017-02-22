@@ -472,7 +472,7 @@ do -- groups
 			end
 
 			function META:IsFriend(ply)
-				return self.aowl_friends and self.aowl_friends[ply] ~= nil
+				return ply == self or self.aowl_friends and self.aowl_friends[ply] ~= nil
 			end
 
 			function META:GetFriends()
@@ -487,14 +487,12 @@ do -- groups
 				if friend:IsValid() then
 					local status = net.ReadString()
 
-					if status == "friend" then
-						friend:AddFriend(ply)
+					print(ply, "'s friend status for ", friend, " is ", status)
+
+					if status == "friend" or status == "requested" then
 						ply:AddFriend(friend)
 					elseif status == "none" or status == "blocked" then
 						ply:RemoveFriend(friend)
-						friend:RemoveFriend(ply)
-					elseif status == "requested" then
-						friend:AddFriend(ply)
 					end
 				end
 			end)
@@ -508,6 +506,7 @@ do -- groups
 
 		if CLIENT then
 			function META:IsFriend(ply)
+				if ply == self then return true end
 				local status = ply:GetFriendStatus()
 				return status == "friend" or status == "requested"
 			end
