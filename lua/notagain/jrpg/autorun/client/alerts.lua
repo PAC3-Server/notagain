@@ -6,7 +6,7 @@ local ResolutionScale = math.Min(scrW/1600 , scrH/900)
 
 ActiveAlert = nil
 
-surface.CreateFont( "JFont", { font = "arial.ttf" , size = 18 , weight = 600 } )
+surface.CreateFont( "JFont", { font = "arial" , size = 18 , weight = 600 } )
 
 local ALERT = {
 	Init = function( self )
