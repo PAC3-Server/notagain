@@ -429,7 +429,20 @@ if SERVER then
 		end)
 	end)
 
+	local prefixes = {"!", "/", "."} --cba to use the lua pattern
 	hook.Add("PlayerSay", "DiscordRelayChat", function(ply, text, teamChat)
+		
+		if aowl then
+			for cmd,v in pairs(aowl.cmds) do
+				for k,prefix in pairs(prefixes) do
+					if string.StartWith(text, prefix..cmd) then
+						if aowl.cmds[cmd] and aowl.cmds[cmd].hidechat then
+							return
+						end
+					end
+				end
+			end
+		end
 	    if discordrelay and discordrelay.enabled then
             discordrelay.GetAvatar(ply:SteamID(), function(ret)
             	discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
@@ -548,9 +561,9 @@ else
 		end
 
 		if nick ~= "" then
-			chat.AddText(Color(114,137,218),"[Discord] "..nick, Color(255,255,255,255),": ",message)
+			chat.AddText( Color(114,137,218,255), "[Discord] "..nick, Color(255,255,255,255),": "..message)
 		else
-			chat.AddText(Color(114,137,218),"[Discord] ", Color(255,255,255,255), message)
+			chat.AddText(Color(255,255,255,255), message)
 		end
 	end)
 end
