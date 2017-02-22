@@ -364,6 +364,14 @@ function easylua.Start(ply)
 		vars.create = easylua.CreateEntity
 		vars.prints = easylua.PrintOnServer
 
+		vars.Say = function(string)
+			if CLIENT then
+				RunConsoleCommand("say", string)
+			elseif SERVER then
+				game.ConsoleCommand("say "..string.."\n")	
+			end
+		end
+
 		if vars.this:IsValid() then
 			vars.phys = vars.this:GetPhysicsObject()
 			vars.model = vars.this:GetModel()
