@@ -69,8 +69,6 @@ hook.Add("PlayerTraceAttack", "cl_godmode", function(victim, dmginfo)
 end)
 
 if SERVER then
-	RunConsoleCommand("sbox_godmode", "0")
-
 	util.AddNetworkString("cl_godmode_ask")
 	util.AddNetworkString("cl_godmode_clear_decals")
 
@@ -84,6 +82,11 @@ if SERVER then
 				victim:SetNWBool("cl_godmode", false)
 			end
 		end
+	end)
+
+	hook.Add("InitPostEntity", "cl_godmode", function()
+		RunConsoleCommand("sbox_godmode", "0")
+		hook.Remove("InitPostEntity", "cl_godmode")
 	end)
 
 	hook.Add("PlayerSpawn", "cl_godmode", function(ply)
