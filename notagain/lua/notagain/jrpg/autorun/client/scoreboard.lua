@@ -9,9 +9,6 @@ local mainMenuSize = {
 }
 local line_height = 70
 
-local color1 = team.GetColor(2)
-local color2 = team.GetColor(1)
-
 local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
     ["$BaseTexture"] = "gui/center_gradient",
     ["$BaseTextureTransform"] = "center .5 .5 scale 1 1 rotate 90 translate 0 0",
@@ -202,7 +199,7 @@ local PLAYER_LINE = {
 
 		h = h - border_size - spacing
 
-		local color = self.Friend and color1 or color2
+		local color = self.Friend and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS)
 		local text_blur_color = Color(color.r*0.6, color.g*0.6, color.b*0.6, 150)
 
 		if dir < 0 then
@@ -462,7 +459,7 @@ PLAYER_LINE = vgui.RegisterTable( PLAYER_LINE, "DPanel" )
 SCORE_BOARD = vgui.RegisterTable( SCORE_BOARD, "EditablePanel" )
 
 local ysc_convar = CreateClientConVar( "yscoreboad_show", "1", true, false )
-ysc_convar:SetInt(1)
+local hide_mouse = CreateClientConVar( "score_hide_mouse", "0", true, false )
 
 if IsValid(w_Scoreboard) then
 	w_Scoreboard:Remove()
@@ -480,14 +477,12 @@ local function YScoreboardShow()
         if ( IsValid( w_Scoreboard ) ) then
 			w_Scoreboard.scoreboard_open_time = RealTime()
             w_Scoreboard:Show()
-            w_Scoreboard:SetKeyboardInputEnabled( false )
-            w_Scoreboard:SetMouseInputEnabled( false )
 			w_Scoreboard.Scroll:InvalidateLayout()
         end
 
         w_Scoreboard:MakePopup()
         w_Scoreboard:SetKeyboardInputEnabled( false )
-        w_Scoreboard:SetMouseInputEnabled( false )
+        w_Scoreboard:SetMouseInputEnabled(hide_mouse:GetInt() == 0 and true or false)
 
 		hook.Add("HUDDrawScoreBoard", "scoreboard", function()
 			if false then
@@ -496,9 +491,9 @@ local function YScoreboardShow()
 				surface.SetMaterial(gradient)
 
 				surface.SetAlphaMultiplier(0.05)
-				surface.SetDrawColor(color1)
+				surface.SetDrawColor(team.GetColor(TEAM_FRIENDS))
 				surface.DrawTexturedRectRotated(x + w,y,w,h*10,0)
-				surface.SetDrawColor(color2)
+				surface.SetDrawColor(team.GetColor(TEAM_PLAYERS))
 				surface.DrawTexturedRectRotated(x,y,w,h*10,180)
 				surface.SetAlphaMultiplier(1)
 			end
@@ -555,13 +550,11 @@ local function YScoreboardHide()
     end
 end
 
-local function PlyBindPress(_,bind,pressed)
+local function KeyRelease(_,pressed)
 
-	if pressed and bind == "+attack2" and w_Scoreboard and w_Scoreboard:IsVisible() then
+	if pressed == IN_ATTACK2 and w_Scoreboard and w_Scoreboard:IsVisible() then
 
 		w_Scoreboard:SetMouseInputEnabled(true)
-
-		return true
 
 	end
 
@@ -569,4 +562,4 @@ end
 
 hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
 hook.Add("ScoreboardHide","YScoreboardHide",YScoreboardHide)
-hook.Add("PlayerBindPress","YScoreboardPress",PlyBindPress)
+hook.Add("KeyRelease","YScoreboardPress",KeyRelease)
