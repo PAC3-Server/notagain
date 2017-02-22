@@ -485,8 +485,17 @@ do -- groups
 
 				local friend = net.ReadEntity()
 				if friend:IsValid() then
-					friend:AddFriend(ply)
-					ply:AddFriend(friend)
+					local status = net.ReadString()
+
+					if status == "friend" then
+						friend:AddFriend(ply)
+						ply:AddFriend(friend)
+					elseif status == "none" or status == "blocked" then
+						ply:RemoveFriend(friend)
+						friend:RemoveFriend(ply)
+					elseif status == "requested" then
+						friend:AddFriend(ply)
+					end
 				end
 			end)
 
@@ -499,7 +508,8 @@ do -- groups
 
 		if CLIENT then
 			function META:IsFriend(ply)
-				return ply:GetFriendStatus() == "friend"
+				local status = ply:GetFriendStatus()
+				return status == "friend" or status == "requested"
 			end
 
 			function META:GetFriends()
@@ -512,17 +522,17 @@ do -- groups
 				return out
 			end
 
-			hook.Add("OnEntityCreated", tag, function(ply)
-				-- might be too early if the player has just spawned?
-				timer.Simple(1, function()
-					if not ply:IsValid() or not ply:IsPlayer() then return end
-
-					if ply:GetFriendStatus() == "friend" then
+			timer.Create(tag, 1, 0, function()
+				for _, ply in ipairs(player.GetAll()) do
+					local status = ply:GetFriendStatus()
+					if ply.aowl_last_friend_status ~= status then
 						net.Start(tag)
-						net.WriteEntity(ply)
+							net.WriteEntity(ply)
+							net.WriteString(status)
 						net.SendToServer()
 					end
-				end)
+					ply.aowl_last_friend_status = status
+				end
 			end)
 		end
 	end
