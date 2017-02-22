@@ -126,7 +126,7 @@ if CLIENT then
 				local border = 20
 				local x = pos.x
 				local y = pos.y + 40
-				local key = input.LookupBinding("+use"):upper()
+				local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
 				local str = key .. "  TAKE"
 				local w,h = prettytext.GetTextSize(str, "Gabriola", 40, 800, 3)
 				local key_width = prettytext.GetTextSize(key, "Gabriola", 40, 800, 3)
