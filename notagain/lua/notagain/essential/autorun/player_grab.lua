@@ -30,8 +30,8 @@ hook.Add("PhysgunPickup", tag, function(ply, ent)
 	local canphysgun = ent:IsPlayer() and not ent:IsPhysgunImmune() and not ent:IsBeingPhysgunned()
 	if not canphysgun then return end
 
-	if ent.IsFriend then
-		canphysgun = ent:IsFriend(ply) and ent:GetInfoNum(tag .. "_dont_touch_me", 0) == 0 and ply:GetInfoNum(tag .. "_dont_touch_me", 0) == 0
+	if ply.CanAlter then
+		canphysgun = ply:CanAlter(ent)
 	else
 		canphysgun = ply:IsAdmin()
 	end

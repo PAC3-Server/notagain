@@ -17,7 +17,7 @@ if CLIENT then
     	size      = 18,
     	weight    = 600,
 	} )
-	
+
 	local scrW, scrH = ScrW(), ScrH()
 	local resolutionScale = math.Min(scrW/1600 , scrH/900)
 	local LastSafeZoneRadius = 0
@@ -35,7 +35,7 @@ if CLIENT then
 		["$BaseTexture"] = "phoenix_storms/stripes",
 
 	})
-	
+
 	local Shiny = CreateMaterial(tostring({}) .. os.clock(), "VertexLitGeneric", {
 		["$Additive"] = 1,
 		["$Translucent"] = 1,
@@ -90,9 +90,9 @@ if CLIENT then
 	})
 
 	local PANEL = {
-	 	
+
 	 	Init = function( self )
-	 		
+
 	 		self.Frame = self:Add( "DFrame" )
 	 		self.Frame:SetSize( 400 , 175 )
 	 		self.Frame:SetPos( scrW / 2 - self.Frame:GetWide() / 2 , scrH / 2 - self.Frame:GetTall() / 2 )
@@ -100,7 +100,7 @@ if CLIENT then
 	 		self.Frame:SetDraggable( true )
 	 		self.Frame:SetTitle( "Safe Zone Settings" )
 	 		self.Frame:MakePopup()
-	 		
+
 	 		self.Frame.Paint = function()
 	 			surface.SetDrawColor( 255 , 255 , 255 )
 	 			surface.SetMaterial(WarnMat)
@@ -150,7 +150,7 @@ if CLIENT then
 	        self.PList:SetValue( "----player----" )
 	        self.PList:SetWide( 200 )
 	        self.PList:SetPos( 125 - self.PList:GetWide() / 2 , 100 - self.PList:GetTall() / 2 )
-	        
+
 	        for k,v in pairs(player.GetAll()) do
 	        	self.PList:AddChoice( v:EntIndex().." -- "..v:Nick():gsub("<(.+)=(.+)>","") )
 	        end
@@ -167,18 +167,18 @@ if CLIENT then
     			surface.SetDrawColor( 255 , 255 , 255 )
     			surface.DrawOutlinedRect(0,0,self.PAdd:GetWide(),self.PAdd:GetTall())
 	    	end
-	    	
+
 	    	self.PAdd.DoClick = function()
-	    		local str,_ = self.PList:GetSelected() 
+	    		local str,_ = self.PList:GetSelected()
 	    		local plindex = string.Split( str or "-2" , " -- "  )[1]
-	    		
+
 	    		if IsValid( Entity( tonumber( plindex ) ) ) then
-		    		
+
 		    		net.Start( "SafeZoneAllowPlayer" )
 		    		net.WriteString( plindex )
 		    		net.SendToServer()
 		    		chat.AddText( Color( 255 , 255 , 255 ) , ChatTag.." "..Entity(plindex):Nick():gsub("<(.+)=(.+)>","").." was added to trusted players" )
-		    	
+
 		    	end
 
 	    	end
@@ -194,13 +194,13 @@ if CLIENT then
     			surface.SetDrawColor( 255 , 255 , 255 )
     			surface.DrawOutlinedRect(0,0,self.PRemove:GetWide(),self.PRemove:GetTall())
 	    	end
-	    
+
 	    	self.PRemove.DoClick = function()
-	    		local str,_ = self.PList:GetSelected() 
+	    		local str,_ = self.PList:GetSelected()
 	    		local plindex = string.Split( str or "-2" , " -- "  )[1]
 
 	    		if IsValid( Entity( tonumber( plindex ) ) ) then
-		    		
+
 		    		net.Start( "SafeZoneDisallowPlayer" )
 		    		net.WriteString( plindex )
 		    		net.SendToServer()
@@ -222,28 +222,28 @@ if CLIENT then
     			surface.SetDrawColor( 255 , 255 , 255 )
     			surface.DrawOutlinedRect(0,0,self.Exit:GetWide(),self.Exit:GetTall())
 	    	end
-	    	
+
 	    	self.Exit.DoClick = function()
 	    		self.Frame:Close()
 	    		PanelOpened = false
 	    	end
-	 	
+
 	 	end,
 
 	}
-	
+
 	SAFE_ZONE_PANEL = vgui.RegisterTable( PANEL , "EditablePanel" )
 
 	function SAFE_ZONE_BASE:AddEffect()
-		
+
 		render.SetColorModulation(r, g, b)
 		render.MaterialOverride(Shiny)
 
 		local Pos = self:WorldSpaceCenter() + Vector(0,0,50)
-		
+
 		self.PixelVisible = self.PixelVisible or util.GetPixelVisibleHandle()
 		self.PixelVisible2 = self.PixelVisible2 or util.GetPixelVisibleHandle()
-		
+
 		local Radius = self:BoundingRadius()
 		local Visi = util.PixelVisible(Pos, Radius*0.5, self.PixelVisible)
 		local Time = RealTime()
@@ -259,7 +259,7 @@ if CLIENT then
 		render.DrawSprite(Pos, r*15, r*15, Color(150, 255, 150, Visi*255*(Glow+3.25)))
 		render.DrawSprite(Pos, r*20, r*20, Color(100, 200, 100, Visi*150*(Glow+3.50)))
 		render.SetMaterial(GlareMat)
-		
+
 		cam.IgnoreZ(false)
 
 		self:DrawModel()
@@ -267,7 +267,7 @@ if CLIENT then
 		if not self.NextEmit2 or self.NextEmit2 < Time then
 
 			local p = Emitter2D:Add(Glare2Mat, Pos + (VectorRand()*Radius*0.5))
-			
+
 			p:SetDieTime(math.Rand(2,4))
 			p:SetLifeTime(1)
 
@@ -286,9 +286,9 @@ if CLIENT then
 			self.NextEmit2 = Time + 0.1
 
 			if math.random() > 0.2 then
-				
+
 				local p = Emitter2D:Add(Glare2Mat, Pos + (VectorRand()*Radius*0.5))
-				
+
 				p:SetDieTime(math.Rand(1,3))
 				p:SetLifeTime(1)
 
@@ -308,15 +308,15 @@ if CLIENT then
 				local Seed2 = math.Rand(-4,4)
 
 				p:SetThinkFunction(function(p)
-					
+
 					p:SetStartSize(math.abs(math.sin(Seed+Time*Seed2)*3+math.Rand(0,2)))
 					p:SetColor(math.Rand(200, 255), math.Rand(200, 255), math.Rand(200, 255))
 					p:SetNextThink(CurTime())
-				
+
 				end)
 
 			end
-		
+
 		end
 
 		Emitter2D:Draw()
@@ -334,12 +334,12 @@ if CLIENT then
 	end
 
 	net.Receive( "SafeZonePanel" , function()
-		
-		if PanelOpened then return end 
-		
+
+		if PanelOpened then return end
+
 		vgui.CreateFromTable( SAFE_ZONE_PANEL )
 		PanelOpened = true
-	
+
 	end)
 
 end
@@ -350,15 +350,15 @@ if SERVER then
 	util.AddNetworkString( "SafeZoneAllowPlayer" )
 	util.AddNetworkString( "SafeZoneDisallowPlayer" )
 	util.AddNetworkString( "SafeZoneSetRadius" )
-	
+
 	local META = FindMetaTable("Entity")
 
 	function META:Dissolve()
-		
-		if IsValid( self ) then 
+
+		if IsValid( self ) then
 
 			self:SetName( "dissolve_target" )
-			
+
 			local Effect = ents.Create( "env_entity_dissolver" )
 			Effect:SetKeyValue( "target" , "dissolve_target" )
 			Effect:SetKeyValue( "dissolvetype", "3" )
@@ -367,11 +367,11 @@ if SERVER then
 			Effect:Spawn()
 			Effect:Activate()
 			Effect:Fire( "Dissolve" , "dissolve_target", 0 )
-			
+
 			SafeRemoveEntity( Effect )
 
 		end
-	
+
 	end
 
  	function SafeZoneBlackList( ply , ent )
@@ -381,10 +381,10 @@ if SERVER then
 	end
 
 	function SAFE_ZONE_BASE:SpawnFunction( ply , tr )
-	   	
-		if !tr.Hit or ply.SafeZone then return end 
-		
-		local SpawnPos = tr.HitPos 
+
+		if !tr.Hit or ply.SafeZone then return end
+
+		local SpawnPos = tr.HitPos
 
 		for k,v in pairs(ents.FindInSphere(	SpawnPos + Vector( 0 , 0 , 50 ) , 500 ) ) do
 			if v:IsPlayer() and v != ply then
@@ -392,13 +392,13 @@ if SERVER then
 			end
 		end
 
-		
+
 		local ent = ents.Create( "safe_zone" )
-		ent:SetPos( SpawnPos ) 
+		ent:SetPos( SpawnPos )
 		ent:SetModel( "models/props_combine/CombineThumper002.mdl" )
 		ent:SetModelScale( 0.4 )
 		ent:Spawn()
-		ent:Activate() 
+		ent:Activate()
 
 		ent.PlayersAllowed = {}
 		ent.PlayersAllowed[ply:EntIndex()] = ply
@@ -430,24 +430,24 @@ if SERVER then
 		Sphere2:DrawShadow( false )
 		Sphere2.Protected = true
 
-		ent.Sphere = Sphere 
+		ent.Sphere = Sphere
 		ent.Sphere2 = Sphere2
 		ent.TempRadius = 0
 
-		return ent 
-		
+		return ent
+
 	end
 
 	function SAFE_ZONE_BASE:Initialize()
-	
+
 		self:SetMoveType( MOVETYPE_NONE )
 		self:SetSolid( SOLID_VPHYSICS )
-		
+
 		self:SetUnFreezable( true )
 
 	end
 
-	
+
 	function SAFE_ZONE_BASE:Use( activator , caller )
 		if self:IsAllowed( caller ) then
 			caller.LastSafeZone = self
@@ -456,7 +456,7 @@ if SERVER then
 		end
 
 	end
-	 
+
 	function SAFE_ZONE_BASE:Think() --stays like this for now
 
 
@@ -464,27 +464,27 @@ if SERVER then
 
 		self.Sphere:SetModelScale( self.Radius * 2 * scale , 0 )
 		self.Sphere2:SetModelScale( self.Radius * 2 * scale , 0 )
-		
+
 		for _,v in pairs( ents.FindInSphere( self:WorldSpaceCenter() + Vector( 0 , 0 , 50 ) , self.Radius ) ) do
 
-			if IsValid(v) and v:CPPIGetOwner() then
-				
-				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) and  v.IsFriend() and !v:CPPIGetOwner():IsFriend( self:CPPIGetOwner() ) then
+			if v:CPPIGetOwner() then
+
+				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) then
 					v:Dissolve()
 				end
-			
-			elseif IsValid(v) and v:IsPlayer() and !self:IsAllowed( v ) and and v.IsFriend()  and !v:IsFriend( self:CPPIGetOwner() ) then 
 
-					local dif = v:GetPos() - self:GetPos()
-					
-					v:SetPos( self:GetPos() + dif / self.Radius * ( self.Radius +  v:GetPos():Distance( self:GetPos() ) ) )
+		elseif v:IsPlayer() and !self:IsAllowed( v ) then
+
+				local dif = v:GetPos() - self:GetPos()
+
+				v:SetPos( self:GetPos() + dif / self.Radius * ( self.Radius +  v:GetPos():Distance( self:GetPos() ) ) )
 
 			end
-		
+
 		end
 
 		self:NextThink( CurTime() )
-		
+
 		return true
 
 	end
@@ -493,29 +493,33 @@ if SERVER then
 		if self:CPPIGetOwner() then
 			self:CPPIGetOwner().SafeZone = false
 		end
-		
+
 	end
 
 	function SAFE_ZONE_BASE:AllowPlayer( ply )
 		if IsValid( ply ) and ply:IsPlayer() then
-			self.PlayersAllowed[ply:EntIndex()] = ply 
+			self.PlayersAllowed[ply:EntIndex()] = ply
 		end
 	end
 
 	function SAFE_ZONE_BASE:DisallowPlayer( ply )
 		if IsValid( ply ) and ply:IsPlayer() then
-			self.PlayersAllowed[ply:EntIndex()] = nil 
+			self.PlayersAllowed[ply:EntIndex()] = nil
 		end
 	end
 
 	function SAFE_ZONE_BASE:IsAllowed( ply )
 		if IsValid( ply ) and ply:IsPlayer() then
+			if ply.CanAlter and self:CPPIGetOwner() and self:CPPIGetOwner():CanAlter(ply) then
+				return true
+			end
+
 			return self.PlayersAllowed[ply:EntIndex()] and true or false
 		else
 			return nil
 		end
 	end
-	
+
 	hook.Add( "PhysgunPickup" , "SafeZoneAntiPickup" , SafeZoneBlackList )
 	hook.Add( "CanDrive" , "SafeZoneAntiDrive" , SafeZoneBlackList )
 
@@ -539,7 +543,7 @@ if SERVER then
 
 	net.Receive( "SafeZoneSetRadius" , function( len , ply )
 		local int = tonumber(net.ReadString())
-		
+
 		int = int >= 500 and 500 or int --Clamping like a pro or not
 	    int = int <= 0 and 1 or int
 
