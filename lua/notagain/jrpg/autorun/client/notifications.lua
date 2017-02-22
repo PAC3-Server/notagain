@@ -1,5 +1,5 @@
 surface.CreateFont( "NoticeFont", {
-    font      = "arial.ttf",
+    font      = "arial",
     size      = 18,
     weight    = 600,
 } )

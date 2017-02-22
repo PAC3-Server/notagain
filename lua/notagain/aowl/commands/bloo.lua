@@ -46,19 +46,19 @@ if CLIENT then
 		end )
 
 		surface.CreateFont( "bluscreenfont70", {
-			font = "arial.ttf",
+			font = "arial",
 			size = 1000,
 			weight = 1000,
 		} )
 
 		surface.CreateFont( "bluscreenfont40", {
-			font = "arial.ttf",
+			font = "arial",
 			size = 40,
 			weight = 600,
 		} )
 
 		surface.CreateFont( "bluscreenfont20", {
-			font = "arial.ttf",
+			font = "arial",
 			size = 20,
 			weight = 500,
 		} )
