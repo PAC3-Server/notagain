@@ -32,5 +32,5 @@
 	path = vj-base
 	url = https://github.com/PAC3-Server/VJ-Base.git
 [submodule "ServerAssets"]
-	path = ServerAssets
+	path = serverassets
 	url = https://github.com/PAC3-Server/ServerAssets
