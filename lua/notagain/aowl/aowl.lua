@@ -757,7 +757,7 @@ do -- groups
 		aowl.AddCommand("sudo", function(ply, _, b)
 			b = util.tobool(b)
 			ply.aowl_sudo = b
-		end)
+		end, "developers")
 	end
 end
 
