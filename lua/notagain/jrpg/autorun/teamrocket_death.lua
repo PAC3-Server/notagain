@@ -62,6 +62,20 @@ end
 if SERVER then
 	util.AddNetworkString("teamrocket")
 
+	local death_sounds = {
+		"chatsounds/autoadd/ssbb_peach/noooo.ogg",
+		"chatsounds/autoadd/ssbb_pit/huaaa.ogg",
+		"vo/halloween_merasmus/sf12_defeated12.mp3",
+		"vo/halloween_merasmus/sf12_defeated11.mp3",
+		"vo/halloween_merasmus/sf12_defeated11.mp3",
+		--"player/survivor/voice/manager/fall01.wav",
+		--"player/survivor/voice/manager/fall02.wav",
+		"player/survivor/voice/manager/fall03.wav",
+		"chatsounds/autoadd/instagib/aaaaa.ogg",
+		"chatsounds/autoadd/hotd2_npcs/noooo/noooo.ogg",
+		"vo/outland_12a/launch/al_launch_noooo.wav",
+	}
+
 	local function team_rocket_death(victim, attacker, dir)
 		local info = DamageInfo()
 		info:SetDamagePosition(victim:GetPos())
@@ -75,7 +89,7 @@ if SERVER then
 		local rag = victim:GetNWEntity("serverside_ragdoll")
 
 		if rag:IsValid() then
-			local snd = CreateSound(victim, table.Random(nnoo))
+			local snd = CreateSound(victim, table.Random(death_sounds))
 			snd:ChangeVolume(1,0)
 			snd:SetSoundLevel(120)
 			snd:SetDSP(20)
@@ -116,20 +130,22 @@ if SERVER then
 		end
 	end
 
+	local suppress = false
 	hook.Add("EntityTakeDamage", "teamrocket", function(victim, info)
-		if not victim:IsPlayer() then return end
+		if suppress or not victim:IsPlayer() then return end
 		local force = info:GetDamageForce()
 
 		local res = util.TraceLine({start = victim:GetPos(), endpos = victim:GetPos() + force, filter = victim})
 
 		if res.HitSky then
+			suppress = true
 			team_rocket_death(victim, info:GetAttacker(), force:GetNormalized())
 		end
 	end)
 
 	hook.Add("PhysgunThrowPlayer", "teamrocket", function(attacker, victim)
-		local res = util.TraceLine({start = ent:GetPos(), endpos = ent:GetPos() + ent:GetVelocity() * 10, filter = ent})
-PrintTable(res)
+		local res = util.TraceLine({start = victim:GetPos(), endpos = victim:GetPos() + victim:GetVelocity() * 10, filter = victim})
+
 		if res.HitSky then
 			team_rocket_death(victim, attacker, victim:GetVelocity():GetNormalized())
 		end
