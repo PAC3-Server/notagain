@@ -459,7 +459,7 @@ if SERVER then
 
 	function SAFE_ZONE_BASE:Think() --stays like this for now
 
-
+		local owner = self:CPPIGetOwner()
 		local scale = self.Sphere:GetModelScale() / self.Sphere:BoundingRadius()
 
 		self.Sphere:SetModelScale( self.Radius * 2 * scale , 0 )
@@ -469,11 +469,11 @@ if SERVER then
 
 			if v:CPPIGetOwner() then
 
-				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) then
+				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) and v:CPPIGetOwner().CanAlter() and !v:CPPIGetOwner():CanAlter( owner ) then    
 					v:Dissolve()
 				end
 
-		elseif v:IsPlayer() and !self:IsAllowed( v ) then
+			elseif v:IsPlayer() and !self:IsAllowed( v ) and v.CanAlter and !v:CanAlter( owner ) then
 
 				local dif = v:GetPos() - self:GetPos()
 
