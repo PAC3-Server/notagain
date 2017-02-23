@@ -81,6 +81,22 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerDisconnected", "serverside_ragdoll", function(ply)
-		SafeRemoveEntity(ply:GetNWEntity("serverside_ragdoll"))
+		ply:Kill()
+		local rag = ply:GetNWEntity("serverside_ragdoll")
+		rag.serverside_ragdoll_disconnected = ply:UniqueID()
+		SafeRemoveEntityDelayed(rag, 120)
+	end)
+
+	hook.Add("PlayerInitialSpawn", "serverside_ragdoll", function(ply)
+		timer.Simple(0, function()
+			if not ply:IsValid() then return end
+			for _, ent in pairs(ents.FindByClass("prop_ragdoll")) do
+				if ent.serverside_ragdoll_disconnected == ply:UniqueID() then
+					ply:SetPos(ent:GetPos())
+					ent:Remove()
+					break
+				end
+			end
+		end)
 	end)
 end
