@@ -122,7 +122,7 @@ if SERVER then
 		ply:TakeDamageInfo(info)
 		net.Start("rockfall_death", true)
 			net.WriteEntity(ply)
-			net.WriteVector(data:GetOrigin())
+			net.WriteVector(pos)
 			net.WriteVector(trace_res.HitNormal)
 			net.WriteFloat(ply:GetModelScale() or 1)
 		net.Broadcast()
