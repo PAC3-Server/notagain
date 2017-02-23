@@ -469,7 +469,7 @@ if SERVER then
 
 			if v:CPPIGetOwner() then
 
-				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) and v:CPPIGetOwner().CanAlter() and !v:CPPIGetOwner:CanAlter( owner ) then    
+				if v:GetClass() != "safe_zone" and !self:IsAllowed( v:CPPIGetOwner() ) and v:CPPIGetOwner().CanAlter() and !v:CPPIGetOwner():CanAlter( owner ) then    
 					v:Dissolve()
 				end
 
