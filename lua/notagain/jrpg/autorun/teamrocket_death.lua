@@ -1,5 +1,6 @@
 if CLIENT then
 	net.Receive("teamrocket", function(len)
+		if not LocalPlayer():IsValid() then return end
 		local origin = net.ReadVector()
 
 		local mat = Material("sprites/light_ignorez")
@@ -140,6 +141,7 @@ if SERVER then
 		if res.HitSky then
 			suppress = true
 			team_rocket_death(victim, info:GetAttacker(), force:GetNormalized())
+			suppress = false
 		end
 	end)
 
