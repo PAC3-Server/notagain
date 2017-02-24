@@ -702,8 +702,7 @@ function tod.AddOverrideConfig(name, config, probability)
 	tod.override_configs[name] = {config = config, probability = probability, lerp = 0}
 end
 
-hook.Add("Think", "tod", function()
-
+timer.Create("tod", 0.1, 0, function()
 	-- initialize tod
 	if SERVER and not tod.mode then
 		tod.SetMode(tod.cvar:GetInt())

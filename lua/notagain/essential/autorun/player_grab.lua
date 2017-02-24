@@ -53,6 +53,20 @@ hook.Add("PhysgunPickup", tag, function(ply, ent)
 	return true
 end)
 
+local nnoo = {
+	"chatsounds/autoadd/ssbb_peach/noooo.ogg",
+	"chatsounds/autoadd/ssbb_pit/huaaa.ogg",
+	"vo/halloween_merasmus/sf12_defeated12.mp3",
+	"vo/halloween_merasmus/sf12_defeated11.mp3",
+	"vo/halloween_merasmus/sf12_defeated11.mp3",
+	--"player/survivor/voice/manager/fall01.wav",
+	--"player/survivor/voice/manager/fall02.wav",
+	"player/survivor/voice/manager/fall03.wav",
+	"chatsounds/autoadd/instagib/aaaaa.ogg",
+	"chatsounds/autoadd/hotd2_npcs/noooo/noooo.ogg",
+	"vo/outland_12a/launch/al_launch_noooo.wav",
+}
+
 hook.Add("PhysgunDrop", tag, function(ply, ent)
 	if ent:IsPlayer() and ent._is_being_physgunned==ply then
 		ent._pos_velocity = {}
@@ -60,6 +74,8 @@ hook.Add("PhysgunDrop", tag, function(ply, ent)
 
 		ent:SetMoveType(ply:KeyDown(IN_ATTACK2) and ply:CheckUserGroupLevel("moderators") and MOVETYPE_NOCLIP or MOVETYPE_WALK)
 		ent:SetOwner()
+		hook.Run("PhysgunThrowPlayer", ply, ent)
+
 		return true
 	end
 end)

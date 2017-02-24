@@ -92,10 +92,11 @@ if CLIENT then
 
 		util.ScreenShake(origin, scale, 1/scale, 1, 10 * scale)
 
-		ply:EmitSound("physics/concrete/boulder_impact_hard"..math.random(1,4)..".wav", 75, 50 )
+		ply:EmitSound("physics/concrete/boulder_impact_hard"..math.random(1,4)..".wav", 60, 50 )
+		ply:EmitSound("pac_server/groundhit.ogg", 100, math.random(90,110) )
 	end
 
-	net.Receive("anime_death", function(len)
+	net.Receive("rockfall_death", function(len)
 		local ply = net.ReadEntity()
 		local origin = net.ReadVector()
 		local normal = net.ReadVector()
@@ -105,94 +106,48 @@ if CLIENT then
 	end)
 end
 
+
 if SERVER then
-	util.AddNetworkString("anime_death")
+	util.AddNetworkString("rockfall_death")
 
-	hook.Add("Move", "realistic_falldamage", function(ply, data)
-		local vel = data:GetVelocity()
+	hook.Add("RealisticFallDamage", "rockfall_death", function(ply, pos, dmg, speed, trace_res, trace_params)
+		if speed < 2000 then return end
 
-		if ply.fdmg_last_vel and ply:GetMoveType() == MOVETYPE_WALK then
-			local diff = vel - ply.fdmg_last_vel
-			local len = diff:Length()
-			if len > 500 then
-				local params = {}
-				params.start = data:GetOrigin() + ply:OBBCenter()
-				params.endpos = params.start - diff:GetNormalized() * ply:BoundingRadius()
-				params.filter = ply
-				params.mins = ply:OBBMins()
-				params.maxs = ply:OBBMaxs()
-				local res = util.TraceHull(params)
+		local info = DamageInfo()
+		info:SetDamagePosition(pos)
+		info:SetDamage(dmg)
+		info:SetDamageType(DMG_FALL)
+		info:SetAttacker(Entity(0))
+		info:SetInflictor(Entity(0))
+		info:SetDamageForce(Vector(0,0,0))
+		ply:TakeDamageInfo(info)
+		net.Start("rockfall_death", true)
+			net.WriteEntity(ply)
+			net.WriteVector(pos)
+			net.WriteVector(trace_res.HitNormal)
+			net.WriteFloat(ply:GetModelScale() or 1)
+		net.Broadcast()
 
-				local dmg = (len - 500) / 4
+		trace_params.mask =  MASK_SOLID_BRUSHONLY
+		local res = util.TraceLine(trace_params)
 
-				if not res.HitWorld and res.Entity:IsValid() then
-					local info = DamageInfo()
-					info:SetDamagePosition(data:GetOrigin())
-					info:SetDamage(dmg)
-					info:SetDamageType(DMG_FALL)
-					info:SetAttacker(ply)
-					info:SetInflictor(ply)
-					info:SetDamageForce(ply.fdmg_last_vel)
-					res.Entity:TakeDamageInfo(info)
-				end
+		timer.Simple(0, function()
+			local ent = ply:GetNWEntity("serverside_ragdoll")
+			if ent:IsValid() then
+				ply:SetMoveType(MOVETYPE_NONE)
+				ply:SetPos(res.HitPos)
 
-				local z = math.abs(res.HitNormal.z)
-
-				if res.Hit and (z < 0.1 or z > 0.9) then
-					local fall_damage = hook.Run("GetFallDamage", ply, len)
-					if fall_damage ~= 0 then
-						if fall_damage < dmg then
-							if len > 2000 then
-								local info = DamageInfo()
-								info:SetDamagePosition(data:GetOrigin())
-								info:SetDamage(dmg - fall_damage)
-								info:SetDamageType(DMG_FALL)
-								info:SetAttacker(Entity(0))
-								info:SetInflictor(Entity(0))
-								info:SetDamageForce(Vector(0,0,0))
-								ply:TakeDamageInfo(info)
-								net.Start("anime_death", true)
-									net.WriteEntity(ply)
-									net.WriteVector(data:GetOrigin())
-									net.WriteVector(res.HitNormal)
-									net.WriteFloat(ply:GetModelScale() or 1)
-								net.Broadcast()
-
-								params.mask =  MASK_SOLID_BRUSHONLY
-								local res = util.TraceLine(params)
-
-								timer.Simple(0, function()
-									local ent = ply:GetNWEntity("serverside_ragdoll")
-									if ent:IsValid() then
-										ply:SetMoveType(MOVETYPE_NONE)
-										ply:SetPos(res.HitPos)
-
-										local phys = ent:GetPhysicsObjectNum(10)
-										if phys:IsValid() then
-											phys:SetPos(res.HitPos + res.HitNormal * -6)
-											local ang = (-res.HitNormal):Angle()
-											ang:RotateAroundAxis(res.HitNormal, math.random()*360)
-											phys:SetAngles(ang)
-											phys:EnableMotion(false)
-										end
-									end
-								end)
-							else
-								local info = DamageInfo()
-								info:SetDamagePosition(data:GetOrigin())
-								info:SetDamage(dmg - fall_damage)
-								info:SetDamageType(DMG_FALL)
-								info:SetAttacker(Entity(0))
-								info:SetInflictor(Entity(0))
-								info:SetDamageForce(ply.fdmg_last_vel)
-								ply:TakeDamageInfo(info)
-							end
-						end
-					end
+				local phys = ent:GetPhysicsObjectNum(10)
+				if phys:IsValid() then
+					phys:SetPos(res.HitPos + res.HitNormal * -6)
+					local ang = (-res.HitNormal):Angle()
+					ang:RotateAroundAxis(res.HitNormal, math.random()*360)
+					phys:SetAngles(ang)
+					phys:EnableMotion(false)
 				end
 			end
-		end
+		end)
 
-		ply.fdmg_last_vel = vel
+		return true
 	end)
 end

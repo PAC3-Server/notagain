@@ -487,8 +487,6 @@ do -- groups
 				if friend:IsValid() then
 					local status = net.ReadString()
 
-					print(ply, "'s friend status for ", friend, " is ", status)
-
 					if status == "friend" or status == "requested" then
 						ply:AddFriend(friend)
 					elseif status == "none" or status == "blocked" then
@@ -759,7 +757,7 @@ do -- groups
 		aowl.AddCommand("sudo", function(ply, _, b)
 			b = util.tobool(b)
 			ply.aowl_sudo = b
-		end)
+		end, "developers")
 	end
 end
 
