@@ -92,7 +92,8 @@ if CLIENT then
 
 		util.ScreenShake(origin, scale, 1/scale, 1, 10 * scale)
 
-		ply:EmitSound("physics/concrete/boulder_impact_hard"..math.random(1,4)..".wav", 75, 50 )
+		ply:EmitSound("physics/concrete/boulder_impact_hard"..math.random(1,4)..".wav", 60, 50 )
+		ply:EmitSound("pac_server/groundhit.ogg", 100, math.random(90,110) )
 	end
 
 	net.Receive("rockfall_death", function(len)
