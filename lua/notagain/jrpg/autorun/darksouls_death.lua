@@ -8,7 +8,7 @@ if CLIENT then
 	})
 
 	surface.CreateFont( "darksouls_death", {
-		font = "georgia",
+		font = "optimusprinceps",
 		size = 1000,
 		weight = 0,
 	} )
@@ -102,7 +102,7 @@ if CLIENT then
 
 				local m = Matrix()
 				m:Translate(Vector(x,y))
-				m:Scale(Vector(1,1,1) * f^0.25)
+				m:Scale(Vector(1,1.25,1) * 1.15 * f^0.25)
 				m:Translate(-Vector(x,y))
 				cam.PushModelMatrix(m)
 				draw.SimpleText("YOU DIED", "darksouls_death", x, y, Color(166, 0, 25, 255*(f^4)), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
@@ -123,7 +123,7 @@ if SERVER then
 
 	hook.Add("RealisticFallDamage", "darksouls_death", function(ply, pos, dmg, speed, trace_res, trace_params)
 		if trace_res.HitNormal.z ~= 1 then return end
-		if dmg > ply:Health()*2 then return end
+		if dmg > ply:GetMaxHealth()*2 then return end
 
 		ply:SetSequence(ply:LookupSequence("death_04"))
 		ply:SetCycle(0.97)
