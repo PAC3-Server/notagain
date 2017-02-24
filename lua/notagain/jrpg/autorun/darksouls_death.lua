@@ -19,8 +19,11 @@ if CLIENT then
 		local ply = net.ReadEntity()
 		local rag = net.ReadEntity()
 
+		local death_music
+
 		if ply == LocalPlayer() then
-			LocalPlayer():EmitSound("pac_server/ds2death.ogg", 75, 100, 0.5)
+			death_music = CreateSound(LocalPlayer(), "pac_server/ds2death.ogg")
+			death_music:Play()
 		end
 
 		timer.Simple(1, function()
@@ -108,6 +111,7 @@ if CLIENT then
 				if ply:Alive() and f > 0.25 then
 					hook.Remove("HUDPaintBackground", "darksouls_death")
 					hook.Remove("HUDShouldDraw", "darksouls_death")
+					death_music:FadeOut(2)
 				end
 			end)
 		end
