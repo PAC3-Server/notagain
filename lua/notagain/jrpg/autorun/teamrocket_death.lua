@@ -16,7 +16,7 @@ if CLIENT then
 		local sound_played = false
 		local start = RealTime()
 
-		LocalPlayer():EmitSound("chatsounds/autoadd/capsadmin/jtechsfx/asdasd.ogg", 75, math.random(130, 150), 0.5)
+		LocalPlayer():EmitSound("pac_server/throw/twinkle.ogg", 75, math.random(95, 105), 0.3)
 		local id = "teamrocket_"..tostring({})
 
 		hook.Add("RenderScreenspaceEffects", id, function()
@@ -63,20 +63,6 @@ end
 if SERVER then
 	util.AddNetworkString("teamrocket")
 
-	local death_sounds = {
-		"chatsounds/autoadd/ssbb_peach/noooo.ogg",
-		"chatsounds/autoadd/ssbb_pit/huaaa.ogg",
-		"vo/halloween_merasmus/sf12_defeated12.mp3",
-		"vo/halloween_merasmus/sf12_defeated11.mp3",
-		"vo/halloween_merasmus/sf12_defeated11.mp3",
-		--"player/survivor/voice/manager/fall01.wav",
-		--"player/survivor/voice/manager/fall02.wav",
-		"player/survivor/voice/manager/fall03.wav",
-		"chatsounds/autoadd/instagib/aaaaa.ogg",
-		"chatsounds/autoadd/hotd2_npcs/noooo/noooo.ogg",
-		"vo/outland_12a/launch/al_launch_noooo.wav",
-	}
-
 	local function team_rocket_death(victim, attacker, dir)
 		local info = DamageInfo()
 		info:SetDamagePosition(victim:GetPos())
@@ -90,12 +76,18 @@ if SERVER then
 		local rag = victim:GetNWEntity("serverside_ragdoll")
 
 		if rag:IsValid() then
-			local snd = CreateSound(victim, table.Random(death_sounds))
-			snd:ChangeVolume(1,0)
-			snd:SetSoundLevel(120)
+			local path
+			if victim:LookupBone("ValveBiped.Bip01_R_Latt") then
+				path = "pac_server/throw/female/" .. math.random(1,9) .. ".ogg"
+			else
+				path = "pac_server/throw/male/" .. math.random(1,19) .. ".ogg"
+			end
+
+			local snd = CreateSound(victim, path)
+			snd:SetSoundLevel(150)
 			snd:SetDSP(20)
 			snd:Play()
-			rag:CallOnRemove("teamrocket_stop_sound", function() snd:ChangeVolume(0, 1) end)
+
 			local phys = rag:GetPhysicsObject()
 			if phys:IsValid() then
 
@@ -138,7 +130,7 @@ if SERVER then
 
 		local res = util.TraceLine({start = victim:GetPos(), endpos = victim:GetPos() + force, filter = victim})
 
-		if res.HitSky then
+		if res.Hit and res.HitSky and victim:GetPos():Distance(res.HitPos) > 1000 then
 			suppress = true
 			team_rocket_death(victim, info:GetAttacker(), force:GetNormalized())
 			suppress = false
@@ -148,7 +140,7 @@ if SERVER then
 	hook.Add("PhysgunThrowPlayer", "teamrocket", function(attacker, victim)
 		local res = util.TraceLine({start = victim:GetPos(), endpos = victim:GetPos() + victim:GetVelocity() * 10, filter = victim})
 
-		if res.HitSky then
+		if res.HitSky and victim:GetPos():Distance(res.HitPos) > 1000 then
 			team_rocket_death(victim, attacker, victim:GetVelocity():GetNormalized())
 		end
 	end)
