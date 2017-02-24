@@ -239,9 +239,12 @@ if CLIENT then
 					end
 				end
 
-				local pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2)):ToScreen()
+				local world_pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2))
+				local pos = world_pos:ToScreen()
+				local dist = world_pos:Distance(EyePos())
+				fraction = fraction * ((-(dist / 1000)+1) ^ 2)
 
-				if pos.visible then
+				if pos.visible and dist < 1000 then
 					surface.DrawRect(pos.x, pos.y, 1,1)
 
 					local cur = ent.hm_cur_health or ent:Health()
