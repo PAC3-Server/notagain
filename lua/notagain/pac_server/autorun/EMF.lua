@@ -92,7 +92,7 @@ end
 
 function EMF.GenerateEnts()
 	local MaxEntries = #EMF.Topology
-	local AmScale = MaxEntries / 100 * #player.GetAll()
+	local AmScale = MaxEntries / 50 * ( #player.GetAll() <= 10 and 1 or math.Round( #player.GetAll() / 10 ) )
 
 	for i = 1 , AmScale do
 		local ent = ents.Create( EMF.Ents[math.random( 1 , #EMF.Ents )].Class )
