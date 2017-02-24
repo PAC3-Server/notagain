@@ -1,3 +1,4 @@
 hook.Add("PlayerInitialSpawn", "player_collision", function(ply)
-	ent:SetNoCollideWithTeammates(true)
+	ply:SetNoCollideWithTeammates(true)
+	ply:SetAvoidPlayers(false)
 end)
