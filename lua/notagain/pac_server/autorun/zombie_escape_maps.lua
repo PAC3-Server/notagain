@@ -12,7 +12,8 @@ hook.Add("InitPostEntity", "fixmap", function()
 			
 		local open_these = {
 			func_door = true,
-			func_linear = true,
+			func_door_rotating = true,
+			func_movelinear = true,
 		}
 
 		for _, ent in pairs(ents.GetAll()) do
