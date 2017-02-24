@@ -355,7 +355,7 @@ concommand.Add("-picker2_copy", function(ply, command, args)
 	if not selected_text then return end
 	local piece, text = string.match(selected_text, "^([^:]+): (.*)$")
 	if piece == "Entity" then
-		text = string.match(text,"^%([0-9]+%) (.*) .*$")
+		text = string.match(text,"^%(?.[0-9]+%) (.*) .*$")
 	elseif piece == "Bone" then
 		local boneindex, entindex = string.match(text,"^#([0-9]+) of Entity #([0-9]+)$")
 		text = string.format("entity(%s):bone(%s)", entindex, boneindex)
