@@ -131,3 +131,7 @@ end
 hook.Add("InitPostEntity" , "EMFInit" , function()
 	EMF.Initialize()
 end)
+
+for _ , fl in ipairs((file.Find("notagain/jrpg/entities/*", "LUA"))) do
+	include("notagain/jrpg/entities/" .. fl )
+end
