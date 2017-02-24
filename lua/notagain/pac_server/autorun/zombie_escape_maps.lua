@@ -8,6 +8,8 @@ hook.Add("InitPostEntity", "fixmap", function()
 			func_physbox_multiplayer = true,
 			info_particle_system = true,
 			game_text = true,
+			func_wall_toggle = true,
+			func_clip_vphysics = true,
 		}
 			
 		local open_these = {
