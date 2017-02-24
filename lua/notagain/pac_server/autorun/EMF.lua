@@ -95,7 +95,7 @@ function EMF.GenerateEnts()
 	local AmScale = MaxEntries / 50 * ( #player.GetAll() <= 10 and 1 or math.Round( #player.GetAll() / 10 ) )
 
 	for i = 1 , AmScale do
-		local ent = ents.Create( EMF.Ents[math.random( 1 , #EMF.Ents )].Class )
+		local ent = ents.Create( EMF.Ents[math.random( 1 , #EMF.Ents )] )
 		ent:Activate()
 		ent:Spawn()
 
