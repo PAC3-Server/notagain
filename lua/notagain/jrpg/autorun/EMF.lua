@@ -79,7 +79,9 @@ if SERVER then
 			ent:DropToFloor() -- in case nearest point doesnt do its job
 
 		else
-			EMF.SetValidPos( ent , ref )
+
+				EMF.SetValidPos( ent , ref )
+
 		end
 
 	end
@@ -93,7 +95,7 @@ if SERVER then
 			ent:Spawn()
 
 			EMF.SetValidPos( ent , math.random( 1 , #EMF.Topology ) )
-			EMF.ActiveEnts[ent:EntIndex()] = ent
+			EMF.ActiveEnts[#EMF.ActiveEnts + 1] = ent
 		end
 	end
 
