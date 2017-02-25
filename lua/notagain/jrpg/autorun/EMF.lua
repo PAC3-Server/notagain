@@ -97,7 +97,6 @@ if SERVER then
 
 		for i = 1 , AmScale do
 			local ent = ents.Create( EMF.Ents[math.random( 1 , #EMF.Ents )] )
-			ent:Activate()
 			ent:Spawn()
 
 			EMF.SetValidPos( ent , math.random( 1 , #EMF.Topology ) )
