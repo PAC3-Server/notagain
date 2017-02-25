@@ -1,3 +1,5 @@
+AddCSLuaFile()
+
 if SERVER then
 	EMF = EMF or {}
 	EMF.Ents = EMF.Ents or {}
