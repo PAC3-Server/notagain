@@ -27,23 +27,3 @@ hook.Add("InitPostEntity", "fixmap", function()
 
 	hook.Remove("InitPostEntity", "fixmap")
 end)
-
-if SERVER then
-	
-	hook.Add( "KeyPress", "OpenDoors", function( ply, key )
-		if ( key == IN_USE ) then
-
-			local ToOpen = {
-				func_door = true,
-				func_door_rotating = true,
-				func_movelinear = true,
-			}
-			local tr = ply:GetEyeTrace()
-
-			if ToOpen[tr.Entity:GetClass()] and tr.HitPos:Distance(ply:GetPos()) <= 100 then
-				tr.Entity:Fire("Open")
-			end
-		end
-	end )
-	
-end
