@@ -7,14 +7,7 @@ if SERVER then
 	
 	aowl.AddCommand({"decals","cleardecals"}, function( player , line )
 		if IsValid(player) then
-			net.Start(Tag)
-			net.Send(player)
+			player:ConCommand("r_cleardecals")
 		end
-	end)
-end
-
-if CLIENT then
-	net.Receive(Tag,function()
-		RunConsoleCommand("r_cleardecals")
 	end)
 end
