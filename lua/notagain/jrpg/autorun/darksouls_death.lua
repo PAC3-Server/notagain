@@ -146,7 +146,7 @@ if SERVER then
 				phys:SetVelocity(Vector(0,0,0))
 			end
 
-			if ply:LookupBone("ValveBiped.Bip01_R_Latt") then
+			if ply:LookupBone("ValveBiped.Bip01_R_Pectoral") then
 				ply:EmitSound("pac_server/darksouls2/death/female/"..math.random(1,4)..".ogg", 75, math.random(95,105))
 			else
 				ply:EmitSound("pac_server/darksouls2/death/male/"..math.random(1,5)..".ogg", 75, math.random(95,105))
