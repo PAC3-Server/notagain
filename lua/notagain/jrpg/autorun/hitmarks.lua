@@ -967,7 +967,6 @@ if SERVER then
 
 	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
 		if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
-
 		local filter = {}
 		for k,v in pairs(player.GetAll()) do
 			if v ~= ent and v:GetPos():Distance(ent:GetPos()) < 1500 * (ent:GetModelScale() or 1) then

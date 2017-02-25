@@ -101,6 +101,7 @@ do
 	function BASE:Initialize() end
 	function BASE:OnAttach() end
 	function BASE:OnDamage(attacker, victim, dmginfo) end
+	function BASE:OnFireBullet(data) end
 
 	function BASE:GetName()
 		return self.Name
@@ -134,7 +135,7 @@ do
 		copy:SetDamageForce(dmginfo:GetDamageForce())
 		copy:SetDamagePosition(dmginfo:GetDamagePosition())
 		copy:SetDamageType(dmginfo:GetDamageType())
-		copy:SetInflictor(dmginfo:GetInflictor())
+		--copy:SetInflictor(dmginfo:GetInflictor())
 		--copy:SetMaxDamage(dmginfo:GetMaxDamage())
 		copy:SetReportedPosition(dmginfo:GetReportedPosition())
 
@@ -162,6 +163,7 @@ do
 				status_mult = {-5, -2},
 				max_positive = 0,
 				max_negative = math.huge,
+				color = Vector(67, 67, 67),
 			},
 			{
 				name = "boring",
@@ -169,6 +171,7 @@ do
 				status_mult = {-5, -1},
 				max_positive = 0,
 				max_negative = math.huge,
+				color = Vector(120, 63, 4),
 			},
 			{
 				name = "common",
@@ -176,6 +179,7 @@ do
 				status_mult = {0, 0},
 				max_positive = 0,
 				max_negative = math.huge,
+				color = Vector(243, 243, 243),
 			},
 			{
 				name = "uncommon",
@@ -183,6 +187,7 @@ do
 				status_mult = {-5, 2},
 				max_positive = 1,
 				max_negative = 1,
+				color = Vector(159, 197, 232),
 			},
 			{
 				name = "greater",
@@ -190,6 +195,7 @@ do
 				status_mult = {-5, 3},
 				max_positive = 2,
 				max_negative = 1,
+				color = Vector(61, 133, 198),
 			},
 			{
 				name = "rare",
@@ -197,6 +203,7 @@ do
 				status_mult = {-5, 6},
 				max_positive = 2,
 				max_negative = 1,
+				color = Vector(106, 119, 31),
 			},
 			{
 				name = "epic",
@@ -204,6 +211,7 @@ do
 				status_mult = {1, 9},
 				max_positive = 2,
 				max_negative = 0,
+				color = Vector(241, 194, 50),
 			},
 			{
 				name = "legendary",
@@ -211,6 +219,7 @@ do
 				status_mult = {1, 12},
 				max_positive = math.huge,
 				max_negative = 0,
+				color = Vector(255, 0, 0),
 			},
 			{
 				name = "godly",
@@ -218,6 +227,7 @@ do
 				status_mult = {1, 15},
 				max_positive = math.huge,
 				max_negative = 0,
+				color = Vector(-1,-1,-1),
 			},
 		}
 
@@ -239,12 +249,12 @@ do
 		end
 
 		function META:OnAttach()
-			local rand = math.random()^3
+			local rand = math.random()^4
 			local num = math.ceil(rand*#self.Rarity)
 			self.rarity = self.Rarity[num]
 			self.rarity.i = (num/#self.Rarity) + 1
 
-			if math.random() < 0.1 then
+			if math.random() < 0.25 then
 				local num = math.random(unpack(self.rarity.status_mult))
 				self.stat_mult_num = num
 				self.stat_mult = 1 + num * 0.02
@@ -278,6 +288,7 @@ do
 			end
 
 			self.Weapon:SetNWString("wepstats_name", wepstats.GetName(self.Weapon))
+			self.Weapon:SetNWVector("wepstats_color", self.rarity.color)
 		end
 
 		function META:OnDamage(attacker, victim, dmginfo)
@@ -290,11 +301,9 @@ do
 	end
 end
 
-hook.Add("OnEntityCreated", "wepstats", function(ent)
-	if type(ent) ~= "Weapon" then return end
-
-	wepstats.AddEffect("base", ent)
-end)
+function wepstats.AddToWeapon(wep)
+	wepstats.AddEffect("base", wep)
+end
 
 local suppress = false
 hook.Add("EntityTakeDamage", "wepstats", function(ent, info)
@@ -303,14 +312,24 @@ hook.Add("EntityTakeDamage", "wepstats", function(ent, info)
 	local attacker = info:GetAttacker()
 
 	if not (attacker:IsNPC() or attacker:IsPlayer()) then return end
+	local wep = attacker:GetActiveWeapon()
 
-	local wep = info:GetInflictor()
+	suppress = true
+	wepstats.CallEffect(wep, "OnDamage", attacker, ent, info)
+	suppress = false
+end)
+
+
+local suppress = false
+hook.Add("EntityFireBullets", "wepstats", function(wep, data)
+	if suppress then return end
 
 	if wep:IsPlayer() then
 		wep = wep:GetActiveWeapon()
 	end
+
 	suppress = true
-	wepstats.CallEffect(wep, "OnDamage", attacker, ent, info)
+	wepstats.CallEffect(wep, "OnFireBullet", data)
 	suppress = false
 end)
 
@@ -329,7 +348,7 @@ do -- effects
 			function META:OnAttach()
 				self.drop_chance = 0.1
 				self.name = table.Random({
-					"wet",
+					"slimey",
 					"slippery",
 					"doused",
 					"clumsy",
@@ -339,6 +358,7 @@ do -- effects
 			function META:OnDamage(attacker, victim, dmginfo)
 				if math.random()*self:GetStatus("base"):GetStatusMultiplier() < self.drop_chance then
 					attacker:DropWeapon(self.Weapon)
+					attacker:SelectWeapon("none")
 				end
 			end
 
@@ -381,7 +401,7 @@ do -- effects
 			function META:OnDamage(attacker, victim, dmginfo)
 				if math.random() < 0.1 then
 					dmginfo = self:CopyDamageInfo(dmginfo)
-					dmginfo:SetDamage(dmginfo:GetDamage() * 0.1 / self:GetStatus("base"):GetStatusMultiplier())
+					dmginfo:SetDamage(dmginfo:GetDamage() * 0.25 / self:GetStatus("base"):GetStatusMultiplier())
 					attacker:TakeDamageInfo(dmginfo)
 				end
 			end
@@ -391,6 +411,53 @@ do -- effects
 	end
 
 	do -- positive
+		do
+			local META = {}
+			META.Name = "leech"
+			META.Negative = true
+			META.Chance = 0.5
+
+			function META:OnAttach()
+				self.name = "life steal"
+				self.alt_name = table.Random({"vampiric", "leeching"})
+			end
+
+			function META:OnDamage(attacker, victim, dmginfo)
+				attacker:SetHealth(math.min(attacker:Health() + (dmginfo:GetDamage() * 0.25 / self:GetStatus("base"):GetStatusMultiplier()), attacker:GetMaxHealth()))
+			end
+
+			wepstats.Register(META)
+		end
+
+		do
+			local META = {}
+			META.Name = "fast"
+			META.Negative = true
+			META.Chance = 0.5
+
+			function META:OnAttach()
+				self.name = "speed"
+				self.alt_name = table.Random({"hasteful", "speedy", "fast"})
+			end
+
+			function META:GetName(alt)
+				return alt and self.alt_name or self.name
+			end
+
+			function META:OnFireBullet(data)
+				local div = 1 + (self:GetStatus("base"):GetStatusMultiplier() ^ 2)
+				local rate = self.Weapon:GetNextPrimaryFire() - CurTime()
+				rate = rate / div
+				self.Weapon:SetNextPrimaryFire(CurTime() + rate)
+
+				local rate = self.Weapon:GetNextSecondaryFire() - CurTime()
+				rate = rate / div
+				self.Weapon:SetNextSecondaryFire(CurTime())
+			end
+
+			wepstats.Register(META)
+		end
+
 		local function basic_elemental(name, type, on_damage, alt_names, names)
 			local META = {}
 			META.Name = name
@@ -412,7 +479,9 @@ do -- effects
 				dmginfo = self:CopyDamageInfo(dmginfo)
 				dmginfo:SetDamageType(type)
 				dmginfo:SetDamage(dmginfo:GetDamage() * self:GetStatus("base"):GetStatusMultiplier())
+				suppress = true
 				victim:TakeDamageInfo(dmginfo)
+				suppress = false
 
 				if on_damage then
 					on_damage(self, attacker, victim, dmginfo)
@@ -423,6 +492,7 @@ do -- effects
 		end
 
 		basic_elemental("fire", DMG_BURN, nil, {"hot", "molten", "burning"}, {"fire"})
+		basic_elemental("water", DMG_DROWN, nil, {"drowned", "doused", "wet"}, {"water"})
 		basic_elemental("poison", DMG_ACID, function(self, attacker, victim, dmginfo)
 			local dmg = dmginfo:GetDamage()
 			timer.Create("poison_"..tostring(attacker)..tostring(victim), 0.5, 10, function()
@@ -432,7 +502,9 @@ do -- effects
 				dmginfo:SetDamageType(DMG_ACID)
 				dmginfo:SetDamagePosition(victim:WorldSpaceCenter())
 				dmginfo:SetAttacker(attacker)
+				suppress = true
 				victim:TakeDamageInfo(dmginfo)
+				suppress = false
 			end)
 		end, {"poisonous", "venomous"}, {"poison", "venom"})
 		basic_elemental("ice", DMG_DROWN, function(self, attacker, victim, dmginfo)
