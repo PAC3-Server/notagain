@@ -61,7 +61,7 @@ if SERVER then
 
 	function EMF.SetValidPos( ent , ref ) -- ref is topology index
 
-		if !EMF.Topology[ref] then return end -- prevents invalid indexes
+		if !EMF.Topology[ref] or !ent or !IsValid(ent) then return end -- prevents invalid indexes
 
 		local refpos = EMF.Topology[ref]
 		local randpos = RandPosToRef( refpos , EMF.MinDistToRef , EMF.MaxDistToRef )
