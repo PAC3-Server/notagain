@@ -109,7 +109,7 @@ if CLIENT then
 			pos = pos:ToScreen()
 			if pos.visible and dist < 100 then
 				surface.SetAlphaMultiplier((-(dist/100) + 1) ^ 0.25)
-				local name = ent:GetClass()
+				local name = ent:GetNWString("wepstats_name", ent:GetClass())
 
 				if language.GetPhrase(name) then
 					name = language.GetPhrase(name)
@@ -326,6 +326,13 @@ if SERVER then
 			local dir = ent:NearestPoint(ply:GetShootPos()) - ply:GetShootPos()
 			local dot = ply:GetAimVector():Dot(dir) / dir:Length()
 			if dot > 0 then
+				for _, wep in pairs(ply:GetWeapons()) do
+					if wep:GetClass() == ent:GetClass() then
+						ply:DropWeapon(wep)
+						break
+					end
+				end
+
 				return
 			end
 		end
