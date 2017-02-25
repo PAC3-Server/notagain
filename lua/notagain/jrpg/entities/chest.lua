@@ -256,12 +256,13 @@ if SERVER then
 		local ent = ents.Create( ent )
 		ent:SetPos( self:GetPos() + self:GetForward() * 20 )
 		ent:Spawn()
+		// wepstats.AddToWeapon( ents )
 		
 		local phys = ent:GetPhysicsObject()
 		phys:SetVelocity( ent:GetUp() * 400 + ent:GetRight() * ( math.random( -self.Spread, self.Spread ) ) + ent:GetForward() * ( math.random( -self.Spread, self.Spread ) ) )
 	end
 	
-	EMF.AddEnt( ENT.ClassName )
+	// EMF.AddEnt( ENT.ClassName )
 end
 
 scripted_ents.Register(ENT, ENT.ClassName, true)
