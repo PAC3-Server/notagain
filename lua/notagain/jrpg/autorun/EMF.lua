@@ -81,7 +81,7 @@ if SERVER then
 		else
 			ent.EMFTryPosCount = ent.EMFTryPosCount and ent.EMFTryPosCount + 1 or 1
 
-			if ent.MFTryPosCount < 20 then -- recursion depth limit
+			if ent.MFTryPosCount < 30 then -- recursion depth limit
 				EMF.SetValidPos( ent , ref )
 			else
 				ent:SetPos(tr.HitPos)
@@ -93,7 +93,7 @@ if SERVER then
 
 	function EMF.GenerateEnts()
 		local MaxEntries = #EMF.Topology
-		local AmScale = MaxEntries / 50 * ( #player.GetAll() <= 10 and 1 or math.Round( #player.GetAll() / 10 ) )
+		local AmScale = math.Round(MaxEntries / 25 * 1.25)
 
 		for i = 1 , AmScale do
 			local ent = ents.Create( EMF.Ents[math.random( 1 , #EMF.Ents )] )
