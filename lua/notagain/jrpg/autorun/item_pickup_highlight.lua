@@ -104,6 +104,32 @@ if CLIENT then
 
 	local gradient = Material("gui/center_gradient")
 
+	local def = Vector(r,g,b)*255
+
+	local function get_color(ent)
+		local color = ent:GetNWVector("wepstats_color", def)
+
+		if color.r < 0 then
+			local c = HSVToColor((os.clock()*200)%360, 1, 1)
+			color.r = c.r/255
+			color.g = c.g/255
+			color.b = c.b/255
+		end
+
+		return color
+	end
+
+	local temp_color = Color(255, 255, 255, 255)
+
+	local function TempColor(r,g,b,a)
+		temp_color.r = math.min(r, 255)
+		temp_color.g = math.min(g, 255)
+		temp_color.b = math.min(b, 255)
+		temp_color.a = a
+
+		return temp_color
+	end
+
 	hook.Add("HUDPaint", "jrpg_items", function()
 		for _, ent in ipairs(entities) do
 			if not ent:IsValid() then
@@ -119,13 +145,8 @@ if CLIENT then
 			if pos.visible and dist < 100 then
 				surface.SetAlphaMultiplier((-(dist/100) + 1) ^ 0.25)
 				local name = ent:GetNWString("wepstats_name", ent:GetClass())
-				local color = ent:GetNWString("wepstats_color", Vector(r,g,b)*255)/255
-				if color.r < 0 then
-					local c = HSVToColor((os.clock()*200)%360, 1, 1)
-					color.r = c.r/255
-					color.g = c.g/255
-					color.b = c.b/255
-				end
+
+				local color = get_color(ent)
 
 				color = color * 1.5
 
@@ -139,7 +160,7 @@ if CLIENT then
 				surface.SetMaterial(gradient)
 				surface.DrawTexturedRect(pos.x - bg_width, pos.y, bg_width * 2, h)
 
-				prettytext.Draw(name, pos.x - w / 2, pos.y, "gabriola", 40, 800, 3, Color(color.r*255,color.g*255,color.b*255,255))
+				prettytext.Draw(name, pos.x - w / 2, pos.y, "gabriola", 40, 800, 3, TempColor(color.r, color.g, color.b, 255))
 
 				local border = 20
 				local x = pos.x
@@ -151,13 +172,12 @@ if CLIENT then
 				local bg_width = w + 100
 
 				surface.SetDrawColor(255,255,255,255)
-				draw.RoundedBox(4, x - 27 - border / 2, y + border / 2, border, border, Color(25,25,25,255))
+				draw.RoundedBox(4, x - 27 - border / 2, y + border / 2, border, border, TempColor(25,25,25,255))
 				prettytext.Draw(str, x - w / 2, y, "gabriola", 40, 800, 3)
 
 				surface.SetDrawColor(0,0,0,100)
 				surface.SetMaterial(gradient)
 				surface.DrawTexturedRect(x - bg_width, y, bg_width * 2, h)
-
 
 				surface.SetAlphaMultiplier(1)
 			end
@@ -180,65 +200,83 @@ if CLIENT then
 	end)
 	]]
 
+	local temp_vec = Vector()
+	local render_SetMaterial = render.SetMaterial
+	local render_DrawSprite = render.DrawSprite
+	local render_DrawSprite = render.DrawSprite
+	local cam_IgnoreZ = cam.IgnoreZ
+	local render_SetColorModulation = render.SetColorModulation
+
+	local render_StartBeam = render.StartBeam
+	local render_EndBeam = render.EndBeam
+	local render_AddBeam = render.AddBeam
+	local math_sin = math.sin
+	local math_abs = math.abs
+	local math_random = math.random
+	local math_abs = math.abs
+	local math_min = math.min
+	local math_pi = math.pi
+	local util_PixelVisible = util.PixelVisible
+	local CurTime = CurTime
+
+	local VectorRand = function()
+		temp_vec.x = math_random()*2-1
+		temp_vec.y = math_random()*2-1
+		temp_vec.z = math_random()*2-1
+		return temp_vec
+	end
+	local MOVETYPE_VPHYSICS = MOVETYPE_VPHYSICS
 	hook.Add("PostDrawTranslucentRenderables", "jrpg_items", function()
 		render.MaterialOverride(shiny)
+		local time = RealTime()
+
 		for _, ent in ipairs(entities) do
 			if not ent:IsValid() then
 				remove_ent(ent)
 				break
 			end
 
-			local color = ent:GetNWString("wepstats_color", Vector(r,g,b)*255)/255
-			if color.r < 0 then
-				local c = HSVToColor((os.clock()*200)%360, 1, 1)
-				color.r = c.r/255
-				color.g = c.g/255
-				color.b = c.b/255
-			end
+			local color = get_color(ent)
 
 			if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then
-				render.SetColorModulation(color.r/5 , color.g/5, color.b/5)
+				render_SetColorModulation(color.r/255/5 , color.g/255/5, color.b/255/5)
 				ent:DrawModel()
 				continue
 			end
 
-			render.SetColorModulation(color.r, color.g, color.b)
+			render_SetColorModulation(color.r/255, color.g/255, color.b/255)
 
 			local pos = ent:WorldSpaceCenter()
 			ent.jrpg_items_pixvis = ent.jrpg_items_pixvis or util.GetPixelVisibleHandle()
 			ent.jrpg_items_pixvis2 = ent.jrpg_items_pixvis2 or util.GetPixelVisibleHandle()
 			local radius = ent:BoundingRadius()
-			local vis = util.PixelVisible(pos, radius*0.5, ent.jrpg_items_pixvis)
+			local vis = util_PixelVisible(pos, radius*0.5, ent.jrpg_items_pixvis)
 
-			if vis == 0 and util.PixelVisible(pos, radius*5, ent.jrpg_items_pixvis2) == 0 then continue end
-
-			local time = RealTime()
+			if vis == 0 and util_PixelVisible(pos, radius*5, ent.jrpg_items_pixvis2) == 0 then continue end
 
 			ent.jrpg_items_random = ent.jrpg_items_random or {}
-			ent.jrpg_items_random.rotation = ent.jrpg_items_random.rotation or math.random()*360
+			ent.jrpg_items_random.rotation = ent.jrpg_items_random.rotation or math_random()*360
 
+			local time = time + ent.jrpg_items_random.rotation
 
+			render_SetMaterial(warp_mat)
+			cam_IgnoreZ(true)
+			render_DrawSprite(pos, 50, 50, TempColor(color.r*2, color.g*2, color.b*2, vis*20), ent.jrpg_items_random.rotation)
 
-			render.SetMaterial(warp_mat)
-			cam.IgnoreZ(true)
-			render.DrawSprite(pos, 50, 50, Color(color.r*255*2, color.g*255*2, color.b*255*2, vis*20), ent.jrpg_items_random.rotation)
+			render_SetMaterial(glare2_mat)
 
-			render.SetMaterial(glare2_mat)
-
-			local glow = math.sin(time*5)*0.5+0.5
+			local glow = math_sin(time*5)*0.5+0.5
 			local r = radius/8
-			render.DrawSprite(pos, r*10, r*10, Color(color.r*255, color.g*255, color.b*255, vis*170*glow))
-			render.DrawSprite(pos, r*20, r*20, Color(color.r*255, color.g*255, color.b*255, vis*170*(glow+0.25)))
-			render.DrawSprite(pos, r*30, r*30, Color(color.r*255, color.g*255, color.b*255, vis*120*(glow+0.5)))
+			render_DrawSprite(pos, r*10, r*10, TempColor(color.r, color.g, color.b, vis*170*glow))
+			render_DrawSprite(pos, r*20, r*20, TempColor(color.r, color.g, color.b, vis*170*(glow+0.25)))
+			render_DrawSprite(pos, r*30, r*30, TempColor(color.r, color.g, color.b, vis*120*(glow+0.5)))
 
-			cam.IgnoreZ(false)
+			cam_IgnoreZ(false)
 
-			render.SetBlend(0.5)
 			ent:DrawModel()
-			render.SetBlend(1)
 
-			render.SetMaterial(glare_mat)
-			render.DrawSprite(pos, r*180, r*50, Color(color.r*255, color.g*255, color.b*255, vis*20))
+			render_SetMaterial(glare_mat)
+			render_DrawSprite(pos, r*180, r*50, TempColor(color.r, color.g, color.b, vis*20))
 
 			if not ent.jrpg_items_next_emit2 or ent.jrpg_items_next_emit2 < time then
 
@@ -252,7 +290,7 @@ if CLIENT then
 				p:SetStartAlpha(0)
 				p:SetEndAlpha(255)
 
-				p:SetColor(255, 230, 150)
+				p:SetColor(color.r, color.g, color.b)
 
 				p:SetVelocity(VectorRand()*5)
 				p:SetGravity(Vector(0,0,3))
@@ -260,7 +298,7 @@ if CLIENT then
 
 				ent.jrpg_items_next_emit2 = time + 0.1
 
-				if math.random() > 0.2 then
+				if math_random() > 0.2 then
 					local p = emitter2d:Add(glare2_mat, pos + (VectorRand()*radius*0.5))
 					p:SetDieTime(math.Rand(1,3))
 					p:SetLifeTime(1)
@@ -277,20 +315,19 @@ if CLIENT then
 
 					p:SetNextThink(CurTime())
 
-					local seed = math.random()
+					local seed = math_random()
 					local seed2 = math.Rand(-4,4)
 
 					p:SetThinkFunction(function(p)
-						p:SetStartSize(math.abs(math.sin(seed+time*seed2)*3+math.Rand(0,2)))
+						p:SetStartSize(math_abs(math_sin(seed+time*seed2)*3+math.Rand(0,2)))
 						p:SetColor(math.Rand(200, 255), math.Rand(200, 255), math.Rand(200, 255))
 						p:SetNextThink(CurTime())
 					end)
-
 				end
 			end
 
 			if not ent.jrpg_items_next_emit or ent.jrpg_items_next_emit < time then
-				local p = emitter2d:Add(math.random() > 0.5 and smoke_mat or smoke2_mat, pos)
+				local p = emitter2d:Add(math_random() > 0.5 and smoke_mat or smoke2_mat, pos)
 				p:SetDieTime(3)
 				p:SetLifeTime(1)
 
@@ -300,11 +337,11 @@ if CLIENT then
 				p:SetStartAlpha(255*vis)
 				p:SetEndAlpha(0)
 
-				p:SetColor(color.r*255,color.g*255,color.b*255)
+				p:SetColor(color.r, color.g, color.b)
 
 				p:SetVelocity(VectorRand()*3)
 
-				p:SetRoll(math.random()*360)
+				p:SetRoll(math_random()*360)
 
 				p:SetAirResistance(30)
 				ent.jrpg_items_next_emit = time + 0.2
@@ -315,49 +352,53 @@ if CLIENT then
 			ent.jrpg_item_fade = ent.jrpg_item_fade or 0
 			ent.jrpg_item_random = ent.jrpg_item_random or math.Rand(0.5, 1)
 
-			for i2 = 1, 5 do
+			local vel = ent:GetVelocity()
+			local fade = 1
+
+			if vel:Length() < 100 then
+				vel:Zero()
+				fade = math_min(time - ent.jrpg_item_fade, 1) ^ 0.5
+			else
+				ent.jrpg_item_fade = time
+			end
+
+			local ang = vel:Angle()
+			local up = ang:Up()
+			local right = ang:Right()
+			local forward = ang:Forward()
+
+			for i2 = 1, 3 do
 				ent.jrpg_items_random[i2] = ent.jrpg_items_random[i2] or math.Rand(-1,1)
 				local f2 = i2/4
 				f2=f2*5+ent.jrpg_items_random[i2]
+
 				local max = 5
-				render.StartBeam(max)
-				for i = 1, max do
-					local f = i/max
-					local s = math.sin(f*math.pi*2)
+				render_StartBeam(max)
+					for i = 1, max do
+						local f = i/max
+						local s = math_sin(f*math_pi*2)
 
+						local offset = pos
 
-					local vel = ent:GetVelocity()
+						if i ~= 1 then
+							offset = pos +
+							(
+								up * -math_sin(f2+time+s*30/max*ent.jrpg_items_random[i2]) +
+								right * -math_sin(f2+time+s*30/max*ent.jrpg_items_random[i2]) +
+								forward * -(radius/13)*math_abs(math_sin(f2 + time/5)*100)*f*0.5 / (1+vel:Length()/100)
+							) * fade * ent.jrpg_item_random
+						end
 
-					local fade = 1
-
-					if vel:Length() < 100 then
-						vel:Zero()
-						fade = math.min(time - ent.jrpg_item_fade, 1) ^ 0.5
-					else
-						ent.jrpg_item_fade = time
+						render_AddBeam(
+							offset,
+							(-f+1)*radius,
+							(f*0.3-time*0.1 + ent.jrpg_items_random[i2]),
+							TempColor(color.r, color.g, color.b, 255*f)
+						)
 					end
-
-					local ang = vel:Angle()
-					local offset = Vector()
-					offset = offset + ang:Up() * -math.sin(f2+time+s*30/max*ent.jrpg_items_random[i2])
-					offset = offset + ang:Right() * -math.sin(f2+time+s*30/max*ent.jrpg_items_random[i2])
-					offset = offset + ang:Forward() * -(radius/13)*math.abs(math.sin(f2 + time/5)*100)*f*0.5 / (1+vel:Length()/100)
-
-					offset = offset * fade * ent.jrpg_item_random
-
-					if i == 1 then
-						offset = offset * 0
-					end
-
-					render.AddBeam(
-						pos + offset,
-						(-f+1)*radius,
-						f*0.3-time*0.1 + ent.jrpg_items_random[i2],
-						Color(color.r*255, color.g*255, color.b*255, 255*f)
-					)
-				end
-				render.EndBeam()
+				render_EndBeam()
 			end
+
 		end
 
 		emitter2d:Draw()
