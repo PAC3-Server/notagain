@@ -8,21 +8,30 @@ if CLIENT then
 
 	local shiny = CreateMaterial(tostring({}) .. os.clock(), "VertexLitGeneric", {
 		["$Additive"] = 1,
-		["$Translucent"] = 1,
+		--["$Translucent"] = 1,
+		--["$VertexAlpha"] = 1,
+		--["$VertexColor"] = 1,
 
 		["$Phong"] = 1,
-		["$PhongBoost"] = 10,
+		["$PhongBoost"] = 6,
 		["$PhongExponent"] = 5,
 		["$PhongFresnelRange"] = Vector(0,0.5,1),
 		["$PhongTint"] = Vector(1,1,1),
 
 
 		["$Rimlight"] = 1,
-		["$RimlightBoost"] = 50,
+		["$RimlightBoost"] = 10,
 		["$RimlightExponent"] = 5,
 
 		["$BaseTexture"] = "models/debug/debugwhite",
 		["$BumpMap"] = "dev/bump_normal",
+
+		Proxies = {
+			Equals = {
+				SrcVar1 = "$color",
+				ResultVar = "$phongtint",
+			},
+		},
 	})
 
 	local smoke_mat = CreateMaterial(tostring{}, "UnlitGeneric", {
@@ -110,6 +119,15 @@ if CLIENT then
 			if pos.visible and dist < 100 then
 				surface.SetAlphaMultiplier((-(dist/100) + 1) ^ 0.25)
 				local name = ent:GetNWString("wepstats_name", ent:GetClass())
+				local color = ent:GetNWString("wepstats_color", Vector(r,g,b)*255)/255
+				if color.r < 0 then
+					local c = HSVToColor((os.clock()*200)%360, 1, 1)
+					color.r = c.r/255
+					color.g = c.g/255
+					color.b = c.b/255
+				end
+
+				color = color * 1.5
 
 				if language.GetPhrase(name) then
 					name = language.GetPhrase(name)
@@ -121,7 +139,7 @@ if CLIENT then
 				surface.SetMaterial(gradient)
 				surface.DrawTexturedRect(pos.x - bg_width, pos.y, bg_width * 2, h)
 
-				prettytext.Draw(name, pos.x - w / 2, pos.y, "gabriola", 40, 800, 3, Color(r*255,g*255,b*255,255))
+				prettytext.Draw(name, pos.x - w / 2, pos.y, "gabriola", 40, 800, 3, Color(color.r*255,color.g*255,color.b*255,255))
 
 				local border = 20
 				local x = pos.x
@@ -146,8 +164,23 @@ if CLIENT then
 		end
 	end)
 
+	--[[
+	local suppress = false
+	hook.Add("PostDrawViewModel", "jrpg_items", function(ent, ply, wep)
+		if suppress then return end
+
+		local color = wep:GetNWString("wepstats_color", Vector(r,g,b)*255)/255
+		render.MaterialOverride(shiny)
+		ent:SetColor(Color(color.r*255,color.g*255,color.b*255, 50))
+		render.SetBlend(0.5)
+		suppress = true
+		ent:DrawModel()
+		suppress = false
+		render.MaterialOverride()
+	end)
+	]]
+
 	hook.Add("PostDrawTranslucentRenderables", "jrpg_items", function()
-		render.SetColorModulation(r, g, b)
 		render.MaterialOverride(shiny)
 		for _, ent in ipairs(entities) do
 			if not ent:IsValid() then
@@ -155,7 +188,21 @@ if CLIENT then
 				break
 			end
 
-			if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then continue end
+			local color = ent:GetNWString("wepstats_color", Vector(r,g,b)*255)/255
+			if color.r < 0 then
+				local c = HSVToColor((os.clock()*200)%360, 1, 1)
+				color.r = c.r/255
+				color.g = c.g/255
+				color.b = c.b/255
+			end
+
+			if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then
+				render.SetColorModulation(color.r/5 , color.g/5, color.b/5)
+				ent:DrawModel()
+				continue
+			end
+
+			render.SetColorModulation(color.r, color.g, color.b)
 
 			local pos = ent:WorldSpaceCenter()
 			ent.jrpg_items_pixvis = ent.jrpg_items_pixvis or util.GetPixelVisibleHandle()
@@ -170,24 +217,28 @@ if CLIENT then
 			ent.jrpg_items_random = ent.jrpg_items_random or {}
 			ent.jrpg_items_random.rotation = ent.jrpg_items_random.rotation or math.random()*360
 
+
+
 			render.SetMaterial(warp_mat)
 			cam.IgnoreZ(true)
-			render.DrawSprite(pos, 50, 50, Color(r*255*2, g*255*2, b*255*2, vis*20), ent.jrpg_items_random.rotation)
+			render.DrawSprite(pos, 50, 50, Color(color.r*255*2, color.g*255*2, color.b*255*2, vis*20), ent.jrpg_items_random.rotation)
 
 			render.SetMaterial(glare2_mat)
 
 			local glow = math.sin(time*5)*0.5+0.5
 			local r = radius/8
-			render.DrawSprite(pos, r*10, r*10, Color(255, 225, 200, vis*170*glow))
-			render.DrawSprite(pos, r*20, r*20, Color(255, 225, 150, vis*170*(glow+0.25)))
-			render.DrawSprite(pos, r*30, r*30, Color(255, 200, 100, vis*120*(glow+0.5)))
+			render.DrawSprite(pos, r*10, r*10, Color(color.r*255, color.g*255, color.b*255, vis*170*glow))
+			render.DrawSprite(pos, r*20, r*20, Color(color.r*255, color.g*255, color.b*255, vis*170*(glow+0.25)))
+			render.DrawSprite(pos, r*30, r*30, Color(color.r*255, color.g*255, color.b*255, vis*120*(glow+0.5)))
 
 			cam.IgnoreZ(false)
 
+			render.SetBlend(0.5)
 			ent:DrawModel()
+			render.SetBlend(1)
 
 			render.SetMaterial(glare_mat)
-			render.DrawSprite(pos, r*180, r*50, Color(r*255, g*255, b*255, vis*20))
+			render.DrawSprite(pos, r*180, r*50, Color(color.r*255, color.g*255, color.b*255, vis*20))
 
 			if not ent.jrpg_items_next_emit2 or ent.jrpg_items_next_emit2 < time then
 
@@ -249,7 +300,7 @@ if CLIENT then
 				p:SetStartAlpha(255*vis)
 				p:SetEndAlpha(0)
 
-				p:SetColor(255,150,50)
+				p:SetColor(color.r*255,color.g*255,color.b*255)
 
 				p:SetVelocity(VectorRand()*3)
 
@@ -302,7 +353,7 @@ if CLIENT then
 						pos + offset,
 						(-f+1)*radius,
 						f*0.3-time*0.1 + ent.jrpg_items_random[i2],
-						Color(200, 150, 0, 255*f)
+						Color(color.r*255, color.g*255, color.b*255, 255*f)
 					)
 				end
 				render.EndBeam()
@@ -314,6 +365,14 @@ if CLIENT then
 		render.SetColorModulation(1,1,1)
 		render.MaterialOverride()
 	end)
+
+	if LocalPlayer():IsValid() then
+		for k,v in pairs(ents.GetAll()) do
+			if v:IsWeapon() then
+				add_ent(v)
+			end
+		end
+	end
 end
 
 if SERVER then
