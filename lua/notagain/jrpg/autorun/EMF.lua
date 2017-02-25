@@ -79,14 +79,7 @@ if SERVER then
 			ent:DropToFloor() -- in case nearest point doesnt do its job
 
 		else
-			ent.EMFTryPosCount = ent.EMFTryPosCount and ent.EMFTryPosCount + 1 or 1
-
-			if ent.MFTryPosCount < 30 then -- recursion depth limit
-				EMF.SetValidPos( ent , ref )
-			else
-				ent:SetPos(tr.HitPos)
-			end
-
+			EMF.SetValidPos( ent , ref )
 		end
 
 	end
