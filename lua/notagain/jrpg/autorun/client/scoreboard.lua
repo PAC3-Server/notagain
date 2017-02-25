@@ -380,7 +380,8 @@ local PLAYER_LINE = {
             self.Menu:Open()
 
         elseif num == MOUSE_LEFT then
-            RunConsoleCommand( "aowl", "goto", PlayerID )
+            if PlayerID == tostring( LocalPlayer():UniqueID() ) then return end 
+			RunConsoleCommand( "aowl", "goto", PlayerID )
         end
 
     end,
