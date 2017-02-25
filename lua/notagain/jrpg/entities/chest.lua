@@ -31,7 +31,7 @@ if CLIENT then
 		
 		self.CModel[10] = ClientsideModel( "models/hunter/blocks/cube025x075x025.mdl" )
 		self.CModel[10]:SetRenderMode(RENDERMODE_TRANSCOLOR)
-		self.CModel[10]:SetColor( 0, 0, 0, 0 )
+		self.CModel[10]:SetColor( Color( 0, 0, 0, 0 ) )
 		
 		self.CModel[6]:SetParent( self.CModel[10] )
 		self.CModel[7]:SetParent( self.CModel[10] )
@@ -167,9 +167,8 @@ if SERVER then
 		self:SetMaterial( "models/props_wasteland/wood_fence01a" )
 
 		self:PhysicsInit( SOLID_VPHYSICS )
-		self:SetMoveType( MOVETYPE_VPHYSICS )
+		self:SetMoveType( MOVETYPE_NONE )
 		self:SetSolid( SOLID_VPHYSICS )
-		self:PhysWake()
 		
 		self:SetUseType( SIMPLE_USE )
 		self:SetNWInt( "status", 0 )
