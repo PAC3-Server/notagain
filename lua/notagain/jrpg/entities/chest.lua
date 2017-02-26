@@ -46,6 +46,12 @@ if CLIENT then
 	function ENT:Think()
 		self.angle = Lerp( 0.05, self.angle, ( self:GetNWInt( "status" ) == 1 ) and 0 or -90 )
 	
+		for i = 1, #self.CModel do
+			if ( !IsValid( self.CModel[i] ) ) then
+				return
+			end
+		end
+	
 		// Model 1
 		local pos = self:GetPos() + self:GetForward() * 23.5 + self:GetUp() * 4
 		self.CModel[1]:SetPos( pos )
