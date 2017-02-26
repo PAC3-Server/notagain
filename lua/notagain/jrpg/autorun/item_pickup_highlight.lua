@@ -66,7 +66,6 @@ if CLIENT then
 	})
 
 	local emitter2d = ParticleEmitter(vector_origin)
-	emitter2d:SetNoDraw(true)
 
 	local entities = {}
 	local done = {}
@@ -106,7 +105,7 @@ if CLIENT then
 	local function get_color(ent)
 		local color = ent:GetNWVector("wepstats_color", def)
 
-		if color.r > 300 then
+		if color.r < 0 then
 			color = color * 1
 			local c = HSVToColor((os.clock()*200)%360, 1, 1)
 			color.r = c.r
@@ -235,6 +234,7 @@ if CLIENT then
 
 	hook.Add("RenderScreenspaceEffects", "jrpg_items", function()
 		cam.Start3D()
+		render.UpdateScreenEffectTexture()
 		render.MaterialOverride(shiny)
 		local time = RealTime()
 
@@ -309,6 +309,8 @@ if CLIENT then
 
 					ent.jrpg_items_next_emit2 = time + 0.1
 
+					local intensity = color:Length()/100
+
 					if math_random() > 0.2 then
 						local p = emitter2d:Add(glare2_mat, pos + (VectorRand()*radius*0.5))
 						p:SetDieTime(math.Rand(1,3))
@@ -330,8 +332,8 @@ if CLIENT then
 						local seed2 = math.Rand(-4,4)
 
 						p:SetThinkFunction(function(p)
-							p:SetStartSize(math_abs(math_sin(seed+time*seed2)*3+math.Rand(0,2)))
-							p:SetColor(math.Rand(200, 255), math.Rand(200, 255), math.Rand(200, 255))
+							p:SetStartSize(math_abs(math_sin(seed+time*seed2)*3*intensity+math.Rand(0,2)))
+							p:SetColor(math.Rand(200/intensity, 255), math.Rand(200/intensity, 255), math.Rand(200/intensity, 255))
 							p:SetNextThink(CurTime())
 						end)
 					end
@@ -420,8 +422,6 @@ if CLIENT then
 
 		end
 
-		emitter2d:Draw()
-
 		render.SetColorModulation(1,1,1)
 		render.MaterialOverride()
 		cam.End3D()
@@ -502,6 +502,7 @@ if SERVER then
 			local active = ply:GetActiveWeapon()
 			local old_class = active:IsValid() and active:GetClass()
 
+				print(wep.wepstats, active.wepstats )
 			if wep.wepstats or (old_class == wep:GetClass() and active.wepstats) then
 				local pos = wep:GetPos()
 				local ang = wep:GetAngles()
