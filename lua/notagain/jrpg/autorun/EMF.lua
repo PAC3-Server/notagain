@@ -96,7 +96,7 @@ if SERVER then
 		local refangle = ent:GetAngles()
 		local angs = { refangle:Forward() , -refangle:Forward() , refangle:Right() , -refangle:Right() }
 		local closest = BigValue
-		local finalangle = Angle( 0 , 0 , 0 )
+		local finalangle = Angle()
 
 		for i = 1 , #angs do
 			
@@ -120,7 +120,7 @@ if SERVER then
 			end
 		end]]--
 
-		ent:SetAngles( -finalangle:Angle() )
+		ent:SetAngles( -finalangle:Angle() or finalangle )
 		
 	end
 
