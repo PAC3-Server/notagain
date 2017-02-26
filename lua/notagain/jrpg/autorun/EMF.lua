@@ -106,7 +106,7 @@ if SERVER then
 				mask = MASK_PLAYERSOLID,
 			})
 
-			if EMF.MinDistToRef > refpos:Distance(tr.HitPos) then
+			if closest > refpos:Distance(tr.HitPos) and EMF.MinDistToRef >= refpos:Distance(tr.HitPos) then
 				closest = refpos:Distance(tr.HitPos)
 				finalangle = angs[i]
 			end
