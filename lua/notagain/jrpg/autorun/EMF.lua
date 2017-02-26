@@ -8,7 +8,7 @@ if SERVER then
 
 	EMF.Topology = EMF.Topology or {}
 	EMF.ActiveEnts = EMF.ActiveEnts or {}
-	EMF.MaxDistToRef = 1000 --Do not change those values if you don't know what you're doing
+	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
 
 	function EMF.GenerateTopology()
@@ -38,7 +38,7 @@ if SERVER then
 					mask = MASK_PLAYERSOLID,
 				})
 
-				if tr.HitPos and tr.HitTexture != "TOOLS/TOOLSNODRAW" and tr.HitTexture != "TOOLS/TOOLSSKYBOX" and tr.HitTexture != "**empty**" then
+				if tr.HitPos and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld then
 					EMF.Topology[#EMF.Topology + 1] = tr.HitPos
 				end
 			end
@@ -59,9 +59,9 @@ if SERVER then
 		return finalpos
 	end
 
-	function EMF.SetValidPos( ent , ref ) -- ref is topology index
+	function EMF.SetValidPos( ent , ref ) 
 
-		if !EMF.Topology[ref] or !ent or !IsValid(ent) then return end -- prevents invalid indexes
+		if !EMF.Topology[ref] or !ent or !IsValid( ent ) then return end 
 
 		local refpos = EMF.Topology[ref]
 		local randpos = RandPosToRef( refpos , EMF.MinDistToRef , EMF.MaxDistToRef )
@@ -72,18 +72,56 @@ if SERVER then
 			mask = MASK_PLAYERSOLID,
 		})
 
-		if ent:IsInWorld() and tr.HitTexture != "TOOLS/TOOLSNODRAW" and tr.HitTexture != "TOOLS/TOOLSSKYBOX" and tr.HitTexture != "**empty**" then
+		if ent:IsInWorld() and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
 
 			ent:SetPos( tr.HitPos )
-			ent:SetPos( ent:NearestPoint( ent:GetPos().z >= 0 and ent:GetPos() - Vector( 0 , 0 , -BigValue ) or ent:GetPos() + Vector( 0 , 0 , -BigValue ) ) )  -- so ent isnt part stuck in the ground
-			ent:DropToFloor() -- in case nearest point doesnt do its job
+			ent:SetPos( ent:NearestPoint( ent:GetPos().z >= 0 and ent:GetPos() - Vector( 0 , 0 , -BigValue ) or ent:GetPos() + Vector( 0 , 0 , -BigValue ) ) )  
+			ent:DropToFloor() 
 
 		else
-
-				EMF.SetValidPos( ent , ref )
-
+			
+			EMF.SetValidPos( ent , ref )
+		
 		end
 
+		table.remove(EMF.Topology,ref)
+
+	end
+
+	function EMF.SetValidAngle( ent )
+		
+		if !ent or !IsValid( ent ) then return end
+		
+		local refpos = ent:GetPos()
+		local refangle = ent:GetAngles()
+		local angs = { refangle:Forward() , -refangle:Forward() , refangle:Right() , -refangle:Right() }
+		local closest = BigValue
+		local finalangle = Angle( 0 , 0 , 0 )
+
+		for i = 1 , #angs do
+			
+			local tr = util.TraceLine({
+				start = refpos,
+				endpos = refpos + angs[i] * BigValue,
+				mask = MASK_PLAYERSOLID,
+			})
+
+			if closest > refpos:Distance(tr.HitPos) and EMF.MinDistToRef >= refpos:Distance(tr.HitPos) then
+				closest = refpos:Distance(tr.HitPos)
+				finalangle = angs[i]
+			end
+		end
+
+		-- TODO: z difference detection
+		
+		--[[if closest == BigValue then
+			for i = 1 , #angs do
+
+			end
+		end]]--
+
+		ent:SetAngles( -finalangle )
+		
 	end
 
 	function EMF.GenerateEnts()
@@ -95,6 +133,7 @@ if SERVER then
 			ent:Spawn()
 
 			EMF.SetValidPos( ent , math.random( 1 , #EMF.Topology ) )
+			EMF.SetValidAngle( ent )
 			EMF.ActiveEnts[#EMF.ActiveEnts + 1] = ent
 		end
 	end
@@ -129,6 +168,6 @@ if SERVER then
 
 end
 
-for _ , fl in ipairs((file.Find("notagain/jrpg/entities/*", "LUA"))) do
-	include("notagain/jrpg/entities/" .. fl )
+for _ , fl in ipairs( ( file.Find( "notagain/jrpg/entities/*" , "LUA" ) ) ) do
+	include( "notagain/jrpg/entities/" .. fl )
 end
