@@ -3,6 +3,7 @@ if SERVER then
 	local luadev = requirex('luadev')
 
 	local webhooktoken = file.Read( "webhook_token.txt", "DATA" )
+	local webhooktoken_scriptlog = file.Read( "webhook_token_scriptlog.txt", "DATA" )
 	local token = file.Read( "discordbot_token.txt", "DATA" )
 
 	if not token then
@@ -13,7 +14,11 @@ if SERVER then
 		print("webhook_token.txt", " not found")
 	end
 
-	if not token or not webhooktoken then return end
+	if not webhooktoken_scriptlog then
+		print("webhooktoken_scriptlog.txt", " not found")
+	end
+
+	if not token or not webhooktoken or not webhooktoken_scriptlog then return end
 
 	util.AddNetworkString("DiscordMessage")
 
@@ -24,8 +29,12 @@ if SERVER then
 	discordrelay.relayChannel = "273575417401573377"
 	discordrelay.logChannel = "280436597248229376"
 	discordrelay.scriptLogChannel = "285346539638095872"
+
     discordrelay.webhookid = "274957435091812352"
     discordrelay.webhooktoken = webhooktoken
+
+	discordrelay.webhookid_scriptlog = "285359393124384770"
+    discordrelay.webhooktoken_scriptlog = webhooktoken_scriptlog
 
 	discordrelay.endpoints = discordrelay.endpoints or {}
 	discordrelay.endpoints.base = "https://discordapp.com/api/v6"
@@ -553,28 +562,36 @@ if SERVER then
 	end)
 
 	hook.Add("LuaDevRunScript", "DiscordRelay", function(script, ply, where, identifier, targets)
+		identifier = identifier:match("<(.-)>")
 
-	  discordrelay.GetAvatar(ply:SteamID64(), function(ret)
-			discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+		if targets then
+			local str = {}
+			for k,v in pairs(targets) do
+				table.insert(str, tostring(v))
+			end
+			where = table.concat(str, ", ")
+		end
+
+		discordrelay.GetAvatar(ply:SteamID(), function(ret)
+			discordrelay.ExecuteWebhook(discordrelay.webhookid_scriptlog, discordrelay.webhooktoken_scriptlog, {
 				["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
 				["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
+				content = "```lua\n"..script.."\n```",
 				["embeds"] = {
 					[1] = {
 						["title"] = "",
-						["description"] = "ran " .. identifier .. " on " .. where,
+						["description"] = "ran " .. identifier .. " " .. where,
 						["author"] = {
-							["name"] = data.name,
+							["name"] = ply:Nick(),
 							["icon_url"] = ret,
 							["url"] = "http://steamcommunity.com/profiles/" .. ply:SteamID64()
 						},
 						["type"] = "rich",
-						["color"] = 0x00b300
+						["color"] = 0x00b300,
 					}
 				}
 			})
 		end)
-
-		discordrelay.CreateMessage(discordrelay.scriptLogChannel, "```lua"..script.."```")
 	end)
 else
 	net.Receive( "DiscordMessage", function()

@@ -510,6 +510,7 @@ if SERVER then
 	end
 
 	local function log_script(script, ply, where, identifier, targets)
+		if IsEntity(targets) then targets = {targets} end
 		hook.Run("LuaDevRunScript", script, ply, where, identifier, targets)
 		luadev.Print(ply, " running ", identifier, " on ", where)
 		if luadev.Verbose() then
