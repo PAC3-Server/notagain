@@ -128,7 +128,7 @@ end
 
 function wepstats.CallStatusFunction(wep, func_name, ...)
 	if not wep.wepstats then return end
-	for i, status in ipairs(wep.wepstats) do
+	for _, status in pairs(wep.wepstats) do
 		local a, b, c, d, e = status[func_name](status, ...)
 		if a ~= nil then
 			return a, b, c, d, e
@@ -137,32 +137,29 @@ function wepstats.CallStatusFunction(wep, func_name, ...)
 end
 
 do -- status events
-	local suppress = false
 	hook.Add("EntityTakeDamage", "wepstats", function(ent, info)
-		if suppress then return end
+		if wepstats.suppress_events then return end
 
 		local attacker = info:GetAttacker()
 
 		if not (attacker:IsNPC() or attacker:IsPlayer()) then return end
 		local wep = attacker:GetActiveWeapon()
 
-		suppress = true
+		wepstats.suppress_events = true
 		wepstats.CallStatusFunction(wep, "OnDamage", attacker, ent, info)
-		suppress = false
+		wepstats.suppress_events = false
 	end)
 
-
-	local suppress = false
 	hook.Add("EntityFireBullets", "wepstats", function(wep, data)
-		if suppress then return end
+		if wepstats.suppress_events then return end
 
 		if wep:IsPlayer() then
 			wep = wep:GetActiveWeapon()
 		end
 
-		suppress = true
+		wepstats.suppress_events = true
 		wepstats.CallStatusFunction(wep, "OnFireBullet", data)
-		suppress = false
+		wepstats.suppress_events = false
 	end)
 end
 
@@ -207,6 +204,12 @@ do
 		self.Weapon.wepstats[self.ClassName] = nil
 	end
 
+	function BASE:TakeDamageInfo(ent, dmginfo)
+		wepstats.suppress_events = true
+		ent:TakeDamageInfo(dmginfo)
+		wepstats.suppress_events = false
+	end
+
 	function BASE:CopyDamageInfo(dmginfo)
 		local copy = DamageInfo()
 
@@ -233,6 +236,16 @@ do
 		META.__index = META
 
 		wepstats.registered[META.ClassName] = META
+
+		for _, wep in pairs(ents.GetAll()) do
+			if wep.wepstats and wep.wepstats[META.ClassName] then
+				for k, v in pairs(META) do
+					if type(v) == "function" then
+						wep.wepstats[META.ClassName][k] = v
+					end
+				end
+			end
+		end
 	end
 
 	do -- always added
@@ -354,7 +367,7 @@ do
 			if status_multiplier then
 				if type(status_multiplier) == "string" then
 					local sign, num = status_multiplier:match("^(.)(%d+)")
-					print(sign, num)
+
 					if sign == "-" then
 						num = -tonumber(num)
 					else
@@ -474,7 +487,7 @@ do -- effects
 				if math.random() < 0.1 then
 					dmginfo = self:CopyDamageInfo(dmginfo)
 					dmginfo:SetDamage(dmginfo:GetDamage() * 0.25 / self:GetStatusMultiplier())
-					attacker:TakeDamageInfo(dmginfo)
+					self:TakeDamageInfo(attacker, dmginfo)
 				end
 			end
 
@@ -533,9 +546,7 @@ do -- effects
 				dmginfo = self:CopyDamageInfo(dmginfo)
 				dmginfo:SetDamageType(type)
 				dmginfo:SetDamage(dmginfo:GetDamage() * self:GetStatusMultiplier())
-				suppress = true
-				victim:TakeDamageInfo(dmginfo)
-				suppress = false
+				self:TakeDamageInfo(victim, dmginfo)
 
 				if on_damage then
 					on_damage(self, attacker, victim, dmginfo)
@@ -552,13 +563,12 @@ do -- effects
 			timer.Create("poison_"..tostring(attacker)..tostring(victim), 0.5, 10, function()
 				if not attacker:IsValid() or not victim:IsValid() then return end
 				local dmginfo = DamageInfo()
-				dmginfo:SetDamage(dmg * self:GetStatusMultiplier())
+				dmginfo:SetDamage(dmg * self:GetStatusMultiplier() * 0.2)
 				dmginfo:SetDamageType(DMG_ACID)
 				dmginfo:SetDamagePosition(victim:WorldSpaceCenter())
 				dmginfo:SetAttacker(attacker)
-				suppress = true
-				victim:TakeDamageInfo(dmginfo)
-				suppress = false
+
+				self:TakeDamageInfo(victim, dmginfo)
 			end)
 		end, {"poisonous", "venomous"}, {"poison", "venom"})
 		basic_elemental("ice", DMG_DROWN, function(self, attacker, victim, dmginfo)
