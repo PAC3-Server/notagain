@@ -1,39 +1,80 @@
 wepstats = {}
-wepstats.effects = {}
+wepstats.registered = {}
 
-function wepstats.AddEffect(name, wep)
-	local stat = setmetatable({}, wepstats.effects[name])
-	stat.Weapon = wep
-	wep.wepstats_effects = wep.wepstats_effects or {}
-	table.insert(wep.wepstats_effects, stat)
+function wepstats.AddStatus(wep, class_name, ...)
+	if class_name ~= "base" and not wep.wepstats.base then
+		wepstats.AddStatus(wep, "base")
+	end
 
-	stat:OnAttach()
+	wep.wepstats = wep.wepstats or {}
+
+	local status = setmetatable({}, wepstats.registered[class_name])
+	status.Weapon = wep
+	wep.wepstats[class_name] = status
+	status:__init()
+	status:OnAttach(...)
+
+	return status
 end
 
-function wepstats.RemoveEffect(name, wep)
-	for i = #wep.wepstats_effects, 1, -1 do
-		local status = wep.wepstats_effects[i]
-		if status.Name == name then
-			table.remove(wep.wepstats_effects, i)
+function wepstats.RemoveStatus(wep, class_name)
+	wep.wepstats[class_name] = nil
+end
+
+function wepstats.GetStatus(wep, class_name)
+	return wep.wepstats[class_name]
+end
+
+function wepstats.GetTable(wep)
+	local out = {}
+	for class_name, status in pairs(wep.wepstats) do
+		if class_name ~= "base" then
+			out[class_name] = {
+				name = status.Name,
+				adjective = status.AdjectiveName,
+			}
+		else
+			out[class_name] = {
+				rarity = status.rarity.name,
+				mult = status.stat_mult,
+			}
 		end
 	end
+	return out
 end
 
-local function wep_name(wep)
-	do return wep:GetClass():gsub("weapon_", "") end
-
-	return "#"..wep:GetClass()
+function wepstats.SetTable(wep, tbl)
+	wep.wepstats = nil
+	wepstats.AddStatus(wep, "base", tbl.base.rarity, tbl.base.mult, false)
+	for class_name, data in pairs(tbl) do
+		if class_name ~= "base" then
+			local status = wepstats.AddStatus(wep, class_name)
+			status.Name = data.name
+			status.AdjectiveName = data.adjective
+		end
+	end
+	wep:SetNWString("wepstats_name", wepstats.GetName(wep))
+	wep:SetNWVector("wepstats_color", wepstats.GetStatus(wep, "base"):GetRarityInfo().color)
 end
+
+function wepstats.AddToWeapon(wep, ...)
+	wep.wepstats = {} -- clear
+	wepstats.AddStatus(wep, "base", ...)
+	wep:SetNWString("wepstats_name", wepstats.GetName(wep))
+	wep:SetNWVector("wepstats_color", wepstats.GetStatus(wep, "base"):GetRarityInfo().color)
+end
+
+--hook.Add("OnEntityCreated", "wepstats", function(wep) if wep:IsWeapon() then wepstats.AddToWeapon(wep) end end)
 
 function wepstats.GetName(wep)
-	if not wep.wepstats_effects then return wep:GetClass() end
+	if not wep.wepstats then return wep:GetClass() end
 
 	local base
 	local positive = {}
 	local negative = {}
 
-	for i, status in ipairs(wep.wepstats_effects) do
-		if status.Name == "base" then
+	for _, status in pairs(wep.wepstats) do
+		if status.ClassName == "base" then
 			base = status
 		elseif status.Positive then
 			table.insert(positive, status)
@@ -50,7 +91,7 @@ function wepstats.GetName(wep)
 	end
 
 	for i, status in ipairs(negative) do
-		str = str .. status:GetName(true) .. " "
+		str = str .. status:GetAdjectiveName() .. " "
 		if i ~= #negative then
 			if i+1 == #negative then
 				str = str .. "and "
@@ -60,7 +101,7 @@ function wepstats.GetName(wep)
 		end
 	end
 
-	str = str .. wep_name(wep) .. " "
+	str = str .. "CLASSNAME "
 
 	if positive[1] then
 		str = str .. "of "
@@ -85,9 +126,9 @@ function wepstats.GetName(wep)
 	return str
 end
 
-function wepstats.CallEffect(wep, func_name, ...)
-	if not wep.wepstats_effects then return end
-	for i, status in ipairs(wep.wepstats_effects) do
+function wepstats.CallStatusFunction(wep, func_name, ...)
+	if not wep.wepstats then return end
+	for i, status in ipairs(wep.wepstats) do
 		local a, b, c, d, e = status[func_name](status, ...)
 		if a ~= nil then
 			return a, b, c, d, e
@@ -95,8 +136,55 @@ function wepstats.CallEffect(wep, func_name, ...)
 	end
 end
 
+do -- status events
+	local suppress = false
+	hook.Add("EntityTakeDamage", "wepstats", function(ent, info)
+		if suppress then return end
+
+		local attacker = info:GetAttacker()
+
+		if not (attacker:IsNPC() or attacker:IsPlayer()) then return end
+		local wep = attacker:GetActiveWeapon()
+
+		suppress = true
+		wepstats.CallStatusFunction(wep, "OnDamage", attacker, ent, info)
+		suppress = false
+	end)
+
+
+	local suppress = false
+	hook.Add("EntityFireBullets", "wepstats", function(wep, data)
+		if suppress then return end
+
+		if wep:IsPlayer() then
+			wep = wep:GetActiveWeapon()
+		end
+
+		suppress = true
+		wepstats.CallStatusFunction(wep, "OnFireBullet", data)
+		suppress = false
+	end)
+end
+
 do
 	local BASE = {}
+
+	function BASE:__init()
+		if self.Adjectives then
+			self.AdjectiveName = table.Random(self.Adjectives)
+		end
+		if self.Names then
+			self.Name = table.Random(self.Names)
+		end
+	end
+
+	function BASE:GetStatusMultiplier()
+		return self:GetStatus("base"):GetStatusMultiplier()
+	end
+
+	function BASE:GetRarityInfo()
+		return self:GetStatus("base").rarity
+	end
 
 	function BASE:Initialize() end
 	function BASE:OnAttach() end
@@ -104,24 +192,19 @@ do
 	function BASE:OnFireBullet(data) end
 
 	function BASE:GetName()
-		return self.Name
+		return self.Name or self.ClassName
 	end
 
-	function BASE:GetStatus(stat)
-		for k,v in pairs(self.Weapon.wepstats_effects) do
-			if v.Name == stat then
-				return v
-			end
-		end
+	function BASE:GetAdjectiveName()
+		return self.AdjectiveName or self:GetName()
+	end
+
+	function BASE:GetStatus(class_name)
+		return wepstats.GetStatus(self.Weapon, class_name)
 	end
 
 	function BASE:Remove()
-		for i,v in pairs(self.Weapon.wepstats_effects) do
-			if v == self then
-				table.remove(self, i)
-				break
-			end
-		end
+		self.Weapon.wepstats[self.ClassName] = nil
 	end
 
 	function BASE:CopyDamageInfo(dmginfo)
@@ -149,12 +232,12 @@ do
 
 		META.__index = META
 
-		wepstats.effects[META.Name] = META
+		wepstats.registered[META.ClassName] = META
 	end
 
 	do -- always added
 		local META = {}
-		META.Name = "base"
+		META.ClassName = "base"
 
 		META.Rarity = {
 			{
@@ -162,7 +245,7 @@ do
 				damage_mult = -0.10,
 				status_mult = {-5, -2},
 				max_positive = 0,
-				max_negative = math.huge,
+				max_negative = 3,
 				color = Vector(67, 67, 67),
 			},
 			{
@@ -170,7 +253,7 @@ do
 				damage_mult = -0.05,
 				status_mult = {-5, -1},
 				max_positive = 0,
-				max_negative = math.huge,
+				max_negative = 2,
 				color = Vector(120, 63, 4),
 			},
 			{
@@ -178,7 +261,7 @@ do
 				damage_mult = 0,
 				status_mult = {0, 0},
 				max_positive = 0,
-				max_negative = math.huge,
+				max_negative = 2,
 				color = Vector(243, 243, 243),
 			},
 			{
@@ -231,6 +314,10 @@ do
 			},
 		}
 
+		for i, v in ipairs(META.Rarity) do
+			v.i = (i / #META.Rarity) + 1
+		end
+
 		function META:GetName()
 			return self.rarity.name
 		end
@@ -248,47 +335,77 @@ do
 			end
 		end
 
-		function META:OnAttach()
-			local rand = math.random()^4
-			local num = math.ceil(rand*#self.Rarity)
-			self.rarity = self.Rarity[num]
-			self.rarity.i = (num/#self.Rarity) + 1
-
-			if math.random() < 0.25 then
-				local num = math.random(unpack(self.rarity.status_mult))
-				self.stat_mult_num = num
-				self.stat_mult = 1 + num * 0.02
+		function META:OnAttach(rarity, status_multiplier, ...)
+			if rarity then
+				if type(rarity) == "string" then
+					for k,v in pairs(self.Rarity) do
+						if v.name == rarity then
+							self.rarity = v
+							break
+						end
+					end
+				elseif type(rarity) == "number" then
+					self.rarity = self.Rarity[math.ceil(math.Clamp(rarity, 0, 1)*#self.Rarity)]
+				end
+			else
+				self.rarity = self.Rarity[math.ceil((math.random()^4)*#self.Rarity)]
 			end
 
-			if self.rarity.max_positive > 0 then
-				local i = 1
-				for name, status in pairs(wepstats.effects) do
-					if status.Positive and math.random() < status.Chance then
-						wepstats.AddEffect(name, self.Weapon)
-						i = i + 1
+			if status_multiplier then
+				if type(status_multiplier) == "string" then
+					local sign, num = status_multiplier:match("^(.)(%d+)")
+					print(sign, num)
+					if sign == "-" then
+						num = -tonumber(num)
+					else
+						num = tonumber(num)
 					end
-					if i == self.rarity.max_positive then break end
+
+					self.stat_mult_num = num
+					self.stat_mult = 1 + num * 0.02
+				elseif type(status_multiplier) == "number" then
+					self.stat_mult_num = (status_multiplier - 1) * 1/0.02
+					self.stat_mult = status_multiplier
+				end
+			else
+				if math.random() < 0.25 then
+					local num = math.random(unpack(self.rarity.status_mult))
+					self.stat_mult_num = num
+					self.stat_mult = 1 + num * 0.02
 				end
 			end
 
-			if self.rarity.max_negative > 0 then
-				local i = 1
-				for name, status in pairs(wepstats.effects) do
-					if status.Negative and math.random() / self.rarity.i < status.Chance then
-						wepstats.AddEffect(name, self.Weapon)
-						i = i + 1
+			local statuses = {...}
+
+			if statuses[1] == false then return end
+
+			if statuses[1] then
+				for _, class_name in ipairs(statuses) do
+					wepstats.AddStatus(self.Weapon, class_name)
+				end
+			else
+				if self.rarity.max_positive > 0 then
+					local i = 1
+					for name, status in pairs(wepstats.registered) do
+						if status.Positive and math.random() < status.Chance then
+							wepstats.AddStatus(self.Weapon, name)
+							i = i + 1
+						end
+						if i == self.rarity.max_positive then break end
 					end
-					if i == self.rarity.max_negative then break end
+				end
+
+				if self.rarity.max_negative > 0 then
+					local i = 1
+					for name, status in pairs(wepstats.registered) do
+						if status.Negative and math.random() / self.rarity.i < status.Chance then
+							wepstats.AddStatus(self.Weapon, name)
+							i = i + 1
+						end
+						if i == self.rarity.max_negative then break end
+					end
 				end
 			end
-
-			local owner = self.Weapon:GetOwner()
-			if owner:IsPlayer() then
-				owner:ChatPrint(wepstats.GetName(self.Weapon))
-			end
-
-			self.Weapon:SetNWString("wepstats_name", wepstats.GetName(self.Weapon))
-			self.Weapon:SetNWVector("wepstats_color", self.rarity.color)
 		end
 
 		function META:OnDamage(attacker, victim, dmginfo)
@@ -301,62 +418,17 @@ do
 	end
 end
 
-function wepstats.AddToWeapon(wep)
-	wepstats.AddEffect("base", wep)
-end
-
-local suppress = false
-hook.Add("EntityTakeDamage", "wepstats", function(ent, info)
-	if suppress then return end
-
-	local attacker = info:GetAttacker()
-
-	if not (attacker:IsNPC() or attacker:IsPlayer()) then return end
-	local wep = attacker:GetActiveWeapon()
-
-	suppress = true
-	wepstats.CallEffect(wep, "OnDamage", attacker, ent, info)
-	suppress = false
-end)
-
-
-local suppress = false
-hook.Add("EntityFireBullets", "wepstats", function(wep, data)
-	if suppress then return end
-
-	if wep:IsPlayer() then
-		wep = wep:GetActiveWeapon()
-	end
-
-	suppress = true
-	wepstats.CallEffect(wep, "OnFireBullet", data)
-	suppress = false
-end)
-
 do -- effects
 	do -- negative
 		do
 			local META = {}
-			META.Name = "clumsy"
+			META.ClassName = "clumsy"
 			META.Negative = true
 			META.Chance = 0.5
-
-			function META:GetName()
-				return self.name
-			end
-
-			function META:OnAttach()
-				self.drop_chance = 0.1
-				self.name = table.Random({
-					"slimey",
-					"slippery",
-					"doused",
-					"clumsy",
-				})
-			end
+			META.Names = {"slimey", "slippery", "doused", "clumsy"}
 
 			function META:OnDamage(attacker, victim, dmginfo)
-				if math.random()*self:GetStatus("base"):GetStatusMultiplier() < self.drop_chance then
+				if math.random()*self:GetStatusMultiplier() < 0.1 then
 					attacker:DropWeapon(self.Weapon)
 					attacker:SelectWeapon("none")
 				end
@@ -367,12 +439,12 @@ do -- effects
 
 		do
 			local META = {}
-			META.Name = "dull"
+			META.ClassName = "dull"
 			META.Negative = true
 			META.Chance = 0.5
 
 			function META:OnAttach()
-				local rarity = self:GetStatus("base").rarity.name
+				local rarity = self:GetRarityInfo().name
 
 				if rarity == "broken" then
 					self.damage = -0.2
@@ -385,7 +457,7 @@ do -- effects
 
 			function META:OnDamage(attacker, victim, dmginfo)
 				local dmg = dmginfo:GetDamage()
-				dmg = dmg * (1 + self.damage) / self:GetStatus("base"):GetStatusMultiplier()
+				dmg = dmg * (1 + self.damage) / self:GetStatusMultiplier()
 				dmginfo:SetDamage(dmg)
 			end
 
@@ -394,14 +466,14 @@ do -- effects
 
 		do
 			local META = {}
-			META.Name = "dumb"
+			META.ClassName = "dumb"
 			META.Negative = true
 			META.Chance = 0.5
 
 			function META:OnDamage(attacker, victim, dmginfo)
 				if math.random() < 0.1 then
 					dmginfo = self:CopyDamageInfo(dmginfo)
-					dmginfo:SetDamage(dmginfo:GetDamage() * 0.25 / self:GetStatus("base"):GetStatusMultiplier())
+					dmginfo:SetDamage(dmginfo:GetDamage() * 0.25 / self:GetStatusMultiplier())
 					attacker:TakeDamageInfo(dmginfo)
 				end
 			end
@@ -413,17 +485,14 @@ do -- effects
 	do -- positive
 		do
 			local META = {}
-			META.Name = "leech"
+			META.ClassName = "leech"
 			META.Negative = true
 			META.Chance = 0.5
-
-			function META:OnAttach()
-				self.name = "life steal"
-				self.alt_name = table.Random({"vampiric", "leeching"})
-			end
+			META.FriendlyNames = {"life steal"}
+			META.FriendlyAlternativeNames = {"vampiric", "leeching"}
 
 			function META:OnDamage(attacker, victim, dmginfo)
-				attacker:SetHealth(math.min(attacker:Health() + (dmginfo:GetDamage() * 0.25 / self:GetStatus("base"):GetStatusMultiplier()), attacker:GetMaxHealth()))
+				attacker:SetHealth(math.min(attacker:Health() + (dmginfo:GetDamage() * 0.25 / self:GetStatusMultiplier()), attacker:GetMaxHealth()))
 			end
 
 			wepstats.Register(META)
@@ -431,21 +500,15 @@ do -- effects
 
 		do
 			local META = {}
-			META.Name = "fast"
+			META.ClassName = "fast"
 			META.Negative = true
 			META.Chance = 0.5
 
-			function META:OnAttach()
-				self.name = "speed"
-				self.alt_name = table.Random({"hasteful", "speedy", "fast"})
-			end
-
-			function META:GetName(alt)
-				return alt and self.alt_name or self.name
-			end
+			META.Names = {"speed"}
+			META.Adjectives = {"hasteful", "speedy", "fast"}
 
 			function META:OnFireBullet(data)
-				local div = 1 + (self:GetStatus("base"):GetStatusMultiplier() ^ 2)
+				local div = 1 + (self:GetStatusMultiplier() ^ 2)
 				local rate = self.Weapon:GetNextPrimaryFire() - CurTime()
 				rate = rate / div
 				self.Weapon:SetNextPrimaryFire(CurTime() + rate)
@@ -458,27 +521,18 @@ do -- effects
 			wepstats.Register(META)
 		end
 
-		local function basic_elemental(name, type, on_damage, alt_names, names)
+		local function basic_elemental(name, type, on_damage, adjectives, names)
 			local META = {}
-			META.Name = name
+			META.ClassName = name
 			META.Positive = true
 			META.Chance = 0.5
-
-			function META:OnAttach()
-				self.amount = math.random()
-
-				self.name = table.Random(names)
-				self.alt_name = table.Random(alt_names)
-			end
-
-			function META:GetName(alt)
-				return alt and self.alt_name or self.name
-			end
+			META.Adjectives = adjectives
+			META.Names = names
 
 			function META:OnDamage(attacker, victim, dmginfo)
 				dmginfo = self:CopyDamageInfo(dmginfo)
 				dmginfo:SetDamageType(type)
-				dmginfo:SetDamage(dmginfo:GetDamage() * self:GetStatus("base"):GetStatusMultiplier())
+				dmginfo:SetDamage(dmginfo:GetDamage() * self:GetStatusMultiplier())
 				suppress = true
 				victim:TakeDamageInfo(dmginfo)
 				suppress = false
@@ -498,7 +552,7 @@ do -- effects
 			timer.Create("poison_"..tostring(attacker)..tostring(victim), 0.5, 10, function()
 				if not attacker:IsValid() or not victim:IsValid() then return end
 				local dmginfo = DamageInfo()
-				dmginfo:SetDamage(dmg * self:GetStatus("base"):GetStatusMultiplier())
+				dmginfo:SetDamage(dmg * self:GetStatusMultiplier())
 				dmginfo:SetDamageType(DMG_ACID)
 				dmginfo:SetDamagePosition(victim:WorldSpaceCenter())
 				dmginfo:SetAttacker(attacker)

@@ -139,19 +139,24 @@ if CLIENT then
 
 			if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then continue end
 
-			local pos = ent:WorldSpaceCenter() + Vector(0,0,30)
+			local pos = ent:WorldSpaceCenter() + Vector(0,0,math.min(ent:BoundingRadius()*1.5, 20))
 			local dist = pos:Distance(EyePos())
 			pos = pos:ToScreen()
 			if pos.visible and dist < 100 then
 				surface.SetAlphaMultiplier((-(dist/100) + 1) ^ 0.25)
-				local name = ent:GetNWString("wepstats_name", ent:GetClass())
 
 				local color = get_color(ent)
-
 				color = color * 1.5
 
-				if language.GetPhrase(name) then
-					name = language.GetPhrase(name)
+				local name = ent:GetNWString("wepstats_name", ent:GetClass())
+				local class_name = ent:GetClass()
+
+				if language.GetPhrase(class_name) and language.GetPhrase(class_name) ~= class_name then
+					name = name:Replace("CLASSNAME", language.GetPhrase(class_name))
+				elseif language.GetPhrase(ent.PrintName) and language.GetPhrase(ent.PrintName) ~= ent.PrintName then
+					name = name:Replace("CLASSNAME", language.GetPhrase(ent.PrintName))
+				elseif ent.PrintName then
+					name = name:Replace("CLASSNAME", ent.PrintName)
 				end
 
 				local w,h = prettytext.GetTextSize(name, "gabriola", 40, 800, 3)
