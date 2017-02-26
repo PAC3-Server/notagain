@@ -275,7 +275,7 @@ do
 				status_mult = {0, 0},
 				max_positive = 0,
 				max_negative = 2,
-				color = Vector(243, 243, 243),
+				color = Vector(143, 143, 143),
 			},
 			{
 				name = "uncommon",
@@ -486,7 +486,7 @@ do -- effects
 			function META:OnDamage(attacker, victim, dmginfo)
 				if math.random() < 0.1 then
 					dmginfo = self:CopyDamageInfo(dmginfo)
-					dmginfo:SetDamage(dmginfo:GetDamage() * 0.25 / self:GetStatusMultiplier())
+					dmginfo:SetDamage(math.max(dmginfo:GetDamage() * 0.25 / self:GetStatusMultiplier(),1))
 					self:TakeDamageInfo(attacker, dmginfo)
 				end
 			end
