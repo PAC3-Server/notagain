@@ -100,20 +100,33 @@ if SERVER then
 
 		local attacker = dmginfo:GetAttacker()
 
+		local npc
+
+		if attacker:IsNPC() and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
+			npc = attacker
+			attacker = attacker:CPPIGetOwner()
+		end
+
 		if victim:IsPlayer() then
 			if attacker:IsPlayer() then
+				if attacker.CanAlter and attacker:CanAlter(victim) and victim:GetInfoNum("cl_godmode", 1) ~= 2 then
+					return
+				end
+
 				attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
 				attacker.cl_dmg_mode_want_attack[victim] = true
 			end
+
+			local godmode = victim:GetInfoNum("cl_godmode", 1) > 0
 
 			if attacker:IsPlayer() and victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
 				victim:SetNWBool("cl_godmode", false)
 				return
 			else
-				victim:SetNWBool("cl_godmode", victim:GetInfoNum("cl_godmode", 1) == 1)
+				victim:SetNWBool("cl_godmode", godmode)
 			end
 
-			if victim:GetInfoNum("cl_godmode", 1) == 1 then
+			if godmode then
 				if attacker:IsPlayer() then
 					attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
 					attacker.cl_dmg_mode_want_attack[victim] = true
@@ -126,6 +139,9 @@ if SERVER then
 					suppress = true
 					dmginfo:SetAttacker(victim)
 					attacker:TakeDamageInfo(dmginfo)
+					if npc then
+						npc:TakeDamageInfo(dmginfo)
+					end
 					suppress = false
 				end
 
