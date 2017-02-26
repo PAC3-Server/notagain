@@ -120,7 +120,7 @@ if SERVER then
 			end
 		end]]--
 
-		ent:SetAngles( -finalangle )
+		ent:SetAngles( -finalangle:Angle() )
 		
 	end
 
