@@ -8,7 +8,7 @@ if SERVER then
 
 	EMF.Topology = EMF.Topology or {}
 	EMF.ActiveEnts = EMF.ActiveEnts or {}
-	EMF.MaxDistToRef = 1000 --Do not change those values if you don't know what you're doing
+	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
 
 	function EMF.GenerateTopology()
@@ -59,9 +59,9 @@ if SERVER then
 		return finalpos
 	end
 
-	function EMF.SetValidPos( ent , ref ) -- ref is topology index
+	function EMF.SetValidPos( ent , ref ) 
 
-		if !EMF.Topology[ref] or !ent or !IsValid(ent) then return end -- prevents invalid indexes
+		if !EMF.Topology[ref] or !ent or !IsValid(ent) then return end 
 
 		local refpos = EMF.Topology[ref]
 		local randpos = RandPosToRef( refpos , EMF.MinDistToRef , EMF.MaxDistToRef )
@@ -75,14 +75,14 @@ if SERVER then
 		if ent:IsInWorld() and tr.HitTexture != "TOOLS/TOOLSNODRAW" and tr.HitTexture != "TOOLS/TOOLSSKYBOX" and tr.HitTexture != "**empty**" then
 
 			ent:SetPos( tr.HitPos )
-			ent:SetPos( ent:NearestPoint( ent:GetPos().z >= 0 and ent:GetPos() - Vector( 0 , 0 , -BigValue ) or ent:GetPos() + Vector( 0 , 0 , -BigValue ) ) )  -- so ent isnt part stuck in the ground
-			ent:DropToFloor() -- in case nearest point doesnt do its job
+			ent:SetPos( ent:NearestPoint( ent:GetPos().z >= 0 and ent:GetPos() - Vector( 0 , 0 , -BigValue ) or ent:GetPos() + Vector( 0 , 0 , -BigValue ) ) )  
+			ent:DropToFloor() 
 
 		else
-
 				EMF.SetValidPos( ent , ref )
-
 		end
+
+		table.remove(EMF.Topology,ref)
 
 	end
 
