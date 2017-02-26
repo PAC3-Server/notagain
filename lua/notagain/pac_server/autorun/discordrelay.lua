@@ -552,7 +552,7 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("LuaDevRunScript", "DiscordRelay", function(script, ply, path, msg)
+	hook.Add("LuaDevRunScript", "DiscordRelay", function(script, ply, where, identifier, targets)
 
 	  discordrelay.GetAvatar(ply:SteamID64(), function(ret)
 			discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
@@ -561,7 +561,7 @@ if SERVER then
 				["embeds"] = {
 					[1] = {
 						["title"] = "",
-						["description"] = msg,
+						["description"] = "ran " .. identifier .. " on " .. where,
 						["author"] = {
 							["name"] = data.name,
 							["icon_url"] = ret,
