@@ -395,6 +395,15 @@ if SERVER then
 		end
 	end
 
+	local function log_script(script, who, extra)
+		hook.Run("LuaDevRunScript", script, tostring(who) .. extra)
+		luadev.Print(tostring(who)..extra)
+		local t = script:Split("\n")
+		luadev.Print(t[1] .. "..")
+		luadev.Print("#" .. #t .. "lines")
+		luadev.Print("#" .. #script .. "bytes")
+	end
+
 	function luadev.RunOnClients(script,who,extra)
 		if not who and extra and isentity(extra) then extra = {ply=extra} end
 
@@ -405,7 +414,7 @@ if SERVER then
 		}
 
 		if luadev.Verbose() then
-			luadev.Print(script,tostring(who).." running on clients")
+			log_script(script,who," running on clients")
 		end
 
 		net.Start(Tag)
@@ -467,7 +476,7 @@ if SERVER then
 
 
 		if luadev.Verbose() then
-			luadev.Print(script,tostring(who).." running on "..tostring(targetslist or "NONE"))
+			log_script(script, who, " running on "..tostring(targetslist or "NONE"))
 		end
 
 		net.Start(Tag)
@@ -485,7 +494,7 @@ if SERVER then
 		if not who and extra and isentity(extra) then extra = {ply=extra} end
 
 		if luadev.Verbose() then
-			luadev.Print(script,tostring(who).." running on server")
+			log_script(script, who, " running on server")
 		end
 
 		return luadev.Run(script,tostring(who),extra)
