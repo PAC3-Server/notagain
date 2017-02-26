@@ -109,11 +109,11 @@ if CLIENT then
 	local function get_color(ent)
 		local color = ent:GetNWVector("wepstats_color", def)
 
-		if color.r < 0 then
+		if color.r > 300 then
 			local c = HSVToColor((os.clock()*200)%360, 1, 1)
-			color.r = c.r/255
-			color.g = c.g/255
-			color.b = c.b/255
+			color.r = c.r
+			color.g = c.g
+			color.b = c.b
 		end
 
 		return color
@@ -422,25 +422,96 @@ if CLIENT then
 end
 
 if SERVER then
-	local function disallow(ply, ent)
-		if ent:GetPos() == ply:GetPos() then
-			return
-		end
+	hook.Add("KeyPress", "item_pickup", function(ply, key)
+		if not ply.item_pickup then return end
+		if key == IN_USE then
+			local found = {}
+			for ent in pairs(ply.item_pickup) do
+				if ent:IsValid() and not ent:GetOwner():IsValid() and ent:GetPos():Distance(ply:GetPos()) < 100 then
+					table.insert(found, ent)
+				else
+					ply.item_pickup[ent] = nil
+				end
+			end
 
-		if ply:KeyDown(IN_USE) then
-			local dir = ent:NearestPoint(ply:GetShootPos()) - ply:GetShootPos()
-			local dot = ply:GetAimVector():Dot(dir) / dir:Length()
-			if dot > 0 then
-				for _, wep in pairs(ply:GetWeapons()) do
-					if wep:GetClass() == ent:GetClass() then
-						ply:DropWeapon(wep)
+			local wep
+			local tr = ply:GetEyeTrace()
+
+			for _, ent in ipairs(found) do
+				if tr.Entity == ent then
+					wep = ent
+					break
+				end
+			end
+
+			if not wep then
+				if tr.HitWorld and tr.HitPos:Distance(ply:GetShootPos()) < 100 then
+					local look_pos = tr.HitPos
+					table.sort(found, function(a, b) return a:NearestPoint(look_pos):Distance(look_pos) < b:NearestPoint(look_pos):Distance(look_pos) end)
+					wep = found[1]
+				end
+			end
+
+			if not wep then
+				local look_pos = ply:GetShootPos()
+				table.sort(found, function(a, b) return a:NearestPoint(look_pos):Distance(look_pos) < b:NearestPoint(look_pos):Distance(look_pos) end)
+
+				for _, ent in ipairs(found) do
+					local dir = ent:NearestPoint(ply:GetShootPos()) - ply:GetShootPos()
+					local dot = ply:GetAimVector():Dot(dir) / dir:Length()
+
+					if dot > 0 then
+						wep = ent
 						break
 					end
 				end
+			end
 
-				return
+			if wep then
+				wep.item_pickup_allow = true
+				timer.Simple(0, function()
+					if wep:IsValid() then
+						wep.item_pickup_allow = nil
+					end
+				end)
 			end
 		end
+	end)
+
+	local function disallow(ply, wep)
+		if wep:GetPos() == ply:GetPos() then
+			return
+		end
+
+		if wep.item_pickup_allow then
+			local pos = wep:GetPos()
+			local ang = wep:GetAngles()
+			local old_class = IsValid(ply:GetActiveWeapon()) and ply:GetActiveWeapon():GetClass()
+
+			for _, ent in pairs(ply:GetWeapons()) do
+				if ent:GetClass() == wep:GetClass() then
+					ply:DropWeapon(ent)
+					ent:SetPos(pos)
+					ent:SetAngles(ang)
+					ent:GetPhysicsObject():SetVelocity(Vector(0,0,0))
+					break
+				end
+			end
+			wep.item_pickup_allow = nil
+
+			if old_class then
+				timer.Simple(0, function()
+					if ply:IsValid() then
+						ply:SelectWeapon(old_class)
+					end
+				end)
+			end
+
+			return
+		end
+
+		ply.item_pickup = ply.item_pickup or {}
+		ply.item_pickup[wep] = wep
 
 		return false
 	end
