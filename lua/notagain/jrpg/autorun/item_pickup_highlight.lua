@@ -153,7 +153,7 @@ if CLIENT then
 
 				if language.GetPhrase(class_name) and language.GetPhrase(class_name) ~= class_name then
 					name = name:Replace("CLASSNAME", language.GetPhrase(class_name))
-				elseif language.GetPhrase(ent.PrintName) and language.GetPhrase(ent.PrintName) ~= ent.PrintName then
+				elseif ent.PrintName and language.GetPhrase(ent.PrintName) and language.GetPhrase(ent.PrintName) ~= ent.PrintName then
 					name = name:Replace("CLASSNAME", language.GetPhrase(ent.PrintName))
 				elseif ent.PrintName then
 					name = name:Replace("CLASSNAME", ent.PrintName)
