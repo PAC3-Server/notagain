@@ -2,7 +2,7 @@ wepstats = {}
 wepstats.registered = {}
 
 function wepstats.AddStatus(wep, class_name, ...)
-	if class_name ~= "base" and not wep.wepstats.base then
+	if class_name ~= "base" and (not wep.wepstats or not wep.wepstats.base) then
 		wepstats.AddStatus(wep, "base")
 	end
 
