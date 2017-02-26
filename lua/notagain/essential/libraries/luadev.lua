@@ -395,20 +395,6 @@ if SERVER then
 		end
 	end
 
-	local function log_script(script, who, str)
-		hook.Run("LuaDevRunScript", script, who, str)
-		luadev.Print(str)
-		if luadev.Verbose() then
-			luadev.Print(script)
-			luadev.Print("\n\n")
-		else
-			local t = script:Split("\n")
-			luadev.Print(t[1] .. "..")
-			luadev.Print("#" .. #t .. "lines")
-			luadev.Print("#" .. #script .. "bytes")
-		end
-	end
-
 	function luadev.RunOnClients(script,who,extra)
 		if not who and extra and isentity(extra) then extra = {ply=extra} end
 
@@ -417,8 +403,6 @@ if SERVER then
 			info=who,
 			extra=extra,
 		}
-
-		log_script(script, who, tostring(who) .. " running on clients")
 
 		net.Start(Tag)
 			luadev.WriteCompressed(script)
@@ -471,14 +455,6 @@ if SERVER then
 
 		if table.Count(targets)==0 then return nil,"no players" end
 
-		local targetslist
-		for _,target in pairs(targets) do
-			local pre = targetslist and ", " or ""
-			targetslist=(targetslist or "")..pre..tostring(target)
-		end
-
-		log_script(script, who, tostring(who) .. " running on "..tostring(targetslist or "NONE"))
-
 		net.Start(Tag)
 			luadev.WriteCompressed(script)
 			net.WriteTable(data)
@@ -487,13 +463,11 @@ if SERVER then
 			end
 		net.Send(targets)
 
-		return #targets
+		return #targets, targets
 	end
 
 	function luadev.RunOnServer(script,who,extra)
 		if not who and extra and isentity(extra) then extra = {ply=extra} end
-
-		log_script(script, who, tostring(who) .. " running on server")
 
 		return luadev.Run(script,tostring(who),extra)
 	end
@@ -579,21 +553,43 @@ local function CMD(who)
 	return CLIENT and "CMD" or who or "CMD"
 end
 
+local function log_script(script, ply, path, msg)
+	hook.Run("LuaDevRunScript", script, ply, path, msg)
+	luadev.Print(msg)
+	if luadev.Verbose() then
+		luadev.Print(script)
+		luadev.Print("\n\n")
+	else
+		local t = script:Split("\n")
+		luadev.Print(t[1] .. "..")
+		luadev.Print("#" .. #t .. "lines")
+		luadev.Print("#" .. #script .. "bytes")
+	end
+end
+
 function luadev.AddCommands()
 	luadev.COMMAND('run_sv',function(ply,_,script,who)
-		luadev.RunOnServer(script,CMD(who),luadev.MakeExtras(ply))
+		who = CMD(who)
+		luadev.RunOnServer(script,who,luadev.MakeExtras(ply))
+		log_script(script, ply, who, tostring(who) .. " running on server")
 	end,true)
 
 	luadev.COMMAND('run_sh',function(ply,_,script,who)
-		luadev.RunOnShared(script,CMD(who),luadev.MakeExtras(ply))
+		who = CMD(who)
+		luadev.RunOnShared(script,who,luadev.MakeExtras(ply))
+		log_script(script, ply, who, tostring(who) .. " running on shared")
 	end,true)
 
 	luadev.COMMAND('run_clients',function(ply,_,script,who)
-		luadev.RunOnClients(script,CMD(who),luadev.MakeExtras(ply))
+		who = CMD(who)
+		luadev.RunOnClients(script,who,luadev.MakeExtras(ply))
+		log_script(script, ply, who, tostring(who) .. " running on clients")
 	end,true)
 
 	luadev.COMMAND('run_self',function(ply,_,script,who)
-		luadev.RunOnSelf(script,CMD(who),luadev.MakeExtras(ply))
+		who = CMD(who)
+		luadev.RunOnSelf(script,who,luadev.MakeExtras(ply))
+		log_script(script, ply, who, tostring(who) .. " running on self")
 	end,true)
 
 	luadev.COMMAND('run_client',function(ply,tbl,script,who)
@@ -621,7 +617,15 @@ function luadev.AddCommands()
 
 		script = script:Trim()
 
-		luadev.RunOnClient(script,cl,CMD(who),luadev.MakeExtras(ply))
+		local _, targets = luadev.RunOnClient(script,cl,CMD(who),luadev.MakeExtras(ply))
+
+		local targetslist
+		for _,target in pairs(targets) do
+			local pre = targetslist and ", " or ""
+			targetslist=(targetslist or "")..pre..tostring(target)
+		end
+
+		log_script(script, ply, who, tostring(who) .. " running on "..tostring(targetslist or "NONE"))
 
 	end)
 
@@ -643,9 +647,16 @@ function luadev.AddCommands()
 
 		local content = Path and luadev.GiveFileContent(Path,searchpath)
 		if not content then luadev.Print("Could not read the file\n") return end
+		who = who or CMD(who)
 
-		luadev.RunOnClient(content,cl,who or CMD(who),luadev.MakeExtras(ply))
+		local _, targets = luadev.RunOnClient(content,cl,who,luadev.MakeExtras(ply))
+		local targetslist
+		for _,target in pairs(targets) do
+			local pre = targetslist and ", " or ""
+			targetslist=(targetslist or "")..pre..tostring(target)
+		end
 
+		log_script(content, ply, who, tostring(who) .. " running on "..tostring(targetslist or "NONE"))
 	end)
 
 	luadev.COMMAND('send_sv',function(ply,c)
@@ -657,9 +668,11 @@ function luadev.AddCommands()
 		if not content then luadev.Print("Could not read the file\n") return end
 
 		local who=string.GetFileFromFilename(Path)
+		who = who or CMD(who)
 
-		luadev.RunOnServer(content,who or CMD(who),luadev.MakeExtras(ply))
+		log_script(content, ply, who, tostring(who) .. " running on server")
 
+		luadev.RunOnServer(content,who,luadev.MakeExtras(ply))
 	end)
 
 	luadev.COMMAND('send_clients',function(ply,c)
@@ -671,9 +684,11 @@ function luadev.AddCommands()
 		if not content then luadev.Print("Could not read the file\n") return end
 
 		local who=string.GetFileFromFilename(Path)
+		who = who or CMD(who)
 
-		luadev.RunOnClients(content,who or CMD(who),luadev.MakeExtras(ply))
+		log_script(content, who, ply, tostring(who) .. " running on clients")
 
+		luadev.RunOnClients(content,who,luadev.MakeExtras(ply))
 	end)
 
 	luadev.COMMAND('send_sh',function(ply,c)
@@ -685,8 +700,11 @@ function luadev.AddCommands()
 		if not content then luadev.Print("Could not read the file\n") return end
 
 		local who=string.GetFileFromFilename(Path)
+		who = who or CMD(who)
 
-		luadev.RunOnShared(content,who or CMD(who),luadev.MakeExtras(ply))
+		log_script(content, who, ply, tostring(who) .. " running on shared")
+
+		luadev.RunOnShared(content,who,luadev.MakeExtras(ply))
 
 	end)
 
@@ -699,8 +717,11 @@ function luadev.AddCommands()
 		if not content then luadev.Print("Could not read the file\n") return end
 
 		local who=string.GetFileFromFilename(Path)
+		who = who or CMD(who)
 
-		luadev.RunOnSelf(content,who or CMD(who),luadev.MakeExtras(ply))
+		log_script(content, who, ply, tostring(who) .. " running on self")
+
+		luadev.RunOnSelf(content,who,luadev.MakeExtras(ply))
 
 	end)
 end
