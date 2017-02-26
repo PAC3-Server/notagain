@@ -23,6 +23,7 @@ if SERVER then
 	discordrelay.admin_roles = {"260870255486697472", "260932947140411412"}
 	discordrelay.relayChannel = "273575417401573377"
 	discordrelay.logChannel = "280436597248229376"
+	discordrelay.scriptLogChannel = "285346539638095872"
     discordrelay.webhookid = "274957435091812352"
     discordrelay.webhooktoken = webhooktoken
 
@@ -101,7 +102,7 @@ if SERVER then
 
 		HTTP(HTTPRequest)
     end
-	function discordrelay.GetAvatar(steamid, callback) 
+	function discordrelay.GetAvatar(steamid, callback)
 		local commid = util.SteamIDTo64(steamid)
 		if discordrelay.AvatarCache[commid] then
 			callback(discordrelay.AvatarCache[commid])
@@ -431,7 +432,7 @@ if SERVER then
 
 	local prefixes = {"!", "/", "."} --cba to use the lua pattern
 	hook.Add("PlayerSay", "DiscordRelayChat", function(ply, text, teamChat)
-		
+
 		if aowl then
 			for cmd,v in pairs(aowl.cmds) do
 				for k,prefix in pairs(prefixes) do
@@ -485,7 +486,7 @@ if SERVER then
 	    if discordrelay and discordrelay.enabled then
 			local commid = util.SteamIDTo64(data.networkid)
 			local reason = (string.StartWith(data.reason ,"Map") or string.StartWith(data.reason ,data.name) or string.StartWith(data.reason ,"Client" )) and ":interrobang: "..data.reason or data.reason
-        	
+
         	discordrelay.GetAvatar(data.networkid, function(ret)
 				discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
 					["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
@@ -551,6 +552,30 @@ if SERVER then
 		end
 	end)
 
+	hook.Add("LuaDevRunScript", "DiscordRelay", function(script, ply, path, msg)
+
+	  discordrelay.GetAvatar(ply:SteamID64(), function(ret)
+			discordrelay.ExecuteWebhook(discordrelay.webhookid, discordrelay.webhooktoken, {
+				["username"] = GetConVar("sv_testing") and GetConVar("sv_testing"):GetBool() and "Test Server" or "Server",
+				["avatar_url"] = "https://cdn.discordapp.com/avatars/276379732726251521/de38fcf57f85e75739a1510c3f9d0531.png",
+				["embeds"] = {
+					[1] = {
+						["title"] = "",
+						["description"] = msg,
+						["author"] = {
+							["name"] = data.name,
+							["icon_url"] = ret,
+							["url"] = "http://steamcommunity.com/profiles/" .. ply:SteamID64()
+						},
+						["type"] = "rich",
+						["color"] = 0x00b300
+					}
+				}
+			})
+		end)
+
+		discordrelay.CreateMessage(discordrelay.scriptLogChannel, "```lua"..script.."```")
+	end)
 else
 	net.Receive( "DiscordMessage", function()
 		local nick = net.ReadString()
