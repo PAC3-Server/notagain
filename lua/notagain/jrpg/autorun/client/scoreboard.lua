@@ -374,6 +374,7 @@ local PLAYER_LINE = {
 
             self.Menu:AddOption("Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end):SetImage("icon16/tab_edit.png")
             self.Menu:AddOption("Open Profile",function() self.Player:ShowProfile() end):SetImage("icon16/world.png")
+            self.Menu:AddOption("Mute/Unmute",function() self.Player:SetMuted(!self.Player:IsMuted()) end):SetImage("icon16/sound_mute.png")
 
 
             RegisterDermaMenuForClose( self.Menu )
