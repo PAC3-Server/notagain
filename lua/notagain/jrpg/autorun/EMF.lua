@@ -96,7 +96,7 @@ if SERVER then
 		local refangle = ent:GetAngles()
 		local angs = { refangle:Forward() , -refangle:Forward() , refangle:Right() , -refangle:Right() }
 		local closest = BigValue
-		local finalangle = Angle( 0 , 0 , 0 )
+		local finalangle = Angle()
 
 		for i = 1 , #angs do
 			
@@ -108,7 +108,7 @@ if SERVER then
 
 			if closest > refpos:Distance(tr.HitPos) and EMF.MinDistToRef >= refpos:Distance(tr.HitPos) then
 				closest = refpos:Distance(tr.HitPos)
-				finalangle = angs[i]
+				finalangle = angs[i]:Angle()
 			end
 		end
 
@@ -120,7 +120,7 @@ if SERVER then
 			end
 		end]]--
 
-		ent:SetAngles( -finalangle:Angle() )
+		ent:SetAngles( -finalangle )
 		
 	end
 
