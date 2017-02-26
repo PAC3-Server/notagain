@@ -108,7 +108,7 @@ if SERVER then
 
 			if closest > refpos:Distance(tr.HitPos) and EMF.MinDistToRef >= refpos:Distance(tr.HitPos) then
 				closest = refpos:Distance(tr.HitPos)
-				finalangle = angs[i]
+				finalangle = angs[i]:Angle()
 			end
 		end
 
@@ -120,7 +120,7 @@ if SERVER then
 			end
 		end]]--
 
-		ent:SetAngles( -finalangle:Angle() or finalangle )
+		ent:SetAngles( -finalangle )
 		
 	end
 
