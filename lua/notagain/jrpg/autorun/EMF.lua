@@ -80,7 +80,13 @@ if SERVER then
 
 		else
 			
-			EMF.SetValidPos( ent , ref )
+			ent.EMFTryPos = ent.EMFTryPos and ent.EMFTryPos + 1 or 1
+			
+			if ent.EMFTryPos <= 30 then
+				EMF.SetValidPos( ent , ref )
+			else
+				ent:SetPos(tr.HitPos)
+			end
 		
 		end
 
@@ -116,7 +122,7 @@ if SERVER then
 		
 		--[[if closest == BigValue then
 			for i = 1 , #angs do
-
+				
 			end
 		end]]--
 
