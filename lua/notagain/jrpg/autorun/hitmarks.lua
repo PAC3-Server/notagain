@@ -32,7 +32,7 @@ if CLIENT then
 		["$VertexColor"] = 1,
 	})
 
-	local function draw_health_bar(x,y, w,h, health, last_health, fade, border_size, skew)
+	local function draw_health_bar(ent, x,y, w,h, health, last_health, fade, border_size, skew)
 		surface.SetDrawColor(200, 200, 200, 50*fade)
 		draw.NoTexture()
 		draw_rect(x,y,w,h, skew)
@@ -54,6 +54,33 @@ if CLIENT then
 
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew, 1, 64,border_size, border:GetTexture("$BaseTexture"):Width(), true)
+		end
+
+		local size = 24
+		x = x + 16
+		y = y + 5
+
+		for i, status in ipairs(jdmg.GetStatuses(ent)) do
+			if status.negative then
+				surface.SetDrawColor(150, 0, 0, 255*fade)
+			elseif status.positive then
+				surface.SetDrawColor(0, 0, 150, 255*fade)
+			else
+				surface.SetDrawColor(0, 0, 0, 255*fade)
+			end
+			draw.NoTexture()
+			draw_rect(x+w-size,y+h,size,size)
+
+			surface.SetDrawColor(255, 255, 255, 255*fade)
+			surface.SetMaterial(border)
+			draw_rect(x+w-size,y+h,size,size, 0, 1, 64,border_size/1.5, border:GetTexture("$BaseTexture"):Width(), true)
+
+			surface.SetDrawColor(255, 255, 255, 255*fade)
+			surface.SetMaterial(status.icon)
+			draw_rect(x+w-size,y+h,size,size)
+			draw_rect(x+w-size,y+h,size,size)
+
+			x = x - 24 - 5
 		end
 	end
 
@@ -271,9 +298,9 @@ if CLIENT then
 
 					local w, h = prettytext.GetTextSize(name, "candara", 20, 30, 2)
 
-					local height = 8
+					local height = 10
 					local border_size = 3
-					local skew = 0
+					local skew = -30
 					local width = math.Clamp(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5,  ScrW()/2)
 
 					if max > 1000 then
@@ -290,7 +317,7 @@ if CLIENT then
 					local width2 = width/2
 					local text_x_offset = 15
 
-					draw_health_bar(pos.x - width2, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, skew)
+					draw_health_bar(ent, pos.x - width2, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, skew)
 
 					prettytext.Draw(name, pos.x - width2 - text_x_offset, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
 				end
@@ -664,6 +691,7 @@ if SERVER then
 					local diff = ent:Health() - (ent.hm_last_health or 0)
 					if diff > 0 then
 						hitmarkers.ShowDamage(ent, diff)
+						jdmg.DamageEffect(ent, "heal")
 					end
 					ent.hm_last_health = ent:Health()
 				end
