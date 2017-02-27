@@ -186,23 +186,6 @@ if CLIENT then
 		end
 	end)
 
-
-	--[[
-	local suppress = false
-	hook.Add("PostDrawViewModel", "jrpg_items", function(ent, ply, wep)
-		if suppress then return end
-
-		local color = wep:GetNWString("wepstats_color", Vector(r,g,b)*255)/255
-		render.MaterialOverride(shiny)
-		ent:SetColor(Color(color.r*255,color.g*255,color.b*255, 50))
-		render.SetBlend(0.5)
-		suppress = true
-		ent:DrawModel()
-		suppress = false
-		render.MaterialOverride()
-	end)
-	]]
-
 	local temp_vec = Vector()
 	local render_SetMaterial = render.SetMaterial
 	local render_DrawSprite = render.DrawSprite
@@ -232,10 +215,179 @@ if CLIENT then
 
 	local last_frame = 0
 
+	hook.Add("PrePlayerDraw", "jrpg_items", function(ply)
+		if ply.item_pickup_player_draw_hack then return true end
+	end)
+
+	local function draw_glow(ent, time, pos, distance, radius, vis, color, vm)
+		ent.jrpg_items_random = ent.jrpg_items_random or {}
+		ent.jrpg_items_random.rotation = ent.jrpg_items_random.rotation or math_random()*360
+
+		local time = time + ent.jrpg_items_random.rotation
+
+		render_SetMaterial(warp_mat)
+		if not vm then
+			cam_IgnoreZ(true)
+		end
+		render_DrawSprite(pos, 50, 50, TempColor(color.r*2, color.g*2, color.b*2, vis*20), ent.jrpg_items_random.rotation)
+
+		render_SetMaterial(glare2_mat)
+
+		local glow = math_sin(time*5)*0.5+0.5
+		local r = radius/8
+		render_DrawSprite(pos, r*10, r*10, TempColor(color.r, color.g, color.b, vis*170*glow))
+		render_DrawSprite(pos, r*20, r*20, TempColor(color.r, color.g, color.b, vis*170*(glow+0.25)))
+		render_DrawSprite(pos, r*30, r*30, TempColor(color.r, color.g, color.b, vis*120*(glow+0.5)))
+
+		if not vm then
+			cam_IgnoreZ(false)
+		end
+
+		ent:DrawModel()
+
+		render_SetMaterial(glare_mat)
+		render_DrawSprite(pos, r*180, r*50, TempColor(color.r, color.g, color.b, vis*20))
+
+		if distance < 1500 then
+
+			if not ent.jrpg_items_next_emit2 or ent.jrpg_items_next_emit2 < time then
+
+				local p = emitter2d:Add(glare2_mat, pos + (VectorRand()*radius*0.5))
+				p:SetDieTime(math.Rand(2,4))
+				p:SetLifeTime(1)
+
+				p:SetStartSize(math.Rand(2,4))
+				p:SetEndSize(0)
+
+				p:SetStartAlpha(0)
+				p:SetEndAlpha(255)
+
+				p:SetColor(color.r, color.g, color.b)
+
+				p:SetVelocity(VectorRand()*5)
+				p:SetGravity(Vector(0,0,3))
+				p:SetAirResistance(30)
+
+				ent.jrpg_items_next_emit2 = time + 0.1
+
+				local intensity = color:Length()/100
+
+				if math_random() > 0.2 then
+					local p = emitter2d:Add(glare2_mat, pos + (VectorRand()*radius*0.5))
+					p:SetDieTime(math.Rand(1,3))
+					p:SetLifeTime(1)
+
+					p:SetStartSize(math.Rand(2,4))
+					p:SetEndSize(0)
+
+					p:SetStartAlpha(255)
+					p:SetEndAlpha(255)
+
+					p:SetVelocity(VectorRand()*3)
+					p:SetGravity(Vector(0,0,math.Rand(3,5)))
+					p:SetAirResistance(30)
+
+					p:SetNextThink(CurTime())
+
+					local seed = math_random()
+					local seed2 = math.Rand(-4,4)
+
+					p:SetThinkFunction(function(p)
+						p:SetStartSize(math_abs(math_sin(seed+time*seed2)*3*intensity+math.Rand(0,2)))
+						p:SetColor(math.Rand(200/intensity, 255), math.Rand(200/intensity, 255), math.Rand(200/intensity, 255))
+						p:SetNextThink(CurTime())
+					end)
+				end
+			end
+
+			if not ent.jrpg_items_next_emit or ent.jrpg_items_next_emit < time then
+				local p = emitter2d:Add(math_random() > 0.5 and smoke_mat or smoke2_mat, pos)
+				p:SetDieTime(3)
+				p:SetLifeTime(1)
+
+				p:SetStartSize(1)
+				p:SetEndSize(15)
+
+				p:SetStartAlpha(255*vis)
+				p:SetEndAlpha(0)
+
+				p:SetColor(color.r, color.g, color.b)
+
+				p:SetVelocity(VectorRand()*3)
+
+				p:SetRoll(math_random()*360)
+
+				p:SetAirResistance(30)
+				ent.jrpg_items_next_emit = time + 0.2
+			end
+		end
+
+		if vm then return end
+
+		render_SetMaterial(fire_mat)
+
+		ent.jrpg_item_fade = ent.jrpg_item_fade or 0
+		ent.jrpg_item_random = ent.jrpg_item_random or math.Rand(0.5, 1)
+
+		local vel = ent:GetVelocity()
+		local fade = 1
+
+		if vel:Length() < 100 then
+			vel:Zero()
+			fade = math_min(time - ent.jrpg_item_fade, 1) ^ 0.5
+		else
+			ent.jrpg_item_fade = time
+		end
+
+		local ang = vel:Angle()
+		local up = ang:Up()
+		local right = ang:Right()
+		local forward = ang:Forward()
+
+		local max_inner = 5
+		local max_outter = 3
+
+		if distance > 1000 then
+			max_outter = 1
+			max_inner = 2
+		end
+
+		for i2 = 1, max_outter do
+			ent.jrpg_items_random[i2] = ent.jrpg_items_random[i2] or math.Rand(-1,1)
+			local f2 = i2/4
+			f2=f2*5+ent.jrpg_items_random[i2]
+
+			render_StartBeam(max_inner)
+				for i = 1, max_inner do
+					local f = i/max_inner
+					local s = math_sin(f*math_pi*2)
+
+					local offset = pos
+
+					if i ~= 1 then
+						offset = pos +
+						(
+							up * -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2]) +
+							right * -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2]) +
+							forward * -(radius/13)*math_abs(math_sin(f2 + time/5)*100)*f*0.5 / (1+vel:Length()/100)
+						) * fade * ent.jrpg_item_random
+					end
+
+					render_AddBeam(
+						offset,
+						(-f+1)*radius,
+						(f*0.3-time*0.1 + ent.jrpg_items_random[i2]),
+						TempColor(color.r, color.g, color.b, 255*f)
+					)
+				end
+			render_EndBeam()
+		end
+	end
+
 	hook.Add("RenderScreenspaceEffects", "jrpg_items", function()
 		cam.Start3D()
 		render.UpdateScreenEffectTexture()
-		render.MaterialOverride(shiny)
+		render.ModelMaterialOverride(shiny)
 		local time = RealTime()
 
 		for _, ent in ipairs(entities) do
@@ -245,186 +397,70 @@ if CLIENT then
 			end
 
 			local color = get_color(ent)
+			render_SetColorModulation(color.r/255 , color.g/255, color.b/255)
 
 			if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then
-				render_SetColorModulation(color.r/255/5 , color.g/255/5, color.b/255/5)
-				ent:DrawModel()
+				local ply = ent:GetOwner()
+				if ply:IsValid() then
+					if ply:GetActiveWeapon() == ent and ent:GetAttachment(1) and (ply ~= LocalPlayer() or ply:ShouldDrawLocalPlayer()) then
+						ent:GetOwner().item_pickup_player_draw_hack = true
+						draw_glow(ent, RealTime(), ent:GetAttachment(1).Pos, 0, 10, 1, color, true)
+						ent:GetOwner().item_pickup_player_draw_hack = nil
+					end
+				end
+
 				continue
 			end
 
-			render_SetColorModulation(color.r/255, color.g/255, color.b/255)
-
 			local pos = ent:WorldSpaceCenter()
+
 			ent.jrpg_items_pixvis = ent.jrpg_items_pixvis or util.GetPixelVisibleHandle()
 			ent.jrpg_items_pixvis2 = ent.jrpg_items_pixvis2 or util.GetPixelVisibleHandle()
+
 			local radius = ent:BoundingRadius()
 			local vis = util_PixelVisible(pos, radius*0.5, ent.jrpg_items_pixvis)
-			local distance = pos:Distance(EyePos())
 
 			if vis == 0 and util_PixelVisible(pos, radius*5, ent.jrpg_items_pixvis2) == 0 then continue end
 
-			ent.jrpg_items_random = ent.jrpg_items_random or {}
-			ent.jrpg_items_random.rotation = ent.jrpg_items_random.rotation or math_random()*360
+			local distance = pos:Distance(EyePos())
 
-			local time = time + ent.jrpg_items_random.rotation
-
-			render_SetMaterial(warp_mat)
-			cam_IgnoreZ(true)
-			render_DrawSprite(pos, 50, 50, TempColor(color.r*2, color.g*2, color.b*2, vis*20), ent.jrpg_items_random.rotation)
-
-			render_SetMaterial(glare2_mat)
-
-			local glow = math_sin(time*5)*0.5+0.5
-			local r = radius/8
-			render_DrawSprite(pos, r*10, r*10, TempColor(color.r, color.g, color.b, vis*170*glow))
-			render_DrawSprite(pos, r*20, r*20, TempColor(color.r, color.g, color.b, vis*170*(glow+0.25)))
-			render_DrawSprite(pos, r*30, r*30, TempColor(color.r, color.g, color.b, vis*120*(glow+0.5)))
-
-			cam_IgnoreZ(false)
-
-			ent:DrawModel()
-
-			render_SetMaterial(glare_mat)
-			render_DrawSprite(pos, r*180, r*50, TempColor(color.r, color.g, color.b, vis*20))
-
-			if distance < 1500 then
-
-				if not ent.jrpg_items_next_emit2 or ent.jrpg_items_next_emit2 < time then
-
-					local p = emitter2d:Add(glare2_mat, pos + (VectorRand()*radius*0.5))
-					p:SetDieTime(math.Rand(2,4))
-					p:SetLifeTime(1)
-
-					p:SetStartSize(math.Rand(2,4))
-					p:SetEndSize(0)
-
-					p:SetStartAlpha(0)
-					p:SetEndAlpha(255)
-
-					p:SetColor(color.r, color.g, color.b)
-
-					p:SetVelocity(VectorRand()*5)
-					p:SetGravity(Vector(0,0,3))
-					p:SetAirResistance(30)
-
-					ent.jrpg_items_next_emit2 = time + 0.1
-
-					local intensity = color:Length()/100
-
-					if math_random() > 0.2 then
-						local p = emitter2d:Add(glare2_mat, pos + (VectorRand()*radius*0.5))
-						p:SetDieTime(math.Rand(1,3))
-						p:SetLifeTime(1)
-
-						p:SetStartSize(math.Rand(2,4))
-						p:SetEndSize(0)
-
-						p:SetStartAlpha(255)
-						p:SetEndAlpha(255)
-
-						p:SetVelocity(VectorRand()*3)
-						p:SetGravity(Vector(0,0,math.Rand(3,5)))
-						p:SetAirResistance(30)
-
-						p:SetNextThink(CurTime())
-
-						local seed = math_random()
-						local seed2 = math.Rand(-4,4)
-
-						p:SetThinkFunction(function(p)
-							p:SetStartSize(math_abs(math_sin(seed+time*seed2)*3*intensity+math.Rand(0,2)))
-							p:SetColor(math.Rand(200/intensity, 255), math.Rand(200/intensity, 255), math.Rand(200/intensity, 255))
-							p:SetNextThink(CurTime())
-						end)
-					end
-				end
-
-				if not ent.jrpg_items_next_emit or ent.jrpg_items_next_emit < time then
-					local p = emitter2d:Add(math_random() > 0.5 and smoke_mat or smoke2_mat, pos)
-					p:SetDieTime(3)
-					p:SetLifeTime(1)
-
-					p:SetStartSize(1)
-					p:SetEndSize(15)
-
-					p:SetStartAlpha(255*vis)
-					p:SetEndAlpha(0)
-
-					p:SetColor(color.r, color.g, color.b)
-
-					p:SetVelocity(VectorRand()*3)
-
-					p:SetRoll(math_random()*360)
-
-					p:SetAirResistance(30)
-					ent.jrpg_items_next_emit = time + 0.2
-				end
-			end
-
-			render.SetMaterial(fire_mat)
-
-			ent.jrpg_item_fade = ent.jrpg_item_fade or 0
-			ent.jrpg_item_random = ent.jrpg_item_random or math.Rand(0.5, 1)
-
-			local vel = ent:GetVelocity()
-			local fade = 1
-
-			if vel:Length() < 100 then
-				vel:Zero()
-				fade = math_min(time - ent.jrpg_item_fade, 1) ^ 0.5
-			else
-				ent.jrpg_item_fade = time
-			end
-
-			local ang = vel:Angle()
-			local up = ang:Up()
-			local right = ang:Right()
-			local forward = ang:Forward()
-
-			local max_inner = 5
-			local max_outter = 3
-
-			if distance > 1000 then
-				max_outter = 1
-				max_inner = 2
-			end
-
-			for i2 = 1, max_outter do
-				ent.jrpg_items_random[i2] = ent.jrpg_items_random[i2] or math.Rand(-1,1)
-				local f2 = i2/4
-				f2=f2*5+ent.jrpg_items_random[i2]
-
-				render_StartBeam(max_inner)
-					for i = 1, max_inner do
-						local f = i/max_inner
-						local s = math_sin(f*math_pi*2)
-
-						local offset = pos
-
-						if i ~= 1 then
-							offset = pos +
-							(
-								up * -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2]) +
-								right * -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2]) +
-								forward * -(radius/13)*math_abs(math_sin(f2 + time/5)*100)*f*0.5 / (1+vel:Length()/100)
-							) * fade * ent.jrpg_item_random
-						end
-
-						render_AddBeam(
-							offset,
-							(-f+1)*radius,
-							(f*0.3-time*0.1 + ent.jrpg_items_random[i2]),
-							TempColor(color.r, color.g, color.b, 255*f)
-						)
-					end
-				render_EndBeam()
-			end
-
+			draw_glow(ent, time, pos, distance, radius, vis, color)
 		end
 
 		render.SetColorModulation(1,1,1)
-		render.MaterialOverride()
+		render.ModelMaterialOverride()
 		cam.End3D()
+	end)
+
+	local suppress = false
+	hook.Add("PostDrawViewModel", "jrpg_items", function(ent, ply, wep)
+		if not wep then return end
+		if suppress then return end
+		local posang = ent:GetAttachment(1)
+
+		if posang then
+			local color = get_color(wep)
+
+			shiny:SetVector("$color2", Vector(color.r/255,color.g/255,color.b/255))
+
+			suppress = true
+			render.ModelMaterialOverride(shiny)
+			render.MaterialOverride(shiny)
+			draw_glow(ent, RealTime(), vector_origin, 0, 10, 1, color, true)
+			ent:DrawModel()
+
+			emitter2d:SetNoDraw(true)
+			cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), posang.Pos, posang.Ang))
+			cam.IgnoreZ(true)
+			emitter2d:Draw()
+			cam.IgnoreZ(false)
+			cam.End3D()
+			emitter2d:SetNoDraw(false)
+
+			render.MaterialOverride()
+			render.ModelMaterialOverride()
+			suppress = false
+		end
 	end)
 
 	if LocalPlayer():IsValid() then

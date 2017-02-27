@@ -135,7 +135,7 @@ function wepstats.CallStatusFunction(wep, func_name, ...)
 end
 
 do -- status events
-	hook.Add("EntityTakeDamage", "wepstats", function(ent, info)
+	hook.Add("EntityTakeDamage", "wepstats", function(victim, info)
 		if wepstats.suppress_events then return end
 
 		local attacker = info:GetAttacker()
@@ -144,8 +144,17 @@ do -- status events
 		local wep = attacker:GetActiveWeapon()
 
 		wepstats.suppress_events = true
-		wepstats.CallStatusFunction(wep, "OnDamage", attacker, ent, info)
+		wepstats.CallStatusFunction(wep, "OnDamage", attacker, victim, info)
 		wepstats.suppress_events = false
+
+		if not (victim:IsNPC() or victim:IsPlayer()) then return end
+
+		local wep = victim:GetActiveWeapon()
+		if wep:IsValid() then
+			wepstats.suppress_events = true
+			wepstats.CallStatusFunction(wep, "OnReceiveDamage", victim, attacker, info)
+			wepstats.suppress_events = false
+		end
 	end)
 
 	hook.Add("EntityFireBullets", "wepstats", function(wep, data)
@@ -184,6 +193,7 @@ do
 	function BASE:Initialize() end
 	function BASE:OnAttach() end
 	function BASE:OnDamage(attacker, victim, dmginfo) end
+	function BASE:OnReceiveDamage(attacker, victim, dmginfo) end
 	function BASE:OnFireBullet(data) end
 
 	function BASE:GetName()
@@ -253,15 +263,15 @@ do
 		META.Rarity = {
 			{
 				name = "broken",
-				damage_mult = -0.10,
+				damage_mult = -0.30,
 				status_mult = {-5, -2},
 				max_positive = 0,
 				max_negative = 3,
 				color = Vector(67, 67, 67),
 			},
 			{
-				name = "boring",
-				damage_mult = -0.05,
+				name = "uninteresting",
+				damage_mult = -0.15,
 				status_mult = {-5, -1},
 				max_positive = 0,
 				max_negative = 2,
@@ -436,7 +446,7 @@ do -- effects
 			META.ClassName = "clumsy"
 			META.Negative = true
 			META.Chance = 0.5
-			META.Names = {"slimey", "slippery", "doused", "clumsy"}
+			META.Names = {"slippery", "clumsy", "unstable"}
 
 			function META:OnDamage(attacker, victim, dmginfo)
 				if math.random()*self:GetStatusMultiplier() < 0.1 then
@@ -453,13 +463,15 @@ do -- effects
 			META.ClassName = "dull"
 			META.Negative = true
 			META.Chance = 0.5
+			META.Names = {"dull", "dim", "sluggish", "tedious", "faint", "pale", "faded", "weak"}
+
 
 			function META:OnAttach()
 				local rarity = self:GetRarityInfo().name
 
 				if rarity == "broken" then
 					self.damage = -0.2
-				elseif rarity == "boring" then
+				elseif rarity == "uninteresting" then
 					self.damage = -0.1
 				else
 					self:Remove()
@@ -480,6 +492,8 @@ do -- effects
 			META.ClassName = "dumb"
 			META.Negative = true
 			META.Chance = 0.5
+			META.Names = {"dumb", "idiotic", "selfharming"}
+
 
 			function META:OnDamage(attacker, victim, dmginfo)
 				if math.random() < 0.1 then
@@ -496,11 +510,75 @@ do -- effects
 	do -- positive
 		do
 			local META = {}
-			META.ClassName = "leech"
-			META.Negative = true
+			META.ClassName = "deflect"
+			META.Positive = true
 			META.Chance = 0.5
-			META.FriendlyNames = {"life steal"}
-			META.FriendlyAlternativeNames = {"vampiric", "leeching"}
+			META.Names = {"deflect"}
+			META.Adjectives = {"shielding", "deflecting", "repelling", "ricocheting", "warding", "resist", "shielding"}
+
+
+			function META:OnReceiveDamage(victim, attacker, dmginfo)
+				if math.random() < 0.3 then
+					dmginfo = self:CopyDamageInfo(dmginfo)
+					dmginfo:SetDamage(math.max(dmginfo:GetDamage() * 0.3 / self:GetStatusMultiplier(),1))
+					self:TakeDamageInfo(attacker, dmginfo)
+				end
+			end
+
+			wepstats.Register(META)
+		end
+
+		do
+			local META = {}
+			META.ClassName = "decay"
+			META.Positive = true
+			META.Chance = 0.1
+			META.Names = {"decay"}
+			META.Adjectives = {"withering", "decaying", "fading", "deteriorating", "fading", "withering", "decay"}
+
+			function META:OnDamage(attacker, victim, dmginfo)
+				if victim:IsPlayer() then
+					if not attacker.CanAlter or not attacker:CanAlter(victim) then return end
+
+					jdmg.SetStatus(victim, "decay", true)
+					local dmg = dmginfo:GetDamage()
+					local id = "decay_"..tostring(attacker)..tostring(victim)
+					local health = victim:Health()
+
+					timer.Create(id, 0.5, 0, function()
+						if not attacker:IsValid() or not victim:IsValid() then
+							timer.Remove(id)
+							return
+						end
+
+						local dmginfo = DamageInfo()
+						dmginfo:SetDamage(2)
+						dmginfo:SetDamageCustom(JDMG_DARK)
+						dmginfo:SetDamagePosition(victim:WorldSpaceCenter())
+						dmginfo:SetAttacker(attacker)
+
+						self:TakeDamageInfo(victim, dmginfo)
+
+						if not victim:Alive() or victim:Health() > health then
+							timer.Remove(id)
+							jdmg.SetStatus(victim, "decay", false)
+						end
+
+						health = victim:Health()
+					end)
+				end
+			end
+
+			wepstats.Register(META)
+		end
+
+		do
+			local META = {}
+			META.ClassName = "leech"
+			META.Positive = true
+			META.Chance = 0.5
+			META.Names = {"life steal"}
+			META.Adjectives = {"vampiric", "leeching"}
 
 			function META:OnDamage(attacker, victim, dmginfo)
 				attacker:SetHealth(math.min(attacker:Health() + (dmginfo:GetDamage() * 0.25 / self:GetStatusMultiplier()), attacker:GetMaxHealth()))
@@ -512,11 +590,11 @@ do -- effects
 		do
 			local META = {}
 			META.ClassName = "fast"
-			META.Negative = true
+			META.Positive = true
 			META.Chance = 0.5
 
-			META.Names = {"speed"}
-			META.Adjectives = {"hasteful", "speedy", "fast"}
+			META.Names = {"speed", "quickness", "haste"}
+			META.Adjectives = {"quick", "snappy", "rapid", "swift", "accelerated", "snappy", "speedy", "fast"}
 
 			function META:OnFireBullet(data)
 				local div = 1 + (self:GetStatusMultiplier() ^ 2)
@@ -554,27 +632,43 @@ do -- effects
 			wepstats.Register(META)
 		end
 
-		basic_elemental("fire", jdmg.DMG_FIRE, function(self, attacker, victim)
+		basic_elemental("fire", JDMG_FIRE, function(self, attacker, victim)
 			victim:Ignite((self:GetStatusMultiplier()-1)*10)
-		end, {"hot", "molten", "burning"}, {"fire"})
-		basic_elemental("lightning", jdmg.DMG_LIGHTNING, nil, {"shocking", "electrical", "static"}, {"lightning", "zeus"})
-		basic_elemental("dark", jdmg.DMG_DARK, nil, {"evil", "darkened", "sad"}, {"dark"})
-		basic_elemental("holy", jdmg.DMG_HOLY, nil, {"celestial", "light", "spirited"}, {"light", "holyness"})
-		basic_elemental("water", jdmg.DMG_WATER, nil, {"drowned", "doused", "wet"}, {"water"})
-		basic_elemental("poison", jdmg.DMG_POISON, function(self, attacker, victim, dmginfo)
+		end, {"hot", "molten", "burning", "flaming"}, {"fire", "flames"})
+		basic_elemental("lightning", JDMG_LIGHTNING, nil, {"shocking", "electrical", "electrifying"}, {"lightning", "thunder", "zeus"})
+		basic_elemental("dark", JDMG_DARK, nil, {"eerie", "ghastly", "cursed", "evil", "darkened", "haunted", "scary", "corrupt", "malicious", "unpleasant", "hateful", "wrathful", "ill"}, {"misery", "sin", "suffering", "darkness", "evil", "hades", "corruption", "heinousness"})
+		basic_elemental("holy", JDMG_HOLY, nil, {"angelic", "divine", "spiritual", "sublime", "celestial", "spirited"}, {"light", "holyness"})
+		basic_elemental("water", JDMG_WATER, nil, {"soggy", "doused", "soaked", "rainy", "misty", "wet"}, {"water", "rain", "aqua", "h2o"})
+		basic_elemental("poison", JDMG_POISON, function(self, attacker, victim, dmginfo)
 			local dmg = dmginfo:GetDamage()
-			timer.Create("poison_"..tostring(attacker)..tostring(victim), 0.5, 10, function()
-				if not attacker:IsValid() or not victim:IsValid() then return end
+			jdmg.SetStatus(victim, "poison", true)
+
+			local time = CurTime() + 5
+
+			local id = "poison_"..tostring(attacker)..tostring(victim)
+
+			timer.Create(id, 0.5, 0, function()
+				if not attacker:IsValid() or not victim:IsValid() then
+					timer.Remove(id)
+					return
+				end
+
 				local dmginfo = DamageInfo()
 				dmginfo:SetDamage(dmg * self:GetStatusMultiplier() * 0.2)
-				dmginfo:SetDamageCustom(jdmg.DMG_FIRE)
+				dmginfo:SetDamageCustom(JDMG_POISON)
 				dmginfo:SetDamagePosition(victim:WorldSpaceCenter())
 				dmginfo:SetAttacker(attacker)
 
 				self:TakeDamageInfo(victim, dmginfo)
+
+				if (not victim:IsPlayer() or not victim:Alive()) or time < CurTime() then
+					timer.Remove(id)
+					jdmg.SetStatus(victim, "poison", false)
+				end
 			end)
-		end, {"poisonous", "venomous"}, {"poison", "venom"})
-		basic_elemental("ice", jdmg.DMG_ICE, function(self, attacker, victim, dmginfo)
+
+		end, {"poisonous", "venomous", "toxic", "infected", "diseased"}, {"poison", "venom", "infection", "illness", "sickness"})
+		basic_elemental("ice", JDMG_ICE, function(self, attacker, victim, dmginfo)
 			if victim.GetLaggedMovementValue then
 				if victim:GetLaggedMovementValue() == 0 then return end
 				victim:SetLaggedMovementValue(victim:GetLaggedMovementValue() * 0.9)
@@ -595,14 +689,20 @@ do -- effects
 					end
 				end)
 			end
-		end, {"cold", "frozen", "freezing", "chill"}, {"ice"})
+		end, {"cold", "frozen", "freezing", "chilled", "iced", "arctic", "frosted"}, {"ice", "glacier", "snow"})
 	end
 end
 
-hook.Add("OnEntityCreated", "", function(wep)
-	timer.Simple(0.1, function()
-		if wep:IsValid() and wep:IsWeapon() then
-			wepstats.AddToWeapon(wep)
-		end
+local blacklist = {
+	weapon_physgun = true,
+}
+
+if me then
+	hook.Add("OnEntityCreated", "", function(wep)
+		timer.Simple(0.1, function()
+			if wep:IsValid() and wep:IsWeapon() and wep:GetClass():StartWith("weapon_") and not blacklist[wep:GetClass()] then
+				wepstats.AddToWeapon(wep)
+			end
+		end)
 	end)
-end)
+end
