@@ -64,8 +64,6 @@ function wepstats.AddToWeapon(wep, ...)
 	wep:SetNWVector("wepstats_color", wepstats.GetStatus(wep, "base"):GetRarityInfo().color)
 end
 
---hook.Add("OnEntityCreated", "wepstats", function(wep) if wep:IsWeapon() then wepstats.AddToWeapon(wep) end end)
-
 function wepstats.GetName(wep)
 	if not wep.wepstats then return wep:GetClass() end
 
@@ -544,7 +542,7 @@ do -- effects
 
 			function META:OnDamage(attacker, victim, dmginfo)
 				dmginfo = self:CopyDamageInfo(dmginfo)
-				dmginfo:SetDamageType(type)
+				dmginfo:SetDamageCustom(type)
 				dmginfo:SetDamage(dmginfo:GetDamage() * self:GetStatusMultiplier())
 				self:TakeDamageInfo(victim, dmginfo)
 
@@ -556,22 +554,24 @@ do -- effects
 			wepstats.Register(META)
 		end
 
-		basic_elemental("fire", DMG_BURN, nil, {"hot", "molten", "burning"}, {"fire"})
-		basic_elemental("water", DMG_DROWN, nil, {"drowned", "doused", "wet"}, {"water"})
-		basic_elemental("poison", DMG_ACID, function(self, attacker, victim, dmginfo)
+		basic_elemental("fire", jdmg.DMG_FIRE, function(self, attacker, victim)
+			victim:Ignite((self:GetStatusMultiplier()-1)*10)
+		end, {"hot", "molten", "burning"}, {"fire"})
+		basic_elemental("water", jdmg.DMG_WATER, nil, {"drowned", "doused", "wet"}, {"water"})
+		basic_elemental("poison", jdmg.DMG_POISON, function(self, attacker, victim, dmginfo)
 			local dmg = dmginfo:GetDamage()
 			timer.Create("poison_"..tostring(attacker)..tostring(victim), 0.5, 10, function()
 				if not attacker:IsValid() or not victim:IsValid() then return end
 				local dmginfo = DamageInfo()
 				dmginfo:SetDamage(dmg * self:GetStatusMultiplier() * 0.2)
-				dmginfo:SetDamageType(DMG_ACID)
+				dmginfo:SetDamageCustom(jdmg.DMG_FIRE)
 				dmginfo:SetDamagePosition(victim:WorldSpaceCenter())
 				dmginfo:SetAttacker(attacker)
 
 				self:TakeDamageInfo(victim, dmginfo)
 			end)
 		end, {"poisonous", "venomous"}, {"poison", "venom"})
-		basic_elemental("ice", DMG_DROWN, function(self, attacker, victim, dmginfo)
+		basic_elemental("ice", jdmg.DMG_ICE, function(self, attacker, victim, dmginfo)
 			if victim.GetLaggedMovementValue then
 				if victim:GetLaggedMovementValue() == 0 then return end
 				victim:SetLaggedMovementValue(victim:GetLaggedMovementValue() * 0.9)
