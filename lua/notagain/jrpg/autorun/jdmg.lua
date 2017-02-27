@@ -25,8 +25,6 @@ for k,v in pairs(jdmg) do
 	end
 end
 
-PrintTable(jdmg.dmg_lookup)
-
 if CLIENT then
 	local function create_material(data)
 		if type(data) == "string" then
@@ -579,7 +577,6 @@ if SERVER then
 		local override = jdmg.dmg_lookup[dmginfo:GetDamageCustom()]
 
 		if override then
-			print(ent, override, duration, strength)
 			jdmg.DamageEffect(ent, override, duration, strength)
 		else
 			local done = {}

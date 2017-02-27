@@ -557,6 +557,9 @@ do -- effects
 		basic_elemental("fire", jdmg.DMG_FIRE, function(self, attacker, victim)
 			victim:Ignite((self:GetStatusMultiplier()-1)*10)
 		end, {"hot", "molten", "burning"}, {"fire"})
+		basic_elemental("lightning", jdmg.DMG_LIGHTNING, nil, {"shocking", "electrical", "static"}, {"lightning", "zeus"})
+		basic_elemental("dark", jdmg.DMG_DARK, nil, {"evil", "darkened", "sad"}, {"dark"})
+		basic_elemental("holy", jdmg.DMG_HOLY, nil, {"celestial", "light", "spirited"}, {"light", "holyness"})
 		basic_elemental("water", jdmg.DMG_WATER, nil, {"drowned", "doused", "wet"}, {"water"})
 		basic_elemental("poison", jdmg.DMG_POISON, function(self, attacker, victim, dmginfo)
 			local dmg = dmginfo:GetDamage()
@@ -595,3 +598,11 @@ do -- effects
 		end, {"cold", "frozen", "freezing", "chill"}, {"ice"})
 	end
 end
+
+hook.Add("OnEntityCreated", "", function(wep)
+	timer.Simple(0.1, function()
+		if wep:IsValid() and wep:IsWeapon() then
+			wepstats.AddToWeapon(wep)
+		end
+	end)
+end)
