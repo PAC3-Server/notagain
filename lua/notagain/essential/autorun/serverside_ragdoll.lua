@@ -41,8 +41,12 @@ end
 
 if SERVER then
 	hook.Add("DoPlayerDeath", "serverside_ragdoll", function(ply, attacker, dmginfo)
-		if dmginfo:GetDamageForce() ~= vector_origin then
-			ply.serverside_ragdoll_vel = dmginfo:GetDamageForce()
+		if not dmginfo:GetDamageForce():IsZero() then
+			local force = dmginfo:GetDamageForce()
+			local length = force:Length()
+			force:Normalize()
+
+			ply.serverside_ragdoll_vel = force * math.min(length, 500)
 		end
 	end)
 
