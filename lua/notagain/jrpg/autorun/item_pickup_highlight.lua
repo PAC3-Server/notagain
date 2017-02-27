@@ -432,6 +432,9 @@ if CLIENT then
 		cam.End3D()
 	end)
 
+	local emitter_viewmodel = ParticleEmitter(vector_origin)
+	emitter_viewmodel:SetNoDraw(true)
+
 	local suppress = false
 	hook.Add("PostDrawViewModel", "jrpg_items", function(ent, ply, wep)
 		if not wep then return end
@@ -446,16 +449,20 @@ if CLIENT then
 			suppress = true
 			render.ModelMaterialOverride(shiny)
 			render.MaterialOverride(shiny)
+
+			local old = emitter2d
+			emitter2d = emitter_viewmodel
+
 			draw_glow(ent, RealTime(), vector_origin, 0, 10, 1, color, true)
 			ent:DrawModel()
 
-			emitter2d:SetNoDraw(true)
 			cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), posang.Pos, posang.Ang))
 			cam.IgnoreZ(true)
-			emitter2d:Draw()
+			emitter_viewmodel:Draw()
 			cam.IgnoreZ(false)
 			cam.End3D()
-			emitter2d:SetNoDraw(false)
+
+			emitter2d = old
 
 			render.MaterialOverride()
 			render.ModelMaterialOverride()
