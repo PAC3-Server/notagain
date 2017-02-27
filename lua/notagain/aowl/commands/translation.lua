@@ -110,24 +110,28 @@ if SERVER then
 		["yoruba"] = "yo",
 		["zulu"] = "zu",
 	}
+	
+	function ConvertLang( str )
+		str = string.lower( str )
+		
+		if str == "auto" then
+			return ""
+		end
+	
+		for k, v in pairs( LangCode ) do
+			if v == str then
+				return str
+			end
+		
+			if string.StartWith( k, str ) then
+				return v
+			end
+		end
+	end
 
 	function translate( sentence, from, to, callback )
-		from = string.lower( from )
-		to = string.lower( to )
-
-		for k, v in pairs( LangCode ) do
-			if string.StartWith( k, from ) then
-				from = v
-			end
-			
-			if string.StartWith( k, to ) then
-				to = v
-			end
-		end
-		
-		if from == "auto" then
-			from = ""
-		end
+		from = ConvertLang( from )
+		to = ConvertLang( to )
 
 		http.Post(API_TRANS_URL,
 		{
@@ -160,6 +164,8 @@ if SERVER then
 				net.Start( "s2c_translate" )
 				net.WriteString( data ) 
 				net.Broadcast()
+			else
+				aowl.Message( player, "Translation error", "error" )
 			end
 		end )
 	end)
