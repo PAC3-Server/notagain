@@ -11,7 +11,10 @@ hook.Add("DoPlayerDeath", "drop_player_weapon_on_death", function(ply)
 	local wep = ply:GetActiveWeapon()
 	if wep:IsValid() then
 		ply:DropWeapon(wep)
-		remove_me[ply] = wep
+
+		if not wep.wepstats then
+			remove_me[ply] = wep
+		end
 
 		local atch = ply:GetAttachment(ply:LookupAttachment("anim_attachment_RH"))
 		if atch then
