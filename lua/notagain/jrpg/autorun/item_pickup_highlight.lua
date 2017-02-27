@@ -545,7 +545,6 @@ if SERVER then
 			local active = ply:GetActiveWeapon()
 			local old_class = active:IsValid() and active:GetClass()
 
-				print(wep.wepstats, active.wepstats )
 			if wep.wepstats or (old_class == wep:GetClass() and active.wepstats) then
 				local pos = wep:GetPos()
 				local ang = wep:GetAngles()
