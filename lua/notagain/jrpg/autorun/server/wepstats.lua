@@ -581,7 +581,7 @@ do -- effects
 			META.Adjectives = {"vampiric", "leeching"}
 
 			function META:OnDamage(attacker, victim, dmginfo)
-				attacker:SetHealth(math.min(attacker:Health() + (dmginfo:GetDamage() * 0.25 / self:GetStatusMultiplier()), attacker:GetMaxHealth()))
+				attacker:SetHealth(math.min(attacker:Health() + math.max(dmginfo:GetDamage() * 0.25 / self:GetStatusMultiplier(), 1), attacker:GetMaxHealth()))
 			end
 
 			wepstats.Register(META)
