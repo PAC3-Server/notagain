@@ -196,10 +196,14 @@ do
 					end
 
 					self.old_hooks_world = {}
-					for k,v in pairs(hook.GetTable().SetupWorldFog) do self.old_hooks_world[k] = v hook.Remove("SetupWorldFog", k,v) end
+					if hook.GetTable().SetupWorldFog then
+						for k,v in pairs(hook.GetTable().SetupWorldFog) do self.old_hooks_world[k] = v hook.Remove("SetupWorldFog", k,v) end
+					end
 
 					self.old_hooks_skybox = {}
-					for k,v in pairs(hook.GetTable().SetupSkyboxFog) do self.old_hooks_skybox[k] = v hook.Remove("SetupSkyboxFog", k,v) end
+					if hook.GetTable().SetupSkyboxFog then
+						for k,v in pairs(hook.GetTable().SetupSkyboxFog) do self.old_hooks_skybox[k] = v hook.Remove("SetupSkyboxFog", k,v) end
+					end
 
 					hook.Add("SetupWorldFog", "jdmg_decay", setup_fog)
 					hook.Add("SetupSkyboxFog", "jdmg_decay", setup_fog)
