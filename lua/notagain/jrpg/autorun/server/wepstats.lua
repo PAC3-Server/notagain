@@ -62,7 +62,12 @@ function wepstats.AddToWeapon(wep, ...)
 	wepstats.AddStatus(wep, "base", ...)
 	wep:SetNWString("wepstats_name", wepstats.GetName(wep))
 	wep:SetNWVector("wepstats_color", wepstats.GetStatus(wep, "base"):GetRarityInfo().color)
+	duplicator.StoreEntityModifier(wep, "wepstats", wepstats.GetTable(wep))
 end
+
+duplicator.RegisterEntityModifier("wepstats", function(ply, ent, data)
+	wepstats.SetTable(ent, data)
+end)
 
 function wepstats.GetName(wep)
 	if not wep.wepstats then return wep:GetClass() end
@@ -693,14 +698,28 @@ do -- effects
 	end
 end
 
-local blacklist = {
-	weapon_physgun = true,
-}
+hook.Add("OnEntityCreated", "wepstats_bugbait", function(ent)
+	if ent:GetClass() == "npc_grenade_bugbait" and ent:GetOwner():IsValid() then
+		local ply = ent:GetOwner()
+		local wep = ply:GetActiveWeapon()
+		if wep:IsValid() and wep.wepstats then
+			ent:CallOnRemove("wepstats", function()
+				for k,v in pairs(ents.FindInSphere(ent:GetPos(), 100)) do
+					v:TakeDamage(10, ply, ent)
+				end
+			end)
+		end
+	end
+end)
 
 if me then
+	local blacklist = {
+		weapon_physgun = true,
+	}
+
 	hook.Add("OnEntityCreated", "", function(wep)
 		timer.Simple(0.1, function()
-			if wep:IsValid() and wep:IsWeapon() and wep:GetClass():StartWith("weapon_") and not blacklist[wep:GetClass()] then
+			if not wep.wepstats and wep:IsValid() and wep:IsWeapon() and wep:GetClass():StartWith("weapon_") and not blacklist[wep:GetClass()] then
 				wepstats.AddToWeapon(wep)
 			end
 		end)
