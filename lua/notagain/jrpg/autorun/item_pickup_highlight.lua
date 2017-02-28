@@ -139,8 +139,8 @@ if CLIENT then
 			local pos = ent:WorldSpaceCenter() + Vector(0,0,math.min(ent:BoundingRadius()*1.5, 20))
 			local dist = pos:Distance(EyePos())
 			pos = pos:ToScreen()
-			if pos.visible and dist < 100 then
-				surface.SetAlphaMultiplier((-(dist/100) + 1) ^ 0.25)
+			if pos.visible and dist < 200 then
+				surface.SetAlphaMultiplier((-(dist/200) + 1) ^ 0.25)
 
 				local color = get_color(ent)
 				color = color * 1.5
@@ -154,6 +154,10 @@ if CLIENT then
 					name = name:Replace("CLASSNAME", language.GetPhrase(ent.PrintName))
 				elseif ent.PrintName then
 					name = name:Replace("CLASSNAME", ent.PrintName)
+				else
+					class_name = class_name:Replace("weapon_", "")
+					class_name = class_name:sub(0, 1):upper() .. class_name:sub(2)
+					name = name:Replace("CLASSNAME", class_name)
 				end
 
 				local w,h = prettytext.GetTextSize(name, "gabriola", 40, 800, 3)
@@ -268,7 +272,7 @@ if CLIENT then
 				p:SetGravity(Vector(0,0,3))
 				p:SetAirResistance(30)
 
-				ent.jrpg_items_next_emit2 = time + 0.1
+				ent.jrpg_items_next_emit2 = time + 0.1 + (vm and 0.4 or 0)
 
 				local intensity = color:Length()/100
 
@@ -306,7 +310,7 @@ if CLIENT then
 				p:SetLifeTime(1)
 
 				p:SetStartSize(1)
-				p:SetEndSize(15)
+				p:SetEndSize(15 * (vm and 0.4 or 1))
 
 				p:SetStartAlpha(255*vis)
 				p:SetEndAlpha(0)
@@ -318,7 +322,7 @@ if CLIENT then
 				p:SetRoll(math_random()*360)
 
 				p:SetAirResistance(30)
-				ent.jrpg_items_next_emit = time + 0.2
+				ent.jrpg_items_next_emit = time + 0.2 + (vm and 0.4 or 0)
 			end
 		end
 
@@ -384,12 +388,15 @@ if CLIENT then
 		end
 	end
 
+	local emitter_viewmodel = ParticleEmitter(vector_origin)
+	emitter_viewmodel:SetNoDraw(true)
+
 	hook.Add("RenderScreenspaceEffects", "jrpg_items", function()
-		cam.Start3D()
 		render.UpdateScreenEffectTexture()
 		render.ModelMaterialOverride(shiny)
 		local time = RealTime()
 
+		cam.Start3D()
 		for _, ent in ipairs(entities) do
 			if not ent:IsValid() then
 				remove_ent(ent)
@@ -432,42 +439,56 @@ if CLIENT then
 		cam.End3D()
 	end)
 
-	local emitter_viewmodel = ParticleEmitter(vector_origin)
-	emitter_viewmodel:SetNoDraw(true)
 
 	local suppress = false
-	hook.Add("PostDrawViewModel", "jrpg_items", function(ent, ply, wep)
+	hook.Remove("PostDrawViewModel", "jrpg_items")
+	hook.Add("PreDrawPlayerHands", "jrpg_items", function(hands, ent, ply, wep)
+		render.ModelMaterialOverride()
+	end)
+	hook.Add("PreDrawViewModel", "jrpg_items", function(ent, ply, wep)
 		if not wep then return end
 		if suppress then return end
-		local posang = ent:GetAttachment(1)
 
-		if posang then
-			local color = get_color(wep)
+		suppress = true
+		ent:DrawModel()
+		suppress = false
+		local time = RealTime()
 
-			shiny:SetVector("$color2", Vector(color.r/255,color.g/255,color.b/255))
+		for i, info in ipairs(ent:GetAttachments()) do
+			local posang = ent:GetAttachment(info.id)
 
-			suppress = true
-			render.ModelMaterialOverride(shiny)
-			render.MaterialOverride(shiny)
+			if posang then
+				local color = get_color(wep)
+				shiny:SetVector("$color2", Vector(color.r/255,color.g/255,color.b/255) * 0.5)
 
-			local old = emitter2d
-			emitter2d = emitter_viewmodel
+				shiny:SetFloat("$RimlightBoost", 1)
 
-			draw_glow(ent, RealTime(), vector_origin, 0, 10, 1, color, true)
-			ent:DrawModel()
 
-			cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), posang.Pos, posang.Ang))
-			cam.IgnoreZ(true)
-			emitter_viewmodel:Draw()
-			cam.IgnoreZ(false)
-			cam.End3D()
+				suppress = true
+				render.ModelMaterialOverride(shiny)
 
-			emitter2d = old
+				local old = emitter2d
+				emitter2d = emitter_viewmodel
 
-			render.MaterialOverride()
-			render.ModelMaterialOverride()
-			suppress = false
+				draw_glow(ent, time, vector_origin, 0, 10, 0.2, color, true)
+
+				ent.item_pickup_vm_rand_ang = ent.item_pickup_vm_rand_ang or {}
+				ent.item_pickup_vm_rand_ang[i] = ent.item_pickup_vm_rand_ang[i] or VectorRand():Angle()
+
+				cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), posang.Pos, posang.Ang + ent.item_pickup_vm_rand_ang[i]))
+				emitter_viewmodel:Draw()
+				cam.End3D()
+
+				emitter2d = old
+
+				render.ModelMaterialOverride()
+				suppress = false
+			end
 		end
+
+		shiny:SetFloat("$RimlightBoost", 10)
+
+		return true
 	end)
 
 	if LocalPlayer():IsValid() then
