@@ -65,6 +65,23 @@ if CLIENT then
 		["$VertexAlpha"] = 1,
 	})
 
+	local render_ModelMaterialOverride = render.ModelMaterialOverride
+	local render_SetColorModulation = render.SetColorModulation	local def = Vector(67,67,67)
+
+	local function get_color(ent)
+		local color = ent:GetNWVector("wepstats_color", def)
+
+		if color.r < 0 then
+			color = color * 1
+			local c = HSVToColor((os.clock()*200)%360, 1, 1)
+			color.r = c.r
+			color.g = c.g
+			color.b = c.b
+		end
+
+		return color
+	end
+
 	local emitter2d = ParticleEmitter(vector_origin)
 
 	local entities = {}
@@ -73,6 +90,20 @@ if CLIENT then
 	local function add_ent(ent)
 		if not done[ent] then
 			table.insert(entities, ent)
+
+			function ent:RenderOverride(...)
+				local color = get_color(self)
+				render_ModelMaterialOverride()
+				render_SetColorModulation(1,1,1)
+				self:DrawModel()
+				render_ModelMaterialOverride(shiny)
+--				render.SetBlend(0.5)
+				render_SetColorModulation(color.r/700, color.g/700, color.b/700)
+				self:DrawModel()
+	--			render.SetBlend(1)
+				render_ModelMaterialOverride()
+			end
+
 			done[ent] = true
 		end
 	end
@@ -100,21 +131,6 @@ if CLIENT then
 
 	local gradient = Material("gui/center_gradient")
 
-	local def = Vector(67,67,67)
-
-	local function get_color(ent)
-		local color = ent:GetNWVector("wepstats_color", def)
-
-		if color.r < 0 then
-			color = color * 1
-			local c = HSVToColor((os.clock()*200)%360, 1, 1)
-			color.r = c.r
-			color.g = c.g
-			color.b = c.b
-		end
-
-		return color
-	end
 
 	local temp_color = Color(255, 255, 255, 255)
 
@@ -195,7 +211,6 @@ if CLIENT then
 	local render_DrawSprite = render.DrawSprite
 	local render_DrawSprite = render.DrawSprite
 	local cam_IgnoreZ = cam.IgnoreZ
-	local render_SetColorModulation = render.SetColorModulation
 
 	local render_StartBeam = render.StartBeam
 	local render_EndBeam = render.EndBeam
@@ -225,7 +240,6 @@ if CLIENT then
 
 		local time = time + ent.jrpg_items_random.rotation
 
-		render_SetMaterial(warp_mat)
 		if not vm then
 			cam_IgnoreZ(true)
 		end
@@ -237,11 +251,11 @@ if CLIENT then
 			pos = vector_origin
 		end
 
+		render_SetMaterial(warp_mat)
 		render_DrawSprite(pos, 50, 50, TempColor(color.r*2, color.g*2, color.b*2, vis*20), ent.jrpg_items_random.rotation)
 
-		render_SetMaterial(glare2_mat)
-
 		local glow = math_sin(time*5)*0.5+0.5
+		render_SetMaterial(glare2_mat)
 		render_DrawSprite(pos, r*10, r*10, TempColor(color.r, color.g, color.b, vis*170*glow))
 		render_DrawSprite(pos, r*20, r*20, TempColor(color.r, color.g, color.b, vis*170*(glow+0.25)))
 		render_DrawSprite(pos, r*30, r*30, TempColor(color.r, color.g, color.b, vis*120*(glow+0.5)))
@@ -250,12 +264,7 @@ if CLIENT then
 			cam_IgnoreZ(false)
 		end
 
-		render.ModelMaterialOverride(shiny)
-		render_SetColorModulation(color.r/200, color.g/200, color.b/200)
-		ent:DrawModel()
-
 		render_SetMaterial(glare_mat)
-
 		render_DrawSprite(pos, r*180, r*50, TempColor(color.r, color.g, color.b, vis*20))
 
 		if distance < 1500 then
@@ -458,9 +467,6 @@ if CLIENT then
 			if vis == 0 and util_PixelVisible(pos, radius*5, ent.jrpg_items_pixvis2) == 0 then continue end
 
 			local distance = pos:Distance(EyePos())
-			render.ModelMaterialOverride()
-			render_SetColorModulation(1,1,1)
-			ent:DrawModel()
 			draw_glow(ent, time, distance, wm and 5 or radius, vis * (wm and 0.25 or 1), color, nil, wm)
 		end
 
@@ -471,7 +477,6 @@ if CLIENT then
 
 
 	local suppress = false
-	hook.Remove("PostDrawViewModel", "jrpg_items")
 	hook.Add("PreDrawPlayerHands", "jrpg_items", function(hands, ent, ply, wep)
 		render.ModelMaterialOverride()
 	end)
@@ -492,9 +497,12 @@ if CLIENT then
 		local old = emitter2d
 		emitter2d = emitter_viewmodel
 
+		render.ModelMaterialOverride(shiny)
 		suppress = true
-		draw_glow(ent, time, 0, 10, 0.2, color, true)
+		ent:DrawModel()
 		suppress = false
+
+		draw_glow(ent, time, 0, 10, 0.2, color, true)
 
 		for i, atch in ipairs(ent:GetAttachments()) do
 			local atch = ent:GetAttachment(atch.id)
@@ -514,6 +522,7 @@ if CLIENT then
 		render.ModelMaterialOverride()
 		suppress = false
 		shiny:SetFloat("$RimlightBoost", 10)
+		shiny:SetVector("$color2", Vector(1,1,1))
 
 		return true
 	end)
