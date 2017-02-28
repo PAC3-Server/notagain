@@ -1,6 +1,10 @@
 resource.AddWorkshop("546392647") -- Media Player
-resource.AddWorkshop("131759821") -- VJ NPC Base
-resource.AddWorkshop("111626188") -- Dark Messiah NPCS
+
+-- wos custom animations
+resource.AddWorkshop("757604550")
+resource.AddWorkshop("848953359")
+resource.AddWorkshop("873302121")
+
 
 do
 	local map_content = {
