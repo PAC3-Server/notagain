@@ -692,8 +692,15 @@ if SERVER then
 					if diff > 0 then
 						hitmarkers.ShowDamage(ent, diff)
 						jdmg.DamageEffect(ent, "heal")
+					elseif diff < 0 then
+						hitmarkers.ShowDamage(ent, diff)
 					end
 					ent.hm_last_health = ent:Health()
+				end
+
+				if ent.hm_last_max_health ~= ent:GetMaxHealth() then
+					hitmarkers.ShowDamage(ent, 0)
+					ent.hm_last_max_health = ent:GetMaxHealth()
 				end
 			end
 		end
