@@ -1,4 +1,4 @@
-local dmgvar = CreateClientConVar("cl_godmode", "1", true, true)
+local dmgvar = CreateClientConVar("cl_godmode", "1", true, true, "0 = off, 1 = on, 2 = world damage, 3 = friend damage + world damage")
 
 if CLIENT then
 	local victim = NULL
@@ -81,6 +81,9 @@ if SERVER then
 			if victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
 				victim:SetNWBool("cl_godmode", false)
 			end
+			local mode = victim:GetInfoNum("cl_godmode", 1)
+
+			victim:SetNWBool("cl_godmode", mode == 0)
 		end
 	end)
 
@@ -100,6 +103,10 @@ if SERVER then
 
 		if not victim:IsPlayer() then return end
 
+		if (victim:GetInfoNum("cl_godmode", 1) == 2 or victim:GetInfoNum("cl_godmode", 1) == 3) and (dmginfo:GetAttacker() == victim or dmginfo:GetAttacker():IsWorld()) then
+			return
+		end
+
 		local attacker = dmginfo:GetAttacker()
 
 		if (not attacker:IsNPC() or not attacker:IsPlayer()) and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
@@ -114,7 +121,7 @@ if SERVER then
 		end
 
 		if attacker:IsPlayer() then
-			if attacker.CanAlter and attacker:CanAlter(victim) and victim:GetInfoNum("cl_godmode", 1) ~= 2 then
+			if attacker.CanAlter and attacker:CanAlter(victim) and victim:GetInfoNum("cl_godmode", 1) == 3 then
 				return
 			end
 
