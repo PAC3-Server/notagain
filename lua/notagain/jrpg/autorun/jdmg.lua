@@ -637,6 +637,10 @@ function jdmg.BuildEnums()
 	end
 end
 
+function jdmg.GetDamageType(dmginfo)
+	return jdmg.enums_lookup[dmginfo:GetDamageCustom()]
+end
+
 jdmg.BuildEnums()
 
 do -- status
@@ -822,7 +826,7 @@ if SERVER then
 		local duration = math.Clamp(fraction^0.25, 0.5, 2)
 		local strength = math.max((fraction^0.5) * 2, 0.5)
 
-		local override = jdmg.enums_lookup[dmginfo:GetDamageCustom()]
+		local override = jdmg.GetDamageType(dmginfo)
 
 		if override then
 			jdmg.DamageEffect(ent, override, duration, strength)
