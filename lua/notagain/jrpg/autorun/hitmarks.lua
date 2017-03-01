@@ -32,19 +32,20 @@ if CLIENT then
 		["$VertexColor"] = 1,
 	})
 
-	local function draw_health_bar(ent, x,y, w,h, health, last_health, fade, border_size, skew)
+	local function draw_health_bar(ent, x,y, w,h, health, last_health, fade, border_size, skew, r,g,b, is_health)
 		surface.SetDrawColor(200, 200, 200, 50*fade)
 		draw.NoTexture()
 		draw_rect(x,y,w,h, skew)
 
 		surface.SetMaterial(gradient)
 
-		surface.SetDrawColor(200, 50, 50, 255*fade)
+		surface.SetDrawColor(is_health and 200 or 50, 50, 50, 255*fade)
+
 		for _ = 1, 2 do
 			draw_rect(x,y,w*last_health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
 
-		surface.SetDrawColor(0, 200, 100, 255*fade)
+		surface.SetDrawColor(r,g,b, 255*fade)
 		for _ = 1, 2 do
 			draw_rect(x,y,w*health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
@@ -270,8 +271,6 @@ if CLIENT then
 				fraction = fraction * ((-(dist / 1000)+1) ^ 2)
 
 				if pos.visible and dist < 1000 then
-					surface.DrawRect(pos.x, pos.y, 1,1)
-
 					local cur = ent.hm_cur_health or ent:Health()
 					local max = ent.hm_max_health or ent:GetMaxHealth()
 					local last = ent.hm_last_health or max
@@ -312,14 +311,45 @@ if CLIENT then
 						skew = 30
 						border_size = 10
 						boss_bar_y = boss_bar_y + height + 20
+					else
+						width = math.Clamp(width + (max - 100), 0, 500)
 					end
 
 					local width2 = width/2
 					local text_x_offset = 15
+					local y = pos.y-height/2
+					local x = pos.x - width2
 
-					draw_health_bar(ent, pos.x - width2, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, skew)
+					draw_health_bar(ent, x, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, -12, 0, 200, 100, true)
 
-					prettytext.Draw(name, pos.x - width2 - text_x_offset, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
+					y = y + math.ceil(height + border_size / 2)
+
+					local height = height / 2
+					local border_size = border_size / 2
+
+					do
+						local cur = ent:GetNWFloat("jattributes_mana", -1)
+						if cur ~= -1 then
+							local max = ent:GetNWFloat("jattributes_max_mana", 100)
+							local width = math.Clamp(max, 0, 500)
+
+							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12, 0, 0, 255)
+							y = y + math.floor(height + border_size / 2)
+						end
+					end
+
+
+					do
+						local cur = ent:GetNWFloat("jattributes_stamina", -1)
+						if cur ~= -1 then
+							local max = ent:GetNWFloat("jattributes_max_stamina", 100)
+							local width = math.Clamp(max, 0, 500)
+
+							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12, 255, 255, 0)
+						end
+					end
+
+					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
 				end
 
 				if fraction <= 0 then
@@ -637,9 +667,12 @@ if SERVER then
 			net.WriteEntity(ent)
 			net.WriteFloat(dmg)
 			net.WriteVector(pos)
-			net.WriteFloat(ent.ACF and ent.ACF.Health or ent.ee_cur_hp or ent:Health())
-			net.WriteFloat(ent.ACF and ent.ACF.MaxHealth or ent.ee_max_hp or ent:GetMaxHealth())
+			net.WriteFloat(ent:Health())
+			net.WriteFloat(ent:GetMaxHealth())
 		net.Send(filter)
+
+		-- to prevent the timer from showing damage as well
+		ent.hm_last_health = ent:Health()
 	end
 
 	util.AddNetworkString("hitmark")
@@ -661,15 +694,10 @@ if SERVER then
 			pos = ent:GetPos()
 		end
 
-		if ent.ee_cur_hp then
-			last_health = ent.ee_cur_hp
-		end
 
 		timer.Create(tostring(ent).."_hitmarker", 0, 1, function()
 			if ent:IsValid() then
-				if ent.ee_cur_hp then
-					health = -(last_health - ent.ee_cur_hp)
-				elseif last_health == ent:Health() then
+				if last_health == ent:Health() then
 					if ent:IsNPC() or ent:IsPlayer() then
 						health = 0
 					else
