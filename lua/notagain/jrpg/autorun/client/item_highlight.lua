@@ -242,7 +242,7 @@ local function draw_glow(ent, time, distance, radius, vis, color, vm, wm)
 	end
 
 	local r = radius/8
-	local pos = ent:GetBonePosition(1) or ent:GetBonePosition(0)
+	local pos = ent:GetBonePosition(1) or ent:GetBonePosition(0) or ent:WorldSpaceCenter()
 
 	if vm then
 		pos = vector_origin
