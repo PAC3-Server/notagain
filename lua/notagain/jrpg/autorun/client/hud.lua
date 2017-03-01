@@ -1,5 +1,3 @@
-if LocalPlayer() ~= me and LocalPlayer() ~= immo then return end
-
 local draw_rect = requirex("draw_skewed_rect")
 
 local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
