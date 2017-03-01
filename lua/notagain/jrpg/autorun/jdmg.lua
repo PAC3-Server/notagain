@@ -732,10 +732,17 @@ if CLIENT then
 			local f = (data.time - time) / data.duration
 			f = f ^ data.pow
 
-			if f <= 0 or not data.ent:IsValid()  then
+			if f <= 0 or not data.ent:IsValid() then
 				table.remove(active, i)
 			else
-				data.type.draw(data.ent, f, data.strength, time + data.time_offset)
+				if data.ent:IsPlayer() and not data.ent:Alive() then
+					local rag = data.ent:GetRagdollEntity()
+					if rag then
+						data.type.draw(data.ent, f, data.strength, time + data.time_offset)
+					end
+				else
+					data.type.draw(data.ent, f, data.strength, time + data.time_offset)
+				end
 			end
 		end
 
