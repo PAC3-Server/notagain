@@ -268,7 +268,9 @@ local function draw_glow(ent, time, distance, radius, vis, color, vm, wm)
 
 		if not ent.jrpg_items_next_emit2 or ent.jrpg_items_next_emit2 < time then
 			local emitted = 1
-			for _, atch in ipairs(ent:GetAttachments()) do
+			local attachments = ent:GetAttachments()
+			if not attachments then return end
+			for _, atch in ipairs(attachments) do
 				local pos = ent:GetAttachment(atch.id).Pos
 
 				if vm then
@@ -329,8 +331,10 @@ local function draw_glow(ent, time, distance, radius, vis, color, vm, wm)
 		end
 
 		if not ent.jrpg_items_next_emit or ent.jrpg_items_next_emit < time then
+			local attachments = ent:GetAttachments()
+			if not attachments then return end
 			local emitted = 1
-			for _, atch in ipairs(ent:GetAttachments()) do
+			for _, atch in ipairs(attachments) do
 				local pos = ent:GetAttachment(atch.id).Pos
 				if vm then
 					pos = vector_origin
