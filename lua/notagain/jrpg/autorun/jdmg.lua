@@ -1,5 +1,6 @@
 jdmg = jdmg or {}
 
+
 local emitter
 local create_material
 local create_overlay_material
@@ -83,6 +84,100 @@ if CLIENT then
 
 			BumpMap = "dev/bump_normal",
 		}, override))
+	end
+
+	do
+		local temp_color = Color(255, 255, 255)
+
+		function jdmg.DrawTrail(self, len, spc, pos, mat, start_color, end_color, start_size, end_size, stretch)
+			self.trail_points = self.trail_points or {}
+			self.trail_last_add = self.trail_last_add or 0
+
+			local time = RealTime()
+
+			if not self.trail_points[1] or self.trail_points[#self.trail_points].pos:Distance(pos) > spc then
+				table.insert(self.trail_points, {pos = pos, life_time = time + len})
+			end
+
+			local count = #self.trail_points
+
+			render.SetMaterial(mat)
+
+			render.StartBeam(count)
+				for i = #self.trail_points, 1, -1 do
+					local data = self.trail_points[i]
+
+					local f = (data.life_time - time)/len
+					f = -f+1
+
+					local width = f * start_size
+
+					local coord = (1 / count) * (i - 1)
+
+					temp_color.r = Lerp(coord, end_color.r, start_color.r)
+					temp_color.g = Lerp(coord, end_color.g, start_color.g)
+					temp_color.b = Lerp(coord, end_color.b, start_color.b)
+					temp_color.a = Lerp(coord, end_color.a, start_color.a)
+
+					render.AddBeam(data.pos, width, (stretch and (coord * stretch)) or width, temp_color)
+
+					if f >= 1 then
+						table.remove(self.trail_points, i)
+					end
+				end
+			render.EndBeam()
+		end
+	end
+
+	do
+		jdmg.materials = jdmg.materials or {}
+
+		jdmg.materials.refract = create_material("particle/warp5_warp")
+		jdmg.materials.refract2 = create_material("particle/warp1_warp")
+		jdmg.materials.splash_disc = create_material("effects/splashwake3")
+		jdmg.materials.beam = create_material("particle/warp3_warp_NoZ")
+
+		jdmg.materials.trail = create_material({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "particle/smokesprites0331",
+			Aditive = 1,
+			GlowAlpha = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+			Translucent = 1,
+		})
+
+		jdmg.materials.hypno = create_material({
+			Shader = "UnlitGeneric",
+			BaseTexture = "effects/flashlight/circles",
+			Aditive = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+			Translucent = 1,
+		})
+
+		jdmg.materials.ring = create_material({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "particle/particle_Ring_Wave_2",
+			Aditive = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		jdmg.materials.glow = create_material({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "sprites/light_glow02",
+			Additive = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+			Translucent = 1,
+		})
+
+
+		jdmg.materials.glow2 = Material("sprites/light_ignorez")
 	end
 end
 
@@ -241,6 +336,19 @@ do
 
 			ent:DrawModel()
 		end
+
+		function jdmg.types.generic.draw_projectile(ent, dmg)
+			local color = Color(255, 255, 255)
+			local size = dmg / 100
+
+			render.SetMaterial(jdmg.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jdmg.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
+
+			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+		end
 	end
 end
 
@@ -326,6 +434,19 @@ do
 			render.SetBlend(f)
 
 			ent:DrawModel()
+		end
+
+		function jdmg.types.holy.draw_projectile(ent, dmg)
+			local color = Color(255, 200, 150)
+			local size = dmg / 100
+
+			render.SetMaterial(jdmg.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jdmg.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
+
+			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 		end
 	end
 end
@@ -427,7 +548,7 @@ do
 				p:SetStartSize(math.Rand(5,20))
 				p:SetEndSize(math.Rand(5,20))
 				p:SetStartAlpha(255*f)
-				p:SetEndLength(math.Rand(p:GetEndSize(),20))
+	 			p:SetEndLength(math.Rand(p:GetEndSize(),20))
 				p:SetEndAlpha(0)
 				p:SetColor(math.Rand(230,255),math.Rand(230,255),math.Rand(230,255))
 				p:SetGravity(physenv.GetGravity()*-0.25)
@@ -465,6 +586,32 @@ do
 			mat:SetMatrix("$BaseTextureTransform", m)
 
 			ent:DrawModel()
+		end
+
+		function jdmg.types.fire.draw_projectile(ent, dmg)
+			local color = Color(255, 130, 0)
+			local size = dmg / 100
+
+			render.SetMaterial(jdmg.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jdmg.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
+
+			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+
+			local p = emitter:Add(table.Random(flames), ent:GetPos())
+			p:SetStartSize(math.Rand(5,10))
+			p:SetEndSize(math.Rand(5,10))
+			p:SetStartAlpha(255)
+			p:SetEndLength(math.Rand(p:GetEndSize(),20))
+			p:SetEndAlpha(0)
+			p:SetColor(math.Rand(230,255),math.Rand(230,255),math.Rand(230,255))
+			p:SetGravity(physenv.GetGravity()*-0.25)
+			p:SetRoll(math.random()*360)
+			p:SetAirResistance(5)
+			p:SetLifeTime(0.25)
+			p:SetDieTime(math.Rand(0.25,0.75))
 		end
 	end
 end
@@ -524,6 +671,22 @@ do
 
 			ent:DrawModel()
 		end
+
+		function jdmg.types.water.draw_projectile(ent, dmg)
+			local p = emitter:Add(table.Random(water), ent:GetPos())
+			p:SetStartSize(20)
+			p:SetEndSize(20)
+			p:SetStartAlpha(50)
+			p:SetEndAlpha(0)
+			p:SetVelocity(VectorRand()*10)
+			p:SetGravity(physenv.GetGravity()*0.025)
+			p:SetColor(100, 200, 255)
+			--p:SetLighting(true)
+			p:SetRoll(math.random())
+			p:SetRollDelta(math.random()*2-1)
+			p:SetLifeTime(1)
+			p:SetDieTime(math.Rand(0.75,1.5)*2)
+		end
 	end
 end
 
@@ -563,6 +726,90 @@ do
 			mat:SetMatrix("$BaseTextureTransform", m)
 
 			ent:DrawModel()
+		end
+
+		util.PrecacheModel("models/pac/default.mdl")
+
+		local rocks = {
+			"models/props_wasteland/rockcliff01b.mdl",
+			"models/props_wasteland/rockcliff01c.mdl",
+			"models/props_wasteland/rockcliff01e.mdl",
+			"models/props_wasteland/rockcliff01f.mdl",
+			"models/props_wasteland/rockcliff01g.mdl",
+			"models/props_wasteland/rockcliff01j.mdl",
+			"models/props_wasteland/rockcliff01k.mdl",
+		}
+
+		for i, v in ipairs(rocks) do
+			util.PrecacheModel(v)
+		end
+
+		local ice_mat = create_material({
+			Name = "magic_ice",
+			Shader = "VertexLitGeneric",
+			CloakPassEnabled = 1,
+			RefractAmount = 1,
+		})
+		local color = Color(100, 200, 255)
+		jdmg.types.ice.draw_projectile = function(ent, dmg)
+			local size = dmg / 100
+
+			render.SetMaterial(jdmg.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jdmg.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 128*size, 128*size, Color(color.r, color.g, color.b, 150))
+
+			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+
+
+			if not ent.next_emit or ent.next_emit < RealTime() then
+				local life_time = 2
+
+				local ice = ents.CreateClientProp()
+				SafeRemoveEntityDelayed(ice, life_time)
+
+				ice:SetModel(table.Random(rocks))
+
+				ice:SetPos(ent:GetPos())
+				ice:SetAngles(VectorRand():Angle())
+				ice:SetModelScale(math.Rand(0.1, 0.2)*0.5)
+
+				ice:SetRenderMode(RENDERMODE_TRANSADD)
+
+				ice.life_time = RealTime() + life_time
+				ice:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+				ice:PhysicsInitSphere(5)
+				local phys = ice:GetPhysicsObject()
+				phys:Wake()
+				phys:EnableGravity(false)
+				phys:AddVelocity(VectorRand()*20)
+				phys:AddAngleVelocity(VectorRand()*20)
+
+				ice.RenderOverride = function()
+
+					local f = (ice.life_time - RealTime()) / life_time
+					local f2 = math.sin(f*math.pi) ^ 0.5
+
+					local c = Vector(color.r/255, color.g/255, color.b/255)*5*(f2^0.5)
+					ice_mat:SetVector("$CloakColorTint", c)
+					ice_mat:SetFloat("$CloakFactor", 0.5*(f2))
+					ice_mat:SetFloat("$RefractAmount", -f+1)
+
+					render.MaterialOverride(ice_mat)
+						render.SetBlend(f2)
+							render.SetColorModulation(c.x, c.y, c.z)
+								ice:DrawModel()
+							render.SetColorModulation(1,1,1)
+						render.SetBlend(1)
+					render.MaterialOverride()
+
+					local phys = ice:GetPhysicsObject()
+					phys:AddVelocity(phys:GetVelocity()*-FrameTime()*2 + Vector(0,0,-FrameTime()*(-f+1)*30))
+				end
+
+				ent.next_emit = RealTime() + 0.02
+			end
 		end
 	end
 end
@@ -614,6 +861,40 @@ do
 			mat:SetMatrix("$BaseTextureTransform", m)
 
 			ent:DrawModel()
+		end
+		local color = Color(0,255,0)
+		jdmg.types.poison.draw_projectile = function(ent, dmg)
+			local size = dmg / 100
+
+			render.SetMaterial(jdmg.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jdmg.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 128*size, 128*size, Color(color.r, color.g, color.b, 150))
+
+			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+
+			local p = emitter:Add("effects/splash1", ent:GetPos() + VectorRand() * 5)
+			p:SetStartSize(10)
+			p:SetEndSize(10)
+			p:SetStartAlpha(50)
+			p:SetEndAlpha(0)
+			p:SetVelocity(VectorRand()*20)
+			p:SetGravity(VectorRand()*10)
+			p:SetColor(0, 150, 0)
+			--p:SetLighting(true)
+			p:SetRoll(math.random()*360)
+			p:SetAirResistance(100)
+			p:SetLifeTime(1)
+			p:SetDieTime(math.Rand(0.75,1.5)*2)
+		end
+	end
+end
+
+if CLIENT then
+	for k,v in pairs(jdmg.types) do
+		if not v.draw_projectile then
+			v.draw_projectile = jdmg.types.generic.draw_projectile
 		end
 	end
 end
@@ -823,7 +1104,7 @@ if SERVER then
 		local max_health = math.max(ent:GetMaxHealth(), 1)
 		local fraction = dmg/max_health
 
-		local duration = math.Clamp(fraction^0.25, 0.5, 2)
+		local duration = math.Clamp(dmg/50, 0.5, 4)
 		local strength = math.max((fraction^0.5) * 2, 0.5)
 
 		local override = jdmg.GetDamageType(dmginfo)
