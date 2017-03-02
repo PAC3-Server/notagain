@@ -17,7 +17,16 @@ jattributes.types = {
 			jattributes.SetStamina(victim, math.max(jattributes.GetStamina(victim) - dmginfo:GetDamage(), 0))
 		end,
 		on_fire_bullet = function(attacker, data, stats)
+			if data.Damage == 0 then return end
 			jattributes.SetStamina(attacker, math.max(jattributes.GetStamina(attacker) - data.Damage, 0))
+			attacker:GetActiveWeapon().jattributes_stamina_drained = true
+		end,
+		on_give_damage = function(stats, dmginfo, attacker)
+			local wep = attacker:GetActiveWeapon()
+			if not wep.jattributes_stamina_drained then
+				jattributes.SetStamina(attacker, math.max(jattributes.GetStamina(attacker) - dmginfo:GetDamage(), 0))
+				wep.jattributes_stamina_drained = nil
+			end
 		end,
 		on_apply = function(ent, stats)
 			ent.jattributes_base_stamina = ent.jattributes_base_stamina or jattributes.GetMaxStamina(ent)
@@ -31,6 +40,7 @@ jattributes.types = {
 	},
 	mana = {
 		on_fire_bullet = function(attacker, data, stats)
+			if data.Damage == 0 then return end
 			local wep = attacker:GetActiveWeapon()
 			if wepstats.IsElemental(wep) then
 				jattributes.SetMana(attacker, math.max(jattributes.GetMana(attacker) - data.Damage, 0))

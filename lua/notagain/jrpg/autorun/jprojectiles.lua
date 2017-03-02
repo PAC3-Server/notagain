@@ -30,6 +30,7 @@ do
 			self.start_time = RealTime() + 1
 			self.damp = math.random()
 			self:SetModelScale(self.bullet_info.Damage)
+			SafeRemoveEntityDelayed(self, 30)
 		end
 
 		if CLIENT then
@@ -99,13 +100,14 @@ do
 		function ENT:DrawTranslucent()
 			if self.damaged or not self.pixvis then return end
 
+			--[[
 			if self:GetLocalPos():Distance(EyePos()) < 40 then
---				local posang = self:GetOwner():GetViewModel():GetAttachment(1)
-
-				--self:SetRenderOrigin(posang.Pos)
+				local posang = self:GetOwner():GetViewModel():GetAttachment(1)
+				self:SetRenderOrigin(posang.Pos)
 			else
-				--self:SetRenderOrigin()
+				self:SetRenderOrigin()
 			end
+			]]
 
 			for _, name in ipairs(self.damage_types) do
 				if jdmg.types[name] and jdmg.types[name].draw_projectile then
