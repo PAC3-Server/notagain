@@ -243,7 +243,7 @@ do
 		copy:SetDamageForce(dmginfo:GetDamageForce())
 		copy:SetDamagePosition(dmginfo:GetDamagePosition())
 		copy:SetDamageType(dmginfo:GetDamageType())
-		--copy:SetInflictor(dmginfo:GetInflictor())
+		copy:SetInflictor(dmginfo:GetInflictor())
 		--copy:SetMaxDamage(dmginfo:GetMaxDamage())
 		copy:SetReportedPosition(dmginfo:GetReportedPosition())
 
