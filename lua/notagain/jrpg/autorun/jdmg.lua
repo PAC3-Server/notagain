@@ -1167,6 +1167,7 @@ if SERVER then
 	end
 
 	hook.Add("EntityTakeDamage", "jdmg", function(ent, dmginfo)
+		if ent:GetNoDraw() then return end
 		local type = dmginfo:GetDamageType()
 		local dmg = dmginfo:GetDamage()
 		local max_health = math.max(ent:GetMaxHealth(), 1)
