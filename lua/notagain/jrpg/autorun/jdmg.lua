@@ -4,8 +4,16 @@ jdmg = jdmg or {}
 local emitter
 local create_material
 local create_overlay_material
+local draw_model
 
 if CLIENT then
+	draw_model = function(ent)
+		if ent.pacDrawModel then
+			ent:pacDrawModel(true)
+		else
+			ent:DrawModel()
+		end
+	end
 	--[[
 		models/weapons/v_smg1/noise
 		particle/particle_smokegrenade
@@ -134,6 +142,7 @@ if CLIENT then
 
 		jdmg.materials.refract = create_material("particle/warp5_warp")
 		jdmg.materials.refract2 = create_material("particle/warp1_warp")
+		jdmg.materials.refract3 = create_material("particle/warp2_warp")
 		jdmg.materials.splash_disc = create_material("effects/splashwake3")
 		jdmg.materials.beam = create_material("particle/warp3_warp_NoZ")
 
@@ -175,6 +184,9 @@ if CLIENT then
 			VertexAlpha = 1,
 			Translucent = 1,
 		})
+
+		jdmg.materials.dark = Material("effects/bluespark")
+		jdmg.materials.dark_trail = Material("sprites/scanner_bottom")
 
 
 		jdmg.materials.glow2 = Material("sprites/light_ignorez")
@@ -242,10 +254,10 @@ do
 	end
 
 	do
-		jdmg.statuses.decay = {}
-		jdmg.statuses.decay.negative = true
+		jdmg.statuses.frozen = {}
+		jdmg.statuses.frozen.negative = true
 		if CLIENT then
-			jdmg.statuses.decay.icon = create_material({
+			jdmg.statuses.frozen.icon = create_material({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/env_particles",
 				VertexAlpha = 1,
@@ -253,7 +265,7 @@ do
 				BaseTextureTransform = "center 0.45 .1 scale 0.9 0.9 rotate 0 translate 0 -0.05",
 			})
 
-			jdmg.statuses.decay.on_set = function(self, ent, b)
+			jdmg.statuses.frozen.on_set = function(self, ent, b)
 				if ent ~= LocalPlayer() then return end
 				local t = RealTime()
 				if b then
@@ -334,7 +346,7 @@ do
 			m:Translate(Vector(1,1,1)*t/5)
 			mat:SetMatrix("$BaseTextureTransform", m)
 
-			ent:DrawModel()
+			draw_model(ent)
 		end
 
 		function jdmg.types.generic.draw_projectile(ent, dmg)
@@ -373,7 +385,7 @@ do
 			m:Translate(Vector(1,1,1)*t/20)
 			mat:SetMatrix("$BaseTextureTransform", m)
 
-			ent:DrawModel()
+			draw_model(ent)
 		end
 	end
 end
@@ -383,6 +395,16 @@ do
 
 	if CLIENT then
 		local mat = create_overlay_material("effects/filmscan256", {Additive = 0, RimlightBoost = 1})
+		jdmg.types.dark.sounds = {
+			{
+				path = "ambient/atmosphere/tone_quiet.wav",
+				pitch = 150,
+			}
+		}
+		--jdmg.types.dark.sound_path = "music/stingers/hl1_stinger_song28.mp3"
+		--jdmg.types.dark.sound_path = "ambient/levels/citadel/extract_loop1.wav"
+		--jdmg.types.dark.sound_path = "ambient/machines/laundry_machine1_amb.wav"
+		--jdmg.types.dark.sound_path = "npc/antlion_guard/confused1.wav"
 
 		jdmg.types.dark.draw = function(ent, f, s, t)
 			if math.random() > 0.5 then
@@ -403,9 +425,24 @@ do
 			m:Translate(Vector(1,1,1)*t/5)
 			mat:SetMatrix("$BaseTextureTransform", m)
 
-			ent:DrawModel()
+			draw_model(ent)
 
 			ent:DisableMatrix("RenderMultiply")
+		end
+
+		function jdmg.types.dark.draw_projectile(ent, dmg)
+			local color = Color(255, 50, 200)
+			local size = dmg / 100
+
+			render.SetMaterial(jdmg.materials.dark)
+			for i = 1, 20 do
+				render.DrawQuadEasy(ent:GetPos(), -EyeVector(), 32*size * math.random(), 32*size * math.random(), Color(color.r, color.g, color.b, 255), (i/20)*360)
+			end
+
+			render.SetMaterial(jdmg.materials.refract3)
+			render.DrawSprite(ent:GetPos(), 64*size + math.sin(RealTime()*4)*10, 64*size + math.cos(RealTime()*4)*10, Color(255,255,255, 150 + math.sin(RealTime()*4)*50))
+
+			jdmg.DrawTrail(ent, 0.1, 0, ent:GetPos(), jdmg.materials.dark, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 30, 0, 2)
 		end
 	end
 end
@@ -423,6 +460,17 @@ do
 			"ambient/levels/coast/coastbird7.wav",
 		}
 
+		jdmg.types.holy.sounds = {
+			{
+				path = "music/hl2_song10.mp3",
+				pitch = 230,
+			},
+			{
+				path = "physics/cardboard/cardboard_box_scrape_smooth_loop1.wav",
+				pitch = 200,
+			}
+		}
+
 		jdmg.types.holy.draw = function(ent, f, s, t)
 			if math.random() > 0.95 then
 				ent:EmitSound(table.Random(sounds), 75, math.Rand(100,120), f)
@@ -433,7 +481,7 @@ do
 			render.SetColorModulation(s*6,s*6,s*6)
 			render.SetBlend(f)
 
-			ent:DrawModel()
+			draw_model(ent)
 		end
 
 		function jdmg.types.holy.draw_projectile(ent, dmg)
@@ -444,7 +492,10 @@ do
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
 
 			render.SetMaterial(jdmg.materials.glow2)
-			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
+			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 200))
+
+			render.SetMaterial(jdmg.materials.refract3)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 150))
 
 			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 		end
@@ -484,7 +535,7 @@ do
 			m:Rotate(VectorRand():Angle())
 			mat:SetMatrix("$BaseTextureTransform", m)
 
-			ent:DrawModel()
+			draw_model(ent)
 		end
 	end
 end
@@ -585,7 +636,7 @@ do
 			m:Translate(Vector(1,1,1)*t/5)
 			mat:SetMatrix("$BaseTextureTransform", m)
 
-			ent:DrawModel()
+			draw_model(ent)
 		end
 
 		function jdmg.types.fire.draw_projectile(ent, dmg)
@@ -669,7 +720,7 @@ do
 			m:Translate(Vector(1,1,1)*t/20)
 			mat:SetMatrix("$BaseTextureTransform", m)
 
-			ent:DrawModel()
+			draw_model(ent)
 		end
 
 		function jdmg.types.water.draw_projectile(ent, dmg)
@@ -696,6 +747,14 @@ do
 	if CLIENT then
 		local mat = create_overlay_material("effects/filmscan256")
 
+		local ice_mat = create_material({
+			Name = "magic_ice",
+			Shader = "VertexLitGeneric",
+			CloakPassEnabled = 1,
+			RefractAmount = 1,
+		})
+		local color = Color(100, 200, 255)
+
 		jdmg.types.ice.draw = function(ent, f, s, t)
 			local pos = ent:NearestPoint(ent:WorldSpaceCenter()+VectorRand()*100)
 
@@ -714,18 +773,14 @@ do
 			p:SetLifeTime(1)
 			p:SetDieTime(math.Rand(0.75,1.5)*2)
 
-
-			render.ModelMaterialOverride(mat)
+			local c = Vector(color.r/255, color.g/255, color.b/255)*5*(f^0.15)
+			ice_mat:SetVector("$CloakColorTint", c)
+			ice_mat:SetFloat("$CloakFactor", 0.5*(f))
+			ice_mat:SetFloat("$RefractAmount", -f+1)
+			render.ModelMaterialOverride(ice_mat)
 			render.SetColorModulation(0.5,0.75, 1*s)
 			render.SetBlend(f)
-
-			local m = mat:GetMatrix("$BaseTextureTransform")
-			m:Identity()
-			m:Scale(Vector(1,1,1)*0.05)
-			m:Translate(Vector(1,1,1)*t/20)
-			mat:SetMatrix("$BaseTextureTransform", m)
-
-			ent:DrawModel()
+			draw_model(ent)
 		end
 
 		util.PrecacheModel("models/pac/default.mdl")
@@ -744,13 +799,7 @@ do
 			util.PrecacheModel(v)
 		end
 
-		local ice_mat = create_material({
-			Name = "magic_ice",
-			Shader = "VertexLitGeneric",
-			CloakPassEnabled = 1,
-			RefractAmount = 1,
-		})
-		local color = Color(100, 200, 255)
+
 		jdmg.types.ice.draw_projectile = function(ent, dmg)
 			local size = dmg / 100
 
@@ -773,7 +822,7 @@ do
 
 				ice:SetPos(ent:GetPos())
 				ice:SetAngles(VectorRand():Angle())
-				ice:SetModelScale(math.Rand(0.1, 0.2)*0.5)
+				ice:SetModelScale(math.Rand(0.1, 0.2)*0.3)
 
 				ice:SetRenderMode(RENDERMODE_TRANSADD)
 
@@ -825,6 +874,12 @@ do
 
 	if CLIENT then
 		local mat = create_overlay_material("effects/filmscan256")
+		jdmg.types.poison.sounds = {
+			{
+				path = "ambient/gas/cannister_loop.wav",
+				pitch = 200,
+			},
+		}
 
 		jdmg.types.poison.draw = function(ent, f, s, t)
 			if math.random() > 0.95 then
@@ -860,7 +915,7 @@ do
 			m:Translate(Vector(1,1,1)*t/20)
 			mat:SetMatrix("$BaseTextureTransform", m)
 
-			ent:DrawModel()
+			draw_model(ent)
 		end
 		local color = Color(0,255,0)
 		jdmg.types.poison.draw_projectile = function(ent, dmg)
@@ -870,18 +925,19 @@ do
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
 
 			render.SetMaterial(jdmg.materials.glow2)
-			render.DrawSprite(ent:GetPos(), 128*size, 128*size, Color(color.r, color.g, color.b, 150))
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 150))
 
-			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			--jdmg.DrawTrail(ent, 1, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 
-			local p = emitter:Add("effects/splash1", ent:GetPos() + VectorRand() * 5)
-			p:SetStartSize(10)
-			p:SetEndSize(10)
+			local p = emitter:Add("effects/bubble", ent:GetPos() + VectorRand() * 5)
+			local size = math.Rand(1,4)
+			p:SetStartSize(size)
+			p:SetEndSize(size)
 			p:SetStartAlpha(50)
 			p:SetEndAlpha(0)
 			p:SetVelocity(VectorRand()*20)
 			p:SetGravity(VectorRand()*10)
-			p:SetColor(0, 150, 0)
+			p:SetColor(100, 255, 100)
 			--p:SetLighting(true)
 			p:SetRoll(math.random()*360)
 			p:SetAirResistance(100)
@@ -1008,6 +1064,8 @@ end
 if CLIENT then
 	local active = {}
 
+	local aaaaa
+
 	local function render_jdmg()
 		cam.Start3D()
 		local time = RealTime()
@@ -1020,6 +1078,16 @@ if CLIENT then
 			if f <= 0 or not data.ent:IsValid() then
 				table.remove(active, i)
 			else
+				if data.ent.pac_parts then
+					for k,v in pairs(data.ent.pac_parts) do
+						for _, part in ipairs(v:GetChildrenList()) do
+							if part.ClassName == "model" and not part:IsHidden() then
+								data.type.draw(part:GetEntity(), f, data.strength, time + data.time_offset)
+							end
+						end
+					end
+				end
+
 				if data.ent:IsPlayer() and not data.ent:Alive() then
 					local rag = data.ent:GetRagdollEntity()
 					if rag then
