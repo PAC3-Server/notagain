@@ -65,6 +65,15 @@ function wepstats.AddToWeapon(wep, ...)
 	duplicator.StoreEntityModifier(wep, "wepstats", wepstats.GetTable(wep))
 end
 
+function wepstats.IsElemental(wep)
+	if not wep.wepstats then return end
+	for k,v in pairs(wep.wepstats) do
+		if v.Elemental then
+			return true
+		end
+	end
+end
+
 duplicator.RegisterEntityModifier("wepstats", function(ply, ent, data)
 	wepstats.SetTable(ent, data)
 end)
@@ -622,6 +631,11 @@ do -- effects
 			META.Chance = 0.5
 			META.Adjectives = adjectives
 			META.Names = names
+			META.Elemental = type
+
+			function META:OnAttach()
+				self.Weapon:SetNWBool("wepstats_elemental", true)
+			end
 
 			function META:OnDamage(attacker, victim, dmginfo)
 				dmginfo = self:CopyDamageInfo(dmginfo)
@@ -712,7 +726,18 @@ hook.Add("OnEntityCreated", "wepstats_bugbait", function(ent)
 	end
 end)
 
-if true then
+hook.Remove("WeaponEquip", "wepstats")
+hook.Add("PlayerSwitchWeapon", "wepstats", function(ply, old_wep, new_wep)
+	if wepstats.IsElemental(new_wep) then
+		jattributes.SetTable(ply, {mana = 1, stamina = 1, health = 1})
+		jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
+		jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
+	else
+		jattributes.Disable(ply)
+	end
+end)
+
+if me then
 	local blacklist = {
 		weapon_physgun = true,
 	}

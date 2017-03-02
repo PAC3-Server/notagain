@@ -4,7 +4,6 @@ jattributes.types = {
 	health = {
 		on_apply = function(ent, stats)
 			ent.jattributes_base_health = ent.jattributes_base_health or ent:GetMaxHealth()
-			print("huh")
 			ent:SetMaxHealth(ent.jattributes_base_health * stats.health)
 		end,
 		reset = function(ent, stats)
@@ -31,13 +30,19 @@ jattributes.types = {
 		end,
 	},
 	mana = {
+		on_fire_bullet = function(attacker, data, stats)
+			local wep = attacker:GetActiveWeapon()
+			if wepstats.IsElemental(wep) then
+				jattributes.SetMana(attacker, math.max(jattributes.GetMana(attacker) - data.Damage, 0))
+				wep.jattributes_mana_drained = true
+			end
+		end,
 		on_give_damage = function(stats, dmginfo, attacker)
-			print(stats, dmginfo, attacker)
-			if jdmg.GetDamageType(dmginfo) then
-				jattributes.SetMana(attacker, math.max(jattributes.GetMana(attacker) - dmginfo:GetDamage(), 0))
-				if jattributes.GetMana(attacker) == 0 then
-					dmginfo:SetDamage(0)
-					dmginfo:SetDamageCustom(0)
+			local wep = attacker:GetActiveWeapon()
+			if wepstats.IsElemental(wep) then
+				if not wep.jattributes_mana_drained then
+					jattributes.SetMana(attacker, math.max(jattributes.GetMana(attacker) - dmginfo:GetDamage(), 0))
+					wep.jattributes_mana_drained = nil
 				end
 			end
 		end,
@@ -146,6 +151,9 @@ if SERVER then
 		for type, info in pairs(jattributes.types) do
 			jattributes.SetAttribute(ent, type, nil)
 		end
+
+		jattributes.SetMana(ent, -1)
+		jattributes.SetStamina (ent, -1)
 	end
 
 	function jattributes.SetTable(ent, stats)
@@ -219,7 +227,7 @@ if SERVER then
 		timer.Create("jattributes_stamina", 0.05, 0, function()
 			for _, ply in ipairs(player.GetAll()) do
 				if jattributes.HasMana(ply) then
-					jattributes.SetMana(ply, math.min(jattributes.GetMana(ply) + 3, jattributes.GetMaxMana(ply)))
+					jattributes.SetMana(ply, math.min(jattributes.GetMana(ply) + 0.5, jattributes.GetMaxMana(ply)))
 				end
 
 				if jattributes.HasStamina(ply) then
