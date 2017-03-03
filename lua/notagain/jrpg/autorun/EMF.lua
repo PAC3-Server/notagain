@@ -1,6 +1,7 @@
 AddCSLuaFile()
 
 if SERVER then
+	
 	EMF = EMF or {}
 	EMF.Ents = EMF.Ents or {}
 
@@ -11,6 +12,14 @@ if SERVER then
 	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
 
+	local function IsMapBounds( pos )
+		
+		local bound = 30000
+		
+		return ( pos.x < bound and pos.x > -bound and pos.y < bound and pos.y > -bound and pos.z < bound and pos.z > -bound )
+	
+	end
+	
 	function EMF.GenerateTopology()
 
 		local ToIgnore = {
@@ -30,7 +39,7 @@ if SERVER then
 
 		for _ , ent in pairs( ents.GetAll() ) do
 
-			if ent:IsInWorld() and !ToIgnore[ent:GetClass()] and !ent:IsWeapon()  then
+			if ent:IsInWorld() and !ToIgnore[ent:GetClass()] and !ent:IsWeapon() and IsMapBounds( ent:GetPos() ) then
 
 				local tr = util.TraceLine({
 					start = ent:GetPos(),
@@ -46,12 +55,48 @@ if SERVER then
 		end
 	end
 
+	function EMF.AddTopology( pos )
+		
+		local add = true
+		
+		for _ , topo in pairs( EMF.Topology ) do
+			if pos:Distance( topo ) < EMF.MaxDistToRef then
+				add = false
+			end
+		end
+
+		if add then
+			EMF.Topology[#EMF.Topology+1] = pos 
+		end
+	
+	end
+
+	timer.Create("AddTopology",60,0,function()
+
+		local count = 0
+		
+		for _ , ply in pairs( player.GetAll() ) do
+			if ply:OnGround() then
+				EMF.AddTopology( pos )
+				count = count + 1
+			end
+		end
+
+		for i = 1 , count do
+			table.remove( EMF.Topology , i )
+		end
+
+	end)
+
 	function EMF.RegenTopology()
+		
 		table.Empty( EMF.Topology )
 		EMF.GenerateTopology()
+	
 	end
 
 	local function RandPosToRef( pos , min , max )
+		
 		local randpos = Vector( math.random( -max , max ) , math.random( -max , max ) , 5 )
 		local arearandpos = pos + randpos
 		local finalpos = ( pos:Distance( arearandpos ) < min and ( pos + ( pos - arearandpos ) ) or arearandpos )
@@ -85,12 +130,12 @@ if SERVER then
 			if ent.EMFTryPos <= 30 then
 				EMF.SetValidPos( ent , ref )
 			else
-				ent:SetPos(tr.HitPos)
+				ent:SetPos( tr.HitPos )
 			end
 		
 		end
 
-		table.remove(EMF.Topology,ref)
+		table.remove( EMF.Topology ,ref )
 
 	end
 
@@ -112,8 +157,8 @@ if SERVER then
 				mask = MASK_PLAYERSOLID,
 			})
 
-			if closest > refpos:Distance(tr.HitPos) and EMF.MinDistToRef >= refpos:Distance(tr.HitPos) then
-				closest = refpos:Distance(tr.HitPos)
+			if closest > refpos:Distance( tr.HitPos ) and EMF.MinDistToRef >= refpos:Distance( tr.HitPos ) then
+				closest = refpos:Distance( tr.HitPos )
 				finalangle = angs[i]:Angle()
 			end
 		end
@@ -126,13 +171,14 @@ if SERVER then
 			end
 		end]]--
 
-		ent:SetAngles( -finalangle )
+		ent:SetAngles( finalangle )
 		
 	end
 
 	function EMF.GenerateEnts()
+		
 		local MaxEntries = #EMF.Topology
-		local AmScale = math.Round(MaxEntries / 25 * 1.25)
+		local AmScale = math.Round( MaxEntries / 25 * 1.25 )
 
 		for i = 1 , AmScale do
 			local ent = ents.Create( EMF.Ents[math.random( 1 , #EMF.Ents )] )
@@ -142,9 +188,11 @@ if SERVER then
 			EMF.SetValidAngle( ent )
 			EMF.ActiveEnts[#EMF.ActiveEnts + 1] = ent
 		end
+	
 	end
 
 	function EMF.RegenEnts()
+		
 		for _ , v in pairs( EMF.ActiveEnts ) do
 			SafeRemoveEntity( v )
 		end
@@ -152,10 +200,23 @@ if SERVER then
 		table.Empty( EMF.ActiveEnts )
 
 		EMF.GenerateEnts()
+	
 	end
 
 	function EMF.AddEnt( class )
-		EMF.Ents[#EMF.Ents + 1] = class
+
+		local add = true
+
+		for _ , eclass in pairs( EMF.Ents ) do
+			if eclass == class then
+				add = false
+			end
+		end
+		
+		if add then
+			EMF.Ents[#EMF.Ents + 1] = class
+		end
+	
 	end
 
 	function EMF.Initialize()
@@ -163,7 +224,6 @@ if SERVER then
 		EMF.GenerateEnts()
 
 		timer.Create( "EMFRegen" , 600 , 0 , function()
-			EMF.RegenTopology()
 			EMF.RegenEnts()
 		end )
 	end
