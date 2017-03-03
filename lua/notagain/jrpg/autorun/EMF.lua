@@ -82,8 +82,8 @@ if SERVER then
 			end
 		end
 
-		for i = 1 , count do
-			table.remove( EMF.Topology , i )
+		for _ = 1 , count do
+			table.remove( EMF.Topology , 1 )
 		end
 
 	end)
