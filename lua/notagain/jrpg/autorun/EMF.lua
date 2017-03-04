@@ -12,9 +12,9 @@ if SERVER then
 	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
 
-	local function IsMapBounds( pos )
+	local function IsInMapBounds( pos )
 		
-		local bound = 30000
+		local bound = 16000
 		
 		return ( pos.x < bound and pos.x > -bound and pos.y < bound and pos.y > -bound and pos.z < bound and pos.z > -bound )
 	
@@ -39,7 +39,7 @@ if SERVER then
 
 		for _ , ent in pairs( ents.GetAll() ) do
 
-			if ent:IsInWorld() and !ToIgnore[ent:GetClass()] and !ent:IsWeapon() and IsMapBounds( ent:GetPos() ) then
+			if ent:IsInWorld() and !ToIgnore[ent:GetClass()] and !ent:IsWeapon() and IsInMapBounds( ent:GetPos() ) then
 
 				local tr = util.TraceLine({
 					start = ent:GetPos(),
@@ -71,13 +71,13 @@ if SERVER then
 	
 	end
 
-	timer.Create("AddTopology",60,0,function()
+	timer.Create("AddTopology",20,0,function()
 
 		local count = 0
 		
 		for _ , ply in pairs( player.GetAll() ) do
-			if ply:OnGround() then
-				EMF.AddTopology( pos )
+			if ply:OnGround() and ply:IsInWorld() then
+				EMF.AddTopology( ply:GetPos() )
 				count = count + 1
 			end
 		end
@@ -87,13 +87,6 @@ if SERVER then
 		end
 
 	end)
-
-	function EMF.RegenTopology()
-		
-		table.Empty( EMF.Topology )
-		EMF.GenerateTopology()
-	
-	end
 
 	local function RandPosToRef( pos , min , max )
 		
@@ -130,7 +123,7 @@ if SERVER then
 			if ent.EMFTryPos <= 30 then
 				EMF.SetValidPos( ent , ref )
 			else
-				ent:SetPos( tr.HitPos )
+				SafeRemoveEntity( ent )
 			end
 		
 		end
