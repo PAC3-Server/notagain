@@ -161,7 +161,7 @@ function battlecam.Enable()
 	battlecam.aim_pos = Vector()
 	battlecam.aim_dir = Vector()
 	--battlecam.CreateCrosshair()
-	battlecam.CreateHUD()
+	--battlecam.CreateHUD()
 
 	battlecam.enemy_visibility = 0
 	battlecam.player_visibility = 0
@@ -681,6 +681,7 @@ do
 			ucmd:SetViewAngles(aim_ang)
 		end
 
+		--[[
 		if battlecam.last_select < RealTime() then
 			if input.IsKeyDown(KEY_DOWN) or input.IsButtonDown(KEY_XBUTTON_DOWN) then
 				battlecam.weapon_i = battlecam.weapon_i + 1
@@ -702,6 +703,7 @@ do
 		if wep then
 			ucmd:SelectWeapon(wep)
 		end
+		]]
 
 		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and (not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) then
 
@@ -760,12 +762,13 @@ end
 
 function battlecam.HUDShouldDraw(hud_type)
 	if
-		hud_type == "CHudCrosshair" or
+		hud_type == "CHudCrosshair" --[[or
 		hud_type == "CHudHealth" or
 		hud_type == "CHudBattery" or
 		hud_type == "CHudAmmo" or
 		hud_type == "CHudSecondaryAmmo" or
 		hud_type == "CHudWeaponSelection"
+		]]
 	then
 		return false
 	end
@@ -1081,8 +1084,8 @@ function battlecam.PreDrawHUD()
 	render.SuppressEngineLighting(true)
 	render.SetColorModulation(1,1,1)
 
-	battlecam.DrawHPMP()
-	battlecam.DrawWeaponSelection()
+	--battlecam.DrawHPMP()
+	--battlecam.DrawWeaponSelection()
 
 	render.SetColorModulation(1,1,1)
 	render.SuppressEngineLighting(false)
