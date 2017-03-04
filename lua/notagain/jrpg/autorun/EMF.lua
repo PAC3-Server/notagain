@@ -65,7 +65,7 @@ if SERVER then
 		
 		for _ , topo in pairs( EMF.Topology ) do
 			
-			if pos:Distance( topo ) < EMF.MaxDistToRef then
+			if pos:Distance( topo ) < EMF.MaxDistToRef / 2 then
 				
 				add = false
 			
@@ -80,48 +80,6 @@ if SERVER then
 		end
 	
 	end
-
-	timer.Create("AddTopology",20,0,function()
-
-		local count = 0
-		
-		for _ , ply in pairs( player.GetAll() ) do
-			
-			if ply:IsInWorld() then
-				
-				if ply:OnGround() then
-					
-					EMF.AddTopology( ply:GetPos() )
-					count = count + 1
-				
-				else
-
-					local tr = util.TraceLine({
-						start = ent:GetPos(),
-						endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
-						mask = MASK_PLAYERSOLID,
-					})
-
-					if !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
-						
-						EMF.AddTopology( tr.HitPos )
-						count = count + 1
-					
-					end
-
-				end
-			
-			end
-		
-		end
-
-		for _ = 1 , count do
-			
-			table.remove( EMF.Topology , 1 )
-		
-		end
-
-	end)
 
 	local function RandPosToRef( pos , min , max )
 		
@@ -279,6 +237,48 @@ if SERVER then
 			EMF.RegenEnts()
 		
 		end )
+
+		timer.Create( "EMFAddTopology" , 20 , 0 , function()
+
+			local count = 0
+			
+			for _ , ply in pairs( player.GetAll() ) do
+				
+				if ply:IsInWorld() then
+					
+					if ply:OnGround() then
+						
+						EMF.AddTopology( ply:GetPos() )
+						count = count + 1
+					
+					else
+
+						local tr = util.TraceLine({
+							start = ent:GetPos(),
+							endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
+							mask = MASK_PLAYERSOLID,
+						})
+
+						if !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
+							
+							EMF.AddTopology( tr.HitPos )
+							count = count + 1
+						
+						end
+
+					end
+				
+				end
+			
+			end
+
+			for _ = 1 , count do
+				
+				table.remove( EMF.Topology , 1 )
+			
+			end
+
+		end)
 	
 	end
 
