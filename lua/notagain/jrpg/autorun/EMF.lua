@@ -48,11 +48,15 @@ if SERVER then
 				})
 
 				if tr.HitPos and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld then
+					
 					EMF.Topology[#EMF.Topology + 1] = tr.HitPos
+				
 				end
+			
 			end
 
 		end
+	
 	end
 
 	function EMF.AddTopology( pos )
@@ -60,13 +64,19 @@ if SERVER then
 		local add = true
 		
 		for _ , topo in pairs( EMF.Topology ) do
+			
 			if pos:Distance( topo ) < EMF.MaxDistToRef then
+				
 				add = false
+			
 			end
+		
 		end
 
 		if add then
+			
 			EMF.Topology[#EMF.Topology+1] = pos 
+		
 		end
 	
 	end
@@ -76,14 +86,39 @@ if SERVER then
 		local count = 0
 		
 		for _ , ply in pairs( player.GetAll() ) do
-			if ply:OnGround() and ply:IsInWorld() then
-				EMF.AddTopology( ply:GetPos() )
-				count = count + 1
+			
+			if ply:IsInWorld() then
+				
+				if ply:OnGround() then
+					
+					EMF.AddTopology( ply:GetPos() )
+					count = count + 1
+				
+				else
+
+					local tr = util.TraceLine({
+						start = ent:GetPos(),
+						endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
+						mask = MASK_PLAYERSOLID,
+					})
+
+					if !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
+						
+						EMF.AddTopology( tr.HitPos )
+						count = count + 1
+					
+					end
+
+				end
+			
 			end
+		
 		end
 
 		for _ = 1 , count do
+			
 			table.remove( EMF.Topology , 1 )
+		
 		end
 
 	end)
@@ -95,6 +130,7 @@ if SERVER then
 		local finalpos = ( pos:Distance( arearandpos ) < min and ( pos + ( pos - arearandpos ) ) or arearandpos )
 
 		return finalpos
+	
 	end
 
 	function EMF.SetValidPos( ent , ref ) 
@@ -121,9 +157,13 @@ if SERVER then
 			ent.EMFTryPos = ent.EMFTryPos and ent.EMFTryPos + 1 or 1
 			
 			if ent.EMFTryPos <= 30 then
+				
 				EMF.SetValidPos( ent , ref )
+			
 			else
+				
 				SafeRemoveEntity( ent )
+			
 			end
 		
 		end
@@ -151,9 +191,12 @@ if SERVER then
 			})
 
 			if closest > refpos:Distance( tr.HitPos ) and EMF.MinDistToRef >= refpos:Distance( tr.HitPos ) then
+				
 				closest = refpos:Distance( tr.HitPos )
 				finalangle = angs[i]:Angle()
+			
 			end
+		
 		end
 
 		-- TODO: z difference detection
@@ -174,20 +217,24 @@ if SERVER then
 		local AmScale = math.Round( MaxEntries / 25 * 1.25 )
 
 		for i = 1 , AmScale do
+			
 			local ent = ents.Create( EMF.Ents[math.random( 1 , #EMF.Ents )] )
 			ent:Spawn()
 
 			EMF.SetValidPos( ent , math.random( 1 , #EMF.Topology ) )
 			EMF.SetValidAngle( ent )
 			EMF.ActiveEnts[#EMF.ActiveEnts + 1] = ent
+		
 		end
 	
 	end
 
 	function EMF.RegenEnts()
 		
-		for _ , v in pairs( EMF.ActiveEnts ) do
-			SafeRemoveEntity( v )
+		for _ , ent in pairs( EMF.ActiveEnts ) do
+			
+			SafeRemoveEntity( ent )
+		
 		end
 
 		table.Empty( EMF.ActiveEnts )
@@ -201,32 +248,46 @@ if SERVER then
 		local add = true
 
 		for _ , eclass in pairs( EMF.Ents ) do
+			
 			if eclass == class then
+				
 				add = false
+			
 			end
+		
 		end
 		
 		if add then
+			
 			EMF.Ents[#EMF.Ents + 1] = class
+		
 		end
 	
 	end
 
 	function EMF.Initialize()
+		
 		EMF.GenerateTopology()
 		EMF.GenerateEnts()
 
 		timer.Create( "EMFRegen" , 600 , 0 , function()
+			
 			EMF.RegenEnts()
+		
 		end )
+	
 	end
 
 	hook.Add("InitPostEntity" , "EMFInit" , function()
+		
 		EMF.Initialize()
+	
 	end)
 
 end
 
 for _ , fl in ipairs( ( file.Find( "notagain/jrpg/entities/*" , "LUA" ) ) ) do
+	
 	include( "notagain/jrpg/entities/" .. fl )
+
 end
