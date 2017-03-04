@@ -211,35 +211,14 @@ if SERVER then
 	end
 
 	hook.Add("PlayerInitialSpawn", "avatar", function(ply)
-		for ent,v in pairs(avatar.avatars) do
+		for ent, info in pairs(avatar.avatars) do
 			if ent:IsValid() then
-				avatar.SetPlayer(ent, v.url, v.w, v.h, v.cx, v.cy, v.s, ply)
+				avatar.SetPlayer(ent, info.url, info.w, info.h, info.cx, info.cy, info.s, ply)
 			else
-				avatar.avatars[k] = nil
+				avatar.avatars[ent] = nil
 			end
 		end
 	end)
-
-	if aowl then
-		aowl.AddCommand("avatar", function(ply, _, url,w,h,cx,cy,s)
-			if not url then
-				avatar.SetPlayer(ply)
-				return
-			end
-
-			if not w then
-				return false, "url, width, height, center_x, center_y, scale"
-			end
-
-			w = tonumber(w)
-			h = tonumber(h) or w
-			cx = tonumber(cx) or w/2
-			cy = tonumber(cy) or h/2
-			s = tonumber(s) or 1
-
-			avatar.SetPlayer(ply, url,w,h,cx,cy,s)
-		end)
-	end
 end
 
 
