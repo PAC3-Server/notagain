@@ -8,7 +8,7 @@ hook.Add( "KeyPress", "OpenDoors", function( ply, key )
 		}
 		local tr = ply:GetEyeTrace()
 
-		if ToOpen[tr.Entity:GetClass()] and tr.HitPos:Distance(ply:GetPos()) <= 100 then
+		if ToOpen[tr.Entity:GetClass()] and tr.HitPos:Distance(ply:GetPos()) <= 100 and IsValid(tr.Entity) then
 			if tr.Entity.ent_fire_use_open then
 				tr.Entity:Fire("close")
 				tr.Entity.ent_fire_use_open = false
