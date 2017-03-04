@@ -43,30 +43,46 @@ jattributes.types = {
 	},
 	mana = {
 		on_fire_bullet = function(attacker, data, stats)
-			if data.Damage == 0 then return end
 			local wep = attacker:GetActiveWeapon()
+			local dmg = data.Damage
+
+			if data.Damage == 0 then
+				if wep.jattributes_last_damage and wep.jattributes_last_damage ~= 0 then
+					dmg = wep.jattributes_last_damage
+				end
+			end
+
+			if dmg == 0 then
+				return
+			end
+
 			if wepstats.IsElemental(wep) then
-				jattributes.SetMana(attacker, math.max(jattributes.GetMana(attacker) - data.Damage, 0))
+				local mana = math.max(jattributes.GetMana(attacker) - dmg, 0)
+				if mana == 0 then
+					attacker:EmitSound("plats/crane/vertical_stop.wav", 75, 255)
+					attacker:EmitSound("plats/crane/vertical_stop.wav", 75, 200)
+					attacker:EmitSound("plats/crane/vertical_stop.wav", 75, 100)
+					wep:SetNextPrimaryFire(CurTime() + 1)
+					wep:SetNextSecondaryFire(CurTime() + 1)
+					wep.jattributes_not_enough_mana = true
+					return false
+				end
+				jattributes.SetMana(attacker, mana)
 				wep.jattributes_mana_drained = true
 			end
 		end,
 		on_give_damage = function(stats, dmginfo, attacker)
 			local wep = attacker:GetActiveWeapon()
-			if wepstats.IsElemental(wep) then
-				if not wep.jattributes_mana_drained then
-					jattributes.SetMana(attacker, math.max(jattributes.GetMana(attacker) - dmginfo:GetDamage(), 0))
-					wep.jattributes_mana_drained = nil
-				end
-			end
+			wep.jattributes_last_damage = dmginfo:GetDamage()
 		end,
 		on_apply = function(ent, stats)
 			ent.jattributes_base_mana = ent.jattributes_base_mana or jattributes.GetMaxMana(ent)
 			jattributes.SetMaxMana(ent, ent.jattributes_base_mana * stats.mana)
 		end,
 		reset = function(ent, stats)
-			if not ent.jattributes_base_stamina then return end
-			jattributes.SetMaxStamina(ent, ent.jattributes_base_stamina)
-			ent.jattributes_base_stamina = nil
+			if not ent.jattributes_base_mana then return end
+			jattributes.SetMaxMana(ent, ent.jattributes_base_mana)
+			ent.jattributes_base_mana = nil
 		end,
 	},
 	physical_attack = {
@@ -195,7 +211,10 @@ if SERVER then
 	hook.Add("EntityFireBullets", "jattributes", function(ply, data)
 		for type, info in pairs(jattributes.types) do
 			if info.on_fire_bullet and ply.jattributes and ply.jattributes[type] then
-				info.on_fire_bullet(ply, data, ply.jattributes)
+				local b = info.on_fire_bullet(ply, data, ply.jattributes)
+				if b ~= nil then
+					return b
+				end
 			end
 		end
 	end)
@@ -240,7 +259,7 @@ if SERVER then
 		timer.Create("jattributes_stamina", 0.05, 0, function()
 			for _, ply in ipairs(player.GetAll()) do
 				if jattributes.HasMana(ply) then
-					jattributes.SetMana(ply, math.min(jattributes.GetMana(ply) + 0.5, jattributes.GetMaxMana(ply)))
+					jattributes.SetMana(ply, math.min(jattributes.GetMana(ply) + 0.1, jattributes.GetMaxMana(ply)))
 				end
 
 				if jattributes.HasStamina(ply) then
@@ -258,7 +277,7 @@ if SERVER then
 							if ply:KeyDown(IN_SPEED) then
 								jattributes.SetStamina(ply, math.max(jattributes.GetStamina(ply) - 1, 0))
 							elseif jattributes.CanRegenStamina(ply) then
-								jattributes.SetStamina(ply, math.min(jattributes.GetStamina(ply) + 3, jattributes.GetMaxStamina(ply)))
+								jattributes.SetStamina(ply, math.min(jattributes.GetStamina(ply) + 1, jattributes.GetMaxStamina(ply)))
 							end
 						end
 					end
@@ -277,11 +296,11 @@ function jattributes.HasStamina(ent)
 end
 
 function jattributes.GetMaxStamina(ent)
-	return ent:GetNWFloat("jattributes_max_stamina", 100)
+	return ent:GetNWFloat("jattributes_max_stamina", 75)
 end
 
 function jattributes.GetMaxMana(ent)
-	return ent:GetNWFloat("jattributes_max_mana", 125)
+	return ent:GetNWFloat("jattributes_max_mana", 50)
 end
 
 function  jattributes.GetMana(ent)

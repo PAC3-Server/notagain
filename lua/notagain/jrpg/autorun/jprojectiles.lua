@@ -269,6 +269,10 @@ hook.Add("EntityEmitSound", "jprojectiles", function(data)
 		if not ply:IsPlayer() and not ply:IsNPC() then return end
 		local wep = ply:GetActiveWeapon()
 
+		if wep.jattributes_not_enough_mana then
+			return false
+		end
+
 		if wep:GetNWBool("wepstats_elemental") then
 			--data.SoundLevel = 75
 			--data.Volume = 1
