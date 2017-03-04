@@ -78,6 +78,8 @@ if SERVER then
 			EMF.Topology[#EMF.Topology+1] = pos 
 		
 		end
+
+		return add
 	
 	end
 
@@ -224,6 +226,8 @@ if SERVER then
 			EMF.Ents[#EMF.Ents + 1] = class
 		
 		end
+
+		return add
 	
 	end
 
@@ -241,15 +245,16 @@ if SERVER then
 		timer.Create( "EMFAddTopology" , 20 , 0 , function()
 
 			local count = 0
-			
+
 			for _ , ply in pairs( player.GetAll() ) do
 				
 				if ply:IsInWorld() then
 					
 					if ply:OnGround() then
 						
-						EMF.AddTopology( ply:GetPos() )
-						count = count + 1
+						if EMF.AddTopology( ply:GetPos() ) then
+							count = count + 1
+						end
 					
 					else
 
@@ -261,8 +266,9 @@ if SERVER then
 
 						if !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
 							
-							EMF.AddTopology( tr.HitPos )
-							count = count + 1
+							if EMF.AddTopology( tr.HitPos ) then
+								count = count + 1
+							end
 						
 						end
 
@@ -271,7 +277,7 @@ if SERVER then
 				end
 			
 			end
-
+			
 			for _ = 1 , count do
 				
 				table.remove( EMF.Topology , 1 )
