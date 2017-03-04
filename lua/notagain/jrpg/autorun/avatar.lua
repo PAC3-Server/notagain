@@ -5,10 +5,16 @@ avatar.steam_avatars = avatar.steam_avatars or {}
 
 if CLIENT then
 	local suppress = false
-	local cvar = CreateClientConVar("cl_avatar", "", true, true)
+	local cvar = CreateClientConVar("cl_avatar", "none", true, true)
 
+	cvars.RemoveChangeCallback("cl_avatar", "cl_avatar")
 	cvars.AddChangeCallback("cl_avatar", function(_,_, str)
 		if suppress then return end
+		if str == "none" then
+			avatar.Change(url)
+			return
+		end
+
 		local url, w,h, cx,cy, s = unpack(str:gsub("%s+", ""):Split(","))
 		if not url then
 			ErrorNoHalt("unable to parse cl_avatar string: " .. cl_avatar)
@@ -20,19 +26,23 @@ if CLIENT then
 		cy = tonumber(cy) or h/2
 		s = tonumber(s) or 1
 
-		if url then
-			avatar.Change(url, w,h, cx,cy, s)
-		end
-	end)
+		avatar.Change(url, w,h, cx,cy, s)
+	end, "cl_avatar")
 
 	net.Receive("cl_avatar_set", function(len)
 		local url = net.ReadString()
+		local ply = net.ReadEntity()
+
+		if url == "none" then
+			avatar.SetPlayer(ply)
+			return
+		end
+
 		local w = net.ReadUInt(16)
 		local h = net.ReadUInt(16)
 		local cx = net.ReadUInt(16)
 		local cy = net.ReadUInt(16)
 		local s = net.ReadFloat()
-		local ply = net.ReadEntity()
 
 		if ply:IsValid() then
 			avatar.SetPlayer(ply, url, w,h, cx,cy, s)
@@ -40,6 +50,13 @@ if CLIENT then
 	end)
 
 	function avatar.Change(url, w,h, cx,cy, s)
+		if not url then
+			net.Start("cl_avatar")
+			net.WriteString("none")
+			net.SendToServer()
+			return
+		end
+
 		h = h or w
 		cx = cx or w/2
 		cy = cy or h/2
@@ -56,6 +73,11 @@ if CLIENT then
 	end
 
 	function avatar.SetPlayer(ply, url, w,h, center_x, center_y, zoom)
+		if not url then
+			avatar.avatars[ply] = nil
+			return
+		end
+
 		local mat = CreateMaterial(tostring({}), "UnlitGeneric", {
 			["$BaseTexture"] = "props/metalduct001a",
 			["$VertexAlpha"] = 1,
@@ -131,6 +153,11 @@ if SERVER then
 
 	net.Receive("cl_avatar", function(len, ply)
 		local url = net.ReadString()
+		if url == "none" then
+			avatar.SetPlayer(ply)
+			return
+		end
+
 		local w = net.ReadUInt(16)
 		local h = net.ReadUInt(16)
 		local cx = net.ReadUInt(16)
@@ -141,6 +168,15 @@ if SERVER then
 	end)
 
 	function avatar.SetPlayer(ply, url, w,h, cx,cy, s, filter)
+		if not url then
+			net.Start("cl_avatar_set")
+			net.WriteString("none")
+			net.WriteEntity(ply)
+			net.Broadcast()
+			avatar.avatars[ply] = nil
+			return
+		end
+
 		h = h or w
 		cx = cx or w/2
 		cy = cy or h/2
@@ -148,12 +184,12 @@ if SERVER then
 
 		net.Start("cl_avatar_set")
 			net.WriteString(url)
+			net.WriteEntity(ply)
 			net.WriteUInt(w, 16)
 			net.WriteUInt(h, 16)
 			net.WriteUInt(cx, 16)
 			net.WriteUInt(cy, 16)
 			net.WriteFloat(s)
-			net.WriteEntity(ply)
 		if filter then
 			net.Send(filter)
 		else
@@ -167,14 +203,20 @@ if SERVER then
 		for ent,v in pairs(avatar.avatars) do
 			if ent:IsValid() then
 				avatar.SetPlayer(ent, v.url, v.w, v.h, v.cx, v.cy, v.s, ply)
+			else
+				avatar.avatars[k] = nil
 			end
 		end
 	end)
 
 	if aowl then
 		aowl.AddCommand("avatar", function(ply, _, url,w,h,cx,cy,s)
+			if not url then
+				avatar.SetPlayer(ply)
+				return
+			end
 
-			if not url or not w then
+			if not w then
 				return false, "url, width, height, center_x, center_y, scale"
 			end
 
