@@ -130,7 +130,7 @@ hook.Add("HUDPaint", "jhud", function()
 			surface.DrawTexturedRect(x-w/2,y-h/2,w,h)
 
 			surface.SetDrawColor(255,255,255,255)
-			avatar.Draw(LocalPlayer(), x,y, 200)
+			avatar.Draw(LocalPlayer(), x,y, height)
 		end
 
 		do
