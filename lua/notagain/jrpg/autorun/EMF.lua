@@ -162,13 +162,17 @@ if SERVER then
 			
 			else
 				
-				SafeRemoveEntity( ent )
+				ent:SetPos( tr.HitPos )
 			
 			end
 		
 		end
 
-		table.remove( EMF.Topology ,ref )
+		if !ent:IsInWorld() then
+			
+			SafeRemoveEntity( ent ) -- Tired of entities still spawning outside world
+		
+		end
 
 	end
 
