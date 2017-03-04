@@ -7,9 +7,7 @@ if CLIENT then
 	local suppress = false
 	local cvar = CreateClientConVar("cl_avatar", "none", true, true)
 
-	cvars.RemoveChangeCallback("cl_avatar", "cl_avatar")
-	cvars.AddChangeCallback("cl_avatar", function(_,_, str)
-		if suppress then return end
+	local function set_from_string(str)
 		if str == "none" then
 			avatar.Change(url)
 			return
@@ -27,7 +25,20 @@ if CLIENT then
 		s = tonumber(s) or 1
 
 		avatar.Change(url, w,h, cx,cy, s)
+	end
+
+	cvars.RemoveChangeCallback("cl_avatar", "cl_avatar")
+	cvars.AddChangeCallback("cl_avatar", function(_,_, str)
+		if suppress then return end
+		set_from_string(str)
 	end, "cl_avatar")
+
+	hook.Add("OnEntityCreated", "avatar", function(ent)
+		if ent == LocalPlayer() then
+			set_from_string(cvar:GetString())
+			hook.Remove("OnEntityCreated", "avatar")
+		end
+	end)
 
 	net.Receive("cl_avatar_set", function(len)
 		local url = net.ReadString()
