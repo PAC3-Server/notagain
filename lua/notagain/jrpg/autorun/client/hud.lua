@@ -59,9 +59,9 @@ local health_height = 18
 local spacing = 2
 
 local function draw_bar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur)
-	surface.SetDrawColor(255,255,255,10)
-	surface.SetMaterial(gradient)
-	draw_rect(x,y,w,h, skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
+	surface.SetDrawColor(0,0,0,240)
+	draw.NoTexture()
+	draw_rect(x,y,w,h, skew)
 
 	surface.SetDrawColor(r,g,b,255)
 	surface.SetMaterial(gradient)
@@ -122,14 +122,35 @@ hook.Add("HUDPaint", "jhud", function()
 
 		do
 			local x = x + 100
-			local y = y + height/2
+			local y = y + 10
 			local w = 500
 			local h = 500
 			surface.SetMaterial(background_glow)
 			surface.SetDrawColor(0,0,0,50)
 			surface.DrawTexturedRect(x-w/2,y-h/2,w,h)
 
-			surface.SetDrawColor(255,255,255,255)
+			local cur = ply:Health()
+			local max = ply:GetMaxHealth()
+			local critical = (cur/max)
+			if critical < 0.5 then
+				critical = critical + math.sin(os.clock() * (2/critical))*0.5+0.5
+				critical = critical ^ 0.5
+			else
+				critical = 1
+			end
+
+
+			local lost = 0
+
+			if smoothers.health then
+				lost = math.max(smoothers.health - math.max(ply:Health(), 0), 0)
+			end
+
+			lost = lost + 1
+			x = x + math.Rand(-1,1) * (lost-1)
+			y = y + math.Rand(-1,1) * (lost-1)
+			surface.SetDrawColor(255,critical*255/lost,critical*255/lost,255)
+
 			avatar.Draw(LocalPlayer(), x,y, height)
 		end
 
@@ -159,7 +180,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 			local w = math.Clamp(max*3, 50, 1000)
 
-			draw_bar(x,y,w,health_height,cur,max,border_size, 175,50,50, "HP", real_cur)
+			draw_bar(x,y,w,health_height,cur,max,border_size, 50,160,50, "HP", real_cur)
 
 			y = y + health_height + spacing
 			x = x + skew/2.5
@@ -187,7 +208,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 			local w = math.Clamp(max*3, 50, 1000)
 
-			draw_bar(x,y,w,health_height,cur,max,border_size, 50,150,50, "SP", real_cur)
+			draw_bar(x,y,w,health_height,cur,max,border_size, 150,150,50, "SP", real_cur)
 
 			last_hp_timer = math.huge
 		end
