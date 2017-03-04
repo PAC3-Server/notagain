@@ -726,7 +726,6 @@ hook.Add("OnEntityCreated", "wepstats_bugbait", function(ent)
 	end
 end)
 
-hook.Remove("WeaponEquip", "wepstats")
 hook.Add("PlayerSwitchWeapon", "wepstats", function(ply, old_wep, new_wep)
 	if wepstats.IsElemental(new_wep) then
 		jattributes.SetTable(ply, {mana = 1, stamina = 1, health = 1})
