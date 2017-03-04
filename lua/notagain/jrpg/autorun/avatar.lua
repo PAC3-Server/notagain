@@ -113,13 +113,21 @@ if CLIENT then
 		end
 	end
 
+	local draw_rect = requirex("draw_skewed_rect")
+
+	local border = CreateMaterial(tostring({}), "UnlitGeneric", {
+		["$BaseTexture"] = "props/metalduct001a",
+		["$VertexAlpha"] = 1,
+		["$VertexColor"] = 1,
+	})
+
 	function avatar.Draw(ply, x,y, size, rot, sx,sy)
 		local info = avatar.avatars[ply]
 
 		if info then
 			x = x or 0
 			y = y or 0
-			local size = info.size or info.w
+			size = size or info.w
 			local sx = info.sx or info.center_x
 			local sy = info.sy or info.center_y
 			local rot = info.rot or 0
@@ -150,10 +158,14 @@ if CLIENT then
 			end
 
 			local pnl = avatar.steam_avatars[ply]
-
-			pnl:SetPos(x-size/2,y-size/2)
+			local x, y = x-size/2,y-size/2
+			pnl:SetPos(x, y)
 			pnl:SetSize(size, size)
 			pnl:PaintManual()
+
+			surface.SetMaterial(border)
+			surface.SetDrawColor(255,255,255,255)
+			draw_rect(x,y,size,size, 0, 4, 70, 5, border:GetTexture("$BaseTexture"):Width(), true)
 		end
 	end
 end
