@@ -294,21 +294,40 @@ local PLAYER_LINE = {
 		end
 
 		do
-			local size = h * 1.15
-			local x = x - size / 2
-			local y = y - size / 2
+			if _G.avatar then
+				surface.SetDrawColor(255,255,255,255)
+				local size = h * 1.15
+				local x = x - size / 2
+				local y = y - size / 2
 
-			y = y + h / 2
-			x = x + (size/3.7 * dir)
+				y = y + h / 2
+				x = x + (size/3.7 * dir)
 
-			if dir < 0 then
-				x = x + w
+				if dir < 0 then
+					x = x + w
+				else
+					x = x + size
+				end
+
+				avatar.Draw(ent, x,y+size/2, size)
+			else
+
+				local size = h * 1.15
+				local x = x - size / 2
+				local y = y - size / 2
+
+				y = y + h / 2
+				x = x + (size/3.7 * dir)
+
+				if dir < 0 then
+					x = x + w
+				end
+
+				--cam.PushModelMatrix
+
+				self.Avatar:SetSize(size,size)
+				self.Avatar:PaintAt(x, y)
 			end
-
-			--cam.PushModelMatrix
-
-			self.Avatar:SetSize(size,size)
-			self.Avatar:PaintAt(x, y)
 		end
 
 		do -- frame
@@ -381,7 +400,7 @@ local PLAYER_LINE = {
             self.Menu:Open()
 
         elseif num == MOUSE_LEFT then
-            if PlayerID == tostring( LocalPlayer():UniqueID() ) then return end 
+            if PlayerID == tostring( LocalPlayer():UniqueID() ) then return end
 			RunConsoleCommand( "aowl", "goto", PlayerID )
         end
 
