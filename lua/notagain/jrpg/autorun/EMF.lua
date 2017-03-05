@@ -8,6 +8,7 @@ if SERVER then
 	local BigValue = 100000
 
 	EMF.Topology = EMF.Topology or {}
+	EMF.InitTopology = EMF.InitTopology or {}
 	EMF.ActiveEnts = EMF.ActiveEnts or {}
 	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
@@ -42,6 +43,7 @@ if SERVER then
 				if tr.HitPos and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld then
 					
 					EMF.Topology[#EMF.Topology + 1] = tr.HitPos
+					EMF.InitTopology[#EMF.InitTopology + 1] = true
 				
 				end
 			
@@ -55,9 +57,9 @@ if SERVER then
 		
 		local add = true
 		
-		for _ , topo in pairs( EMF.Topology ) do
+		for index , topo in pairs( EMF.Topology ) do
 			
-			if pos:Distance( topo ) < EMF.MaxDistToRef / 2 then
+			if !EMF.InitTopology[index] and topo:Distance( pos ) < EMF.MaxDistToRef / 2 then
 				
 				add = false
 			
@@ -67,10 +69,11 @@ if SERVER then
 
 		if add then
 			
-			EMF.Topology[#EMF.Topology+1] = pos 
-		
-		end
+			EMF.Topology[#EMF.Topology + 1] = pos 
+			EMF.InitTopology[#EMF.InitTopology + 1] = false
 
+		end
+		
 		return add
 	
 	end
@@ -166,7 +169,7 @@ if SERVER then
 
 		if !ent:IsInWorld() then
 			
-			SafeRemoveEntity( ent ) -- Tired of entities still spawning outside world
+			SafeRemoveEntity( ent ) 
 		
 		end
 
