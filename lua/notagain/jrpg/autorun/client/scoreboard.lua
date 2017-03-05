@@ -7,7 +7,7 @@ local mainMenuSize = {
     w = 1000,
     h = scrH * .8
 }
-local line_height = 90
+local line_height = 70
 
 local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
     ["$BaseTexture"] = "gui/center_gradient",
