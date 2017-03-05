@@ -75,6 +75,50 @@ if SERVER then
 	
 	end
 
+	function EMF.TrackPlayersPos()
+
+		local count = 0
+
+		for _ , ply in pairs( player.GetAll() ) do
+			
+			if ply:IsInWorld() then
+				
+				if ply:OnGround() then
+					
+					if EMF.AddTopology( ply:GetPos() ) then
+						count = count + 1
+					end
+				
+				else
+
+					local tr = util.TraceLine({
+						start = ent:GetPos(),
+						endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
+						mask = MASK_PLAYERSOLID,
+					})
+
+					if !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
+						
+						if EMF.AddTopology( tr.HitPos ) then
+							count = count + 1
+						end
+					
+					end
+
+				end
+			
+			end
+		
+		end
+		
+		for _ = 1 , count do
+			
+			table.remove( EMF.Topology , 1 )
+		
+		end
+	
+	end
+
 	local function RandPosToRef( pos , min , max )
 		
 		local randpos = Vector( math.random( -max , max ) , math.random( -max , max ) , 5 )
@@ -228,53 +272,15 @@ if SERVER then
 		EMF.GenerateTopology()
 		EMF.GenerateEnts()
 
-		timer.Create( "EMFRegen" , 600 , 0 , function()
+		timer.Create( "EMFEntsRegen" , 600 , 0 , function()
 			
 			EMF.RegenEnts()
 		
 		end )
 
-		timer.Create( "EMFAddTopology" , 20 , 0 , function()
+		timer.Create( "EMFPlayerTracking" , 20 , 0 , function()
 
-			local count = 0
-
-			for _ , ply in pairs( player.GetAll() ) do
-				
-				if ply:IsInWorld() then
-					
-					if ply:OnGround() then
-						
-						if EMF.AddTopology( ply:GetPos() ) then
-							count = count + 1
-						end
-					
-					else
-
-						local tr = util.TraceLine({
-							start = ent:GetPos(),
-							endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
-							mask = MASK_PLAYERSOLID,
-						})
-
-						if !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
-							
-							if EMF.AddTopology( tr.HitPos ) then
-								count = count + 1
-							end
-						
-						end
-
-					end
-				
-				end
-			
-			end
-			
-			for _ = 1 , count do
-				
-				table.remove( EMF.Topology , 1 )
-			
-			end
+			EMF.TrackPlayersPos()
 
 		end)
 	
