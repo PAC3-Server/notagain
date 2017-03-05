@@ -117,6 +117,7 @@ if SERVER then
 		for _ = 1 , count do
 			
 			table.remove( EMF.Topology , 1 )
+			table.remove( EMF.InitTopology , 1 )
 		
 		end
 	
