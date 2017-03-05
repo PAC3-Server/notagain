@@ -448,7 +448,7 @@ if CLIENT then
 				local txt = math.Round(Lerp(math.Clamp(fraction-0.95, 0, 1), data.dmg, 0))
 
 				if data.xp then
-					txt = txt .. " xp"
+					txt = "xp +" .. txt
 				elseif data.dmg == 0 then
 					txt = "MISS"
 				elseif data.dmg > 0 then
