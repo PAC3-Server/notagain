@@ -447,7 +447,9 @@ if CLIENT then
 
 				local txt = math.Round(Lerp(math.Clamp(fraction-0.95, 0, 1), data.dmg, 0))
 
-				if data.dmg == 0 then
+				if data.xp then
+					txt = txt .. " xp"
+				elseif data.dmg == 0 then
 					txt = "MISS"
 				elseif data.dmg > 0 then
 					txt = "+" .. txt
@@ -483,7 +485,9 @@ if CLIENT then
 					local w, h = prettytext.GetTextSize(txt, font_info.font, font_info.size, font_info.weight, font_info.blur_size)
 					local hoffset = data.height_offset * -h * 0.5
 
-					if data.dmg == 0 then
+					if data.xp then
+						surface.SetDrawColor(100, 0, 255, 255)
+					elseif data.dmg == 0 then
 						surface.SetDrawColor(255, 255, 255, 255)
 					elseif data.rec then
 						surface.SetDrawColor(100, 255, 100, 255)
@@ -538,7 +542,7 @@ if CLIENT then
 		table.insert(weapon_info, {name = name, ent = ent, time = RealTime() + length, length = length})
 	end
 
-	function hitmarkers.ShowDamage(ent, dmg, pos)
+	function hitmarkers.ShowDamage(ent, dmg, pos, xp)
 		ent = ent or NULL
 		dmg = dmg or 0
 		pos = pos or ent:EyePos()
@@ -571,6 +575,7 @@ if CLIENT then
 
 				offset = offset,
 				height_offset = height_offset,
+				xp = xp,
 
 				bounced = 0
 			}
@@ -654,6 +659,14 @@ if CLIENT then
 
 		hitmarkers.ShowDamage(ent, dmg, pos)
 	end)
+
+	net.Receive("hitmark_xp", function()
+		local ent = net.ReadEntity()
+		local xp = math.Round(net.ReadFloat())
+		local pos = net.ReadVector()
+
+		hitmarkers.ShowDamage(ent, xp, pos, true)
+	end)
 end
 
 if SERVER then
@@ -676,6 +689,21 @@ if SERVER then
 	end
 
 	util.AddNetworkString("hitmark")
+
+	function hitmarkers.ShowXP(ent, xp, pos, filter)
+		ent = ent or NULL
+		xp = xp or 0
+		pos = pos or ent:EyePos()
+		filter = filter or player.GetAll()
+
+		net.Start("hitmark_xp", true)
+			net.WriteEntity(ent)
+			net.WriteFloat(xp)
+			net.WriteVector(pos)
+		net.Send(filter)
+	end
+
+	util.AddNetworkString("hitmark_xp")
 
 	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
 		if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
