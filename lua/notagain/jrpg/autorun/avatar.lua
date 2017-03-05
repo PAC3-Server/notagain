@@ -168,6 +168,15 @@ if CLIENT then
 			draw_rect(x,y,size,size, 0, 4, 70, 5, border:GetTexture("$BaseTexture"):Width(), true)
 		end
 	end
+
+	hook.Add("OnEntityCreated", "avatar", function(ent)
+		if ent == LocalPlayer() then
+			timer.Simple(1, function()
+				RunConsoleCommand("request_avatars")
+			end)
+			hook.Remove("OnEntityCreated", "avatar")
+		end
+	end)
 end
 
 if SERVER then
@@ -222,7 +231,8 @@ if SERVER then
 		avatar.avatars[ply] = {url = url, w = w, h = h, cx = cx,cy = cy, s = s}
 	end
 
-	hook.Add("PlayerInitialSpawn", "avatar", function(ply)
+	concommand.Add("request_avatars", function(ply)
+		if ply.avatar_last_request and ply.avatar_last_request > RealTime() then return end
 		for ent, info in pairs(avatar.avatars) do
 			if ent:IsValid() then
 				avatar.SetPlayer(ent, info.url, info.w, info.h, info.cx, info.cy, info.s, ply)
@@ -230,6 +240,7 @@ if SERVER then
 				avatar.avatars[ent] = nil
 			end
 		end
+		ply.avatar_last_request = RealTime() + 1
 	end)
 end
 
