@@ -4,7 +4,7 @@ local draw_rect = requirex("draw_skewed_rect")
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
 local mainMenuSize = {
-    w = scrW * .75,
+    w = 1000,
     h = scrH * .8
 }
 local line_height = 90
@@ -201,12 +201,6 @@ local PLAYER_LINE = {
 
 		local color = self.Friend and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS)
 		local text_blur_color = Color(color.r*0.6, color.g*0.6, color.b*0.6, 150)
-
-		if dir < 0 then
-			x = x + w - w / size_div
-		end
-
-		w = w / size_div
 
 		do
 			surface.DisableClipping(true)
@@ -449,8 +443,8 @@ local SCORE_BOARD = {
     PerformLayout = function( self )
 
         self:SetSize( mainMenuSize.w, mainMenuSize.h )
-		self.ScoresLeft:SetWide(mainMenuSize.w/2)
-		self.ScoresRight:SetWide(mainMenuSize.w/2)
+		self.ScoresLeft:SetWide(450)
+		self.ScoresRight:SetWide(450)
 		self.ScoresRight:SetTall(select(2, self.ScoresRight:ChildrenSize()))
 		self.ScoresLeft:SetTall(select(2, self.ScoresLeft:ChildrenSize()))
         self:Center()
