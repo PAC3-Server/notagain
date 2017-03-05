@@ -14,26 +14,6 @@ if CLIENT then
 			ent:DrawModel()
 		end
 	end
-	--[[
-		models/weapons/v_smg1/noise
-		particle/particle_smokegrenade
-		effects/filmscan256
-		effects/splash2
-		effects/combineshield/comshieldwall
-		models/brokenglass/glassbroken_piece1_mask
-		models/alyx/emptool_glow
-		models/effects/dust01
-		models/effects/portalfunnel2_sheet
-		models/effects/comball_sphere
-		models/effects/com_shield001a
-		models/effects/splode_sheet
-		models/player/player_chrome1
-		models/props_combine/pipes01
-		models/props_combine/introomarea_glassmask
-		models/props_combine/tprings_globe_dx70
-		models/props_combine/stasisshield_dx7
-		models/props_lab/warp_sheet
-	]]
 	emitter = ParticleEmitter(vector_origin)
 
 	create_material = function(data)
@@ -1135,13 +1115,28 @@ if CLIENT then
 		local type = net.ReadString()
 		local duration = net.ReadFloat()
 		local strength = net.ReadFloat()
+		local pos = net.ReadVector()
+
+		if ent:IsPlayer() then
+			local name = "flinch_stomach_0" .. math.random(2)
+			local bone = ent:LookupBone("ValveBiped.Bip01_Head1") or ent:LookupBone("ValveBiped.Bip01_Neck")
+
+			if bone and pos:Distance(ent:WorldToLocal(ent:GetBonePosition(bone))) < 20 or pos:Distance(ent:WorldToLocal(ent:EyePos())) < 20 then
+				name = "flinch_head_0" .. math.random(2)
+			elseif strength > 0.5 then
+				name = "flinch_phys_0" .. math.random(2)
+			end
+
+			local seq = ent:GetSequenceActivity(ent:LookupSequence(name))
+			ent:AnimRestartGesture(GESTURE_SLOT_FLINCH, seq, true)
+		end
 
 		jdmg.DamageEffect(ent, type, duration, strength)
 	end)
 end
 
 if SERVER then
-	function jdmg.DamageEffect(ent, type, duration, strength)
+	function jdmg.DamageEffect(ent, type, duration, strength, pos)
 		type = type or "generic"
 		duration = duration or 1
 		strength = strength or 1
@@ -1151,6 +1146,7 @@ if SERVER then
 			net.WriteString(type)
 			net.WriteFloat(duration)
 			net.WriteFloat(strength)
+			net.WriteVector(pos)
 		net.Broadcast()
 	end
 
@@ -1168,6 +1164,8 @@ if SERVER then
 
 	hook.Add("EntityTakeDamage", "jdmg", function(ent, dmginfo)
 		if ent:GetNoDraw() then return end
+
+		local pos = ent:WorldToLocal(dmginfo:GetDamagePosition())
 		local type = dmginfo:GetDamageType()
 		local dmg = dmginfo:GetDamage()
 		local max_health = math.max(ent:GetMaxHealth(), 1)
@@ -1179,7 +1177,7 @@ if SERVER then
 		local override = jdmg.GetDamageType(dmginfo)
 
 		if override then
-			jdmg.DamageEffect(ent, override, duration, strength)
+			jdmg.DamageEffect(ent, override, duration, strength, pos)
 		else
 			local done = {}
 			for k, v in pairs(enums) do
@@ -1194,7 +1192,7 @@ if SERVER then
 						end
 					end
 
-					jdmg.DamageEffect(ent, jdmg_name, duration, strength)
+					jdmg.DamageEffect(ent, jdmg_name, duration, strength, pos)
 
 					done[hl2_name] = true
 				end
