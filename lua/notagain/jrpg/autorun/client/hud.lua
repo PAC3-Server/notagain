@@ -173,10 +173,12 @@ hook.Add("HUDPaint", "jhud", function()
 		c.g = c.g/3
 		c.b = c.b/3
 		c.a = 100
-		prettytext.Draw(ply:Nick(), x + 210, y - offset, "gabriola", 55, 00, 6, Color(255, 255, 255, 200), c)
+
+
+		prettytext.Draw(ply:Nick(), x + 210, y - offset + 7, "gabriola", 55, 00, 6, Color(255, 255, 255, 200), c)
 
 		x = x + 200
-		prettytext.Draw("Lv. " .. ply:GetNWInt("jlevel_level", 0), x + math.Clamp(ply:GetMaxHealth()*3, 50, 1000),  y - offset, "gabriola", 55, 00, 6, Color(200, 50, 255, 200), c, -1)
+		prettytext.Draw("Lv. " .. ply:GetNWInt("jlevel_level", 0), x + math.Clamp(ply:GetMaxHealth()*3, 50, 1000),  y - offset + 7, "gabriola", 55, 00, 6, Color(200, 50, 255, 200), c, -1)
 		y = y + height / 2 - offset
 
 
