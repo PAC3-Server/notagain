@@ -36,6 +36,7 @@ if CLIENT then
 	hook.Add("OnEntityCreated", "avatar", function(ent)
 		if ent == LocalPlayer() then
 			set_from_string(cvar:GetString())
+			RunConsoleCommand("request_avatars")
 			hook.Remove("OnEntityCreated", "avatar")
 		end
 	end)
@@ -168,15 +169,6 @@ if CLIENT then
 			draw_rect(x,y,size,size, 0, 4, 70, 5, border:GetTexture("$BaseTexture"):Width(), true)
 		end
 	end
-
-	hook.Add("OnEntityCreated", "avatar", function(ent)
-		if ent == LocalPlayer() then
-			timer.Simple(1, function()
-				RunConsoleCommand("request_avatars")
-			end)
-			hook.Remove("OnEntityCreated", "avatar")
-		end
-	end)
 end
 
 if SERVER then
