@@ -58,7 +58,7 @@ local skew = -40
 local health_height = 18
 local spacing = 2
 
-local function draw_bar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur)
+local function draw_bar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center_number)
 	surface.SetMaterial(border)
 	surface.SetDrawColor(255,255,255,255)
 	--draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
@@ -76,8 +76,8 @@ local function draw_bar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur)
 	surface.SetDrawColor(255,255,255,255)
 	draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 
-	prettytext.Draw(real_cur, x + w, y, "gabriola", health_height*3.5, 1, 2, Color(255, 255, 255, 150), Color(r/2,g/2,b/2,100), -1.25, -0.6)
-	prettytext.Draw(txt, x, y, "gabriola", health_height*2, 1, 2, Color(255, 255, 255, 150), Color(r/2,g/2,b/2,100), -1.3, -0.3)
+	prettytext.Draw(real_cur, center_number and x+w/2 or (x + w), center_number and y+h/2 or y, "gabriola", health_height*3.5 * (center_number and 0.7 or 1), 1, 2, Color(255, 255, 255, 150), Color(r/2,g/2,b/2,100), center_number and -0.5 or 0.5, center_number and -0.55 or -0.4)
+	prettytext.Draw(txt, x, y, "gabriola", health_height*2, 0, 5, Color(255, 255, 255, 150), Color(r/5,g/5,b/5,255), -1.3, -0.3)
 end
 
 hook.Add("HUDPaint", "jhud", function()
@@ -173,11 +173,10 @@ hook.Add("HUDPaint", "jhud", function()
 		c.g = c.g/3
 		c.b = c.b/3
 		c.a = 100
-		prettytext.Draw(ply:Nick(), x + 220, y + 10 - offset, "gabriola", 70, 0, 6, Color(255, 255, 255, 200), c)
+		prettytext.Draw(ply:Nick() .. " LV. " .. ply:GetNWInt("jlevel_level", 0), x + 210, y - offset, "gabriola", 55, 00, 6, Color(255, 255, 255, 200), c)
 
 		x = x + 200
-		y = y + height / 2 - offset + 15
-
+		y = y + height / 2 - offset
 
 		do
 			local real_cur = ply:Health()
@@ -217,6 +216,17 @@ hook.Add("HUDPaint", "jhud", function()
 			draw_bar(x,y,w,health_height,cur,max,border_size, 150,150,50, "SP", real_cur)
 
 			last_hp_timer = math.huge
+
+			y = y + health_height + spacing
+			x = x + skew/2.5
+		end
+
+		do
+			local real_cur = math.Round(ply:GetNWInt("jlevel_xp", 0))
+			local cur = smooth(real_cur, "xp")
+			local max = ply:GetNWInt("jlevel_next_level", 0)
+
+			draw_bar(x, y, 300-5, 8, cur, max, 1, 100,0,255, "XP", real_cur, true)
 		end
 	end
 
