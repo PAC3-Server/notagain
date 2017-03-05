@@ -4,6 +4,8 @@ avatar.avatars = avatar.avatars or {}
 avatar.steam_avatars = avatar.steam_avatars or {}
 
 if CLIENT then
+	local urlimage = requirex("urlimage")
+
 	local suppress = false
 	local cvar = CreateClientConVar("cl_avatar", "none", true, true)
 
@@ -13,18 +15,16 @@ if CLIENT then
 			return
 		end
 
-		local url, w,h, cx,cy, s = unpack(str:gsub("%s+", ""):Split(","))
+		local url, cx,cy, s = unpack(str:gsub("%s+", ""):Split(","))
 		if not url then
 			ErrorNoHalt("unable to parse cl_avatar string: " .. cl_avatar)
 			return
 		end
-		w = tonumber(w)
-		h = tonumber(h) or w
-		cx = tonumber(cx) or w/2
-		cy = tonumber(cy) or h/2
+		cx = tonumber(cx)
+		cy = tonumber(cy)
 		s = tonumber(s) or 1
 
-		avatar.Change(url, w,h, cx,cy, s)
+		avatar.Change(url, cx,cy, s)
 	end
 
 	cvars.RemoveChangeCallback("cl_avatar", "cl_avatar")
@@ -50,18 +50,16 @@ if CLIENT then
 			return
 		end
 
-		local w = net.ReadUInt(16)
-		local h = net.ReadUInt(16)
 		local cx = net.ReadUInt(16)
 		local cy = net.ReadUInt(16)
 		local s = net.ReadFloat()
 
 		if ply:IsValid() then
-			avatar.SetPlayer(ply, url, w,h, cx,cy, s)
+			avatar.SetPlayer(ply, url, cx,cy, s)
 		end
 	end)
 
-	function avatar.Change(url, w,h, cx,cy, s)
+	function avatar.Change(url, cx,cy, s)
 		if not url then
 			net.Start("cl_avatar")
 			net.WriteString("none")
@@ -69,48 +67,33 @@ if CLIENT then
 			return
 		end
 
-		h = h or w
-		cx = cx or w/2
-		cy = cy or h/2
+		cx = cx
+		cy = cy
 		s = s or 1
 
 		net.Start("cl_avatar")
 			net.WriteString(url)
-			net.WriteUInt(w, 16)
-			net.WriteUInt(h, 16)
 			net.WriteUInt(cx, 16)
 			net.WriteUInt(cy, 16)
 			net.WriteFloat(s)
 		net.SendToServer()
 	end
 
-	function avatar.SetPlayer(ply, url, w,h, center_x, center_y, zoom)
+	function avatar.SetPlayer(ply, url, center_x, center_y, zoom)
 		if not url then
 			avatar.avatars[ply] = nil
 			return
 		end
 
-		local mat = CreateMaterial(tostring({}), "UnlitGeneric", {
-			["$BaseTexture"] = "props/metalduct001a",
-			["$VertexAlpha"] = 1,
-			["$VertexColor"] = 1,
-		})
-
-		pac.urltex.GetMaterialFromURL(url, function(_, tex)
-			mat:SetTexture("$BaseTexture", tex)
-		end, false, "UnlitGeneric")
-
 		avatar.avatars[ply] = {
 			url = url,
-			mat = mat,
-			w = w,
-			h = h,
+			mat = urlimage.URLMaterial(url),
 			center_x = center_x,
 			center_y = center_y,
 			zoom = zoom or 1,
 		}
 		if ply == LocalPlayer() then
-			cvar:SetString(table.concat({url, w,h, center_x, center_y, zoom}, ","))
+			cvar:SetString(table.concat({url, center_x, center_y, zoom}, ","))
 		end
 	end
 
@@ -128,16 +111,14 @@ if CLIENT then
 		if info then
 			x = x or 0
 			y = y or 0
-			size = size or info.w
 			local sx = info.sx or info.center_x
 			local sy = info.sy or info.center_y
 			local rot = info.rot or 0
-			local w = info.w
-			local h = info.h
+
+			local w, h = info.mat()
+			if not w then return end
 
 			size = size * info.zoom
-
-			surface.SetMaterial(info.mat)
 
 			local m = Matrix()
 			m:Translate(Vector(x - sx,y - sy))
@@ -182,16 +163,14 @@ if SERVER then
 			return
 		end
 
-		local w = net.ReadUInt(16)
-		local h = net.ReadUInt(16)
 		local cx = net.ReadUInt(16)
 		local cy = net.ReadUInt(16)
 		local s = net.ReadFloat()
 
-		avatar.SetPlayer(ply, url, w,h, cx,cy, s)
+		avatar.SetPlayer(ply, url, cx,cy, s)
 	end)
 
-	function avatar.SetPlayer(ply, url, w,h, cx,cy, s, filter)
+	function avatar.SetPlayer(ply, url, cx,cy, s, filter)
 		if not url then
 			net.Start("cl_avatar_set")
 			net.WriteString("none")
@@ -201,16 +180,11 @@ if SERVER then
 			return
 		end
 
-		h = h or w
-		cx = cx or w/2
-		cy = cy or h/2
 		s = s or 1
 
 		net.Start("cl_avatar_set")
 			net.WriteString(url)
 			net.WriteEntity(ply)
-			net.WriteUInt(w, 16)
-			net.WriteUInt(h, 16)
 			net.WriteUInt(cx, 16)
 			net.WriteUInt(cy, 16)
 			net.WriteFloat(s)
@@ -220,14 +194,14 @@ if SERVER then
 			net.Broadcast()
 		end
 
-		avatar.avatars[ply] = {url = url, w = w, h = h, cx = cx,cy = cy, s = s}
+		avatar.avatars[ply] = {url = url, cx = cx,cy = cy, s = s}
 	end
 
 	concommand.Add("request_avatars", function(ply)
 		if ply.avatar_last_request and ply.avatar_last_request > RealTime() then return end
 		for ent, info in pairs(avatar.avatars) do
 			if ent:IsValid() then
-				avatar.SetPlayer(ent, info.url, info.w, info.h, info.cx, info.cy, info.s, ply)
+				avatar.SetPlayer(ent, info.url, info.cx, info.cy, info.s, ply)
 			else
 				avatar.avatars[ent] = nil
 			end
