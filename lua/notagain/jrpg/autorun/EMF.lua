@@ -11,14 +11,6 @@ if SERVER then
 	EMF.ActiveEnts = EMF.ActiveEnts or {}
 	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
-
-	local function IsInMapBounds( pos )
-		
-		local bound = 16000
-		
-		return ( pos.x < bound and pos.x > -bound and pos.y < bound and pos.y > -bound and pos.z < bound and pos.z > -bound )
-	
-	end
 	
 	function EMF.GenerateTopology()
 
@@ -39,7 +31,7 @@ if SERVER then
 
 		for _ , ent in pairs( ents.GetAll() ) do
 
-			if ent:IsInWorld() and !ToIgnore[ent:GetClass()] and !ent:IsWeapon() and IsInMapBounds( ent:GetPos() ) then
+			if ent:IsInWorld() and !ToIgnore[ent:GetClass()] and !ent:IsWeapon() then
 
 				local tr = util.TraceLine({
 					start = ent:GetPos(),
