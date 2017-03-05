@@ -187,7 +187,7 @@ hook.Add("HUDPaint", "jhud", function()
 			local cur = smooth(math.max(real_cur, 0), "health")
 			local max = ply:GetMaxHealth()
 
-			local w = math.Clamp(max*3, 50, 1000)
+			local w = math.Clamp(max*3, 50, ScrW()/3)
 
 			draw_bar(x,y,w,health_height,cur,max,border_size, 50,160,50, "HP", real_cur)
 
@@ -200,7 +200,7 @@ hook.Add("HUDPaint", "jhud", function()
 			local cur = smooth(real_cur, "mana")
 			local max = jattributes.GetMaxMana(ply)
 
-			local w = math.Clamp(max*3, 50, 1000)
+			local w = math.Clamp(max*3, 50, ScrW()/3)
 
 			draw_bar(x,y,w,health_height,cur,max,border_size, 50,50,175, "MP", real_cur)
 
@@ -215,22 +215,23 @@ hook.Add("HUDPaint", "jhud", function()
 			local cur = smooth(real_cur, "stamina")
 			local max = jattributes.GetMaxStamina(ply)
 
-			local w = math.Clamp(max*3, 50, 1000)
+			local w = math.Clamp(max*3, 50, ScrW()/3)
 
 			draw_bar(x,y,w,health_height,cur,max,border_size, 150,150,50, "SP", real_cur)
 
 			last_hp_timer = math.huge
 
 			y = y + health_height + spacing
-			x = x + skew/2.5
+			x = x + skew/2.75
 		end
 
 		do
 			local real_cur = math.Round(ply:GetNWInt("jlevel_xp", 0))
 			local cur = smooth(real_cur, "xp")
 			local max = ply:GetNWInt("jlevel_next_level", 0)
+			local w = math.Clamp(jattributes.GetMaxStamina(ply)*3, 50, ScrW()/3)
 
-			draw_bar(x, y, 300-5, 8, cur, max, 1, 100,0,255, "XP", real_cur, true)
+			draw_bar(x, y, w, 8, cur, max, 1, 100,0,255, "XP", real_cur, true)
 		end
 	end
 
