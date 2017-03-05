@@ -7,7 +7,7 @@ local mainMenuSize = {
     w = scrW * .75,
     h = scrH * .8
 }
-local line_height = 70
+local line_height = 90
 
 local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
     ["$BaseTexture"] = "gui/center_gradient",
@@ -193,7 +193,7 @@ local PLAYER_LINE = {
 		local dir = self.Friend and 1 or -1
 		local skew = 30 * dir
 		--skew = skew * math.sin(os.clock()*5)
-		local size_div = 1.2
+		local size_div = 1.35
 		local spacing = 8
 		local border_size = 10
 
@@ -296,11 +296,11 @@ local PLAYER_LINE = {
 		do
 			if _G.avatar then
 				surface.SetDrawColor(255,255,255,255)
-				local size = h * 1.15
-				local x = x - size / 2
+				local size = h * 1.75
+				local x = x - size / 1.75
 				local y = y - size / 2
 
-				y = y + h / 2
+				y = y + h / 2.5
 				x = x + (size/3.7 * dir)
 
 				if dir < 0 then
