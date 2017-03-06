@@ -1061,7 +1061,7 @@ if CLIENT then
 				if data.ent.pac_parts then
 					for k,v in pairs(data.ent.pac_parts) do
 						for _, part in ipairs(v:GetChildrenList()) do
-							if part.ClassName == "model" and not part:IsHidden() then
+							if part.ClassName == "model" and not part:IsHidden() and part:GetEntity():IsValid() then
 								data.type.draw(part:GetEntity(), f, data.strength, time + data.time_offset)
 							end
 						end
