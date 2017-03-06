@@ -154,6 +154,8 @@ do -- status events
 
 		local attacker = info:GetAttacker()
 
+		if attacker:IsPlayer() and not attacker:GetNWBool("rpg") then return end
+
 		if not (attacker:IsNPC() or attacker:IsPlayer()) then return end
 		local wep = attacker:GetActiveWeapon()
 
@@ -175,6 +177,8 @@ do -- status events
 		if wepstats.suppress_events then return end
 
 		if wep:IsPlayer() then
+			if not wep:GetNWBool("rpg") then return end
+
 			wep = wep:GetActiveWeapon()
 		end
 
