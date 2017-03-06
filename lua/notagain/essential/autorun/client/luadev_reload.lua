@@ -33,9 +33,9 @@ local function callback(path, code, what)
 	end
 end
 
-concommand.Add("notagain_monitor_lua", function(_,_,_,b)
+concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 	if b == "1" then
-		timer.Create("notagain_monitor_lua", 0.1, 0, function()
+		timer.Create("luadev_monitor_notagain", 0.1, 0, function()
 			for _, dir in pairs(notagain.directories) do
 				check_dir("addons/notagain/lua/"..dir.."/autorun/", callback, "shared")
 				check_dir("addons/notagain/lua/"..dir.."/autorun/client/", callback, "clients")
@@ -49,6 +49,25 @@ concommand.Add("notagain_monitor_lua", function(_,_,_,b)
 			end
 		end)
 	else
-		timer.Remove("notagain_monitor_lua")
+		timer.Remove("luadev_monitor_notagain")
+	end
+end)
+
+concommand.Add("luadev_monitor_last_send", function(ply,_,_,b)
+	local last_time
+	if b == "1" then
+		timer.Create("luadev_monitor_last_send", 0.1, 0, function()
+			local path, where = luadev.GetLastRunPath()
+			if path then
+				local time = file.Time(path, where)
+				if time ~= last_time then
+					luadev.RepeatLastCommand()
+					print("luadev reload: ", path, " reloaded")
+					last_time = time
+				end
+			end
+		end)
+	else
+
 	end
 end)
