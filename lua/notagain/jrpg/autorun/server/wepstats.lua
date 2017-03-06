@@ -726,16 +726,6 @@ hook.Add("OnEntityCreated", "wepstats_bugbait", function(ent)
 	end
 end)
 
-hook.Add("PlayerSwitchWeapon", "wepstats", function(ply, old_wep, new_wep)
-	if wepstats.IsElemental(new_wep) then
-		jattributes.SetTable(ply, {mana = 1, stamina = 1, health = 1})
-		jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
-		jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
-	else
-		jattributes.Disable(ply)
-	end
-end)
-
 if me then
 	local blacklist = {
 		weapon_physgun = true,
