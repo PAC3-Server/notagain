@@ -13,7 +13,5 @@ hook.Add("PlayerSpawnedSWEP", "undo_weapon", function(ply, ent)
 			undo.SetCustomUndoText("Undone " .. ent.PrintName)
 		end
 
-	undo.Finish("Weapon (" .. tostring(ent:GetClass()) .. ")")l
+	undo.Finish("Weapon (" .. tostring(ent:GetClass()) .. ")")
 end)
-
-
