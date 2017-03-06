@@ -88,6 +88,7 @@ if SERVER then
 		ply:Kill()
 		local rag = ply:GetNWEntity("serverside_ragdoll")
 		rag.serverside_ragdoll_disconnected = ply:UniqueID()
+		rag.serverside_ragdoll_eyeangles = ply:EyeAngles()
 		SafeRemoveEntityDelayed(rag, 120)
 	end)
 
@@ -97,6 +98,7 @@ if SERVER then
 			for _, ent in pairs(ents.FindByClass("prop_ragdoll")) do
 				if ent.serverside_ragdoll_disconnected == ply:UniqueID() then
 					ply:SetPos(ent:GetPos())
+					ply:SetEyeAngles(ent.serverside_ragdoll_eyeangles)
 					ent:Remove()
 					break
 				end
