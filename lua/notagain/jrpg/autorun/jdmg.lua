@@ -1,6 +1,5 @@
 jdmg = jdmg or {}
 
-
 local emitter
 local create_material
 local create_overlay_material
@@ -1146,7 +1145,7 @@ if SERVER then
 			net.WriteString(type)
 			net.WriteFloat(duration)
 			net.WriteFloat(strength)
-			net.WriteVector(pos)
+			net.WriteVector(pos or vector_origin)
 		net.Broadcast()
 	end
 
