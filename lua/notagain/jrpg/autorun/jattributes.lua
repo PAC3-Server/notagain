@@ -9,6 +9,7 @@ jattributes.types = {
 		reset = function(ent, stats)
 			if not ent.jattributes_base_health then return end
 			ent:SetMaxHealth(ent.jattributes_base_health)
+			ent:SetHealth(math.min(ent:Health(), ent:GetMaxHealth()))
 			ent.jattributes_base_health = nil
 		end,
 	},
@@ -227,6 +228,7 @@ if SERVER then
 					info.on_apply(ply, ply.jattributes)
 				end
 			end
+			ply:SetHealth(ply:GetMaxHealth())
 		end)
 	end)
 
