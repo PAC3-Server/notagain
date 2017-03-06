@@ -11,7 +11,7 @@ if CLIENT then
 
 	local function set_from_string(str)
 		if str == "none" then
-			avatar.Change(url)
+			avatar.Change()
 			return
 		end
 
