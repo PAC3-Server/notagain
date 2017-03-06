@@ -267,6 +267,9 @@ hook.Add("EntityEmitSound", "jprojectiles", function(data)
 	if data.SoundName:find("weapons/") and data.OriginalSoundName:EndsWith(".Single") then
 		local ply = data.Entity
 		if not ply:IsPlayer() and not ply:IsNPC() then return end
+
+		if ply:IsPlayer() and not ply:GetNWBool("rpg") then return end
+
 		local wep = ply:GetActiveWeapon()
 
 		if wep.jattributes_not_enough_mana then
@@ -300,6 +303,8 @@ end)
 hook.Add("EntityFireBullets", "jprojectiles", function(attacker, data)
 	if suppress then return end
 	if not attacker:IsPlayer() and not attacker:IsNPC() then return end
+
+	if attacker:IsPlayer() and not attacker:GetNWBool("rpg") then return end
 
 	local wep = attacker:GetActiveWeapon()
 

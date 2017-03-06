@@ -68,6 +68,10 @@ local render_ModelMaterialOverride = render.ModelMaterialOverride
 local render_SetColorModulation = render.SetColorModulation	local def = Vector(67,67,67)
 
 local function get_color(ent)
+	if not LocalPlayer():GetNWBool("rpg") then
+		return Vector(100, 100, 100)
+	end
+
 	local color = ent:GetNWVector("wepstats_color", def)
 
 	if color.r < 0 then
@@ -158,7 +162,7 @@ hook.Add("HUDPaint", "jrpg_items", function()
 			local color = get_color(ent)
 			color = color * 1.5
 
-			local name = ent:GetNWString("wepstats_name", ent:GetClass())
+			local name = LocalPlayer():GetNWBool("rpg") and ent:GetNWString("wepstats_name", ent:GetClass()) or ent:GetClass()
 			local class_name = ent:GetClass()
 
 			if language.GetPhrase(class_name) and language.GetPhrase(class_name) ~= class_name then
@@ -433,6 +437,8 @@ local emitter_viewmodel = ParticleEmitter(vector_origin)
 emitter_viewmodel:SetNoDraw(true)
 
 hook.Add("RenderScreenspaceEffects", "jrpg_items", function()
+	if not LocalPlayer():GetNWBool("rpg") then return end
+
 	render.UpdateScreenEffectTexture()
 	local time = RealTime()
 
@@ -479,9 +485,11 @@ end)
 
 local suppress = false
 hook.Add("PreDrawPlayerHands", "jrpg_items", function(hands, ent, ply, wep)
+	if not LocalPlayer():GetNWBool("rpg") then return end
 	render.ModelMaterialOverride()
 end)
 hook.Add("PreDrawViewModel", "jrpg_items", function(ent, ply, wep)
+	if not LocalPlayer():GetNWBool("rpg") then return end
 	if not wep then return end
 	if suppress then return end
 
