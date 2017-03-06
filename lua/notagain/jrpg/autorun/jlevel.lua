@@ -26,6 +26,12 @@ if SERVER then
 		end
 
 		ent:SetNWInt("jlevel_xp", ent:GetNWInt("jlevel_xp", 0) + xp)
+
+		if ent:IsPlayer() then
+			ent:SetPData("jlevel_xp", ent:GetNWInt("jlevel_xp", 0))
+			ent:SetPData("jlevel_level", ent:GetNWInt("jlevel_level", 0))
+			ent:SetPData("jlevel_attribute_points", ent:GetNWInt("jlevel_attribute_points", 0))
+		end
 	end
 
 	hook.Add("EntityTakeDamage", "jlevel", function(victim, dmginfo)
@@ -51,5 +57,13 @@ if SERVER then
 				end
 			end
 		end
+	end)
+
+	hook.Add("PlayerInitialSpawn", "jlevel", function(ply)
+		ply:SetNWInt("jlevel_xp", ply:GetPData("jlevel_xp"))
+		ply:SetNWInt("jlevel_level", ply:GetPData("jlevel_level"))
+		ply:SetNWInt("jlevel_attribute_points", ply:GetPData("jlevel_attribute_points"))
+
+		ply:SetNWInt("jlevel_next_level", 500 * ply:GetNWInt("jlevel_level", 0) ^ 1.5)
 	end)
 end
