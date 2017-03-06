@@ -85,12 +85,11 @@ hook.Add("HUDPaint", "jhud", function()
 
 	local offset = 0
 
-	if jattributes.HasMana(ply) then
-		offset = offset + 16
-	end
-
-	if jattributes.HasStamina(ply) then
-		offset = offset + 16
+	if ply:GetNWBool("rpg") then
+		offset = offset + 32
+	else
+		if ply:Health() == ply:GetMaxHealth() then return end
+		offset = offset - 16
 	end
 
 	local width = 100000
@@ -178,7 +177,9 @@ hook.Add("HUDPaint", "jhud", function()
 		prettytext.Draw(ply:Nick(), x + 210, y - offset + 7, "gabriola", 55, 00, 6, Color(255, 255, 255, 200), c)
 
 		x = x + 200
-		prettytext.Draw("Lv. " .. ply:GetNWInt("jlevel_level", 0), x + math.Clamp(ply:GetMaxHealth()*3, 50, 1000),  y - offset + 7, "gabriola", 55, 00, 6, Color(200, 50, 255, 200), c, -1)
+		if ply:GetNWBool("rpg") then
+			prettytext.Draw("Lv. " .. ply:GetNWInt("jlevel_level", 0), x + math.Clamp(ply:GetMaxHealth()*3, 50, ScrW()/3),  y - offset + 7, "gabriola", 55, 00, 6, Color(200, 50, 255, 200), c, -1)
+		end
 		y = y + height / 2 - offset
 
 
@@ -225,7 +226,7 @@ hook.Add("HUDPaint", "jhud", function()
 			x = x + skew/2.75
 		end
 
-		do
+		if ply:GetNWBool("rpg") then
 			local real_cur = math.Round(ply:GetNWInt("jlevel_xp", 0))
 			local cur = smooth(real_cur, "xp")
 			local max = ply:GetNWInt("jlevel_next_level", 0)
