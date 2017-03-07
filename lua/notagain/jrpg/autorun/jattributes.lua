@@ -1,5 +1,8 @@
 jattributes = {}
 
+local game_script_damage = {}
+jattributes.game_script_damage = game_script_damage
+
 jattributes.types = {
 	health = {
 		on_apply = function(ent, stats)
@@ -48,7 +51,22 @@ jattributes.types = {
 			local dmg = data.Damage
 
 			if data.Damage == 0 then
-				if wep.jattributes_last_damage and wep.jattributes_last_damage ~= 0 then
+				if game_script_damage[wep:GetClass()] == nil then
+					local str = file.Read("scripts/"..wep:GetClass()..".txt", "GAME")
+					if str then
+						game_script_damage[wep:GetClass()] = util.KeyValuesToTable(str).damage
+					end
+
+					if not game_script_damage[wep:GetClass()] then
+						game_script_damage[wep:GetClass()] = false
+					end
+				end
+
+				if game_script_damage[wep:GetClass()] then
+					dmg = game_script_damage[wep:GetClass()]
+				end
+
+				if dmg == 0 and wep.jattributes_last_damage and wep.jattributes_last_damage ~= 0 then
 					dmg = wep.jattributes_last_damage
 				end
 			end
@@ -266,17 +284,12 @@ if SERVER then
 
 				if jattributes.HasStamina(ply) then
 					if ply:IsOnGround() then
-						if
-							not ply:KeyDown(IN_FORWARD) and
-							not ply:KeyDown(IN_BACK) and
-							not ply:KeyDown(IN_MOVELEFT) and
-							not ply:KeyDown(IN_MOVERIGHT)
-						then
+						if ply:GetVelocity():IsZero() then
 							if jattributes.CanRegenStamina(ply) then
 								jattributes.SetStamina(ply, math.min(jattributes.GetStamina(ply) + 3, jattributes.GetMaxStamina(ply)))
 							end
 						else
-							if ply:KeyDown(IN_SPEED) then
+							if ply:GetVelocity():Length()-5 > ply:GetWalkSpeed() then
 								jattributes.SetStamina(ply, math.max(jattributes.GetStamina(ply) - 1, 0))
 							elseif jattributes.CanRegenStamina(ply) then
 								jattributes.SetStamina(ply, math.min(jattributes.GetStamina(ply) + 1, jattributes.GetMaxStamina(ply)))
@@ -315,8 +328,9 @@ end
 
 hook.Add("Move", "jattributes_stamina", function(ply, mov)
 	if jattributes.HasStamina(ply) and jattributes.GetStamina(ply) == 0 then
-		mov:SetForwardSpeed(math.Clamp(mov:GetForwardSpeed(), -100, 100))
-		mov:SetSideSpeed(math.Clamp(mov:GetSideSpeed(), -100, 100))
+		local speed = ply:GetWalkSpeed()
+		mov:SetForwardSpeed(math.Clamp(mov:GetForwardSpeed(), -speed, speed))
+		mov:SetSideSpeed(math.Clamp(mov:GetSideSpeed(), -speed, speed))
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() then
 			wep:SetNextPrimaryFire(CurTime() + 0.1)
