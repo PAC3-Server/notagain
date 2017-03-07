@@ -125,8 +125,10 @@ if SERVER then
 				return
 			end
 
-			attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
-			attacker.cl_dmg_mode_want_attack[victim] = true
+			if attacker ~= victim then
+				attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
+				attacker.cl_dmg_mode_want_attack[victim] = true
+			end
 		end
 
 		local godmode = victim:GetInfoNum("cl_godmode", 1) > 0
@@ -140,21 +142,25 @@ if SERVER then
 
 		if godmode then
 			if attacker:IsPlayer() then
-				attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
-				attacker.cl_dmg_mode_want_attack[victim] = true
+				if attacker ~= victim then
+					attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
+					attacker.cl_dmg_mode_want_attack[victim] = true
+				end
 
 				local wep = attacker:GetActiveWeapon()
 				if wep:IsValid() then
 					wep:SetNWBool("cl_godmode_lethal", true)
 				end
 
-				suppress = true
-				dmginfo:SetAttacker(victim)
-				attacker:TakeDamageInfo(dmginfo)
-				if npc then
-					npc:TakeDamageInfo(dmginfo)
+				if attacker ~= victim then
+					suppress = true
+					dmginfo:SetAttacker(victim)
+					attacker:TakeDamageInfo(dmginfo)
+					if npc then
+						npc:TakeDamageInfo(dmginfo)
+					end
+					suppress = false
 				end
-				suppress = false
 			end
 
 			dmginfo:SetDamage(0)
