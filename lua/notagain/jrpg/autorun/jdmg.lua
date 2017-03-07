@@ -1177,6 +1177,9 @@ if SERVER then
 
 		if override then
 			jdmg.DamageEffect(ent, override, duration, strength, pos)
+			if override == "lightning" then
+				dmginfo:SetDamageType(DMG_DISSOLVE)
+			end
 		else
 			local done = {}
 			for k, v in pairs(enums) do
