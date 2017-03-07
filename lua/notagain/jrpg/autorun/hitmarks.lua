@@ -300,7 +300,7 @@ if CLIENT then
 					local height = 10
 					local border_size = 3
 					local skew = -30
-					local width = math.Clamp(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5,  ScrW()/2)
+					local width = math.Clamp(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5 + 100,  ScrW()/2)
 
 					if max > 1000 then
 						height = 35
@@ -312,7 +312,7 @@ if CLIENT then
 						border_size = 10
 						boss_bar_y = boss_bar_y + height + 20
 					else
-						width = math.Clamp(width + (max - 100), 0, 500)
+						width = math.Clamp(width + (max - 50), 0, 500)
 					end
 
 					local width2 = width/2
