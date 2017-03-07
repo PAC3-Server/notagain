@@ -109,7 +109,7 @@ if SERVER then
 
 		local attacker = dmginfo:GetAttacker()
 
-		if (not attacker:IsNPC() or not attacker:IsPlayer()) and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
+		if (not attacker:IsNPC() and not attacker:IsPlayer()) and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
 			attacker = attacker:CPPIGetOwner()
 		end
 
@@ -156,6 +156,7 @@ if SERVER then
 					suppress = true
 					dmginfo:SetAttacker(victim)
 					attacker:TakeDamageInfo(dmginfo)
+						print(npc, attacker)
 					if npc then
 						npc:TakeDamageInfo(dmginfo)
 					end
