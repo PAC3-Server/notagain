@@ -19,7 +19,7 @@ function META:IsStuck()
 				filter = self 
 			})
 
-			if self:GetMoveType() != MOVETYPE_NOCLIP then
+			if self:GetMoveType() != MOVETYPE_NOCLIP and self:Alive() then
 				
 				if !tr.HitWorld and tr.Hit then
 					
