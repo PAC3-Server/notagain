@@ -269,9 +269,12 @@ if CLIENT then
 				local world_pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2))
 				local pos = world_pos:ToScreen()
 				local dist = world_pos:Distance(EyePos())
-				fraction = fraction * ((-(dist / 1000)+1) ^ 2)
+				local scale = (ent:GetModelScale() or 1)
+				local radius = ent:BoundingRadius() * 10
+				local max_distance = scale * radius
+				fraction = fraction * ((-(dist / max_distance)+1) ^ 2)
 
-				if pos.visible and dist < 1000 then
+				if pos.visible and dist < max_distance then
 					local cur = ent.hm_cur_health or ent:Health()
 					local max = ent.hm_max_health or ent:GetMaxHealth()
 					local last = ent.hm_last_health or max
@@ -301,7 +304,7 @@ if CLIENT then
 					local height = 10
 					local border_size = 3
 					local skew = -30
-					local width = math.Clamp(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5 + 100,  ScrW()/2)
+					local width = math.Clamp(radius * 3.5 * scale, w * 1.5 + 100,  ScrW()/2)
 
 					if max > 1000 then
 						height = 35
