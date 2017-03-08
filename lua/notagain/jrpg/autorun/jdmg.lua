@@ -1145,7 +1145,7 @@ if CLIENT then
 		local strength = net.ReadFloat()
 		local pos = net.ReadVector()
 
-		if ent:IsPlayer() then
+		if ent:IsPlayer() and type ~= "heal" then
 			local name = "flinch_stomach_0" .. math.random(2)
 			local bone = ent:LookupBone("ValveBiped.Bip01_Head1") or ent:LookupBone("ValveBiped.Bip01_Neck")
 
