@@ -74,6 +74,16 @@ function wepstats.IsElemental(wep)
 	end
 end
 
+function wepstats.ContainsElement(wep, ...)
+	if not wep.wepstats then return end
+	local tbl = {...}
+	for k,v in pairs(wep.wepstats) do
+		if v.Elemental and table.HasValue(tbl, v.ClassName) then
+			return true
+		end
+	end
+end
+
 duplicator.RegisterEntityModifier("wepstats", function(ply, ent, data)
 	wepstats.SetTable(ent, data)
 end)
@@ -285,7 +295,7 @@ do
 				status_mult = {-5, -2},
 				max_positive = 0,
 				max_negative = 3,
-				color = Vector(67, 67, 67),
+				color = Vector(30, 30, 30),
 			},
 			{
 				name = "uninteresting",
@@ -293,7 +303,7 @@ do
 				status_mult = {-5, -1},
 				max_positive = 0,
 				max_negative = 2,
-				color = Vector(120, 63, 4),
+				color = Vector(60, 60, 60),
 			},
 			{
 				name = "common",
@@ -301,7 +311,7 @@ do
 				status_mult = {0, 0},
 				max_positive = 0,
 				max_negative = 2,
-				color = Vector(143, 143, 143),
+				color = Vector(120, 120, 120),
 			},
 			{
 				name = "uncommon",
@@ -325,7 +335,7 @@ do
 				status_mult = {-5, 6},
 				max_positive = 2,
 				max_negative = 1,
-				color = Vector(106, 119, 31),
+				color = Vector(75, 255, 75),
 			},
 			{
 				name = "epic",
@@ -656,9 +666,33 @@ do -- effects
 		end
 
 		basic_elemental("fire", JDMG_FIRE, function(self, attacker, victim)
-			victim:Ignite((self:GetStatusMultiplier()-1)*10)
+			victim:Ignite((self:GetStatusMultiplier()-1)*10, victim:BoundingRadius() * 2)
 		end, {"hot", "molten", "burning", "flaming"}, {"fire", "flames"})
-		basic_elemental("lightning", JDMG_LIGHTNING, nil, {"shocking", "electrical", "electrifying"}, {"lightning", "thunder", "zeus"})
+		basic_elemental("lightning", JDMG_LIGHTNING, function(self, attacker, victim, dmginfo)
+			jdmg.SetStatus(victim, "lightning", true)
+
+			local time = CurTime() + 5
+
+			local id = "poison_"..tostring(attacker)..tostring(victim)
+
+			timer.Create(id, 0.2, 0, function()
+				if not attacker:IsValid() or not victim:IsValid() then
+					timer.Remove(id)
+					return
+				end
+
+				local wep = victim:GetActiveWeapon()
+				if wep:IsValid() then
+					wep:SetNextPrimaryFire(CurTime()+math.random())
+					wep:SetNextSecondaryFire(CurTime()+math.random())
+				end
+
+				if (not victim:IsPlayer() or not victim:Alive()) or time < CurTime() then
+					timer.Remove(id)
+					jdmg.SetStatus(victim, "lightning", false)
+				end
+			end)
+		end, {"shocking", "electrical", "electrifying"}, {"lightning", "thunder", "zeus"})
 		basic_elemental("dark", JDMG_DARK, nil, {"eerie", "ghastly", "cursed", "evil", "darkened", "haunted", "scary", "corrupt", "malicious", "unpleasant", "hateful", "wrathful", "ill"}, {"misery", "sin", "suffering", "darkness", "evil", "hades", "corruption", "heinousness"})
 		basic_elemental("holy", JDMG_HOLY, nil, {"angelic", "divine", "spiritual", "sublime", "celestial", "spirited"}, {"light", "holyness"})
 		basic_elemental("water", JDMG_WATER, nil, {"soggy", "doused", "soaked", "rainy", "misty", "wet"}, {"water", "rain", "aqua", "h2o"})

@@ -34,6 +34,35 @@ if SERVER then
 		end
 	end
 
+	jlevel.stats = {
+		health = function(val) return val + 25 end,
+		mana = function(val) return val + 10 end,
+		stamina = function(val) return val + 5 end,
+	}
+
+	function jlevel.LevelAttribute(ent, what)
+		if not jlevel.stats[what] then return false end
+
+		if ent:GetNWInt("jlevel_attribute_points", 0) >= 1 then
+			jattributes.SetAttribute(ent, what, jlevel.stats[what](jattributes.GetAttribute(ent, what)))
+			ent:SetNWInt("jlevel_attribute_points", ent:GetNWInt("jlevel_attribute_points", 0) - 1)
+			ent:SetPData("jlevel_attribute_points", ent:GetNWInt("jlevel_attribute_points", 0))
+			ent:SetPData("jlevel_stat_" .. what, jattributes.GetAttribute(ent, what))
+			return true
+		end
+	end
+
+	function jlevel.LoadStats(ply)
+		ply:SetNWInt("jlevel_xp", tonumber(ply:GetPData("jlevel_xp")))
+		ply:SetNWInt("jlevel_level", tonumber(ply:GetPData("jlevel_level")))
+		ply:SetNWInt("jlevel_attribute_points", tonumber(ply:GetPData("jlevel_attribute_points")))
+		ply:SetNWInt("jlevel_next_level", 500 * ply:GetNWInt("jlevel_level", 0) ^ 1.5)
+
+		for stat in pairs(jlevel.stats) do
+			jattributes.SetAttribute(ply, stat, tonumber(ply:GetPData("jlevel_stat_" .. stat)))
+		end
+	end
+
 	hook.Add("EntityTakeDamage", "jlevel", function(victim, dmginfo)
 		local attacker = dmginfo:GetAttacker()
 
@@ -59,11 +88,5 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("PlayerInitialSpawn", "jlevel", function(ply)
-		ply:SetNWInt("jlevel_xp", ply:GetPData("jlevel_xp"))
-		ply:SetNWInt("jlevel_level", ply:GetPData("jlevel_level"))
-		ply:SetNWInt("jlevel_attribute_points", ply:GetPData("jlevel_attribute_points"))
-
-		ply:SetNWInt("jlevel_next_level", 500 * ply:GetNWInt("jlevel_level", 0) ^ 1.5)
-	end)
+	hook.Add("PlayerInitialSpawn", "jlevel", jlevel.LoadStats)
 end

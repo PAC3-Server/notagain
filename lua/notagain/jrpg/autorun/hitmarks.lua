@@ -60,28 +60,29 @@ if CLIENT then
 		local size = 24
 		x = x + 16
 		y = y + 5
+		if is_health then
+			for i, status in ipairs(jdmg.GetStatuses(ent)) do
+				if status.negative then
+					surface.SetDrawColor(150, 0, 0, 255*fade)
+				elseif status.positive then
+					surface.SetDrawColor(0, 0, 150, 255*fade)
+				else
+					surface.SetDrawColor(0, 0, 0, 255*fade)
+				end
+				draw.NoTexture()
+				draw_rect(x+w-size,y+h,size,size)
 
-		for i, status in ipairs(jdmg.GetStatuses(ent)) do
-			if status.negative then
-				surface.SetDrawColor(150, 0, 0, 255*fade)
-			elseif status.positive then
-				surface.SetDrawColor(0, 0, 150, 255*fade)
-			else
-				surface.SetDrawColor(0, 0, 0, 255*fade)
+				surface.SetDrawColor(255, 255, 255, 255*fade)
+				surface.SetMaterial(border)
+				draw_rect(x+w-size,y+h,size,size, 0, 1, 64,border_size/1.5, border:GetTexture("$BaseTexture"):Width(), true)
+
+				surface.SetDrawColor(255, 255, 255, 255*fade)
+				surface.SetMaterial(status.icon)
+				draw_rect(x+w-size,y+h,size,size)
+				draw_rect(x+w-size,y+h,size,size)
+
+				x = x - 24 - 5
 			end
-			draw.NoTexture()
-			draw_rect(x+w-size,y+h,size,size)
-
-			surface.SetDrawColor(255, 255, 255, 255*fade)
-			surface.SetMaterial(border)
-			draw_rect(x+w-size,y+h,size,size, 0, 1, 64,border_size/1.5, border:GetTexture("$BaseTexture"):Width(), true)
-
-			surface.SetDrawColor(255, 255, 255, 255*fade)
-			surface.SetMaterial(status.icon)
-			draw_rect(x+w-size,y+h,size,size)
-			draw_rect(x+w-size,y+h,size,size)
-
-			x = x - 24 - 5
 		end
 	end
 
