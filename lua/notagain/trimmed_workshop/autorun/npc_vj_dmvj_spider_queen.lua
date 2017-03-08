@@ -1,3 +1,31 @@
+-- ConVars --
+VJ.AddConVar("vj_dm_spiderqueen_h",10000)
+VJ.AddConVar("vj_dm_spiderqueen_d_single",85)
+VJ.AddConVar("vj_dm_spiderqueen_d_dual",47)
+VJ.AddConVar("vj_dm_spiderqueen_d_poison",96)
+
+VJ.AddConVar("vj_dm_spider_h",200)
+VJ.AddConVar("vj_dm_spider_d_reg",30)
+VJ.AddConVar("vj_dm_spider_d_slow",37)
+VJ.AddConVar("vj_dm_spider_d_slowdual",21)
+
+VJ.AddConVar("vj_dm_facehugger_h",100)
+VJ.AddConVar("vj_dm_facehugger_d_reg",25)
+VJ.AddConVar("vj_dm_facehugger_d_bite",30)
+VJ.AddConVar("vj_dm_facehugger_d_slow",38)
+
+VJ.AddConVar("vj_dm_worm_h",8000)
+VJ.AddConVar("vj_dm_worm_d",80)
+
+-- Menu --
+local AddConvars = {}
+AddConvars["vj_dm_nobabyspawn"] = 1 -- Spawn Baby Spiders?
+AddConvars["vj_dm_nextbaby"] = 40 -- Next Baby Spawn
+AddConvars["vj_dm_babyspawnlimit"] = 9 -- Baby spawn limit
+for k, v in pairs(AddConvars) do
+	if !ConVarExists( k ) then CreateConVar( k, v, {FCVAR_ARCHIVE} ) end
+end
+
 local ENT = {}
 ENT.ClassName = "npc_vj_dmvj_spider_queen"
 
