@@ -5,11 +5,11 @@ if SERVER then
 	EMF = EMF or {}
 	EMF.Ents = EMF.Ents or {}
 
-	local BigValue = 100000
+	local BigValue = 100000	
 
-	EMF.Topology = EMF.Topology or {}
+	EMF.Topology     = EMF.Topology or {}
 	EMF.InitTopology = EMF.InitTopology or {}
-	EMF.ActiveEnts = EMF.ActiveEnts or {}
+	EMF.ActiveEnts   = EMF.ActiveEnts or {}
 	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
 	
@@ -17,16 +17,16 @@ if SERVER then
 
 		local ToIgnore = {
 
-			sky_camera = true,
-			env_fog_controller = true,
-			worldspawn = true,
-			predicted_viewmodel = true,
+			sky_camera               = true,
+			env_fog_controller       = true,
+			worldspawn               = true,
+			predicted_viewmodel      = true,
 			func_physbox_multiplayer = true,
-			info_particle_system = true,
-			game_text = true,
-			soundent = true,
-			scene_manager = true,
-			env_skypaint = true,
+			info_particle_system     = true,
+			game_text                = true,
+			soundent                 = true,
+			scene_manager            = true,
+			env_skypaint             = true,
 
 		}
 
@@ -35,9 +35,9 @@ if SERVER then
 			if ent:IsInWorld() and !ToIgnore[ent:GetClass()] and !ent:IsWeapon() then
 
 				local tr = util.TraceLine({
-					start = ent:GetPos(),
+					start  = ent:GetPos(),
 					endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
-					mask = MASK_PLAYERSOLID,
+					mask   = MASK_PLAYERSOLID,
 				})
 
 				if tr.HitPos and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld then
@@ -95,9 +95,9 @@ if SERVER then
 				else
 
 					local tr = util.TraceLine({
-						start = ent:GetPos(),
+						start  = ent:GetPos(),
 						endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
-						mask = MASK_PLAYERSOLID,
+						mask   = MASK_PLAYERSOLID,
 					})
 
 					if !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
@@ -125,9 +125,9 @@ if SERVER then
 
 	local function RandPosToRef( pos , min , max )
 		
-		local randpos = Vector( math.random( -max , max ) , math.random( -max , max ) , 5 )
+		local randpos     = Vector( math.random( -max , max ) , math.random( -max , max ) , 5 )
 		local arearandpos = pos + randpos
-		local finalpos = ( pos:Distance( arearandpos ) < min and ( pos + ( pos - arearandpos ) ) or arearandpos )
+		local finalpos    = ( pos:Distance( arearandpos ) < min and ( pos + ( pos - arearandpos ) ) or arearandpos )
 
 		return finalpos
 	
@@ -137,16 +137,21 @@ if SERVER then
 
 		if !EMF.Topology[ref] or !ent or !IsValid( ent ) then return end 
 
-		local refpos = EMF.Topology[ref]
+		local refmins = ent:OBBMins()
+		local refmaxs = ent:OBBMaxs()
+		local refpos  = EMF.Topology[ref]
 		local randpos = RandPosToRef( refpos , EMF.MinDistToRef , EMF.MaxDistToRef )
 
-		local tr = util.TraceLine({
-			start = randpos,
+		local tr = util.TraceHull({
+			start  = randpos,
 			endpos = randpos.z >= 0 and randpos - Vector( 0 , 0 , refpos.z )  * BigValue or randpos + Vector( 0 , 0 , refpos.z )  * BigValue,
-			mask = MASK_PLAYERSOLID,
+			maxs   = refmaxs,
+			mins   = refmins,
+			filter = ent,
+			mask   = MASK_PLAYERSOLID,
 		})
 
-		if ent:IsInWorld() and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.AllSolid then
+		if ent:IsInWorld() and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.StartSolid then
 
 			ent:SetPos( tr.HitPos )
 			ent:SetPos( ent:NearestPoint( ent:GetPos().z >= 0 and ent:GetPos() - Vector( 0 , 0 , -BigValue ) or ent:GetPos() + Vector( 0 , 0 , -BigValue ) ) )  
@@ -180,25 +185,40 @@ if SERVER then
 		
 		if !ent or !IsValid( ent ) then return end
 		
-		local refpos = ent:GetPos()
-		local refangle = ent:GetAngles()
-		local angs = { refangle:Forward() , -refangle:Forward() , refangle:Right() , -refangle:Right() }
-		local closest = BigValue
+		local refpos     = ent:WorldSpaceCenter()
+		local refmins    = ent:OBBMins()
+		local refmaxs    = ent:OBBMaxs()
+		local closest    = BigValue
 		local finalangle = Angle()
+		local angled = false
 
-		for i = 1 , #angs do
+		for i = 1 , 6 do 
 			
-			local tr = util.TraceLine({
-				start = refpos,
-				endpos = refpos + angs[i] * BigValue,
-				mask = MASK_PLAYERSOLID,
+			local currentang = Angle( 0 , i*60 - 180 , 0 )
+			
+			local tr = util.TraceHull({
+				start  = refpos,
+				endpos = refpos + currentang:Forward() * BigValue,
+				maxs   = refmaxs,
+				mins   = refmins,
+				filter = ent,
+				mask   = MASK_PLAYERSOLID,
 			})
 
 			if closest > refpos:Distance( tr.HitPos ) and EMF.MinDistToRef >= refpos:Distance( tr.HitPos ) then
 				
-				closest = refpos:Distance( tr.HitPos )
-				finalangle = angs[i]:Angle()
+				closest    = refpos:Distance( tr.HitPos )
+				finalangle = currentang - Angle( 0 , 90 , 0 )
+				angled = true
 			
+			end
+
+			if tr.StartSolid and tr.HitWorld then
+
+				closest    = 0
+				finalangle = currentang - Angle( 0 , 90 , 0 )
+				angled = true
+
 			end
 		
 		end
@@ -211,6 +231,12 @@ if SERVER then
 			end
 		end]]--
 
+		if !angled then
+			
+			finalangle = Angle( 0 , math.random( -180 , 180 ) , 0 )
+		
+		end
+		
 		ent:SetAngles( finalangle )
 		
 	end
@@ -218,12 +244,13 @@ if SERVER then
 	function EMF.GenerateEnts()
 		
 		local MaxEntries = #EMF.Topology
-		local AmScale = math.Round( MaxEntries / 25 * 1.25 )
+		local AmScale    = math.Round( MaxEntries / 25 * 1.25 )
 
 		for i = 1 , AmScale do
 			
 			local ent = ents.Create( EMF.Ents[math.random( 1 , #EMF.Ents )] )
 			ent:Spawn()
+			ent.EMFSpawned = true
 
 			EMF.SetValidPos( ent , math.random( 1 , #EMF.Topology ) )
 			EMF.SetValidAngle( ent )
