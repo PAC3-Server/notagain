@@ -436,22 +436,22 @@ do
 				if self.rarity.max_positive > 0 then
 					local i = 1
 					for name, status in pairs(wepstats.registered) do
+						if i == self.rarity.max_positive then break end
 						if status.Positive and math.random() < status.Chance then
 							wepstats.AddStatus(self.Weapon, name)
 							i = i + 1
 						end
-						if i == self.rarity.max_positive then break end
 					end
 				end
 
 				if self.rarity.max_negative > 0 then
 					local i = 1
 					for name, status in pairs(wepstats.registered) do
+						if i == self.rarity.max_negative then break end
 						if status.Negative and math.random() / self.rarity.i < status.Chance then
 							wepstats.AddStatus(self.Weapon, name)
 							i = i + 1
 						end
-						if i == self.rarity.max_negative then break end
 					end
 				end
 			end
