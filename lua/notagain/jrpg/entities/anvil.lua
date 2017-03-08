@@ -1,3 +1,5 @@
+AddCSLuaFile()
+
 local ENT = {}
 
 ENT.Type = "anim"
