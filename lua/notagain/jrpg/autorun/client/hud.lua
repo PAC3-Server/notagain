@@ -245,7 +245,11 @@ hook.Add("HUDPaint", "jhud", function()
 end)
 
 hook.Add("HUDShouldDraw", "jhud", function(what)
-	if what == "CHudHealth" or what == "CHudBattery" or what == "CHudAmmo" or what == "CHudSecondaryAmmo" then
+	if what == "CHudHealth"  then
+		return false
+	end
+
+	if LocalPlayer():GetNWBool("rpg") and (what == "CHudBattery" or what == "CHudAmmo" or what == "CHudSecondaryAmmo") then
 		return false
 	end
 end)
