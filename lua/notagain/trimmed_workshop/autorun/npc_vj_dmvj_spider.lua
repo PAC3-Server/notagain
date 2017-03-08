@@ -1,5 +1,5 @@
 local ENT = {}
-ENT.ClassName = "npc_vj_dmvj_spider_queen"
+ENT.ClassName = "npc_vj_dmvj_spider"
 
 ENT.Base 			= "npc_vj_creature_base"
 ENT.Type 			= "ai"
