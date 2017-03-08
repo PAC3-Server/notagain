@@ -233,6 +233,20 @@ do
 	end
 
 	do
+		jdmg.statuses.lightning = {}
+		jdmg.statuses.lightning.negative = true
+		if CLIENT then
+			jdmg.statuses.lightning.icon = create_material({
+				Shader = "UnlitGeneric",
+				BaseTexture = "editor/choreo_manager",
+				VertexAlpha = 1,
+				VertexColor = 1,
+				BaseTextureTransform = "center 0.45 .1 scale 0.9 0.9 rotate 0 translate 0 -0.05",
+			})
+		end
+	end
+
+	do
 		jdmg.statuses.frozen = {}
 		jdmg.statuses.frozen.negative = true
 		if CLIENT then
@@ -349,11 +363,12 @@ do
 	if CLIENT then
 		local mat = create_overlay_material("effects/filmscan256")
 
-		jdmg.types.heal.draw = function(ent, f, s, t)
-			if math.random() > 0.99 then
+		jdmg.types.heal.think = function(ent, f, s, t)
+			if math.random() > 0.9 then
 				ent:EmitSound("items/smallmedkit1.wav", 75, math.Rand(230,235), f)
 			end
-
+		end
+		jdmg.types.heal.draw = function(ent, f, s, t)
 			render.ModelMaterialOverride(mat)
 			render.SetColorModulation(0.75, 1*s, 0.75)
 			render.SetBlend(f)
@@ -385,11 +400,12 @@ do
 		--jdmg.types.dark.sound_path = "ambient/machines/laundry_machine1_amb.wav"
 		--jdmg.types.dark.sound_path = "npc/antlion_guard/confused1.wav"
 
-		jdmg.types.dark.draw = function(ent, f, s, t)
-			if math.random() > 0.5 then
+		jdmg.types.dark.think = function(ent, f, s, t)
+				if math.random() > 0.5 then
 				ent:EmitSound("hl1/fvox/buzz.wav", 75, math.Rand(175,255), f)
 			end
-
+		end
+		jdmg.types.dark.draw = function(ent, f, s, t)
 			local m = Matrix()
 			m:Scale(Vector(1,1,1) + (VectorRand()*0.1) * f)
 			ent:EnableMatrix("RenderMultiply", m)
@@ -450,12 +466,13 @@ do
 			}
 		}
 
-		jdmg.types.holy.draw = function(ent, f, s, t)
+		jdmg.types.holy.think = function(ent, f, s, t)
 			if math.random() > 0.95 then
 				ent:EmitSound(table.Random(sounds), 75, math.Rand(100,120), f)
 				ent:EmitSound("friends/friend_join.wav", 75, 255, f)
 			end
-
+		end
+		jdmg.types.holy.draw = function(ent, f, s, t)
 			render.ModelMaterialOverride(mat)
 			render.SetColorModulation(s*6,s*6,s*6)
 			render.SetBlend(f)
@@ -491,11 +508,13 @@ do
 	if CLIENT then
 		local mat = create_overlay_material("sprites/lgtning")
 
-		jdmg.types.lightning.draw = function(ent, f, s, t)
+		jdmg.types.lightning.think = function(ent, f, s, t)
 			if math.random() > 0.95 then
 				ent:EmitSound("ambient/energy/zap"..math.random(1, 3)..".wav", 75, math.Rand(150,255), f)
 			end
+		end
 
+		jdmg.types.lightning.draw = function(ent, f, s, t)
 			f = 0.1 * f + (f * math.random() ^ 5)
 
 			--t = t + math.Rand(0,0.25)
@@ -559,11 +578,13 @@ do
 			})
 		end
 
-		jdmg.types.fire.draw = function(ent, f, s, t)
+		jdmg.types.fire.think = function(ent, f, s, t)
 			if math.random() > 0.98 then
 				ent:EmitSound("ambient/fire/mtov_flame2.wav", 75, math.Rand(50,100), f)
 			end
+		end
 
+		jdmg.types.fire.draw = function(ent, f, s, t)
 			for i = 1, 1 do
 				local pos
 				local mat = ent:GetBoneMatrix(math.random(1, ent:GetBoneCount()))
@@ -665,11 +686,13 @@ do
 
 		}
 
-		jdmg.types.water.draw = function(ent, f, s, t)
+		jdmg.types.water.think = function(ent, f, s, t)
 			if math.random() > 0.8 then
 				ent:EmitSound("ambient/water/wave"..math.random(1,6)..".wav", 75, math.Rand(200,255), f)
 			end
+		end
 
+		jdmg.types.water.draw = function(ent, f, s, t)
 			local pos = ent:GetBoneMatrix(math.random(1, ent:GetBoneCount()))
 			if pos then
 				pos = pos:GetTranslation()
@@ -860,11 +883,13 @@ do
 			},
 		}
 
-		jdmg.types.poison.draw = function(ent, f, s, t)
+		jdmg.types.poison.think = function(ent, f, s, t)
 			if math.random() > 0.95 then
 				ent:EmitSound("ambient/levels/canals/toxic_slime_sizzle"..math.random(2, 4)..".wav", 75, math.Rand(120,170), f)
 			end
+		end
 
+		jdmg.types.poison.draw = function(ent, f, s, t)
 			local pos = ent:GetBoneMatrix(math.random(1, ent:GetBoneCount()))
 			if pos then
 				pos = pos:GetTranslation()
@@ -1057,6 +1082,10 @@ if CLIENT then
 			if f <= 0 or not data.ent:IsValid() then
 				table.remove(active, i)
 			else
+				if data.type.think then
+					data.type.think(data.ent, f, data.strength, time + data.time_offset)
+				end
+
 				if data.ent.pac_parts then
 					for k,v in pairs(data.ent.pac_parts) do
 						for _, part in ipairs(v:GetChildrenList()) do
