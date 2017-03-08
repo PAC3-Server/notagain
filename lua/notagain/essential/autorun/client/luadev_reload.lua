@@ -12,7 +12,7 @@ local function check_dir(dir, cb, what, lib)
 			if last[path] then
 				local code = file.Read(path, "MOD")
 				if lib then
-					code = "notagain.loaded_libraries." .. name .. "=nil;" .. code
+					code = "notagain.loaded_libraries." .. name .. "=(function()" .. code .. ";end)()"
 				end
 				cb(path, code, what)
 			end
