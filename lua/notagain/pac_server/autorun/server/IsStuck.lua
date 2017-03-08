@@ -21,7 +21,7 @@ function META:IsStuck()
 
 			if self:GetMoveType() != MOVETYPE_NOCLIP and self:Alive() then
 				
-				if !tr.HitWorld and tr.Hit then
+				if !tr.HitWorld and IsValid(tr.Entity) and tr.Entity:GetOwner() != self and tr.Entity != self then
 					
 					local dist = tr.HitPos:Distance( pos + Vector( 0 , 0 , j ) )
 					
@@ -31,7 +31,7 @@ function META:IsStuck()
 
 					end
 
-				elseif tr.AllSolid or tr.StartSolid then
+				elseif tr.StartSolid then
 
 					return true 
 
