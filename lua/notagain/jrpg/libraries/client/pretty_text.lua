@@ -12,7 +12,6 @@ local function create_fonts(font, size, weight, blursize)
 			size = size,
 			weight = weight,
 			antialias 	= true,
-			additive 	= true,
 		}
 	)
 
@@ -34,14 +33,16 @@ local function create_fonts(font, size, weight, blursize)
 	}
 end
 
-def_color1 = Color(255, 255, 255, 255)
-def_color2 = Color(0, 0, 0, 255)
+local def_color1 = Color(255, 255, 255, 255)
+local def_color2 = Color(0, 0, 0, 255)
 
 local surface_SetFont = surface.SetFont
 local surface_SetTextColor = surface.SetTextColor
 local surface_SetTextPos = surface.SetTextPos
 local surface_DrawText = surface.DrawText
 local Color = Color
+
+local hsv_cache = {}
 
 local prettytext = {}
 
@@ -51,6 +52,29 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 	weight = weight or 0
 	blursize = blursize or 1
 	color1 = color1 or def_color1
+
+	if color2 == true then
+		hsv_cache[color1.r] = hsv_cache[color1.r] or {}
+		hsv_cache[color1.r][color1.g] = hsv_cache[color1.r][color1.g] or {}
+
+		if not hsv_cache[color1.r][color1.g][color1.b] then
+			local h,s,v = ColorToHSV(color1)
+			local v2 = v
+			s = s * 0.5
+			v = v * 0.5
+			v = -v + 1
+
+			if math.abs(v-v2) < 0.1 then
+				v = v - 0.25
+			end
+			color2 = HSVToColor(h,s,v)
+
+			hsv_cache[color1.r][color1.g][color1.b] = hsv_cache[color1.r][color1.g][color1.b] or color2
+		end
+
+		color2 = hsv_cache[color1.r][color1.g][color1.b]
+	end
+
 	color2 = color2 or def_color2
 
 	if not fonts[font] then fonts[font] = {} end

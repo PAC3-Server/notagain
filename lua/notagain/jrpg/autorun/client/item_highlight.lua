@@ -183,7 +183,7 @@ hook.Add("HUDPaint", "jrpg_items", function()
 			surface.SetMaterial(gradient)
 			surface.DrawTexturedRect(pos.x - bg_width, pos.y, bg_width * 2, h)
 
-			prettytext.Draw(name, pos.x - w / 2, pos.y, "gabriola", 40, 800, 3, TempColor(color.r, color.g, color.b, 255))
+			prettytext.Draw(name, pos.x - w / 2, pos.y, "gabriola", 40, 800, 3, TempColor(color.r, color.g, color.b, 255), true)
 
 			local border = 20
 			local x = pos.x
