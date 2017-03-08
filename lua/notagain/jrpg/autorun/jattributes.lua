@@ -5,9 +5,10 @@ jattributes.game_script_damage = game_script_damage
 
 jattributes.types = {
 	health = {
+		default = 0,
 		on_apply = function(ent, stats)
 			ent.jattributes_base_health = ent.jattributes_base_health or ent:GetMaxHealth()
-			ent:SetMaxHealth(ent.jattributes_base_health * stats.health)
+			ent:SetMaxHealth(ent.jattributes_base_health + stats.health)
 		end,
 		reset = function(ent, stats)
 			if not ent.jattributes_base_health then return end
@@ -17,6 +18,7 @@ jattributes.types = {
 		end,
 	},
 	stamina = {
+		default = 0,
 		on_receive_damage = function(stats, dmginfo, victim)
 			jattributes.SetStamina(victim, math.max(jattributes.GetStamina(victim) - dmginfo:GetDamage(), 0))
 		end,
@@ -37,7 +39,7 @@ jattributes.types = {
 		end,
 		on_apply = function(ent, stats)
 			ent.jattributes_base_stamina = ent.jattributes_base_stamina or jattributes.GetMaxStamina(ent)
-			jattributes.SetMaxStamina(ent, ent.jattributes_base_stamina * stats.stamina)
+			jattributes.SetMaxStamina(ent, ent.jattributes_base_stamina + stats.stamina)
 		end,
 		reset = function(ent, stats)
 			if not ent.jattributes_base_stamina then return end
@@ -46,6 +48,7 @@ jattributes.types = {
 		end,
 	},
 	mana = {
+		default = 0,
 		on_fire_bullet = function(attacker, data, stats)
 			local wep = attacker:GetActiveWeapon()
 			local dmg = data.Damage
@@ -96,7 +99,7 @@ jattributes.types = {
 		end,
 		on_apply = function(ent, stats)
 			ent.jattributes_base_mana = ent.jattributes_base_mana or jattributes.GetMaxMana(ent)
-			jattributes.SetMaxMana(ent, ent.jattributes_base_mana * stats.mana)
+			jattributes.SetMaxMana(ent, ent.jattributes_base_mana + stats.mana)
 		end,
 		reset = function(ent, stats)
 			if not ent.jattributes_base_mana then return end
@@ -105,6 +108,7 @@ jattributes.types = {
 		end,
 	},
 	physical_attack = {
+		default = 1,
 		on_give_damage = function(stats, dmginfo)
 			if not jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() * stats.physical_attack)
@@ -112,6 +116,7 @@ jattributes.types = {
 		end,
 	},
 	physical_defense = {
+		default = 1,
 		on_receive_damage = function(stats, dmginfo)
 			if not jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() / stats.physical_defense)
@@ -119,6 +124,7 @@ jattributes.types = {
 		end,
 	},
 	magic_attack = {
+		default = 1,
 		on_give_damage = function(stats, dmginfo)
 			if jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() * stats.magic_attack)
@@ -126,6 +132,7 @@ jattributes.types = {
 		end,
 	},
 	magic_defense = {
+		default = 1,
 		on_receive_damage = function(stats, dmginfo)
 			if jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() / stats.magic_defense)
@@ -133,6 +140,7 @@ jattributes.types = {
 		end,
 	},
 	jump = {
+		default = 1,
 		on_apply = function(ent, stats)
 			if ent:IsPlayer() then
 				ent.jattributes_base_jump_power = ent.jattributes_base_jump_power or ent:GetJumpPower()
@@ -149,15 +157,16 @@ jattributes.types = {
 		end,
 	},
 	speed = {
+		default = 0,
 		on_apply = function(ent, stats)
 			if ent:IsPlayer() then
 				ent.jattributes_base_walk_speed = ent.jattributes_base_walk_speed or ent:GetWalkSpeed()
 				ent.jattributes_base_run_speed = ent.jattributes_base_run_speed or ent:GetRunSpeed()
 				ent.jattributes_base_crouched_walk_speed = ent.jattributes_base_crouched_walk_speed or ent:GetCrouchedWalkSpeed()
 
-				ent:SetRunSpeed(ent.jattributes_base_run_speed * stats.speed)
-				ent:SetWalkSpeed(ent.jattributes_base_walk_speed * stats.speed)
-				ent:SetCrouchedWalkSpeed(ent.jattributes_base_crouched_walk_speed * stats.speed)
+				ent:SetRunSpeed(ent.jattributes_base_run_speed + stats.speed)
+				ent:SetWalkSpeed(ent.jattributes_base_walk_speed + stats.speed)
+				ent:SetCrouchedWalkSpeed(ent.jattributes_base_crouched_walk_speed + stats.speed)
 			end
 		end,
 		reset = function(ent, stats)
@@ -177,6 +186,12 @@ jattributes.types = {
 
 if SERVER then
 
+	function jattributes.SetElementalMultiplier(ent, type, num)
+		ent.jattribute_elemental = ent.jattribute_elemental or {}
+
+		ent.jattribute_elemental[type] = num
+	end
+
 	function jattributes.SetAttribute(ent, type, num)
 		if num then
 			ent.jattributes = ent.jattributes or {}
@@ -193,6 +208,14 @@ if SERVER then
 				ent.jattributes = nil
 			end
 		end
+	end
+
+	function jattributes.GetAttribute(ent, type)
+		if ent.jattributes then
+			return ent.jattributes[type]
+		end
+
+		return jattributes.types[type].default
 	end
 
 	function jattributes.Disable(ent)
@@ -217,6 +240,17 @@ if SERVER then
 	hook.Add("EntityTakeDamage", "jattributes", function(victim, dmginfo)
 		local attacker = dmginfo:GetAttacker()
 		if not attacker:IsPlayer() and not attacker:IsNPC() then return end
+
+		if victim.jattribute_elemental then
+			local type = jdmg.GetDamageType(dmginfo)
+			if type and victim.jattribute_elemental[type] then
+				dmginfo:SetDamage(dmginfo:GetDamage() * victim.jattribute_elemental[type])
+				local dmg = dmginfo:GetDamage()
+				if dmg < 0 then
+					victim:SetHealth(math.min(victim:Health() + -dmg, victim:GetMaxHealth()))
+				end
+			end
+		end
 
 		for type, info in pairs(jattributes.types) do
 			if info.on_give_damage and attacker.jattributes and attacker.jattributes[type] then
@@ -278,20 +312,25 @@ if SERVER then
 
 		timer.Create("jattributes_stamina", 0.05, 0, function()
 			for _, ply in ipairs(player.GetAll()) do
-				if jattributes.HasMana(ply) then
-					jattributes.SetMana(ply, math.min(jattributes.GetMana(ply) + 0.1, jattributes.GetMaxMana(ply)))
+				if math.random() > 0.9 and jattributes.HasMana(ply) and wepstats.ContainsElement(ply:GetActiveWeapon(), "dark") then
+					jattributes.SetMana(ply, math.min(jattributes.GetMana(ply) + 1, jattributes.GetMaxMana(ply)))
 				end
 
-				if jattributes.HasStamina(ply) then
+				if math.random() > 0.9 and wepstats.ContainsElement(ply:GetActiveWeapon(), "holy") then
+					ply:SetHealth(math.min(ply:Health() + 1, ply:GetMaxHealth()))
+				end
+
+				if jattributes.HasStamina(ply) and not ply:GetNWBool("shield_stunned") then
 					if ply:IsOnGround() then
+						local shield = ply:GetNWEntity("shield"):IsValid()
 						if ply:GetVelocity():IsZero() then
 							if jattributes.CanRegenStamina(ply) then
-								jattributes.SetStamina(ply, math.min(jattributes.GetStamina(ply) + 3, jattributes.GetMaxStamina(ply)))
+								jattributes.SetStamina(ply, math.min(jattributes.GetStamina(ply) + (shield and 0.5 or 3), jattributes.GetMaxStamina(ply)))
 							end
 						else
 							if ply:GetVelocity():Length()-5 > ply:GetWalkSpeed() then
 								jattributes.SetStamina(ply, math.max(jattributes.GetStamina(ply) - 1, 0))
-							elseif jattributes.CanRegenStamina(ply) then
+							elseif jattributes.CanRegenStamina(ply) and not shield then
 								jattributes.SetStamina(ply, math.min(jattributes.GetStamina(ply) + 1, jattributes.GetMaxStamina(ply)))
 							end
 						end
