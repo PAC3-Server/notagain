@@ -1,4 +1,5 @@
 resource.AddWorkshop("546392647") -- Media Player
+resource.AddWorkshop("879302614") -- cuustom server content
 
 -- wos custom animations
 resource.AddWorkshop("757604550")
