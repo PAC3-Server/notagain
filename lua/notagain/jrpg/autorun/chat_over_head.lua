@@ -3,17 +3,22 @@ if SERVER then
 
 	net.Receive("coh", function(len, ply)
 		net.Start("coh", true)
+			local str = net.ReadString()
+			if #str > 300 then
+				str = str:sub(0,300) .. "..."
+			end
 			net.WriteEntity(ply)
-			net.WriteString(net.ReadString())
+			net.WriteString(str)
+			net.WriteBool(net.ReadBool())
 			net.WriteBool(net.ReadBool())
 		net.Broadcast()
 	end)
 end
 
 if CLIENT then
-	local history_time = 4
+	local history_time = 8
 
-	local function add_text(ply, str, change)
+	local function add_text(ply, str, change, entered)
 		ply.coh_text_history = ply.coh_text_history or {}
 
 		if #ply.coh_text_history > 10 then
@@ -25,9 +30,11 @@ if CLIENT then
 				table.insert(ply.coh_text_history, 1, {str = str, time = 0})
 			end
 			ply.coh_text_history[1] = {str = str, time = 0}
+		elseif str == "" then
+			table.remove(ply.coh_text_history, 1)
 		else
 			table.remove(ply.coh_text_history, 1)
-			table.insert(ply.coh_text_history, 1, {str = str, time = RealTime() + history_time})
+			table.insert(ply.coh_text_history, 1, {str = str, time = RealTime() + history_time, entered = entered})
 		end
 	end
 
@@ -36,22 +43,25 @@ if CLIENT then
 		if ply:IsValid() then
 			local str = net.ReadString()
 			local change = net.ReadBool()
+			local entered = net.ReadBool()
 
-			add_text(ply, str, change)
+			add_text(ply, str, change, entered)
 		end
 	end)
 
-	local function send_text(str, change)
+	local function send_text(str, change, entered)
 		net.Start("coh", true)
 			net.WriteString(str)
 			net.WriteBool(change)
+			net.WriteBool(entered)
 		net.SendToServer()
 	end
 
 	local wrote = ""
 
 	hook.Add("FinishChat", "coh", function()
-		send_text(wrote)
+		send_text(wrote, false, input.IsKeyDown(KEY_ENTER) or input.IsKeyDown(KEY_PAD_ENTER))
+		wrote = ""
 	end)
 
 	hook.Add("ChatTextChanged", "coh", function(text)
@@ -128,6 +138,11 @@ if CLIENT then
 					local border_size = border_size / 2
 
 					prettytext.Draw(text, x + text_width_border, y, font, size, bold, blursize, Color(0, 0, 0, 255), Color(200, 200, 200, 255))
+
+					if not data.entered and data.time ~= 0 then
+						surface.SetDrawColor(0, 0, 0, 230)
+						surface.DrawRect(x + text_width_border,y+h/2, w-text_width_border*2, 10)
+					end
 
 					local width = 50
 					local xpos = math.min(w/2 - 400, w) + width * 3
