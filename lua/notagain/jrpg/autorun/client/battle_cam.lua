@@ -734,23 +734,12 @@ do
 
 			dir.z = 0
 
-			--dir = dir - ply:LocalToWorldAngles(Vector(joy_forward/10000, joy_side/10000, 0):Angle()):Right()
-			--dir:Normalize()
-
-			if (smooth_dir - dir):Length() > 1.5 then
-				smooth_forward = 0
-			end
-
 			if dir ~= Vector(0,0,0) then
 				smooth_dir = smooth_dir + ((dir - smooth_dir) * FrameTime() * 10)
 				ucmd:SetViewAngles(smooth_dir:Angle())
 
-				ucmd:SetForwardMove(smooth_forward)
+				ucmd:SetForwardMove(10000)
 				ucmd:SetSideMove(0)
-
-				smooth_forward = smooth_forward + ((1000 - smooth_forward) * FrameTime()*0.25)
-			else
-				smooth_forward = smooth_forward + ((0 - smooth_forward) * FrameTime()*0.25)
 			end
 		end
 
