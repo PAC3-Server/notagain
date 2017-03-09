@@ -59,7 +59,7 @@ if SERVER then
 		
 		for index , topo in pairs( EMF.Topology ) do
 			
-			if !EMF.InitTopology[index] and topo:Distance( pos ) < EMF.MaxDistToRef / 2 then
+			if !EMF.InitTopology[index] and topo:Distance( pos ) > EMF.MaxDistToRef / 2 then
 				
 				add = false
 			
@@ -95,8 +95,8 @@ if SERVER then
 				else
 
 					local tr = util.TraceLine({
-						start  = ent:GetPos(),
-						endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
+						start  = ply:GetPos(),
+						endpos = ply:GetPos() - ply:GetAngles():Up() * BigValue,
 						mask   = MASK_PLAYERSOLID,
 					})
 
