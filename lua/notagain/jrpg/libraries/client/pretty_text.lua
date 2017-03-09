@@ -1,9 +1,8 @@
 local fonts = {}
 
--- python1320: heul,
 local function create_fonts(font, size, weight, blursize)
-	local main = "pretty_text_" .. size .. weight
-	local blur = "pretty_text_blur_" .. size .. weight
+	local main = "pretty_text_" .. size .. "_" .. weight .. "_" .. blursize
+	local blur = "pretty_text_blur_" .. size  .. "_" .. weight .. "_" .. blursize
 
 	surface.CreateFont(
 		main,
@@ -40,6 +39,7 @@ local surface_SetFont = surface.SetFont
 local surface_SetTextColor = surface.SetTextColor
 local surface_SetTextPos = surface.SetTextPos
 local surface_DrawText = surface.DrawText
+local surface_GetTextSize = surface.GetTextSize
 local Color = Color
 
 local hsv_cache = {}
@@ -118,8 +118,8 @@ function prettytext.GetTextSize(text, font, size, weight, blursize)
 	if not fonts[font][size][weight] then fonts[font][size][weight] = {} end
 	if not fonts[font][size][weight][blursize] then fonts[font][size][weight][blursize] = create_fonts(font, size, weight, blursize) end
 
-	surface.SetFont(fonts[font][size][weight][blursize].main)
-	return surface.GetTextSize(text)
+	surface_SetFont(fonts[font][size][weight][blursize].main)
+	return surface_GetTextSize(text)
 end
 
 return prettytext
