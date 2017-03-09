@@ -176,7 +176,10 @@ do
 	end
 
 	if CLIENT then
-		function ENT:Draw()
+		function ENT:Think()
+			local ply = self:GetOwner()
+			if not ply:IsValid() then return end
+			self:SetRenderBounds(ply:OBBMins(), ply:OBBMaxs())
 			local info = models[self:GetSkin()]
 			if info.csmdl then
 				self:SetModel(info.csmdl)
@@ -184,6 +187,10 @@ do
 			if info.csmdl_scale then
 				self:SetModelScale(info.csmdl_scale)
 			end
+		end
+
+		function ENT:Draw()
+			local info = models[self:GetSkin()]
 			local ply = self:GetOwner()
 			if not ply:IsValid() then return end
 
