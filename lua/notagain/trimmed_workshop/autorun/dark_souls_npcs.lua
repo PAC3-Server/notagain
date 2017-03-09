@@ -550,10 +550,13 @@ do
 		---------------------------------------------------------------------------------------------------------------------------------------------
 		function ENT:SwordBox(vStndDmg)
 		vStndDmg = vStndDmg or 1
-		local attackthev = ents.FindInSphere(self:GetAttachment(1).Pos, 80)
+		local pos = self:GetAttachment(1).Pos
+		local attackthev = ents.FindInSphere(pos, 80)
 		for _,v in pairs(attackthev) do
 		if (v:IsNPC()) && (self:Disposition(v) == 1 or self:Disposition(v) == 2) && (v != self) && (v:GetClass() != self:GetClass()) or v:GetClass() == "prop_physics" or v:GetClass() == "func_breakable_surf" or table.HasValue(self.EntitiesToDestroyClass,v:GetClass()) or v.VJ_AddEntityToSNPCAttackList == true then
 		 local doactualdmg = DamageInfo()
+		doactualdmg:SetDamagePosition(pos)
+
 		 doactualdmg:SetDamage(vStndDmg)
 		 doactualdmg:SetInflictor(self)
 		 doactualdmg:SetDamageType(self.MeleeAttackDamageType)
@@ -563,6 +566,7 @@ do
 
 		elseif ((v:IsPlayer() && v:Alive())) && (self:Disposition(v) == 1 or self:Disposition(v) == 2) && (v != self) && (v:GetClass() != self:GetClass()) or v:GetClass() == "prop_physics" or v:GetClass() == "func_breakable_surf" or table.HasValue(self.EntitiesToDestroyClass,v:GetClass()) or v.VJ_AddEntityToSNPCAttackList == true then
 		local doactualdmg = DamageInfo()
+		doactualdmg:SetDamagePosition(pos)
 		 doactualdmg:SetDamage(vStndDmg)
 		 doactualdmg:SetInflictor(self)
 		 doactualdmg:SetDamageType(self.MeleeAttackDamageType)
@@ -1116,10 +1120,12 @@ do
 		---------------------------------------------------------------------------------------------------------------------------------------------
 		function ENT:SwordBox(vStndDmg)
 		vStndDmg = vStndDmg or 1
-		local attackthev = ents.FindInSphere(self:GetAttachment(1).Pos, 110)
+		local pos = self:GetAttachment(1).Pos
+		local attackthev = ents.FindInSphere(pos, 110)
 		for _,v in pairs(attackthev) do
 		if (v:IsNPC()) && (self:Disposition(v) == 1 or self:Disposition(v) == 2) && (v != self) && (v:GetClass() != self:GetClass()) or v:GetClass() == "prop_physics" or v:GetClass() == "func_breakable_surf" or table.HasValue(self.EntitiesToDestroyClass,v:GetClass()) or v.VJ_AddEntityToSNPCAttackList == true then
 		 local doactualdmg = DamageInfo()
+		 doactualdmg:SetDamagePosition(pos)
 		 doactualdmg:SetDamage(vStndDmg)
 		 doactualdmg:SetInflictor(self)
 		 doactualdmg:SetDamageType(self.MeleeAttackDamageType)
@@ -1130,6 +1136,7 @@ do
 		 //v:ViewPunch( Angle( math.random(-50, 50), math.random(-50, 50), math.random(30, -30) ) )
 		elseif ((v:IsPlayer() && v:Alive())) && (self:Disposition(v) == 1 or self:Disposition(v) == 2) && (v != self) && (v:GetClass() != self:GetClass()) or v:GetClass() == "prop_physics" or v:GetClass() == "func_breakable_surf" or table.HasValue(self.EntitiesToDestroyClass,v:GetClass()) or v.VJ_AddEntityToSNPCAttackList == true then
 		local doactualdmg = DamageInfo()
+		doactualdmg:SetDamagePosition(pos)
 		 doactualdmg:SetDamage(vStndDmg)
 		 doactualdmg:SetInflictor(self)
 		 doactualdmg:SetDamageType(self.MeleeAttackDamageType)
