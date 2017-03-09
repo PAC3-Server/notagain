@@ -295,10 +295,6 @@ if SERVER then
 		end
 	end)
 
-	hook.Remove("SetupMove", "jattributes")
-	hook.Remove("FinishMove", "jattributes")
-	hook.Remove("PlayerPostThink", "jattributes")
-
 	hook.Add("PlayerPostThink", "jattributes", function(ply)
 		local wep = ply:GetActiveWeapon()
 
@@ -329,6 +325,8 @@ if SERVER then
 				end
 			end
 			ply:SetHealth(ply:GetMaxHealth())
+			jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
+			jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
 		end)
 	end)
 
