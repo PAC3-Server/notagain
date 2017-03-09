@@ -9,29 +9,21 @@ function META:IsStuck()
 
 	for j = 1 , maxs.z do
 		
-		for i = 1 , 6 do 
+		for i = 1 , 10 do 
 			
 			local tr = util.TraceHull({
-				start = pos + Vector( 0 , 0 , j ),
-				endpos = pos + Vector( 0 , 0 , j ) + Angle( 0 , i*60 - 180 , 0 ):Forward() * len,
-				maxs = maxs,
-				mins = mins,
+				
+				start  = pos + Vector( 0 , 0 , j ),
+				endpos = pos + Vector( 0 , 0 , j ) + Angle( 0 , i*36 - 180 , 0 ):Forward() * len,
+				maxs   = maxs,
+				mins   = mins,
 				filter = self 
+			
 			})
 
-			if self:GetMoveType() != MOVETYPE_NOCLIP and self:Alive() then
+			if self:GetMoveType() != MOVETYPE_NOCLIP and self:Alive() and !self:Crouching() then
 				
-				if !tr.HitWorld and IsValid(tr.Entity) and tr.Entity:GetOwner() != self then
-					
-					local dist = tr.HitPos:Distance( pos + Vector( 0 , 0 , j ) )
-					
-					if dist < maxs.x or dist < maxs.y or dist < maxs.z then 
-
-						return true
-
-					end
-
-				elseif tr.StartSolid then
+				if tr.StartSolid then
 
 					return true 
 

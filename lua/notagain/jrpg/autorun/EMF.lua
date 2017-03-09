@@ -95,8 +95,8 @@ if SERVER then
 				else
 
 					local tr = util.TraceLine({
-						start  = ent:GetPos(),
-						endpos = ent:GetPos() - ent:GetAngles():Up() * BigValue,
+						start  = ply:GetPos(),
+						endpos = ply:GetPos() - ply:GetAngles():Up() * BigValue,
 						mask   = MASK_PLAYERSOLID,
 					})
 
