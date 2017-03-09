@@ -30,7 +30,7 @@ if SERVER then
 	hook.Add("EntityTakeDamage", "roll", function(ent, dmginfo)
 		if is_rolling(ent) and (bit.band(dmginfo:GetDamageType(), DMG_CRUSH) > 0 or bit.band(dmginfo:GetDamageType(), DMG_SLASH) > 0) then
 			dmginfo:ScaleDamage(0)
-			--ent:ChatPrint("dodge!")
+			ent:ChatPrint("dodge!")
 			return true
 		end
 	end)
@@ -115,8 +115,23 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 end)
 
 hook.Add("Move", "roll", function(ply, mv, ucmd)
+	local landed
+
+	if not ply:OnGround() then
+		ply.roll_in_air = CurTime()
+	end
+
+	local diff = (CurTime() - ply.roll_in_air)
+
+	if diff > 0 and diff < 0.1 then
+		landed = true
+	end
+
 	if can_roll(ply) then
-		if mv:KeyPressed(IN_DUCK) then
+		if mv:KeyPressed(IN_DUCK) or landed then
+
+			local stamina = jattributes.GetStamina(ply)
+			if stamina < 30 then return end
 
 			if mv:KeyDown(IN_BACK) or mv:KeyDown(IN_MOVELEFT) or mv:KeyDown(IN_MOVERIGHT) or mv:KeyDown(IN_FORWARD) then
 				ply.roll_ang = mv:GetAngles()
@@ -142,6 +157,8 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 
 				if SERVER then
 					ply:SetNW2Float("roll_time", ply.roll_time)
+
+					jattributes.SetStamina(ply, stamina - 15)
 				end
 			end
 		else
