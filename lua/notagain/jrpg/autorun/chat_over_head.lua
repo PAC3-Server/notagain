@@ -69,20 +69,9 @@ if CLIENT then
 		send_text(text, true)
 	end)
 
-	local font = "DermaLarge"
-	local text_color = Color(0,0,0,255)
 	local background_color = Color(255,255,255,255)
 	local border_color = Color(150,150,150,255)
 	local border_size = 3
-
-	local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
-		["$BaseTexture"] = "gui/center_gradient",
-		["$BaseTextureTransform"] = "center .5 .5 scale 1 1 rotate 90 translate 0 0",
-		["$VertexAlpha"] = 1,
-		["$VertexColor"] = 1,
-		["$Additive"] = 0,
-	})
-	local draw_rect = requirex("draw_skewed_rect")
 	local text_width_border = 300
 	local roundness = 15
 
@@ -135,7 +124,7 @@ if CLIENT then
 					local border_size = border_size * 2
 					draw.RoundedBox(roundness, x, y, w, h, background_color)
 					draw.RoundedBox(roundness, x + border_size, y+h/2, w - border_size*2, h-h/2 - border_size, Color(0,0,0, 50))
-					local border_size = border_size / 2
+					border_size = border_size / 2
 
 					prettytext.Draw(text, x + text_width_border, y, font, size, bold, blursize, Color(0, 0, 0, 255), Color(200, 200, 200, 255))
 
