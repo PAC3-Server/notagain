@@ -76,8 +76,8 @@ local function draw_bar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, cente
 	surface.SetDrawColor(255,255,255,255)
 	draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 
-	prettytext.Draw(real_cur, center_number and x+w/2 or (x + w), center_number and y+h/2 or y, "gabriola", health_height*3.5 * (center_number and 0.7 or 1), 1, 2, Color(255, 255, 255, 150), Color(r/2,g/2,b/2,100), center_number and -0.5 or 0.5, center_number and -0.55 or -0.4)
-	prettytext.Draw(txt, x, y, "gabriola", health_height*2, 0, 5, Color(255, 255, 255, 150), Color(r/5,g/5,b/5,255), -1.3, -0.3)
+	prettytext.Draw(real_cur, center_number and x+w/2 or (x + w), center_number and y+h/2 or y, "gabriola", health_height*3.5 * (center_number and 0.7 or 1), 1, 3, Color(255, 255, 255, 150), Color(r/2,g/2,b/2,255), center_number and -0.5 or 0.5, center_number and -0.55 or -0.4)
+	prettytext.Draw(txt, x, y, "gabriola", health_height*2, 0, 3, Color(255, 255, 255, 150), Color(r/5,g/5,b/5,255), -1.3, -0.3)
 end
 
 hook.Add("HUDPaint", "jhud", function()
@@ -168,17 +168,17 @@ hook.Add("HUDPaint", "jhud", function()
 		end
 
 		local c = team.GetColor(TEAM_FRIENDS)
-		c.r = c.r/3
-		c.g = c.g/3
-		c.b = c.b/3
-		c.a = 100
+		c.r = c.r/5
+		c.g = c.g/5
+		c.b = c.b/5
+		c.a = 255
 
 
-		prettytext.Draw(ply:Nick(), x + 210, y - offset + 7, "gabriola", 55, 00, 6, Color(255, 255, 255, 200), c)
+		prettytext.Draw(ply:Nick(), x + 210, y - offset + 7, "gabriola", 55, 0, 3, Color(255, 255, 255, 200), c)
 
 		x = x + 200
 		if ply:GetNWBool("rpg") then
-			prettytext.Draw("Lv. " .. ply:GetNWInt("jlevel_level", 0), x + math.Clamp(ply:GetMaxHealth()*2, 50, ScrW()/3),  y - offset + 7, "gabriola", 55, 00, 6, Color(200, 50, 255, 200), c, -1)
+			prettytext.Draw("Lv. " .. ply:GetNWInt("jlevel_level", 0), x + math.Clamp(ply:GetMaxHealth()*2, 50, ScrW()/3),  y - offset + 7, "gabriola", 55, 0, 3, Color(200, 100, 255, 200), c, -1)
 		end
 		y = y + height / 2 - offset
 
