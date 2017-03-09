@@ -59,7 +59,7 @@ if SERVER then
 		ply:SetNWInt("jlevel_next_level", 500 * ply:GetNWInt("jlevel_level", 0) ^ 1.5)
 
 		for stat in pairs(jlevel.stats) do
-			jattributes.SetAttribute(ply, stat, tonumber(ply:GetPData("jlevel_stat_" .. stat)))
+			jattributes.SetAttribute(ply, stat, tonumber(ply:GetPData("jlevel_stat_" .. stat, 0)))
 		end
 	end
 
