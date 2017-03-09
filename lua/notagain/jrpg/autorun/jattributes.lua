@@ -3,6 +3,33 @@ jattributes = {}
 local game_script_damage = {}
 jattributes.game_script_damage = game_script_damage
 
+local function get_damage(wep)
+	local dmg = nil
+
+	if game_script_damage[wep:GetClass()] == nil then
+		local str = file.Read("scripts/"..wep:GetClass()..".txt", "GAME")
+		if str then
+			game_script_damage[wep:GetClass()] = util.KeyValuesToTable(str).damage
+		end
+
+		if not game_script_damage[wep:GetClass()] then
+			game_script_damage[wep:GetClass()] = false
+		end
+	end
+
+	if game_script_damage[wep:GetClass()] then
+		dmg = game_script_damage[wep:GetClass()]
+	end
+
+	if not dmg or dmg == 0 and wep.jattributes_last_damage and wep.jattributes_last_damage ~= 0 then
+		dmg = wep.jattributes_last_damage
+		game_script_damage[wep:GetClass()] = dmg
+	end
+
+	return dmg
+end
+
+
 jattributes.types = {
 	health = {
 		default = 0,
@@ -22,17 +49,33 @@ jattributes.types = {
 		on_receive_damage = function(stats, dmginfo, victim)
 			jattributes.SetStamina(victim, math.max(jattributes.GetStamina(victim) - dmginfo:GetDamage(), 0))
 		end,
+		--[[on_probable_attack = function(wep, attacker, what)
+			local dmg = get_damage(wep)
+			if dmg then
+				if not wepstats.IsElemental(wep) then
+					jattributes.SetStamina(attacker, math.max(jattributes.GetStamina(attacker) - dmg, 0))
+					wep.jattributes_stamina_drained = os.clock() + 0.05
+				end
+			end
+		end,]]
 		on_fire_bullet = function(attacker, data, stats)
-			if data.Damage == 0 then return end
 			local wep = attacker:GetActiveWeapon()
+			if wep.jattributes_stamina_drained and wep.jattributes_stamina_drained > os.clock() then return end
+			local dmg = get_damage(wep) or data.Damage
+
+			if dmg == 0 then
+				return
+			end
+
 			if not wepstats.IsElemental(wep) then
-				jattributes.SetStamina(attacker, math.max(jattributes.GetStamina(attacker) - data.Damage, 0))
-				attacker:GetActiveWeapon().jattributes_stamina_drained = true
+				jattributes.SetStamina(attacker, math.max(jattributes.GetStamina(attacker) - dmg, 0))
+				wep.jattributes_stamina_drained = os.clock() + 0.05
 			end
 		end,
 		on_give_damage = function(stats, dmginfo, attacker)
 			local wep = attacker:GetActiveWeapon()
-			if not wepstats.IsElemental(wep) and not wep.jattributes_stamina_drained then
+			if wep.jattributes_stamina_drained and wep.jattributes_stamina_drained > os.clock() then return end
+			if not wepstats.IsElemental(wep) then
 				jattributes.SetStamina(attacker, math.max(jattributes.GetStamina(attacker) - dmginfo:GetDamage(), 0))
 				wep.jattributes_stamina_drained = nil
 			end
@@ -51,28 +94,7 @@ jattributes.types = {
 		default = 0,
 		on_fire_bullet = function(attacker, data, stats)
 			local wep = attacker:GetActiveWeapon()
-			local dmg = data.Damage
-
-			if data.Damage == 0 then
-				if game_script_damage[wep:GetClass()] == nil then
-					local str = file.Read("scripts/"..wep:GetClass()..".txt", "GAME")
-					if str then
-						game_script_damage[wep:GetClass()] = util.KeyValuesToTable(str).damage
-					end
-
-					if not game_script_damage[wep:GetClass()] then
-						game_script_damage[wep:GetClass()] = false
-					end
-				end
-
-				if game_script_damage[wep:GetClass()] then
-					dmg = game_script_damage[wep:GetClass()]
-				end
-
-				if dmg == 0 and wep.jattributes_last_damage and wep.jattributes_last_damage ~= 0 then
-					dmg = wep.jattributes_last_damage
-				end
-			end
+			local dmg = get_damage(wep) or data.Damage
 
 			if dmg == 0 then
 				return
@@ -261,12 +283,38 @@ if SERVER then
 			end
 		end
 	end)
+
 	hook.Add("EntityFireBullets", "jattributes", function(ply, data)
 		for type, info in pairs(jattributes.types) do
 			if info.on_fire_bullet and ply.jattributes and ply.jattributes[type] then
 				local b = info.on_fire_bullet(ply, data, ply.jattributes)
 				if b ~= nil then
 					return b
+				end
+			end
+		end
+	end)
+
+	hook.Remove("SetupMove", "jattributes")
+	hook.Remove("FinishMove", "jattributes")
+	hook.Remove("PlayerPostThink", "jattributes")
+
+	hook.Add("PlayerPostThink", "jattributes", function(ply)
+		local wep = ply:GetActiveWeapon()
+
+		if not wep:IsValid() then return end
+
+		local attacked = false
+
+		local diff = wep:GetNextPrimaryFire() - CurTime()
+		if diff > 0 and diff < 0.01 then
+			attacked = true
+		end
+
+		if attacked then
+			for type, info in pairs(jattributes.types) do
+				if info.on_probable_attack and ply.jattributes and ply.jattributes[type] then
+					info.on_probable_attack(wep, ply)
 				end
 			end
 		end
