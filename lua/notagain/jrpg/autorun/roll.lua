@@ -1,8 +1,27 @@
+local roll_time = 0.75
+local roll_speed = 1
 local function is_rolling(ply)
 	if CLIENT and ply ~= LocalPlayer() then
 		return ply:GetNW2Float("roll_time", CurTime()) > CurTime()
 	end
 	return ply.roll_time and ply.roll_time > CurTime()
+end
+
+local function vel_to_dir(ang, vel)
+	ang.p = 0
+	local dot = ang:Forward():Dot(vel)
+	if dot > 100 then
+		return "forward"
+	elseif dot < -100 then
+		return "backward"
+	end
+
+	local dot = ang:Right():Dot(vel)
+	if dot > 0 then
+		return "right"
+	else
+		return "left"
+	end
 end
 
 if SERVER then
@@ -11,7 +30,7 @@ if SERVER then
 	hook.Add("EntityTakeDamage", "roll", function(ent, dmginfo)
 		if is_rolling(ent) and (bit.band(dmginfo:GetDamageType(), DMG_CRUSH) > 0 or bit.band(dmginfo:GetDamageType(), DMG_SLASH) > 0) then
 			dmginfo:ScaleDamage(0)
-			ent:ChatPrint("dodge!")
+			--ent:ChatPrint("dodge!")
 			return true
 		end
 	end)
@@ -47,30 +66,27 @@ end
 
 hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 	if is_rolling(ply) then
-		ply.roll_back_cycle = (ply.roll_back_cycle or 0) + FrameTime()
+		local dir = vel_to_dir(ply:EyeAngles(), velocity)
 
-		if ply.roll_dir == "forward" then
-			ply:SetCycle(ply.roll_back_cycle)
-		elseif ply.roll_dir == "backward" then
-			if ply.roll_back_cycle > 1 then
-				ply:SetCycle(0)
-			else
-				ply:SetCycle(math.max((-ply.roll_back_cycle+1)-0.1, 0))
-			end
-		elseif ply.roll_dir == "left" or ply.roll_dir == "right" then
-			ply:SetCycle((ply.roll_back_cycle * 0.8) + 0.15)
+		if dir == "forward" or dir == "backward" then
+			ply.roll_back_cycle = (ply.roll_back_cycle or 0) + (ply:GetVelocity():Length() * FrameTime() / 275)
+		else
+			ply.roll_back_cycle = (ply.roll_back_cycle or 0) + (ply:GetVelocity():Length() * FrameTime() / 275)
 		end
 
-		if ply.roll_back_cycle then
-			local dir = ply.roll_dir
-			if
-				(dir == "forward" and ply.roll_back_cycle < 0.8) or
-				(dir == "backward" and ply.roll_back_cycle < 1.1) or
-				((dir == "left" or dir == "right") and ply.roll_back_cycle < 1)
-			then
-				return true
-			end
+		local f = math.Clamp(ply.roll_back_cycle*(1/roll_time),0,1)
+
+		if dir == "forward" then
+			ply:SetCycle(Lerp(f, 0.1, 1))
+		elseif dir == "backward" then
+			ply:SetCycle(Lerp(f, 0.9, 0))
+		elseif dir == "left" or dir == "right" then
+			ply:SetCycle(Lerp(f, 0.25, 1))
 		end
+
+		ply:SetPlaybackRate(0)
+
+		return true
 	else
 		ply.roll_back_cycle = nil
 	end
@@ -78,24 +94,15 @@ end)
 
 hook.Add("CalcMainActivity", "roll", function(ply)
 	if is_rolling(ply) then
-
-		if ply.roll_back_cycle then
-			local dir = ply.roll_dir
-			if dir == "forward" and ply.roll_back_cycle > 0.8 then
-				return
-			elseif dir == "backward" and ply.roll_back_cycle > 1.1 then
-				return
-			elseif (dir == "left" or dir == "right") and ply.roll_back_cycle > 1 then
-				return
-			end
-		end
+		local dir = vel_to_dir(ply:EyeAngles(), ply:GetVelocity())
 
 		local seq = ""
-		if ply.roll_dir == "forward" or ply.roll_dir == "backward" then
+
+		if dir == "forward" or dir == "backward" then
 			seq = "roll_forward"
-		elseif ply.roll_dir == "left" then
+		elseif dir == "left" then
 			seq = "roll_left"
-		elseif ply.roll_dir == "right" then
+		elseif dir == "right" then
 			seq = "roll_right"
 		end
 
@@ -104,7 +111,6 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 		if seqid > 1 then
 			return seqid, seqid
 		end
-
 	end
 end)
 
@@ -112,21 +118,26 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 	if can_roll(ply) then
 		if mv:KeyPressed(IN_DUCK) then
 
-			if mv:KeyDown(IN_BACK) then
-				ply.roll_dir = "backward"
-				ply.roll_time = CurTime() + 0.9
-			elseif mv:KeyDown(IN_MOVELEFT) then
-				ply.roll_dir = "left"
-				ply.roll_time = CurTime() + 0.8
-			elseif mv:KeyDown(IN_MOVERIGHT) then
-				ply.roll_dir = "right"
-				ply.roll_time = CurTime() + 0.8
-			elseif mv:KeyDown(IN_FORWARD) then
-				ply.roll_dir = "forward"
-				ply.roll_time = CurTime() + 0.9
+			if mv:KeyDown(IN_BACK) or mv:KeyDown(IN_MOVELEFT) or mv:KeyDown(IN_MOVERIGHT) or mv:KeyDown(IN_FORWARD) then
+				ply.roll_ang = mv:GetAngles()
+				ply.roll_time = CurTime() + roll_time
 			end
 
 			if ply.roll_time then
+				if mv:GetForwardSpeed() > 0 then
+					ply.roll_dir = "forward"
+				elseif mv:GetForwardSpeed() < 0 then
+					ply.roll_dir = "backward"
+				end
+
+				if not ply.roll_dir then
+					if mv:GetSideSpeed() > 0 then
+						ply.roll_dir = "right"
+					else
+						ply.roll_dir = "left"
+					end
+				end
+
 				ply:AnimRestartMainSequence()
 
 				if SERVER then
@@ -134,28 +145,36 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 				end
 			end
 		else
-			ply.roll_dir = nil
+			ply.roll_ang = nil
 			ply.roll_time = nil
+			ply.roll_dir = nil
 		end
 	end
 
 	if is_rolling(ply) then
 		local dir
-		local ang = mv:GetAngles()
 
-		if ply.roll_dir == "forward" then
+		local ang = ply.roll_ang * 1
+		ang.p = 0
+
+		local dir = ply.roll_dir
+		local f = math.Clamp((ply.roll_time - CurTime()) * (1/roll_time), 0, 1)
+
+		if dir == "forward" then
 			dir = ang:Forward()*300
-		elseif ply.roll_dir == "backward" then
+		elseif dir == "backward" then
 			dir = ang:Forward()*-300
-		elseif ply.roll_dir == "left" then
+		elseif dir == "left" then
 			dir = ang:Right()*-300
-		elseif ply.roll_dir == "right" then
+		elseif dir == "right" then
 			dir = ang:Right()*300
 		end
+		local mult = (math.sin(f*math.pi) + 0.5)
 
-		if dir then
-			mv:SetVelocity(dir)
-		end
+		dir = dir * mult * 0.75
+
+		ply:SetEyeAngles(ply.roll_ang)
+		mv:SetVelocity(dir)
 	end
 end)
 
