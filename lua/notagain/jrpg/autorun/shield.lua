@@ -229,6 +229,7 @@ if SERVER then
 		if not ply:GetNWBool("rpg") then return end
 		if key ~= IN_WALK then return end
 		if ply.shield_timer and ply.shield_timer > CurTime() then return end
+		if jattributes.GetStamina(ply) == 0 then return end
 		local shield = ply:GetNWEntity("shield")
 
 		if not shield:IsValid() then
@@ -286,5 +287,17 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("taunt_persistence"), math.min((CurTime() - ply.shield_stunned)*0.25 + 0.2, 0.5), true)
 	else
 		ply.shield_stunned = nil
+	end
+end)
+
+hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
+	local shield = ent:GetNWEntity("shield")
+	if shield:IsValid() then
+		local data = util.TraceLine({start = dmginfo:GetDamagePosition(), endpos = ent:WorldSpaceCenter(), filter = {dmginfo:GetAttacker()}})
+
+		if data.Entity == shield then
+			shield:OnTakeDamage(dmginfo)
+			dmginfo:SetDamage(0)
+		end
 	end
 end)
