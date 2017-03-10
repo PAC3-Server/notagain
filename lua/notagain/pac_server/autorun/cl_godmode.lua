@@ -1,4 +1,4 @@
-local dmgvar = CreateClientConVar("cl_godmode", "1", true, true, "0 = off, 1 = on, 2 = world damage, 3 = friend damage + world damage")
+local dmgvar = CreateClientConVar("cl_godmode", "3", true, true, "0 = off, 1 = on, 2 = world damage, 3 = friend damage + world damage")
 
 if CLIENT then
 	local victim = NULL
