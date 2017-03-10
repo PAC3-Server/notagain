@@ -115,20 +115,23 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 end)
 
 hook.Add("Move", "roll", function(ply, mv, ucmd)
-	local landed
+	if not ply:GetNWBool("rpg") then return end
+
+	--[[local landed
 
 	if not ply:OnGround() then
 		ply.roll_in_air = CurTime()
-	end
+	else
+		local diff = (CurTime() - ply.roll_in_air)
 
-	local diff = (CurTime() - ply.roll_in_air)
-
-	if diff > 0 and diff < 0.1 then
-		landed = true
+		if diff > 0 and diff < 0.1 then
+			landed = true
+		end
 	end
+	]]
 
 	if can_roll(ply) then
-		if mv:KeyPressed(IN_DUCK) or landed then
+		if mv:KeyPressed(IN_DUCK) then
 
 			local stamina = jattributes.GetStamina(ply)
 			if stamina < 30 then return end
