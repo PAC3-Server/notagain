@@ -304,7 +304,7 @@ if CLIENT then
 					local height = 10
 					local border_size = 3
 					local skew = -30
-					local width = math.Clamp(radius * 3.5 * scale, w * 1.5 + 100,  ScrW()/2)
+					local width = math.Clamp(radius * scale, w * 1.5 + 100,  ScrW()/2)
 
 					if max > 1000 then
 						height = 35
@@ -328,17 +328,17 @@ if CLIENT then
 
 					y = y + math.ceil(height + border_size / 2)
 
-					local height = height / 2
+					local height = height
 					local border_size = border_size / 2
 
 					do
 						local cur = ent:GetNWFloat("jattributes_mana", -1)
 						if cur ~= -1 then
 							local max = ent:GetNWFloat("jattributes_max_mana", 100)
-							local width = math.Clamp(max, 0, 500)
+							local width = math.Clamp(max*3, 0, 500)
 
 							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12, 0, 0, 255)
-							y = y + math.floor(height + border_size / 2)
+							y = y + height-border_size
 						end
 					end
 
@@ -347,13 +347,17 @@ if CLIENT then
 						local cur = ent:GetNWFloat("jattributes_stamina", -1)
 						if cur ~= -1 then
 							local max = ent:GetNWFloat("jattributes_max_stamina", 100)
-							local width = math.Clamp(max, 0, 500)
+							local width = math.Clamp(max*3, 0, 500)
 
 							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12, 255, 255, 0)
 						end
 					end
 
 					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
+
+					if ent:GetNWBool("rpg") then
+						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, -1, -1)
+					end
 				end
 
 				if fraction <= 0 then
