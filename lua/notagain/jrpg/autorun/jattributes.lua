@@ -325,6 +325,7 @@ if SERVER then
 				end
 			end
 			ply:SetHealth(ply:GetMaxHealth())
+
 			if jattributes.HasMana(ply) then
 				jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
 			end

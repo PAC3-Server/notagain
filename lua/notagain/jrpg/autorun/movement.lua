@@ -31,13 +31,27 @@ hook.Add("Move", "movement", function(ply, mv)
 		ply.movement_smooth_forward = 0
 	end
 
+	do
+		local hp = ply:GetNWFloat("hp_overload", 0)
+		local mp = ply:GetNWFloat("mp_overload", 0)
+		local sp = ply:GetNWFloat("sp_overload", 0)
+
+		local factor = hp+mp+sp
+
+		if factor > 10 then
+			local p = mv:GetOrigin()/1000
+			forward = forward + math.sin(os.clock()+p.x) * factor * 10000
+			side = side + math.cos(os.clock()+p.y) * factor * 10000
+		end
+	end
+
 	ply.movement_smooth_side = ply.movement_smooth_side + ((side - ply.movement_smooth_side) * FrameTime() / 5)
 	ply.movement_smooth_forward = ply.movement_smooth_forward + ((forward - ply.movement_smooth_forward) * FrameTime() / 5)
 
 	mv:SetForwardSpeed(ply.movement_smooth_forward)
 	mv:SetSideSpeed(ply.movement_smooth_side)
 
-	if jattributes.HasStamina(ply) and jattributes.GetStamina(ply) == 0 then
+	if jattributes.HasStamina(ply) and jattributes.GetStamina(ply) == 0 or ply:GetNWBool("drinking_potion") then
 		local speed = ply:GetWalkSpeed()
 		mv:SetForwardSpeed(math.Clamp(ply.movement_smooth_forward, -speed, speed))
 		mv:SetSideSpeed(math.Clamp(ply.movement_smooth_side, -speed, speed))

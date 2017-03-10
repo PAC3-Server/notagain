@@ -6,6 +6,15 @@ aowl.AddCommand("rpg", function(ply)
 		jlevel.LoadStats(ply)
 		jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
 		jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
+
+		ply:Give("potion_health")
+		ply:Give("potion_mana")
+		ply:Give("potion_stamina")
+
+		ply:SetNWFloat("hp_overload", 0)
+		ply:SetNWFloat("mp_overload", 0)
+		ply:SetNWFloat("sp_overload", 0)
+
 		ply:ChatPrint("rpg mode enabled")
 	else
 		jattributes.Disable(ply)
