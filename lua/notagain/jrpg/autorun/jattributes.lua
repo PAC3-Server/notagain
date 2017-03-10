@@ -246,7 +246,7 @@ if SERVER then
 		end
 
 		jattributes.SetMana(ent, -1)
-		jattributes.SetStamina (ent, -1)
+		jattributes.SetStamina(ent, -1)
 	end
 
 	function jattributes.SetTable(ent, stats)
@@ -325,8 +325,13 @@ if SERVER then
 				end
 			end
 			ply:SetHealth(ply:GetMaxHealth())
-			jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
-			jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
+			if jattributes.HasMana(ply) then
+				jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
+			end
+
+			if jattributes.HasStamina(ply) then
+				jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
+			end
 		end)
 	end)
 
@@ -410,19 +415,6 @@ end
 function jattributes.HasMana(ent)
 	return ent:GetNWFloat("jattributes_mana", -1) ~= -1
 end
-
-hook.Add("Move", "jattributes_stamina", function(ply, mov)
-	if jattributes.HasStamina(ply) and jattributes.GetStamina(ply) == 0 then
-		local speed = ply:GetWalkSpeed()
-		mov:SetForwardSpeed(math.Clamp(mov:GetForwardSpeed(), -speed, speed))
-		mov:SetSideSpeed(math.Clamp(mov:GetSideSpeed(), -speed, speed))
-		local wep = ply:GetActiveWeapon()
-		if wep:IsValid() then
-			wep:SetNextPrimaryFire(CurTime() + 0.1)
-			wep:SetNextSecondaryFire(CurTime() + 0.1)
-		end
-	end
-end)
 
 if SERVER then
 	for _, ent in ipairs(ents.GetAll()) do

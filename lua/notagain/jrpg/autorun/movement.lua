@@ -29,6 +29,17 @@ hook.Add("Move", "movement", function(ply, mv)
 
 	mv:SetForwardSpeed(ply.movement_smooth_forward)
 	mv:SetSideSpeed(ply.movement_smooth_side)
+
+	if jattributes.HasStamina(ply) and jattributes.GetStamina(ply) == 0 then
+		local speed = ply:GetWalkSpeed()
+		mv:SetForwardSpeed(math.Clamp(mv:GetForwardSpeed(), -speed, speed))
+		mv:SetSideSpeed(math.Clamp(mv:GetSideSpeed(), -speed, speed))
+		local wep = ply:GetActiveWeapon()
+		if wep:IsValid() then
+			wep:SetNextPrimaryFire(CurTime() + 0.1)
+			wep:SetNextSecondaryFire(CurTime() + 0.1)
+		end
+	end
 end)
 
 if CLIENT then
