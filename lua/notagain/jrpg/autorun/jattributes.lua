@@ -83,6 +83,7 @@ jattributes.types = {
 		on_apply = function(ent, stats)
 			ent.jattributes_base_stamina = ent.jattributes_base_stamina or jattributes.GetMaxStamina(ent)
 			jattributes.SetMaxStamina(ent, ent.jattributes_base_stamina + stats.stamina)
+			jattributes.SetStamina(ent, math.min(jattributes.GetStamina(ent), jattributes.GetMaxStamina(ent)))
 		end,
 		reset = function(ent, stats)
 			if not ent.jattributes_base_stamina then return end
@@ -122,6 +123,7 @@ jattributes.types = {
 		on_apply = function(ent, stats)
 			ent.jattributes_base_mana = ent.jattributes_base_mana or jattributes.GetMaxMana(ent)
 			jattributes.SetMaxMana(ent, ent.jattributes_base_mana + stats.mana)
+			jattributes.SetMana(ent, math.min(jattributes.GetMana(ent), jattributes.GetMaxMana(ent)))
 		end,
 		reset = function(ent, stats)
 			if not ent.jattributes_base_mana then return end
@@ -318,7 +320,7 @@ if SERVER then
 
 	hook.Add("PlayerSpawn", "jattributes", function(ply)
 		timer.Simple(0, function()
-			if not ply:IsValid() or not ply.jattributes then return end
+			if not ply:IsValid() or not ply.jattributes or not ply:GetNWBool("rpg") then return end
 			for type, info in pairs(jattributes.types) do
 				if info.on_apply and ply.jattributes[type] then
 					info.on_apply(ply, ply.jattributes)

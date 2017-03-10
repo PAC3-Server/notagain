@@ -53,14 +53,17 @@ if SERVER then
 	end
 
 	function jlevel.LoadStats(ply)
-		ply:SetNWInt("jlevel_xp", tonumber(ply:GetPData("jlevel_xp")))
-		ply:SetNWInt("jlevel_level", tonumber(ply:GetPData("jlevel_level")))
-		ply:SetNWInt("jlevel_attribute_points", tonumber(ply:GetPData("jlevel_attribute_points")))
-		ply:SetNWInt("jlevel_next_level", 500 * ply:GetNWInt("jlevel_level", 0) ^ 1.5)
+		timer.Simple(0.1, function()
+			if not ply:IsValid() then return end
+			ply:SetNWInt("jlevel_xp", tonumber(ply:GetPData("jlevel_xp")))
+			ply:SetNWInt("jlevel_level", tonumber(ply:GetPData("jlevel_level")))
+			ply:SetNWInt("jlevel_attribute_points", tonumber(ply:GetPData("jlevel_attribute_points")))
+			ply:SetNWInt("jlevel_next_level", 500 * ply:GetNWInt("jlevel_level", 0) ^ 1.5)
 
-		for stat in pairs(jlevel.stats) do
-			jattributes.SetAttribute(ply, stat, tonumber(ply:GetPData("jlevel_stat_" .. stat, 0)))
-		end
+			for stat in pairs(jlevel.stats) do
+				jattributes.SetAttribute(ply, stat, tonumber(ply:GetPData("jlevel_stat_" .. stat, 0)))
+			end
+		end)
 	end
 
 	hook.Add("EntityTakeDamage", "jlevel", function(victim, dmginfo)
