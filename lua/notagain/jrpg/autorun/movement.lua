@@ -16,24 +16,31 @@ hook.Add("Move", "movement", function(ply, mv)
 	ply.movement_smooth_side = ply.movement_smooth_side or 0
 	ply.movement_smooth_forward = ply.movement_smooth_forward or 0
 
-	if mv:GetSideSpeed()  == 0 then
+	local side = mv:GetSideSpeed()
+	local forward = mv:GetForwardSpeed()
+
+	if side  == 0 then
+		ply.movement_smooth_side = 0
+	elseif (side > 0 and ply.movement_smooth_side < 0) or (side < 0 and ply.movement_smooth_side > 0) then
 		ply.movement_smooth_side = 0
 	end
 
-	if mv:GetForwardSpeed()  == 0 then
+	if forward == 0 then
+		ply.movement_smooth_forward = 0
+	elseif (forward > 0 and ply.movement_smooth_forward < 0) or (forward < 0 and ply.movement_smooth_forward > 0) then
 		ply.movement_smooth_forward = 0
 	end
 
-	ply.movement_smooth_side = ply.movement_smooth_side + ((mv:GetSideSpeed() - ply.movement_smooth_side) * FrameTime() / 15)
-	ply.movement_smooth_forward = ply.movement_smooth_forward + ((mv:GetForwardSpeed() - ply.movement_smooth_forward) * FrameTime() / 15)
+	ply.movement_smooth_side = ply.movement_smooth_side + ((side - ply.movement_smooth_side) * FrameTime() / 5)
+	ply.movement_smooth_forward = ply.movement_smooth_forward + ((forward - ply.movement_smooth_forward) * FrameTime() / 5)
 
 	mv:SetForwardSpeed(ply.movement_smooth_forward)
 	mv:SetSideSpeed(ply.movement_smooth_side)
 
 	if jattributes.HasStamina(ply) and jattributes.GetStamina(ply) == 0 then
 		local speed = ply:GetWalkSpeed()
-		mv:SetForwardSpeed(math.Clamp(mv:GetForwardSpeed(), -speed, speed))
-		mv:SetSideSpeed(math.Clamp(mv:GetSideSpeed(), -speed, speed))
+		mv:SetForwardSpeed(math.Clamp(ply.movement_smooth_forward, -speed, speed))
+		mv:SetSideSpeed(math.Clamp(ply.movement_smooth_side, -speed, speed))
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() then
 			wep:SetNextPrimaryFire(CurTime() + 0.1)
