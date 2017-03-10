@@ -165,11 +165,12 @@ do
 		end
 	end
 
-	function ENT:GetPosAng()
+	function ENT:GetPosAng(pos, ang)
 		local ply = self:GetOwner()
 
-		local pos = ply:WorldSpaceCenter()
-		local ang = ply:EyeAngles()
+		pos = pos or ply:WorldSpaceCenter()
+		ang = ang or ply:EyeAngles()
+
 		ang.p = math.Clamp(ang.p + 90, -10, 90)
 
 		pos = pos + ang:Up()*(30 + ang.p/50)
@@ -208,12 +209,15 @@ do
 			local info = models[self:GetSkin()]
 			local ply = self:GetOwner()
 			if not ply:IsValid() then return end
+			if not ply.shield_wield_time then return end
 
-			local pos, ang = self:GetPosAng()
+			local pos, ang
 
-			if ply.shield_wield_time and (CurTime() - ply.shield_wield_time) < 0.3 then
+			if (CurTime() - ply.shield_wield_time) < 0.3 then
 				pos, ang = ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_L_Hand"))
 			end
+
+			pos, ang = self:GetPosAng(pos, ang)
 
 			if true then
 				self:SetPos(pos)
@@ -329,6 +333,15 @@ end)
 hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 	local shield = ent:GetNWEntity("shield")
 	if shield:IsValid() then
+		local type = dmginfo:GetDamageType()
+
+		if type == DMG_CRUSH or type == DMG_SLASH then
+			shield:OnTakeDamage(dmginfo)
+			dmginfo:SetDamage(0)
+			ent:ChatPrint("block!")
+			return
+		end
+
 		local data = util.TraceLine({start = dmginfo:GetDamagePosition(), endpos = ent:WorldSpaceCenter(), filter = {dmginfo:GetAttacker()}})
 
 		if data.Entity == shield then
