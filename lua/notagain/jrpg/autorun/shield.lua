@@ -94,11 +94,20 @@ do
 			mdl = "models/Mechanics/wheels/rim_1.mdl",
 
 		},
+		{
+			translate = function(pos, ang)
+				pos = pos + ang:Up() * -8
+				ang:RotateAroundAxis(ang:Up(), -90)
+
+				return pos, ang
+			end,
+			mdl = "models/props_combine/combine_mine01.mdl",
+		}
 	}
 
 	if SERVER then
 		function ENT:Initialize()
-			self:SetSkin(6)
+			self:SetSkin(13)
 			self:SetModel(models[self:GetSkin()].mdl)
 			self:SetMoveType(MOVETYPE_NONE)
 			self:SetSolid(SOLID_VPHYSICS)
@@ -176,16 +185,22 @@ do
 	end
 
 	if CLIENT then
-		function ENT:Think()
+		function ENT:Initialize()
 			local ply = self:GetOwner()
+
 			if not ply:IsValid() then return end
+
 			self:SetRenderBounds(ply:OBBMins(), ply:OBBMaxs())
+
 			local info = models[self:GetSkin()]
+
 			if info.csmdl then
-				self:SetModel(info.csmdl)
-			end
-			if info.csmdl_scale then
-				self:SetModelScale(info.csmdl_scale)
+				self.csent = ClientsideModel(info.csmdl)
+				self.csent:SetPos(self:GetPos())
+				self.csent:SetNoDraw(true)
+				if info.csmdl_scale then
+					self.csent:SetModelScale(info.csmdl_scale)
+				end
 			end
 		end
 
@@ -200,14 +215,26 @@ do
 				pos, ang = ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_L_Hand"))
 			end
 
-			if info.csmdl_translate then
-				pos, ang = info.csmdl_translate(pos, ang)
+			if true then
+				self:SetPos(pos)
+				self:SetAngles(ang)
+				self:SetupBones()
+				self:DrawModel()
 			end
 
-			self:SetPos(pos)
-			self:SetAngles(ang)
-			self:SetupBones()
-			self:DrawModel()
+			if self.csent then
+				if info.csmdl_translate then
+					pos, ang = info.csmdl_translate(pos, ang)
+				end
+
+				self.csent:SetPos(pos)
+				self.csent:SetAngles(ang)
+				self.csent:DrawModel()
+			end
+		end
+
+		function ENT:OnRemove()
+			SafeRemoveEntity(self.csent)
 		end
 	end
 
@@ -270,8 +297,10 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_bow"), math.min((CurTime() - ply.shield_wield_time)*1.25, 0.3), false)
 
 		if CLIENT then
-			manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Angle(math.Clamp(ply:EyeAngles().p - 90, -180,-90),0,0))
+			manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Angle(math.Clamp(math.NormalizeAngle(ply:EyeAngles().p - 90), -180,-90),0,0))
 		end
+
+		return true
 
 	elseif ply.shield_wield_time then
 		ply.shield_unwield_time = ply.shield_unwield_time or CurTime()
