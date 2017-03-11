@@ -95,15 +95,18 @@ if CLIENT then
 
 	hook.Add("UpdateAnimation", "movement", function(ply)
 		if not ply:GetNWBool("rpg") then return end
-		local ang = ply:EyeAngles()
-		local vel = ply:GetVelocity()
 
-		local dot = ang:Right():Dot(vel)
+		if ply:OnGround() then
+			local ang = ply:EyeAngles()
+			local vel = ply:GetVelocity()
 
-		if ang:Forward():Dot(vel) > 200 then
-			manip_angles(ply, 0, Angle(0,dot*-0.15,0))
-		else
-			manip_angles(ply, 0, Angle(0,0,0))
+			local dot = ang:Right():Dot(vel)
+
+			if ang:Forward():Dot(vel) > 200 then
+				manip_angles(ply, 0, Angle(0,dot*-0.15,0))
+			else
+				manip_angles(ply, 0, Angle(0,0,0))
+			end
 		end
 	end)
 end
