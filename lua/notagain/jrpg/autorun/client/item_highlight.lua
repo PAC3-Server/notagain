@@ -122,8 +122,7 @@ local function remove_ent(ent)
 end
 
 hook.Add("OnEntityCreated", "jrpg_items", function(ent)
-	local name = ent:GetClass()
-	if (name:StartWith("weapon_") or name:StartWith("item_")) then
+	if ent:IsWeapon() then
 		add_ent(ent)
 	end
 end)
