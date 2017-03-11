@@ -31,7 +31,7 @@ if SERVER then
 
 		for _ , ent in pairs( ents.GetAll() ) do
 
-			if !EMF.IsStuck( ent ) and !ToIgnore[ent:GetClass()] then
+			if !EMF.IsStuck( ent ) and ent:IsInWorld() and !ToIgnore[ent:GetClass()] then
 
 				local tr = util.TraceLine({
 					start  = ent:GetPos(),
@@ -54,13 +54,13 @@ if SERVER then
 
 	function EMF.AddTopology( pos )
 		
-		local add = true
+		local add = false
 		
 		for index , topo in pairs( EMF.Topology ) do
 			
-			if !EMF.InitTopology[index] and topo:Distance( pos ) < EMF.MaxDistToRef / 2 then
+			if EMF.InitTopology[index] or topo:Distance( pos ) > EMF.MaxDistToRef / 2 then
 				
-				add = false
+				add = true
 			
 			end
 		
@@ -227,7 +227,7 @@ if SERVER then
 		
 		end
 
-		if EMF.IsStuck( ent ) then
+		if EMF.IsStuck( ent ) or ent:IsInWorld() then
 			
 			SafeRemoveEntity( ent ) 
 		
@@ -244,7 +244,6 @@ if SERVER then
 		local refmaxs    = ent:OBBMaxs()
 		local refdist    = refmaxs.x < refmaxs.y and ( refmaxs.x * 2 ) or ( refmaxs.y * 2 )
 		
-		local angs       = { ent:GetAngles():Forward() , -ent:GetAngles():Forward() , ent:GetAngles():Right() , -ent:GetAngles():Right() }
 		local closest    = BigValue
 		local finalang   = Angle()
 		local angled     = false
@@ -255,15 +254,15 @@ if SERVER then
 			angled   = true
 
 		end
+
+		for i = 1 , 10 do -- Walls
 			
-		for i = 1 , 4 do -- Wall checker
-			
-			local currentdir = angs[i]
+			local currentang = Angle( 0 , i*36 - 180 , 0 )
 			
 			local tr = util.TraceHull({
 				
 				start  = refpos,
-				endpos = refpos + currentdir * refdist,
+				endpos = refpos + currentang:Forward() * refdist,
 				maxs   = refmaxs,
 				mins   = refmins,
 				filter = ent,
@@ -274,20 +273,20 @@ if SERVER then
 			if closest > refpos:Distance( tr.HitPos ) then
 				
 				closest = refpos:Distance( tr.HitPos )
-				SetBestAngle( currentdir:Angle() )
+				SetBestAngle( currentang )
 			
 			end
 
 			if tr.StartSolid then
 
 				closest = 0
-				SetBestAngle( currentdir:Angle() )
+				SetBestAngle( currentang )
 
 			end
 		
 		end
 
-		if !angled then -- then check for holes if no walls
+		if !angled then -- Holes
 
 			local ztr = util.TraceLine({
 
@@ -299,33 +298,34 @@ if SERVER then
 			})
 
 			local zrefpos = ztr.HitPos 
-			local ztests = { Vector( 0 , refdist , 0 ) , - Vector( 0 , refdist , 0 ) , Vector( refdist , 0 , 0 ) , - Vector( refdist , 0 , 0 ) }
 			local deepest = zrefpos.z
-			
-			for i = 1 , 4 do
+
+			for i = 1 , 10 do
 				
-				local currentpos = zrefpos + ztests[i]
+				local currentang = Angle( 0 , i*36 - 180 , 0 )
+				local currentpos = zrefpos + currentang:Forward() * refdist
 				
 				local tr = util.TraceLine({
 					
 					start  = currentpos,
 					endpos = currentpos - Vector( 0 , 0 , BigValue ),
-					filter = ent, 
+					filter = ent,
 					mask   = MASK_PLAYERSOLID,
+				
 				})
 
 				if tr.HitPos.z < deepest and !tr.StartSolid then
 
 					deepest = tr.HitPos.z
-					SetBestAngle( angs[i]:Angle() )
+					SetBestAngle( currentang )
 
 				end
-			
+
 			end
 
 		end
 
-		if !angled then -- if no walls or holes then random angle
+		if !angled then -- Random
 			
 			finalang = Angle( 0 , math.random( -180 , 180 ) , 0 )
 		
