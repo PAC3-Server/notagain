@@ -643,7 +643,9 @@ if CLIENT then
 					end
 
 					hitmarkers.ShowAttack(ent, name)
-					hitmarkers.ShowHealth(ent)
+					if ent ~= LocalPlayer() then
+						hitmarkers.ShowHealth(ent)
+					end
 				end
 			end
 		end
