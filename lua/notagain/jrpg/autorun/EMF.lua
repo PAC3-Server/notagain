@@ -20,7 +20,6 @@ if SERVER then
 			sky_camera               = true,
 			env_fog_controller       = true,
 			worldspawn               = true,
-			predicted_viewmodel      = true,
 			func_physbox_multiplayer = true,
 			info_particle_system     = true,
 			game_text                = true,
@@ -32,7 +31,7 @@ if SERVER then
 
 		for _ , ent in pairs( ents.GetAll() ) do
 
-			if ent:IsInWorld() and !ToIgnore[ent:GetClass()] and !ent:IsWeapon() then
+			if !EMF.IsStuck( ent ) and !ToIgnore[ent:GetClass()] then
 
 				local tr = util.TraceLine({
 					start  = ent:GetPos(),
@@ -123,6 +122,24 @@ if SERVER then
 	
 	end
 
+	function EMF.GetRenewedTopology()
+
+		local count = 0
+
+		for _ , bool in pairs( EMF.InitTopology ) do
+
+			if !bool then 
+
+				count = count + 1 
+
+			end
+
+		end
+
+		return math.Round( count / #EMF.InitTopology )
+
+	end
+
 	local function RandPosToRef( pos , min , max )
 		
 		local randpos     = Vector( math.random( -max , max ) , math.random( -max , max ) , 5 )
@@ -130,6 +147,43 @@ if SERVER then
 		local finalpos    = ( pos:Distance( arearandpos ) < min and ( pos + ( pos - arearandpos ) ) or arearandpos )
 
 		return finalpos
+	
+	end
+
+	function EMF.IsStuck( ent )
+
+		local refpos  = ent:WorldSpaceCenter() - Vector( 0 , 0 , ( ent:WorldSpaceCenter() - ent:NearestPoint( ent:GetPos() - Vector( 0 , 0 , BigValue ) ) ) )
+		local refmins = ent:OBBMins()
+		local refmaxs = ent:OBBMaxs()
+		local refdist = 128
+
+		for j = 1 , refmaxs.z do
+			
+			local currentpos = refpos + Vector( 0 , 0 , j )
+
+			for i = 1 , 10 do 
+				
+				local tr = util.TraceHull({
+					
+					start  = currentpos,
+					endpos = currentpos + Angle( 0 , i*36 - 180 , 0 ):Forward() * refdist,
+					maxs   = refmaxs,
+					mins   = refmins,
+					filter = ent 
+				
+				})
+
+				if tr.StartSolid then
+
+					return true 
+
+				end
+			
+			end
+		
+		end
+
+		return false 
 	
 	end
 
@@ -151,10 +205,10 @@ if SERVER then
 			mask   = MASK_PLAYERSOLID,
 		})
 
-		if ent:IsInWorld() and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.StartSolid then
+		if !EMF.IsStuck( ent ) and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld and !tr.StartSolid then
 
 			ent:SetPos( tr.HitPos )
-			ent:SetPos( ent:NearestPoint( ent:GetPos().z >= 0 and ent:GetPos() - Vector( 0 , 0 , -BigValue ) or ent:GetPos() + Vector( 0 , 0 , -BigValue ) ) )  
+			ent:SetPos( ent:NearestPoint( ent:GetPos() - Vector( 0 , 0 , BigValue ) ) )  
 			ent:DropToFloor() 
 
 		else
@@ -173,7 +227,7 @@ if SERVER then
 		
 		end
 
-		if !ent:IsInWorld() then
+		if EMF.IsStuck( ent ) then
 			
 			SafeRemoveEntity( ent ) 
 		
@@ -188,63 +242,103 @@ if SERVER then
 		local refpos     = ent:WorldSpaceCenter()
 		local refmins    = ent:OBBMins()
 		local refmaxs    = ent:OBBMaxs()
+		local refdist    = refmaxs.x < refmaxs.y and ( refmaxs.x * 2 ) or ( refmaxs.y * 2 )
+		
+		local angs       = { ent:GetAngles():Forward() , -ent:GetAngles():Forward() , ent:GetAngles():Right() , -ent:GetAngles():Right() }
 		local closest    = BigValue
-		local finalangle = Angle()
-		local angled = false
+		local finalang   = Angle()
+		local angled     = false
 
-		for i = 1 , 6 do 
+		local function SetBestAngle( ang )
+
+			finalang = ang 
+			angled   = true
+
+		end
 			
-			local currentang = Angle( 0 , i*60 - 180 , 0 )
+		for i = 1 , 4 do -- Wall checker
+			
+			local currentdir = angs[i]
 			
 			local tr = util.TraceHull({
+				
 				start  = refpos,
-				endpos = refpos + currentang:Forward() * BigValue,
+				endpos = refpos + currentdir * refdist,
 				maxs   = refmaxs,
 				mins   = refmins,
 				filter = ent,
 				mask   = MASK_PLAYERSOLID,
+			
 			})
 
-			if closest > refpos:Distance( tr.HitPos ) and EMF.MinDistToRef >= refpos:Distance( tr.HitPos ) then
+			if closest > refpos:Distance( tr.HitPos ) then
 				
-				closest    = refpos:Distance( tr.HitPos )
-				finalangle = currentang - Angle( 0 , 90 , 0 )
-				angled = true
+				closest = refpos:Distance( tr.HitPos )
+				SetBestAngle( currentdir:Angle() )
 			
 			end
 
-			if tr.StartSolid and tr.HitWorld then
+			if tr.StartSolid then
 
-				closest    = 0
-				finalangle = currentang - Angle( 0 , 90 , 0 )
-				angled = true
+				closest = 0
+				SetBestAngle( currentdir:Angle() )
 
 			end
 		
 		end
 
-		-- TODO: z difference detection
-		
-		--[[if closest == BigValue then
-			for i = 1 , #angs do
-				
-			end
-		end]]--
+		if !angled then -- then check for holes if no walls
 
-		if !angled then
+			local ztr = util.TraceLine({
+
+				start  = refpos,
+				endpos = refpos - Vector( 0 , 0 , BigValue ),
+				filter = ent,
+				mask   = MASK_PLAYERSOLID,
+
+			})
+
+			local zrefpos = ztr.HitPos 
+			local ztests = { Vector( 0 , refdist , 0 ) , - Vector( 0 , refdist , 0 ) , Vector( refdist , 0 , 0 ) , - Vector( refdist , 0 , 0 ) }
+			local deepest = zrefpos.z
 			
-			finalangle = Angle( 0 , math.random( -180 , 180 ) , 0 )
+			for i = 1 , 4 do
+				
+				local currentpos = zrefpos + ztests[i]
+				
+				local tr = util.TraceLine({
+					
+					start  = currentpos,
+					endpos = currentpos - Vector( 0 , 0 , BigValue ),
+					filter = ent, 
+					mask   = MASK_PLAYERSOLID,
+				})
+
+				if tr.HitPos.z < deepest and !tr.StartSolid then
+
+					deepest = tr.HitPos.z
+					SetBestAngle( angs[i]:Angle() )
+
+				end
+			
+			end
+
+		end
+
+		if !angled then -- if no walls or holes then random angle
+			
+			finalang = Angle( 0 , math.random( -180 , 180 ) , 0 )
 		
 		end
 		
-		ent:SetAngles( finalangle )
+		ent:SetAngles( finalang )
 		
 	end
 
 	function EMF.GenerateEnts()
 		
 		local MaxEntries = #EMF.Topology
-		local AmScale    = math.Round( MaxEntries / 25 * 1.25 )
+		local AmScale    = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
 
 		for i = 1 , AmScale do
 			
