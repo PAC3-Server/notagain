@@ -20,7 +20,7 @@ AddConvars["vj_frostlionguard_h"] = 800
 AddConvars["vj_frostlionguard_d"] = 65
 
 for k, v in pairs(AddConvars) do
-	if !ConVarExists( k ) then CreateConVar( k, v, {FCVAR_NONE} ) end
+	if not ConVarExists( k ) then CreateConVar( k, v, {FCVAR_NONE} ) end
 end
 
 do
@@ -31,8 +31,8 @@ do
 	ENT.Type 			= "ai"
 	ENT.PrintName 		= "Frostlion"
 	ENT.Author 			= "Norpa"
-	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
-	ENT.Purpose 		= "Spawn it and fight with it!"
+	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
+	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
 	ENT.Category		= "Antlions"
 
@@ -48,11 +48,11 @@ do
 
 		--AddCSLuaFile("shared.lua")
 		--include('shared.lua')
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 		ENT.Model = "models/AntLio2.mdl"
 		ENT.StartHealth = GetConVarNumber("vj_frostlion_h")
 		ENT.MoveType = MOVETYPE_STEP
@@ -120,11 +120,11 @@ do
 			end
 		end
 
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -137,8 +137,8 @@ do
 	ENT.Type 			= "ai"
 	ENT.PrintName 		= "Frostlion Guard"
 	ENT.Author 			= "Norpa"
-	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
-	ENT.Purpose 		= "Spawn it and fight with it!"
+	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
+	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click to spawn it."
 	ENT.Category		= "Antlions"
 
@@ -154,11 +154,11 @@ do
 
 		--AddCSLuaFile("shared.lua")
 		--include('shared.lua')
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 		ENT.Model = {"models/mallion_guard.mdl"} -- The game will pick a random model from the table when the SNPC is spawned | Add as many as you want
 		ENT.StartHealth = GetConVarNumber("vj_frostlionguard_h")
 		ENT.MoveType = MOVETYPE_STEP
@@ -249,7 +249,7 @@ do
 
 				function ENT:CustomOnTakeDamage_BeforeGetDamage(dmginfo,hitgroup)
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 5  && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 5   and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
@@ -257,23 +257,23 @@ do
 
 
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 4  && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 4   and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
 
 
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 40 && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 40  and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
 		end
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -286,8 +286,8 @@ do
 	ENT.Type 			= "ai"
 	ENT.PrintName 		= "Hellion"
 	ENT.Author 			= "Norpa"
-	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
-	ENT.Purpose 		= "Spawn it and fight with it!"
+	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
+	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
 	ENT.Category		= "Antlions"
 
@@ -303,11 +303,11 @@ do
 
 		--AddCSLuaFile("shared.lua")
 		--include('shared.lua')
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2015 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 		ENT.Model = "models/AntLio1.mdl"
 		ENT.StartHealth = GetConVarNumber("vj_hellion_h")
 		ENT.MoveType = MOVETYPE_STEP
@@ -368,11 +368,11 @@ do
 		end
 
 
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2015 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -385,8 +385,8 @@ do
 	ENT.Type 			= "ai"
 	ENT.PrintName 		= "Hellion Guard"
 	ENT.Author 			= "Norpa"
-	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
-	ENT.Purpose 		= "Spawn it and fight with it!"
+	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
+	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click to spawn it."
 	ENT.Category		= "Antlions"
 
@@ -402,11 +402,11 @@ do
 
 		--AddCSLuaFile("shared.lua")
 		--include('shared.lua')
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 		ENT.Model = {"models/hellion_guard.mdl"} -- The game will pick a random model from the table when the SNPC is spawned | Add as many as you want
 		ENT.StartHealth = GetConVarNumber("vj_hellionguard_h")
 		ENT.MoveType = MOVETYPE_STEP
@@ -496,7 +496,7 @@ do
 
 						function ENT:CustomOnTakeDamage_BeforeGetDamage(dmginfo,hitgroup)
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 5  && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 5   and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
@@ -504,23 +504,23 @@ do
 
 
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 4  && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 4   and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
 
 
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 40 && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 40  and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
 		end
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -533,8 +533,8 @@ do
 	ENT.Type 			= "ai"
 	ENT.PrintName 		= "Thunderlion"
 	ENT.Author 			= "Norpa"
-	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
-	ENT.Purpose 		= "Spawn it and fight with it!"
+	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
+	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
 	ENT.Category		= "Antlions"
 
@@ -550,11 +550,11 @@ do
 
 		--AddCSLuaFile("shared.lua")
 		--include('shared.lua')
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2015 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 		ENT.Model = "models/AntLio1.mdl"
 		ENT.StartHealth = GetConVarNumber("vj_thunderlion_h")
 		ENT.MoveType = MOVETYPE_STEP
@@ -614,11 +614,11 @@ do
 
 		end
 
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2015 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -631,8 +631,8 @@ do
 	ENT.Type 			= "ai"
 	ENT.PrintName 		= "Thunderlion Guard"
 	ENT.Author 			= "Norpa"
-	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
-	ENT.Purpose 		= "Spawn it and fight with it!"
+	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
+	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click to spawn it."
 	ENT.Category		= "Antlions"
 
@@ -648,11 +648,11 @@ do
 
 		--AddCSLuaFile("shared.lua")
 		--include('shared.lua')
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 		ENT.Model = {"models/metlion_guard.mdl"} -- The game will pick a random model from the table when the SNPC is spawned | Add as many as you want
 		ENT.StartHealth = GetConVarNumber("vj_thunderlionguard_h")
 		ENT.MoveType = MOVETYPE_STEP
@@ -746,7 +746,7 @@ do
 
 						function ENT:CustomOnTakeDamage_BeforeGetDamage(dmginfo,hitgroup)
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 5  && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 5   and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
@@ -754,23 +754,23 @@ do
 
 
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 4  && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 4   and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
 
 
 			local panis = dmginfo:GetDamageType()
-			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB) && dmginfo:GetDamage() >= 40 && dmginfo:GetAttacker().IsHugeMonster != true then
+			if (panis == DMG_BUCKSHOT or panis == DMG_BULLET or panis == DMG_GENERIC or panis == DMG_CLUB)  and  dmginfo:GetDamage() >= 40  and  dmginfo:GetAttacker().IsHugeMonster ~= true then
 			dmginfo:ScaleDamage(0.1)
 			dmginfo:SetDamage(dmginfo:GetDamage() /1)
 			end
 		end
-		/*-----------------------------------------------
+		--[[-----------------------------------------------
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/
+		-----------------------------------------------]]
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -797,7 +797,7 @@ do
 		--include("shared.lua")
 
 		function ENT:Initialize()
-		//SMALL BLUE BANGY THINGY\\
+		--SMALL BLUE BANGY THINGY\\
 		self:SetModel("models/props_junk/watermelon01_chunk02c.mdl")
 		self:PhysicsInit( SOLID_VPHYSICS )
 		self:SetMoveType( MOVETYPE_VPHYSICS )
@@ -833,7 +833,7 @@ do
 		if self:IsValid() then
 		ParticleEffectAttach("striderbuster_smoke", PATTACH_ABSORIGIN_FOLLOW, self, 0)
 		end
-		if self:GetOwner() != NULL then
+		if self:GetOwner() ~= NULL then
 		self:SetOwner(self)
 			end
 		end
@@ -863,7 +863,7 @@ do
 		--include("shared.lua")
 
 		function ENT:Initialize()
-		//SMALL BLUE BANGY THINGY\\
+		--SMALL BLUE BANGY THINGY\\
 		self:SetModel("models/props_junk/watermelon01_chunk02c.mdl")
 		self:PhysicsInit( SOLID_VPHYSICS )
 		self:SetMoveType( MOVETYPE_VPHYSICS )
@@ -902,5 +902,37 @@ do
 		end
 
 	end
+	scripted_ents.Register(ENT, ENT.ClassName)
+end
+
+do
+	local ENT = {}
+
+	ENT.PrintName = "robolion"
+	ENT.ClassName = "npc_vj_robolion"
+	ENT.Base = "npc_vj_thunderlion"
+
+	if CLIENT then
+		http.Fetch("https://gist.githubusercontent.com/sambarinooo/fabe4356b0ab88965cf87bb570e60ee5/raw/b8fdd8cb39c13099ff11fe05301ca40833964dc2/antlion%2520robot%2520outfit", function(str)
+			pac.AddEntityClassListener(ENT.ClassName, pac.luadata.Decode(str), nil, 1000)
+		end)
+	end
+
+	scripted_ents.Register(ENT, ENT.ClassName)
+end
+
+do
+	local ENT = {}
+
+	ENT.PrintName = "robolion guard"
+	ENT.ClassName = "npc_vj_robolionguard"
+	ENT.Base = "npc_vj_thunderlionguard"
+
+	if CLIENT then
+		http.Fetch("https://gist.githubusercontent.com/sambarinooo/93afdad8335e5bc0172b64b767eb1559/raw/e5fccc6349dcf934059d776082b681a4c2cd238b/antlionguard%2520robot%2520outfit", function(str)
+			pac.AddEntityClassListener(ENT.ClassName, pac.luadata.Decode(str), nil, 1000)
+		end)
+	end
+
 	scripted_ents.Register(ENT, ENT.ClassName)
 end
