@@ -682,7 +682,7 @@ do -- effects
 				end
 
 				local wep = victim:GetActiveWeapon()
-				if wep:IsValid() then
+				if wep and wep:IsValid() then
 					wep:SetNextPrimaryFire(CurTime()+math.random())
 					wep:SetNextSecondaryFire(CurTime()+math.random())
 				end
