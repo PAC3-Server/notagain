@@ -205,8 +205,10 @@ do
 
 	SWEP.PrintName = "potion"
 	SWEP.Spawnable = true
-	SWEP.ViewModel = "models/healthvial.mdl"
 	SWEP.WorldModel = "models/healthvial.mdl"
+
+	SWEP.ViewModel = Model( "models/weapons/c_medkit.mdl" )
+	SWEP.UseHands = true
 
 	SWEP.RenderGroup = RENDERGROUP_TRANSLUCENT
 	SWEP.is_potion = true
@@ -257,6 +259,15 @@ do
 			end
 		end)
 
+
+		local suppress_player_draw = false
+
+		hook.Add("PrePlayerDraw", "potion", function(ply)
+			if suppress_player_draw then
+				return true
+			end
+		end)
+
 		function SWEP:DrawWorldModelTranslucent()
 			local ply = self:GetOwner()
 
@@ -277,7 +288,10 @@ do
 			render.SetColorModulation(self.Color.x, self.Color.y, self.Color.z)
 			render.ModelMaterialOverride(shiny)
 
+			ysuppress_player_draw = true
 			self:DrawModel()
+			suppress_player_draw = false
+
 			render.ModelMaterialOverride()
 			render.SetColorModulation(1,1,1)
 		end
