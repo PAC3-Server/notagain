@@ -2,6 +2,7 @@ AddCSLuaFile()
 
 if SERVER then
 	API_TRANS_URL = "https://translation.googleapis.com/language/translate/v2"
+	API_DETECT_URL = "https://translation.googleapis.com/language/translate/v2/detect"
 	API_TRANS_KEY = file.Read("translation_key.txt")
 
 	local LangCode = {
@@ -155,6 +156,25 @@ if SERVER then
 		end
 		)
 	end
+	
+	function detectlang( query, callback )
+	  http.Post(API_DETECT_URL,
+		{
+		  key = API_TRANS_KEY,
+		  q = query
+		},
+		function( res )
+		  local tab = util.JSONToTable(res)
+
+		  if tab then
+			callback(tab.data.detections[1][1].language)
+		  end
+		end,
+		function( err )
+		  print("Error:" .. err)
+		end
+	  )
+	end
 
 	util.AddNetworkString( "s2c_translate" )
 
@@ -169,6 +189,38 @@ if SERVER then
 			end
 		end )
 	end)
+	
+	
+	// Chat
+	util.AddNetworkString( "s2c_reqtranschat" )
+	util.AddNetworkString( "c2s_reqtranschat" )
+
+	aowl.AddCommand( {"trchat"}, function( pl, line, target )
+		if target then
+			local lang = ConvertLang( target )
+			
+			if lang then
+				pl:SetNWString( "trchat", lang )
+			end
+		else
+			pl:SetNWString( "trchat", "" )
+		end
+	end)
+	
+	net.Receive( "c2s_reqtranschat", function( len, pl )
+		local p = net.ReadEntity()
+		local t = net.ReadString()
+		local lang = pl:GetNWString( "trchat" )
+		
+		translate( t, "auto", lang, function( q )
+			if q then
+				net.Start( "s2c_reqtranschat" )
+				net.WriteEntity( p )
+				net.WriteString( q )
+				net.Send( pl )
+			end
+		end )
+	end )
 else
 	net.Receive( "s2c_translate", function()
 		local data = net.ReadString()
@@ -185,5 +237,28 @@ else
 		Color(252, 202, 3), "e",
 		color_white, ": ",
 		data)
+	end )
+	
+	// chat
+	hook.Add( "OnPlayerChat", "translation_chat", function( pl, t )
+		local targetLang = LocalPlayer():GetNWString( "trchat" )
+		
+		if targetLang != "" and !string.StartWith( t, "!" ) and pl != LocalPlayer() then
+			net.Start( "c2s_reqtranschat" )
+			net.WriteEntity( pl )
+			net.WriteString( t ) 
+			net.SendToServer()
+		end
+	end )
+	
+	net.Receive( "s2c_reqtranschat", function()
+		local p = net.ReadEntity()
+		local t = net.ReadString()
+		
+		chat.AddText(
+		Color(192, 127, 255), "[Translate] ",
+		Color(192, 127, 255), p:Nick(),
+		color_white, ": " .. t
+		)
 	end )
 end
