@@ -2,6 +2,7 @@ AddCSLuaFile()
 
 if SERVER then
 	API_TRANS_URL = "https://translation.googleapis.com/language/translate/v2"
+	API_DETECT_URL = "https://translation.googleapis.com/language/translate/v2/detect"
 	API_TRANS_KEY = file.Read("translation_key.txt")
 
 	local LangCode = {
@@ -154,6 +155,25 @@ if SERVER then
 			callback(false)
 		end
 		)
+	end
+	
+	function detectlang( query, callback )
+	  http.Post(API_DETECT_URL,
+		{
+		  key = API_TRANS_KEY,
+		  q = query
+		},
+		function( res )
+		  local tab = util.JSONToTable(res)
+
+		  if tab then
+			callback(tab.data.detections[1][1].language)
+		  end
+		end,
+		function( err )
+		  print("Error:" .. err)
+		end
+	  )
 	end
 
 	util.AddNetworkString( "s2c_translate" )
