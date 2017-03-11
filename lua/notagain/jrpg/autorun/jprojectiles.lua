@@ -169,7 +169,7 @@ do
 
 			if trace.Entity:IsValid() then
 				self.pos = trace.Entity
-				self.lpos = trace.Entity:WorldToLocal(trace.HitPos)
+				self.lpos = trace.Entity:NearestPoint(trace.Entity:WorldToLocal(trace.HitPos))
 			end
 
 			local bone_id = attacker:LookupBone("ValveBiped.Bip01_R_Hand")
