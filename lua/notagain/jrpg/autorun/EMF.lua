@@ -54,13 +54,13 @@ if SERVER then
 
 	function EMF.AddTopology( pos )
 		
-		local add = false
+		local add = true
 		
 		for index , topo in pairs( EMF.Topology ) do
 			
-			if EMF.InitTopology[index] or topo:Distance( pos ) > EMF.MaxDistToRef / 2 then
+			if !EMF.InitTopology[index] and topo:Distance( pos ) < EMF.MaxDistToRef / 2 then
 				
-				add = true
+				add = false
 			
 			end
 		
