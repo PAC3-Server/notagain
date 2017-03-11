@@ -340,8 +340,9 @@ if SERVER then
 
 	function EMF.GenerateEnts()
 		
-		local MaxEntries = #EMF.Topology
-		local AmScale    = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
+		local MaxEntries    = #EMF.Topology
+		local AmScale       = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
+		local UniqueSpawned = {}
 
 		for i = 1 , AmScale do
 			
@@ -349,22 +350,16 @@ if SERVER then
 
 			local function Unique()
 				
-				if EMF.Ents[random][2] then
+				if EMF.Ents[random][2] and !UniqueSpawned[EMF.Ents[random][1]] then 
 					
-					for _ , preent in pairs( EMF.ActiveEnts ) do
-						
-						if preent:GetClass() == EMF.Ents[random][1] then
-							
-							random = math.random( 1 , #EMF.Ents )
-							break
-						
-						end
-					
-					end
+					UniqueSpawned[EMF.Ents[random][1]] = true 
 				
-				end
+				else
 
-				Unique() 
+					random = math.random( 1 , #EMF.Ents )
+					Unique()
+
+				end
 
 			end
 			
