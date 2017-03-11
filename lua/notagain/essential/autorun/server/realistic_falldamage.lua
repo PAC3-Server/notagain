@@ -16,6 +16,9 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 			local dmg = (len - 500) / 4
 
 			if not res.HitWorld and res.Entity:IsValid() then
+				local owner = res.Entity.CPPIGetOwner and res.Entity:CPPIGetOwner()
+				if owner and not owner:CanAlter(ply) then return end
+
 				local info = DamageInfo()
 				info:SetDamagePosition(data:GetOrigin())
 				info:SetDamage(dmg)
