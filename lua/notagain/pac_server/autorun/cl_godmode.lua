@@ -155,8 +155,9 @@ if SERVER then
 				if attacker ~= victim then
 					suppress = true
 					dmginfo:SetAttacker(victim)
+					dmginfo:SetDamageForce(vector_origin)
 					attacker:TakeDamageInfo(dmginfo)
-						print(npc, attacker)
+
 					if npc then
 						npc:TakeDamageInfo(dmginfo)
 					end
