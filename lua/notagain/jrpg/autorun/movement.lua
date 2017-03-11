@@ -10,6 +10,10 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 	end
 end)
 
+hook.Remove("Move", "movement")
+hook.Remove("SetupMove", "movement")
+hook.Remove("FinishMove", "movement")
+hook.Remove("PlayerTick", "movement")
 hook.Add("Move", "movement", function(ply, mv)
 	if not ply:GetNWBool("rpg") then return end
 
@@ -19,17 +23,8 @@ hook.Add("Move", "movement", function(ply, mv)
 	local side = mv:GetSideSpeed()
 	local forward = mv:GetForwardSpeed()
 
-	if side  == 0 then
-		ply.movement_smooth_side = 0
-	elseif (side > 0 and ply.movement_smooth_side < 0) or (side < 0 and ply.movement_smooth_side > 0) then
-		ply.movement_smooth_side = 0
-	end
-
-	if forward == 0 then
-		ply.movement_smooth_forward = 0
-	elseif (forward > 0 and ply.movement_smooth_forward < 0) or (forward < 0 and ply.movement_smooth_forward > 0) then
-		ply.movement_smooth_forward = 0
-	end
+	side = math.Clamp(side, -500, 500)
+	forward = math.Clamp(forward, -500, 500)
 
 	do
 		local hp = ply:GetNWFloat("hp_overload", 0)
@@ -45,16 +40,41 @@ hook.Add("Move", "movement", function(ply, mv)
 		end
 	end
 
-	ply.movement_smooth_side = ply.movement_smooth_side + ((side - ply.movement_smooth_side) * FrameTime() / 5)
-	ply.movement_smooth_forward = ply.movement_smooth_forward + ((forward - ply.movement_smooth_forward) * FrameTime() / 5)
 
-	mv:SetForwardSpeed(ply.movement_smooth_forward)
-	mv:SetSideSpeed(ply.movement_smooth_side)
+	--[[
+	if ply == me then
+		if mv:GetForwardSpeed() == 0 and mv:GetSideSpeed() == 0 and ply.movement_cooldown_done then
+			ply.movement_startup = nil
+			ply.movement_cooldown = ply.movement_cooldown or CurTime() + 1
+			local time = math.max(ply.movement_cooldown - CurTime(), 0)
+
+			if time ~= 0 then
+				mv:SetForwardSpeed(ply.movement_last_forward * time)
+				mv:SetSideSpeed(ply.movement_last_side * time)
+				ply.movement_cooldown_done = true
+			end
+		else
+			ply.movement_cooldown_done = true
+			ply.movement_cooldown = nil
+			ply.movement_startup = ply.movement_startup or CurTime()
+			local time = math.min(CurTime() - ply.movement_startup, 1)
+			mv:SetMaxClientSpeed(time * 500)
+
+			ply.movement_last_side = side
+			ply.movement_last_forward = forward
+		end
+
+		return
+	end
+
+	mv:SetForwardSpeed(forward)
+	mv:SetSideSpeed(side)
+	]]
 
 	if jattributes.HasStamina(ply) and jattributes.GetStamina(ply) == 0 or ply:GetNWBool("drinking_potion") then
 		local speed = ply:GetWalkSpeed()
-		mv:SetForwardSpeed(math.Clamp(ply.movement_smooth_forward, -speed, speed))
-		mv:SetSideSpeed(math.Clamp(ply.movement_smooth_side, -speed, speed))
+		mv:SetForwardSpeed(math.Clamp(forward, -speed, speed))
+		mv:SetSideSpeed(math.Clamp(side, -speed, speed))
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() then
 			wep:SetNextPrimaryFire(CurTime() + 0.1)
