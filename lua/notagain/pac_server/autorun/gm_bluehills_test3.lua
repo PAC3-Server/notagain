@@ -26,8 +26,8 @@ easylua.StartEntity("bluehill_theater_screen")
 
 			function mp:UpdateListeners()
 				local listeners = {}
-				for k, v in pairs(player.GetAll()) do
-					if v:GetPos():Distance(Vector(766.525879, 600, 77.898056)) < 600 then --This really needs to be redone
+				for k, v in pairs( ents.FindInBox( Vector( 343, 1191, 436 ), Vector( 1216, 91, -63 ) ) ) do
+					if v:IsPlayer() then
 						table.insert(listeners, v)
 					end
 				end
