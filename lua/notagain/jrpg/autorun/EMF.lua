@@ -454,7 +454,7 @@ for class , _ in pairs( scripted_ents.GetList() ) do -- Add VJ base npcs
 	
 	if class:StartWith( "npc_vj" ) then 
 		
-		EMF.AddEnt( class ) 
+		EMF.AddEnt( class , true ) 
 	
 	end 
 
