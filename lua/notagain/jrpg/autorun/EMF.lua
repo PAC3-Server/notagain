@@ -230,8 +230,8 @@ if SERVER then
 
 		if EMF.IsStuck( ent ) or !ent:IsInWorld() then
 			
-			SafeRemoveEntity( ent ) 
 			table.remove(EMF.ActiveEnts,ent.EMFID)
+			SafeRemoveEntity( ent ) 
 		
 		end
 
@@ -344,26 +344,30 @@ if SERVER then
 		local AmScale       = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
 		local UniqueSpawned = {}
 
-		for i = 1 , AmScale do
+		timer.Create( "EMFGenerateEnts" , 0.15 , AmScale , function()
 			
 			local random = math.random( 1 , #EMF.Ents )
 
 			local function Unique()
 				
-				if EMF.Ents[random][2] and !UniqueSpawned[EMF.Ents[random][1]] then 
+				if EMF.Ents[random].Unique then 
 					
-					UniqueSpawned[EMF.Ents[random][1]] = true 
-				
-				else
+					if table.HasValue( UniqueSpawned , EMF.Ents[random].Class ) then
 
-					random = math.random( 1 , #EMF.Ents )
-					Unique()
+						random = math.random( 1 , #EMF.Ents )
+						Unique()
+
+					else
+
+						UniqueSpawned[#UniqueSpawned + 1] = EMF.Ents[random].Class
+
+					end
 
 				end
 
 			end
 			
-			local ent = ents.Create( EMF.Ents[random][1] )
+			local ent = ents.Create( EMF.Ents[random].Class )
 			ent:Spawn()
 			ent.EMFSpawned = true
 			ent.EMFID = #EMF.ActiveEnts + 1
@@ -372,7 +376,7 @@ if SERVER then
 			EMF.SetValidAngle( ent )
 			EMF.ActiveEnts[ent.EMFID] = ent
 		
-		end
+		end )
 	
 	end
 
@@ -393,27 +397,12 @@ if SERVER then
 	function EMF.AddEnt( class , unique )
 
 		unique = unique or false
-		
-		local add = true
 
-		for _ , tbl in pairs( EMF.Ents ) do
+		if !table.HasValue( EMF.Ents , class ) then
 			
-			if tbl[1] == class then
-				
-				add = false
-				break
-			
-			end
+			EMF.Ents[#EMF.Ents + 1] = { Class = class , Unique = unique }
 		
 		end
-		
-		if add then
-			
-			EMF.Ents[#EMF.Ents + 1] = { class , unique }
-		
-		end
-
-		return add
 	
 	end
 
