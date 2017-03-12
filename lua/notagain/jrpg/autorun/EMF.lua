@@ -344,7 +344,7 @@ if SERVER then
 		local AmScale       = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
 		local UniqueSpawned = {}
 
-		timer.Create( "EMFGenerateEnts" , 0.15 , AmScale , function()
+		timer.Create( "EMFGenerateEnts" , 1 , AmScale , function()
 			
 			local random = math.random( 1 , #EMF.Ents )
 
@@ -447,16 +447,6 @@ end
 for _ , fl in ipairs( ( file.Find( "notagain/jrpg/entities/*" , "LUA" ) ) ) do
 	
 	include( "notagain/jrpg/entities/" .. fl )
-
-end
-
-for class , _ in pairs( scripted_ents.GetList() ) do -- Add VJ base npcs
-	
-	if class:StartWith( "npc_vj" ) then 
-		
-		EMF.AddEnt( class , true ) 
-	
-	end 
 
 end
 
