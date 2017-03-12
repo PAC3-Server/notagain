@@ -107,7 +107,7 @@ do
 
 	if SERVER then
 		function ENT:Initialize()
-			self:SetSkin(13)
+			self:SetSkin(2)
 			self:SetModel(models[self:GetSkin()].mdl)
 			self:SetMoveType(MOVETYPE_NONE)
 			self:SetSolid(SOLID_VPHYSICS)
