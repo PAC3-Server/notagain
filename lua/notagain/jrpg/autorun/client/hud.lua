@@ -218,7 +218,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 			local w = math.Clamp(max*2, 50, ScrW()/3)
 
-			draw_bar(x,y,w,health_height,cur,max,border_size, 150,150,50, "SP", real_cur)
+			draw_bar(x,y,w,health_height,cur,max,border_size, 150,150,50, "SP", math.Round(real_cur))
 
 			last_hp_timer = math.huge
 
