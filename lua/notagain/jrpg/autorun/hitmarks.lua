@@ -417,17 +417,22 @@ if CLIENT then
 
 			for i = #hitmarks, 1, -1 do
 				local data = hitmarks[i]
-				local t = RealTime() + data.offset
-
-				local fraction =  (data.life - t) / life_time
-				local pos = data.real_pos
 
 				if data.ent:IsValid() then
+					if data.ent == LocalPlayer() and not data.ent:ShouldDrawLocalPlayer() then
+						continue
+					end
+
 					pos = LocalToWorld(data.real_pos, Angle(0,0,0), data.ent:GetPos(), data.first_angle)
 					data.last_pos = pos
 				else
 					pos = data.last_pos or pos
 				end
+
+				local t = RealTime() + data.offset
+
+				local fraction =  (data.life - t) / life_time
+				local pos = data.real_pos
 
 				local fade = math.Clamp(fraction ^ 0.25, 0, 1)
 
