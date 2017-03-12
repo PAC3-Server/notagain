@@ -349,21 +349,39 @@ if SERVER then
 			local random = math.random( 1 , #EMF.Ents )
 
 			local function Unique()
-				
-				if EMF.Ents[random][2] and !UniqueSpawned[EMF.Ents[random][1]] then 
-					
-					UniqueSpawned[EMF.Ents[random][1]] = true 
-				
-				else
 
-					random = math.random( 1 , #EMF.Ents )
-					Unique()
+				local spawn = true 
+				
+				if EMF.Ents[random].Unique then 
+					
+					for _ , unique in pairs( UniqueSpawned ) do 
+
+						if EMF.Ents[random].Class == unique then
+
+							spawn = false
+							break
+
+						end
+					
+					end
+				
+				
+					if !spawn then
+
+						random = math.random( 1 , #EMF.Ents )
+						Unique()
+
+					else
+
+						UniqueSpawned[#UniqueSpawned + 1] = EMF.Ents[random].Class
+
+					end
 
 				end
 
 			end
 			
-			local ent = ents.Create( EMF.Ents[random][1] )
+			local ent = ents.Create( EMF.Ents[random].Class )
 			ent:Spawn()
 			ent.EMFSpawned = true
 			ent.EMFID = #EMF.ActiveEnts + 1
@@ -396,9 +414,9 @@ if SERVER then
 		
 		local add = true
 
-		for _ , tbl in pairs( EMF.Ents ) do
+		for _ , ent in pairs( EMF.Ents ) do
 			
-			if tbl[1] == class then
+			if ent.Class == class then
 				
 				add = false
 				break
@@ -409,7 +427,7 @@ if SERVER then
 		
 		if add then
 			
-			EMF.Ents[#EMF.Ents + 1] = { class , unique }
+			EMF.Ents[#EMF.Ents + 1] = { Class = class , Unique = unique }
 		
 		end
 
