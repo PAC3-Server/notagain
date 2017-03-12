@@ -5,7 +5,7 @@ resource.AddWorkshop("879302614") -- cuustom server content
 resource.AddWorkshop("757604550")
 resource.AddWorkshop("848953359")
 resource.AddWorkshop("873302121")
-resource.AddWorkshop("848953609")
+-- resource.AddWorkshop("848953609") age of chivalry causes issues
 
 
 do
