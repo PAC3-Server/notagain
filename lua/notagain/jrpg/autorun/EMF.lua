@@ -344,7 +344,7 @@ if SERVER then
 		local AmScale       = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
 		local UniqueSpawned = {}
 
-		timer.Create( "EMFGenerateEnts" , 0.15 , AmScale , function()
+		timer.Create( "EMFGenerateEnts" , 1 , AmScale , function()
 			
 			local random = math.random( 1 , #EMF.Ents )
 
@@ -396,9 +396,20 @@ if SERVER then
 
 	function EMF.AddEnt( class , unique )
 
-		unique = unique or false
+		local add = true
+		local unique = unique or false
 
-		if !table.HasValue( EMF.Ents , class ) then
+		for _ , ent in pairs( EMF.Ents ) do
+			
+			if class == ent.Class then
+				
+				add = false 
+			
+			end
+		
+		end
+
+		if add then 
 			
 			EMF.Ents[#EMF.Ents + 1] = { Class = class , Unique = unique }
 		
@@ -438,3 +449,4 @@ for _ , fl in ipairs( ( file.Find( "notagain/jrpg/entities/*" , "LUA" ) ) ) do
 	include( "notagain/jrpg/entities/" .. fl )
 
 end
+
