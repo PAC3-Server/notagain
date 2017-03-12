@@ -107,6 +107,8 @@ if CLIENT then
 			else
 				manip_angles(ply, 0, Angle(0,0,0))
 			end
+		else
+			manip_angles(ply, 0, Angle(0,0,0))
 		end
 	end)
 end
