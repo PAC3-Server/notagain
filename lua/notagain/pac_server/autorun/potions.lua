@@ -283,12 +283,14 @@ do
 				self:SetupBones()
 			end
 
+			suppress_player_draw = true
 			self:DrawModel()
+			suppress_player_draw = false
 
 			render.SetColorModulation(self.Color.x, self.Color.y, self.Color.z)
 			render.ModelMaterialOverride(shiny)
 
-			ysuppress_player_draw = true
+			suppress_player_draw = true
 			self:DrawModel()
 			suppress_player_draw = false
 
