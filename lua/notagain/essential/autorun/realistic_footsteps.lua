@@ -197,7 +197,7 @@ if CLIENT then
 
 				local volume = math.Clamp(vel:Length()/2, 0, 1)
 
-				debugoverlay.Line(pos, pos + dir * volume, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
+				--debugoverlay.Line(pos, pos + dir * volume, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
 
 				if trace.Hit then
 
