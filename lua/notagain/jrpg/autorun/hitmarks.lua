@@ -589,7 +589,9 @@ if CLIENT then
 			}
 		)
 
-		hitmarkers.ShowHealth(ent)
+		if ent ~= LocalPlayer() then
+			hitmarkers.ShowHealth(ent)
+		end
 	end
 
 	timer.Create("hitmark", 0.25, 0, function()
@@ -643,6 +645,7 @@ if CLIENT then
 					end
 
 					hitmarkers.ShowAttack(ent, name)
+
 					if ent ~= LocalPlayer() then
 						hitmarkers.ShowHealth(ent)
 					end
