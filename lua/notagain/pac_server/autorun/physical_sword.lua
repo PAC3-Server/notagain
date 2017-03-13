@@ -139,8 +139,8 @@ if SERVER then
 
 	function ENT:GetSwordPos()
 		local owner = self:GetOwner()
-
-		local pos = owner:GetBonePosition(owner:LookupBone("ValveBiped.Bip01_R_Hand")) or owner:EyePos()
+		local id = owner:LookupBone("ValveBiped.Bip01_R_Hand")
+		local pos = id and owner:GetBonePosition(id) or owner:EyePos()
 		local ang = owner:EyeAngles()
 
 		local ang_offset
