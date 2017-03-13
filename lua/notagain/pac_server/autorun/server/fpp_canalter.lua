@@ -6,7 +6,7 @@ timer.Simple(0.5, function()
 		if not ent:IsPlayer() then
 			local ent = ent:CPPIGetOwner()
 			if ent and ply:CanAlter(ent) then
-				return 31 -- all the touch flags
+				return true
 			end
 		end
 
