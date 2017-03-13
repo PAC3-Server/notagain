@@ -339,33 +339,14 @@ if SERVER then
 		
 		EMF.AmScale = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
 		
-		local MaxEntries    = #EMF.Topology
-		local UniqueSpawned = {}
+		local MaxEntries = #EMF.Topology
+		local ToSpawn    = EMF.Ents
 
 		timer.Create( "EMFGenerateEnts" , 600 / EMF.AmScale , EMF.AmScale , function()
 			
-			local random = math.random( 1 , #EMF.Ents )
-
-			local function Unique()
-				
-				if EMF.Ents[random].Unique then 
-					
-					if table.HasValue( UniqueSpawned , EMF.Ents[random].Class ) then
-
-						random = math.random( 1 , #EMF.Ents )
-						Unique()
-
-					else
-
-						UniqueSpawned[#UniqueSpawned + 1] = EMF.Ents[random].Class
-
-					end
-
-				end
-
-			end
+			local random = math.random( 1 , #ToSpawn )
 			
-			local ent = ents.Create( EMF.Ents[random].Class )
+			local ent = ents.Create( ToSpawn[random].Class )
 			ent:Spawn()
 			ent.EMFSpawned = true
 			ent.EMFID = #EMF.ActiveEnts + 1
@@ -373,6 +354,12 @@ if SERVER then
 			EMF.SetValidPos( ent , math.random( 1 , #EMF.Topology ) )
 			EMF.SetValidAngle( ent )
 			EMF.ActiveEnts[ent.EMFID] = ent
+
+			if !ToSpawn[random].Unique then
+				
+				ToSpawn[random] = nil 
+			
+			end
 		
 		end )
 	
