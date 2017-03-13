@@ -216,7 +216,7 @@ do
 			if (CurTime() - ply.shield_wield_time) < 0.3 then
 				local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
 				if id then
-					pos, ang = ply:GetBonePosition()
+					pos, ang = ply:GetBonePosition(id)
 				else
 					pos, ang = ply:EyePos(), ply:EyeAngles()
 				end
