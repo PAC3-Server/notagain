@@ -400,25 +400,30 @@ local function draw_glow(ent, time, distance, radius, vis, color, vm, wm)
 		max_inner = 2
 	end
 
+	local vel_len = vel:Length()
+	local fade = fade * ent.jrpg_item_random
+
 	for i2 = 1, max_outter do
 		ent.jrpg_items_random[i2] = ent.jrpg_items_random[i2] or math.Rand(-1,1)
 		local f2 = i2/4
 		f2=f2*5+ent.jrpg_items_random[i2]
+
+		local offset = pos * 1
 
 		render_StartBeam(max_inner)
 			for i = 1, max_inner do
 				local f = i/max_inner
 				local s = math_sin(f*math_pi*2)
 
-				local offset = pos
 
 				if i ~= 1 then
-					offset = pos +
-					(
-						up * -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2]) +
-						right * -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2]) +
-						forward * -(radius/13)*math_abs(math_sin(f2 + time/5)*100)*f*0.5 / (1+vel:Length()/100)
-					) * fade * ent.jrpg_item_random
+					local up_mult = -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2])
+					local right_mult = -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2])
+					local forward_mult = -(radius/13)*math_abs(math_sin(f2 + time/5)*100)*f*0.5 / (1+vel_len/100)
+
+					offset.x = pos.x + (up.x * up_mult + right.x * right_mult + forward.x * forward_mult) * fade
+					offset.y = pos.y + (up.y * up_mult + right.y * right_mult + forward.y * forward_mult) * fade
+					offset.z = pos.z + (up.z * up_mult + right.z * right_mult + forward.z * forward_mult) * fade
 				end
 
 				render_AddBeam(
@@ -475,10 +480,10 @@ hook.Add("RenderScreenspaceEffects", "jrpg_items", function()
 		local distance = pos:Distance(EyePos())
 		draw_glow(ent, time, distance, wm and 5 or radius, vis * (wm and 0.25 or 1), color, nil, wm)
 	end
+	cam.End3D()
 
 	render.SetColorModulation(1,1,1)
 	render.ModelMaterialOverride()
-	cam.End3D()
 end)
 
 
