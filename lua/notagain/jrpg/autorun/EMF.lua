@@ -6,10 +6,10 @@ if SERVER then
 	EMF.Ents = EMF.Ents or {}
 	EMF.Topology = EMF.Topology or {}
 	
-	EMF.InitTopology = EMF.InitTopology or {}
 	EMF.ActiveEnts   = EMF.ActiveEnts or {}
 	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
+	EMF.AmScale      = 0
 
 	local BigValue = 100000	
 	
@@ -41,8 +41,7 @@ if SERVER then
 
 				if tr.HitPos and !tr.HitNoDraw and !tr.HitSky and tr.HitWorld then
 					
-					EMF.Topology[#EMF.Topology + 1] = tr.HitPos
-					EMF.InitTopology[#EMF.InitTopology + 1] = true
+					EMF.Topology[#EMF.Topology + 1] = { Pos = tr.HitPos , CreatedOnInit = true }				
 				
 				end
 			
@@ -58,7 +57,7 @@ if SERVER then
 		
 		for index , topo in pairs( EMF.Topology ) do
 			
-			if !EMF.InitTopology[index] and topo:Distance( pos ) < EMF.MaxDistToRef / 2 then
+			if !EMF.Topology[index].CreatedOnInit and topo:Distance( pos ) < EMF.MaxDistToRef / 2 then
 				
 				add = false
 				break
@@ -69,8 +68,7 @@ if SERVER then
 
 		if add then
 			
-			EMF.Topology[#EMF.Topology + 1] = pos 
-			EMF.InitTopology[#EMF.InitTopology + 1] = false
+			EMF.Topology[#EMF.Topology + 1] = { Pos = pos , CreatedOnInit = false } 
 
 		end
 		
@@ -117,7 +115,6 @@ if SERVER then
 		for _ = 1 , count do
 			
 			table.remove( EMF.Topology , 1 )
-			table.remove( EMF.InitTopology , 1 )
 		
 		end
 	
@@ -127,9 +124,9 @@ if SERVER then
 
 		local count = 0
 
-		for _ , bool in pairs( EMF.InitTopology ) do
+		for _ , topo in pairs( EMF.Topology ) do
 
-			if !bool then 
+			if !topo.CreatedOnInit then 
 
 				count = count + 1 
 
@@ -137,7 +134,7 @@ if SERVER then
 
 		end
 
-		return math.Round( count / #EMF.InitTopology )
+		return math.Round( count / #EMF.Topology )
 
 	end
 
@@ -230,7 +227,7 @@ if SERVER then
 
 		if EMF.IsStuck( ent ) or !ent:IsInWorld() then
 			
-			table.remove(EMF.ActiveEnts,ent.EMFID)
+			EMF.ActiveEnts[ent.EMFID] = nil
 			SafeRemoveEntity( ent ) 
 		
 		end
@@ -340,11 +337,12 @@ if SERVER then
 
 	function EMF.GenerateEnts()
 		
+		EMF.AmScale = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
+		
 		local MaxEntries    = #EMF.Topology
-		local AmScale       = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
 		local UniqueSpawned = {}
 
-		timer.Create( "EMFGenerateEnts" , 1 , AmScale , function()
+		timer.Create( "EMFGenerateEnts" , 600 / EMF.AmScale , EMF.AmScale , function()
 			
 			local random = math.random( 1 , #EMF.Ents )
 
@@ -422,9 +420,13 @@ if SERVER then
 		EMF.GenerateTopology()
 		EMF.GenerateEnts()
 
-		timer.Create( "EMFEntsRegen" , 600 , 0 , function()
+		timer.Create( "EMFEntsRegen" , 300 , 0 , function()
 			
-			EMF.RegenEnts()
+			if #EMF.ActiveEnts <= ( 3 * EMF.AmScale ) / 4 then
+				
+				EMF.RegenEnts()
+
+			end
 		
 		end )
 
