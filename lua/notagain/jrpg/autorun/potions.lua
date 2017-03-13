@@ -272,15 +272,18 @@ do
 			local ply = self:GetOwner()
 
 			if ply:IsValid() then
-				local pos, ang = ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_L_Hand"))
+				local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
+				if id then
+					local pos, ang = ply:GetBonePosition(id)
 
-				pos = pos + (ang:Forward() * 5)
-				pos = pos + (ang:Right() * 3)
-				pos = pos + (ang:Up() * -7)
+					pos = pos + (ang:Forward() * 5)
+					pos = pos + (ang:Right() * 3)
+					pos = pos + (ang:Up() * -7)
 
-				self:SetPos(pos)
-				self:SetAngles(ang)
-				self:SetupBones()
+					self:SetPos(pos)
+					self:SetAngles(ang)
+					self:SetupBones()
+				end
 			end
 
 			suppress_player_draw = true
