@@ -418,6 +418,8 @@ if CLIENT then
 			for i = #hitmarks, 1, -1 do
 				local data = hitmarks[i]
 
+				local pos = data.real_pos
+
 				if data.ent:IsValid() then
 					if data.ent == LocalPlayer() and not data.ent:ShouldDrawLocalPlayer() then
 						continue
@@ -432,7 +434,6 @@ if CLIENT then
 				local t = RealTime() + data.offset
 
 				local fraction =  (data.life - t) / life_time
-				local pos = data.real_pos
 
 				local fade = math.Clamp(fraction ^ 0.25, 0, 1)
 
