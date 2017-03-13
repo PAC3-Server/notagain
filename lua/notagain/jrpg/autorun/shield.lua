@@ -214,7 +214,12 @@ do
 			local pos, ang
 
 			if (CurTime() - ply.shield_wield_time) < 0.3 then
-				pos, ang = ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_L_Hand"))
+				local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
+				if id then
+					pos, ang = ply:GetBonePosition()
+				else
+					pos, ang = ply:EyePos(), ply:EyeAngles()
+				end
 			end
 
 			pos, ang = self:GetPosAng(pos, ang)
@@ -301,7 +306,10 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_bow"), math.min((CurTime() - ply.shield_wield_time)*1.25, 0.3), false)
 
 		if CLIENT then
-			manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Angle(math.Clamp(math.NormalizeAngle(ply:EyeAngles().p - 90), -180,-90),0,0))
+			local id = ply:LookupBone("ValveBiped.Bip01_L_UpperArm")
+			if id then
+				manip_angles(ply, id, Angle(math.Clamp(math.NormalizeAngle(ply:EyeAngles().p - 90), -180,-90),0,0))
+			end
 		end
 
 		return true
@@ -314,11 +322,17 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 			ply.shield_wield_time = nil
 			ply.shield_unwield_time = nil
 			ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, 0)
-			ply:ManipulateBoneAngles(ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Angle(0,0,0))
+			local id = ply:LookupBone("ValveBiped.Bip01_L_UpperArm")
+			if id then
+				ply:ManipulateBoneAngles(id, Angle(0,0,0))
+			end
 		end
 
 		if CLIENT then
-			manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Angle(0,0,0))
+			local id = ply:LookupBone("ValveBiped.Bip01_L_UpperArm")
+			if id then
+				manip_angles(ply, id, Angle(0,0,0))
+			end
 		end
 	end
 

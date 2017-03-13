@@ -170,6 +170,7 @@ if CLIENT then
 				ply:SetupBones()
 				local id = ply:LookupBone(which == "right" and "valvebiped.bip01_r_toe0" or "valvebiped.bip01_l_toe0")
 
+				if not id then continue end
 
 				local m = ply:GetBoneMatrix(id)
 
@@ -178,9 +179,16 @@ if CLIENT then
 				local pos = m:GetTranslation()
 
 				local vel = (ply.realistic_footsteps[which].last_pos or pos) - pos
-				ply.realistic_footsteps.smooth_vel = ply.realistic_footsteps.smooth_vel or vel
-				ply.realistic_footsteps.smooth_vel = ply.realistic_footsteps.smooth_vel + ((vel - ply.realistic_footsteps.smooth_vel) * FrameTime() * 5)
-				vel = ply.realistic_footsteps.smooth_vel
+				ply.realistic_footsteps[which].smooth_vel = ply.realistic_footsteps[which].smooth_vel or vel
+				ply.realistic_footsteps[which].smooth_vel = ply.realistic_footsteps[which].smooth_vel + ((vel - ply.realistic_footsteps[which].smooth_vel) * math.Clamp(FrameTime() * 5, 0.0001, 1))
+				vel = ply.realistic_footsteps[which].smooth_vel
+
+				do -- hack to prevent crazy velocites
+					local l = ply.realistic_footsteps[which].smooth_vel:Length()
+					if l + 0 ~= l then
+						ply.realistic_footsteps[which].smooth_vel:Zero()
+					end
+				end
 
 				local dir = Vector(0,0,-50)
 
@@ -195,7 +203,7 @@ if CLIENT then
 					trace.Hit = false
 				end
 
-				local volume = math.Clamp(vel:Length()/2, 0, 1)
+				local volume = math.Clamp(vel:Length()*0.5, 0, 1)
 
 				--debugoverlay.Line(pos, pos + dir * volume, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
 
@@ -240,7 +248,6 @@ if CLIENT then
 							end
 
 							if mute then continue end
-
 							EmitSound(path, pos, ply:EntIndex(), CHAN_BODY, data.volume * volume, data.level, SND_NOFLAGS, math.Clamp((data.pitch / scale) + math.Rand(-10,10), 0, 255))
 							ply.realistic_footsteps[which].sound_played = true
 

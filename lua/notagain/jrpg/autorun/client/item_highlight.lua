@@ -454,7 +454,7 @@ hook.Add("RenderScreenspaceEffects", "jrpg_items", function()
 
 		if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then
 			local ply = ent:GetOwner()
-			if ply:IsValid() then
+			if ply:IsValid() and ply:IsPlayer() then
 				if ply:GetActiveWeapon() ~= ent or (ply == LocalPlayer() and not ply:ShouldDrawLocalPlayer()) then
 					continue
 				end
