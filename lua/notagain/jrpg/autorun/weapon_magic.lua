@@ -7,7 +7,19 @@ SWEP.RenderGroup = RENDERGROUP_TRANSLUCENT
 SWEP.WorldModel = "models/Gibs/HGIBS.mdl"
 
 function SWEP:SetupDataTables()
-	self:NetworkVar("String", 0, "DamageTypes")
+	self:NetworkVar("String", 0, "DamageTypesInternal")
+end
+
+function SWEP:GetDamageTypes()
+	local types = self:GetDamageTypesInternal()
+	if types ~= self.last_damage_types then
+		self.damage_types = types:Split(",")
+		if not self.damage_types[1] then
+			table.insert(self.damage_types, "generic")
+		end
+		self.last_damage_types = types
+	end
+	return self.last_damage_types
 end
 
 if CLIENT then
@@ -47,16 +59,7 @@ function SWEP:DrawWorldModelTranslucent()
 			self:SetAngles(ang)
 		end
 
-		local types = self:GetDamageTypes()
-		if types ~= self.last_damage_types then
-			self.damage_types = types:Split(",")
-			if not self.damage_types[1] then
-				table.insert(self.damage_types, "generic")
-			end
-			self.last_damage_types = types
-		end
-
-		for _, name in ipairs(self.damage_types) do
+ 		for _, name in ipairs(self:GetDamageTypes()) do
 			if jdmg.types[name] and jdmg.types[name].draw_projectile then
 				jdmg.types[name].draw_projectile(self, 40, true)
 			end
@@ -110,7 +113,7 @@ if CLIENT then
 		local g = 0
 		local b = 0
 		local div = 1
-		for _, name in ipairs(self.damage_types) do
+		for _, name in ipairs(self:GetDamageTypes()) do
 			if jdmg.types[name] and jdmg.types[name].color then
 				r = r + jdmg.types[name].color.r
 				g = g + jdmg.types[name].color.g
@@ -174,7 +177,7 @@ function SWEP:Deploy()
 				table.insert(ugh, name)
 			end
 		end
-		self:SetDamageTypes(table.concat(ugh, ","))
+		self:SetDamageTypesInternal(table.concat(ugh, ","))
 	end
 
 	self:SetHoldType("melee")
