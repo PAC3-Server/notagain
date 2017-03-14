@@ -470,6 +470,8 @@ function SWEP:Initialize()
 end
 
 if CLIENT then
+	local jeffects = requirex("jeffects")
+
 	function SWEP:GetMagicColor()
 		local r = 0
 		local g = 0
