@@ -211,6 +211,7 @@ do
 		end
 
 		function ENT:PhysicsCollide(data, phys)
+			if self.damaged then return end
 			self:StopMotionController()
 			phys:Sleep()
 			phys:SetVelocity(Vector(0,0,0))
@@ -221,8 +222,9 @@ do
 
 			timer.Simple(0, function()
 				self:OnDamage()
-				self.damaged = true
 			end)
+
+			self.damaged = true
 		end
 
 		function ENT:Think()
