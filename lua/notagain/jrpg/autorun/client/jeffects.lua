@@ -13,7 +13,11 @@ function jeffects.CreateMaterial(data)
 	local params = {}
 
 	for k, v in pairs(data) do
-		params["$" .. k] = v
+		if k == "Proxies" then
+			params[k] = v
+		else
+			params["$" .. k] = v
+		end
 	end
 
 	return CreateMaterial(name, shader, params)

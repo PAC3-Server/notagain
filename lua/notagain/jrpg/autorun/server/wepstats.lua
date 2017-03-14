@@ -63,6 +63,16 @@ function wepstats.AddToWeapon(wep, ...)
 	wep:SetNWString("wepstats_name", wepstats.GetName(wep))
 	wep:SetNWVector("wepstats_color", wepstats.GetStatus(wep, "base"):GetRarityInfo().color)
 	duplicator.StoreEntityModifier(wep, "wepstats", wepstats.GetTable(wep))
+
+	if wep.SetDamageTypesInternal then
+		local ugh = {}
+		for name, dmgtype in pairs(wep.wepstats) do
+			if dmgtype.Elemental then
+				table.insert(ugh, name)
+			end
+		end
+		wep:SetDamageTypesInternal(table.concat(ugh, ","))
+	end
 end
 
 function wepstats.IsElemental(wep)
@@ -676,7 +686,7 @@ do -- effects
 			local id = "poison_"..tostring(attacker)..tostring(victim)
 
 			timer.Create(id, 0.2, 0, function()
-				if not attacker:IsValid() or not victim:IsValid() then
+				if not victim:IsValid() then
 					timer.Remove(id)
 					return
 				end

@@ -31,7 +31,7 @@ do
 			self.rand_dir = (self.dir - self:GetOwner():GetAimVector())
 			self.start_time = RealTime() + 1
 			self.damp = math.random()
-			self:SetDamage(self.damage)
+			if self.damage then self:SetDamage(self.damage) end
 			SafeRemoveEntityDelayed(self, 30)
 		end
 
@@ -89,6 +89,15 @@ do
 				suppress = true
 				self:FireBullets(data)
 				suppress = false
+			elseif ent:IsValid() then
+				for _, name in ipairs(self:GetDamageTypes():Split(",")) do
+					local d = DamageInfo()
+					d:SetDamage(50)
+					d:SetDamageCustom(jdmg.enums[name])
+					d:SetAttacker(self:GetOwner())
+					d:SetInflictor(self:GetOwner())
+					ent:TakeDamageInfo(d)
+				end
 			end
 
 			SafeRemoveEntityDelayed(self, 0)
