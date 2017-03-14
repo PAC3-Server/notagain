@@ -87,9 +87,8 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("InitPostEntity", "cl_godmode", function()
+	timer.Simple(0.1, function()
 		RunConsoleCommand("sbox_godmode", "0")
-		hook.Remove("InitPostEntity", "cl_godmode")
 	end)
 
 	hook.Add("PlayerSpawn", "cl_godmode", function(ply)
