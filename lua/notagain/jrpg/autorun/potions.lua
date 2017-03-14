@@ -408,6 +408,7 @@ if SERVER then
 			ply:Give("potion_health")
 			ply:Give("potion_mana")
 			ply:Give("potion_stamina")
+			ply:Give("weapon_magic")
 		end)
 
 		ply:SetNWFloat("hp_overload", 0)

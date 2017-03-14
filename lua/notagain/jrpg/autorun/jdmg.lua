@@ -342,8 +342,10 @@ do
 			draw_model(ent)
 		end
 
-		function jdmg.types.generic.draw_projectile(ent, dmg)
-			local color = Color(255, 255, 255)
+		local color = Color(255, 255, 255)
+		jdmg.types.generic.color = color
+
+		function jdmg.types.generic.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
 			render.SetMaterial(jdmg.materials.glow)
@@ -352,7 +354,9 @@ do
 			render.SetMaterial(jdmg.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
 
-			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			if not simple then
+				jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			end
 		end
 	end
 end
@@ -425,8 +429,9 @@ do
 			ent:DisableMatrix("RenderMultiply")
 		end
 
-		function jdmg.types.dark.draw_projectile(ent, dmg)
-			local color = Color(255, 50, 200)
+		local color = Color(255, 50, 200)
+		jdmg.types.dark.color = color
+		function jdmg.types.dark.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
 			render.SetMaterial(jdmg.materials.dark)
@@ -437,7 +442,9 @@ do
 			render.SetMaterial(jdmg.materials.refract3)
 			render.DrawSprite(ent:GetPos(), 64*size + math.sin(RealTime()*4)*10, 64*size + math.cos(RealTime()*4)*10, Color(255,255,255, 150 + math.sin(RealTime()*4)*50))
 
-			jdmg.DrawTrail(ent, 0.1, 0, ent:GetPos(), jdmg.materials.dark, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 30, 0, 2)
+			if not simple then
+				jdmg.DrawTrail(ent, 0.1, 0, ent:GetPos(), jdmg.materials.dark, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 30, 0, 2)
+			end
 		end
 	end
 end
@@ -480,8 +487,10 @@ do
 			draw_model(ent)
 		end
 
-		function jdmg.types.holy.draw_projectile(ent, dmg)
-			local color = Color(255, 200, 150)
+		local color = Color(255, 200, 150)
+		jdmg.types.holy.color = color
+
+		function jdmg.types.holy.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
 			render.SetMaterial(jdmg.materials.glow)
@@ -493,7 +502,9 @@ do
 			render.SetMaterial(jdmg.materials.refract3)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 150))
 
-			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			if not simple then
+				jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			end
 		end
 	end
 end
@@ -513,6 +524,9 @@ do
 				ent:EmitSound("ambient/energy/zap"..math.random(1, 3)..".wav", 75, math.Rand(150,255), f)
 			end
 		end
+
+		local color = Color(255, 255, 255)
+		jdmg.types.lightning.color = color
 
 		jdmg.types.lightning.draw = function(ent, f, s, t)
 			f = 0.1 * f + (f * math.random() ^ 5)
@@ -639,8 +653,9 @@ do
 			draw_model(ent)
 		end
 
-		function jdmg.types.fire.draw_projectile(ent, dmg)
-			local color = Color(255, 130, 0)
+		local color = Color(255, 130, 0)
+		jdmg.types.fire.color = color
+		function jdmg.types.fire.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
 			render.SetMaterial(jdmg.materials.glow)
@@ -649,7 +664,9 @@ do
 			render.SetMaterial(jdmg.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
 
-			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			if not simple then
+				jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			end
 
 			local p = emitter:Add(table.Random(flames), ent:GetPos())
 			p:SetStartSize(math.Rand(5,10))
@@ -692,6 +709,9 @@ do
 			end
 		end
 
+		local color = Color(100, 200, 255)
+		jdmg.types.water.color = color
+
 		jdmg.types.water.draw = function(ent, f, s, t)
 			local pos = ent:GetBoneMatrix(math.random(1, ent:GetBoneCount()))
 			if pos then
@@ -704,7 +724,7 @@ do
 				p:SetEndAlpha(0)
 				p:SetVelocity(VectorRand()*10)
 				p:SetGravity(physenv.GetGravity()*0.025)
-				p:SetColor(100, 200, 255)
+				p:SetColor(color.r, color.g, color.b)
 				--p:SetLighting(true)
 				p:SetRoll(math.random())
 				p:SetRollDelta(math.random()*2-1)
@@ -725,7 +745,7 @@ do
 			draw_model(ent)
 		end
 
-		function jdmg.types.water.draw_projectile(ent, dmg)
+		function jdmg.types.water.draw_projectile(ent, dmg, simple)
 			local p = emitter:Add(table.Random(water), ent:GetPos())
 			p:SetStartSize(20)
 			p:SetEndSize(20)
@@ -756,7 +776,7 @@ do
 			RefractAmount = 1,
 		})
 		local color = Color(100, 200, 255)
-
+		jdmg.types.ice.color = color
 		jdmg.types.ice.draw = function(ent, f, s, t)
 			local pos = ent:NearestPoint(ent:WorldSpaceCenter()+VectorRand()*100)
 
@@ -802,7 +822,7 @@ do
 		end
 
 
-		jdmg.types.ice.draw_projectile = function(ent, dmg)
+		jdmg.types.ice.draw_projectile = function(ent, dmg, simple)
 			local size = dmg / 100
 
 			render.SetMaterial(jdmg.materials.glow)
@@ -811,55 +831,58 @@ do
 			render.SetMaterial(jdmg.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 128*size, 128*size, Color(color.r, color.g, color.b, 150))
 
-			jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			if not simple then
+
+				jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 
 
-			if not ent.next_emit or ent.next_emit < RealTime() then
-				local life_time = 2
+				if not ent.next_emit or ent.next_emit < RealTime() then
+					local life_time = 2
 
-				local ice = ents.CreateClientProp()
-				SafeRemoveEntityDelayed(ice, life_time)
+					local ice = ents.CreateClientProp()
+					SafeRemoveEntityDelayed(ice, life_time)
 
-				ice:SetModel(table.Random(rocks))
+					ice:SetModel(table.Random(rocks))
 
-				ice:SetPos(ent:GetPos())
-				ice:SetAngles(VectorRand():Angle())
-				ice:SetModelScale(math.Rand(0.1, 0.2)*0.3)
+					ice:SetPos(ent:GetPos())
+					ice:SetAngles(VectorRand():Angle())
+					ice:SetModelScale(math.Rand(0.1, 0.2)*0.3)
 
-				ice:SetRenderMode(RENDERMODE_TRANSADD)
+					ice:SetRenderMode(RENDERMODE_TRANSADD)
 
-				ice.life_time = RealTime() + life_time
-				ice:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
-				ice:PhysicsInitSphere(5)
-				local phys = ice:GetPhysicsObject()
-				phys:Wake()
-				phys:EnableGravity(false)
-				phys:AddVelocity(VectorRand()*20)
-				phys:AddAngleVelocity(VectorRand()*20)
-
-				ice.RenderOverride = function()
-
-					local f = (ice.life_time - RealTime()) / life_time
-					local f2 = math.sin(f*math.pi) ^ 0.5
-
-					local c = Vector(color.r/255, color.g/255, color.b/255)*5*(f2^0.5)
-					ice_mat:SetVector("$CloakColorTint", c)
-					ice_mat:SetFloat("$CloakFactor", 0.5*(f2))
-					ice_mat:SetFloat("$RefractAmount", -f+1)
-
-					render.MaterialOverride(ice_mat)
-						render.SetBlend(f2)
-							render.SetColorModulation(c.x, c.y, c.z)
-								ice:DrawModel()
-							render.SetColorModulation(1,1,1)
-						render.SetBlend(1)
-					render.MaterialOverride()
-
+					ice.life_time = RealTime() + life_time
+					ice:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+					ice:PhysicsInitSphere(5)
 					local phys = ice:GetPhysicsObject()
-					phys:AddVelocity(phys:GetVelocity()*-FrameTime()*2 + Vector(0,0,-FrameTime()*(-f+1)*30))
-				end
+					phys:Wake()
+					phys:EnableGravity(false)
+					phys:AddVelocity(VectorRand()*20)
+					phys:AddAngleVelocity(VectorRand()*20)
 
-				ent.next_emit = RealTime() + 0.02
+					ice.RenderOverride = function()
+
+						local f = (ice.life_time - RealTime()) / life_time
+						local f2 = math.sin(f*math.pi) ^ 0.5
+
+						local c = Vector(color.r/255, color.g/255, color.b/255)*5*(f2^0.5)
+						ice_mat:SetVector("$CloakColorTint", c)
+						ice_mat:SetFloat("$CloakFactor", 0.5*(f2))
+						ice_mat:SetFloat("$RefractAmount", -f+1)
+
+						render.MaterialOverride(ice_mat)
+							render.SetBlend(f2)
+								render.SetColorModulation(c.x, c.y, c.z)
+									ice:DrawModel()
+								render.SetColorModulation(1,1,1)
+							render.SetBlend(1)
+						render.MaterialOverride()
+
+						local phys = ice:GetPhysicsObject()
+						phys:AddVelocity(phys:GetVelocity()*-FrameTime()*2 + Vector(0,0,-FrameTime()*(-f+1)*30))
+					end
+
+					ent.next_emit = RealTime() + 0.02
+				end
 			end
 		end
 	end
@@ -922,7 +945,8 @@ do
 			draw_model(ent)
 		end
 		local color = Color(0,255,0)
-		jdmg.types.poison.draw_projectile = function(ent, dmg)
+		jdmg.types.poison.color = color
+		jdmg.types.poison.draw_projectile = function(ent, dmg, simple)
 			local size = dmg / 100
 
 			render.SetMaterial(jdmg.materials.glow)
@@ -930,6 +954,8 @@ do
 
 			render.SetMaterial(jdmg.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 150))
+
+			if simple then return end
 
 			--jdmg.DrawTrail(ent, 1, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 
