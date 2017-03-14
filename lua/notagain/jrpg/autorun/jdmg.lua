@@ -3,8 +3,11 @@ jdmg = jdmg or {}
 local emitter
 local create_overlay_material
 local draw_model
+local jeffects
 
 if CLIENT then
+	jeffects = requirex("jeffects")
+
 	draw_model = function(ent)
 		if ent.pacDrawModel then
 			ent:pacDrawModel(true)
