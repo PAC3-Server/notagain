@@ -160,15 +160,21 @@ if CLIENT then
 	local feet = {"left", "right"}
 
 	hook.Remove("Think", "realistic_footsteps")
-	timer.Create("realistic_footsteps", 1/30, 0, function()
+	hook.Remove("Tick", "realistic_footsteps")
+	timer.Remove("realistic_footsteps")
+	--timer.Create("realistic_footsteps", 1/60, 0, function()
+	hook.Add("Think", "realistic_footsteps", function()
 		for _, ply in ipairs(player.GetAll()) do
-			if ply:GetMoveType() ~= MOVETYPE_WALK or not ply:OnGround() then continue end
+			if ply:GetMoveType() ~= MOVETYPE_WALK or not ply:OnGround() or ply:GetVelocity():IsZero() then continue end
 			for _, which in ipairs(feet) do
 				ply.realistic_footsteps = ply.realistic_footsteps or {}
 				ply.realistic_footsteps[which] = ply.realistic_footsteps[which] or {}
 
 				ply:SetupBones()
 				local id = ply:LookupBone(which == "right" and "valvebiped.bip01_r_toe0" or "valvebiped.bip01_l_toe0")
+				if not id then
+					id = ply:LookupBone(which == "right" and "valvebiped.bip01_r_foot" or "valvebiped.bip01_l_foot")
+				end
 
 				if not id then continue end
 
@@ -199,13 +205,13 @@ if CLIENT then
 				end
 
 				-- if dir is -50 this is required to check if the foot is actualy above player pos
-				if pos.z - ply:GetPos().z > 1.5*scale then
+				if pos.z - ply:GetPos().z > 0.5*scale then
 					trace.Hit = false
 				end
 
 				local volume = math.Clamp(vel:Length()*0.5, 0, 1)
 
-				--debugoverlay.Line(pos, pos + dir * volume, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
+				-- debugoverlay.Line(pos, pos + dir * volume, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
 
 				if trace.Hit then
 
@@ -231,8 +237,7 @@ if CLIENT then
 					end
 
 					if data then
-						if not ply.realistic_footsteps[which].sound_played then
-
+						if ply.realistic_footsteps_last_foot ~= which and (not ply.realistic_footsteps[which].next_play or ply.realistic_footsteps[which].next_play < RealTime()) then
 							local mute = false
 
 							local path = table.Random(data.sounds)
@@ -249,7 +254,8 @@ if CLIENT then
 
 							if mute then continue end
 							EmitSound(path, pos, ply:EntIndex(), CHAN_BODY, data.volume * volume, data.level, SND_NOFLAGS, math.Clamp((data.pitch / scale) + math.Rand(-10,10), 0, 255))
-							ply.realistic_footsteps[which].sound_played = true
+							ply.realistic_footsteps[which].next_play = RealTime() + 0.1
+							ply.realistic_footsteps_last_foot = which
 
 							local mdl = ply:GetModel()
 							for _, info in pairs(extra) do
@@ -272,8 +278,8 @@ if CLIENT then
 							end
 						end
 					end
-				else
-					ply.realistic_footsteps[which].sound_played = false
+
+					break
 				end
 
 				ply.realistic_footsteps[which].last_pos = pos
