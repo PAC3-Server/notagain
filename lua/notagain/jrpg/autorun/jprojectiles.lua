@@ -28,10 +28,10 @@ do
 
 			self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
 
-			self.rand_dir = (self.bullet_info.Dir - self:GetOwner():GetAimVector())
+			self.rand_dir = (self.dir - self:GetOwner():GetAimVector())
 			self.start_time = RealTime() + 1
 			self.damp = math.random()
-			self:SetDamage(self.bullet_info.Damage)
+			self:SetDamage(self.damage)
 			SafeRemoveEntityDelayed(self, 30)
 		end
 
@@ -80,14 +80,16 @@ do
 
 		if SERVER then
 			local data = self.bullet_info
-			data.Attacker = self:GetOwner()
-			data.Dir = normal
-			data.Src = self:GetPos()
-			data.Distance = pos:Distance(self:GetPos())*2
-			data.HullSize = 10
-			suppress = true
-			self:FireBullets(data)
-			suppress = false
+			if data then
+				data.Attacker = self:GetOwner()
+				data.Dir = normal
+				data.Src = self:GetPos()
+				data.Distance = pos:Distance(self:GetPos())*2
+				data.HullSize = 10
+				suppress = true
+				self:FireBullets(data)
+				suppress = false
+			end
 
 			SafeRemoveEntityDelayed(self, 0)
 		end
@@ -150,18 +152,23 @@ do
 		hook.Add("GravGunOnPickedUp", ENT.ClassName, function(ply, self)
 			if self:GetClass() ~= ENT.ClassName then return end
 
-			self:SetBulletData(ply, self.bullet_info, self:GetOwner():GetActiveWeapon())
+			if self.bullet_info then
+				self:SetBulletData(ply, self.bullet_info, self:GetOwner():GetActiveWeapon())
+			end
 		end)
 
-		function ENT:SetBulletData(attacker, data, wep)
+		function ENT:SetProjectileData(attacker, pos, dir, dmg, wep)
 			wep = wep or attacker:GetActiveWeapon()
 			self:SetOwner(attacker)
+
+			self:SetDamage(dmg or 1)
+			self.dir = dir
 
 			local filter = ents.FindByClass(ENT.ClassName)
 			table.insert(filter, attacker)
 			local trace = util.TraceLine({
-				start = data.Src,
-				endpos = data.Src + data.Dir * 100000,
+				start = pos,
+				endpos = pos + dir * 100000,
 				filter = filter,
 			})
 
@@ -177,10 +184,8 @@ do
 			if bone_id then
 				self:SetPos(attacker:GetBonePosition(bone_id))
 			else
-				self:SetPos(data.Src)
+				self:SetPos(pos)
 			end
-
-			self.bullet_info = data
 
 			local ugh = {}
 			for name, dmgtype in pairs(wep.wepstats) do
@@ -189,6 +194,11 @@ do
 				end
 			end
 			self:SetDamageTypes(table.concat(ugh, ","))
+		end
+
+		function ENT:SetBulletData(attacker, data, wep)
+			self:SetProjectileData(attacker, data.Src, data.Dir, data.Damage, wep)
+			self.bullet_info = data
 		end
 
 		function ENT:PhysicsCollide(data, phys)
