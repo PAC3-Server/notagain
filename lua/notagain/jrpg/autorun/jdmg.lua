@@ -1,7 +1,6 @@
 jdmg = jdmg or {}
 
 local emitter
-local create_material
 local create_overlay_material
 local draw_model
 
@@ -15,32 +14,9 @@ if CLIENT then
 	end
 	emitter = ParticleEmitter(vector_origin)
 
-	create_material = function(data)
-		if type(data) == "string" then
-			return Material(data)
-		end
-
-		local name = (data.Name or "") .. tostring({})
-		local shader = data.Shader
-		data.Name = nil
-		data.Shader = nil
-
-		local params = {}
-
-		for k, v in pairs(data) do
-			if k == "Proxies" then
-				params[k] = v
-			else
-				params["$" .. k] = v
-			end
-		end
-
-		return CreateMaterial(name, shader, params)
-	end
-
 	create_overlay_material = function(tex, override)
 		override = override or {}
-		return create_material(table.Merge({
+		return jeffects.CreateMaterial(table.Merge({
 			Name = "fire",
 			Shader = "VertexLitGeneric",
 			Additive = 1,
@@ -74,58 +50,15 @@ if CLIENT then
 	end
 
 	do
-		local temp_color = Color(255, 255, 255)
-
-		function jdmg.DrawTrail(self, len, spc, pos, mat, start_color, end_color, start_size, end_size, stretch)
-			self.trail_points = self.trail_points or {}
-			self.trail_last_add = self.trail_last_add or 0
-
-			local time = RealTime()
-
-			if not self.trail_points[1] or self.trail_points[#self.trail_points].pos:Distance(pos) > spc then
-				table.insert(self.trail_points, {pos = pos, life_time = time + len})
-			end
-
-			local count = #self.trail_points
-
-			render.SetMaterial(mat)
-
-			render.StartBeam(count)
-				for i = #self.trail_points, 1, -1 do
-					local data = self.trail_points[i]
-
-					local f = (data.life_time - time)/len
-					f = -f+1
-
-					local width = f * start_size
-
-					local coord = (1 / count) * (i - 1)
-
-					temp_color.r = Lerp(coord, end_color.r, start_color.r)
-					temp_color.g = Lerp(coord, end_color.g, start_color.g)
-					temp_color.b = Lerp(coord, end_color.b, start_color.b)
-					temp_color.a = Lerp(coord, end_color.a, start_color.a)
-
-					render.AddBeam(data.pos, width, (stretch and (coord * stretch)) or width, temp_color)
-
-					if f >= 1 then
-						table.remove(self.trail_points, i)
-					end
-				end
-			render.EndBeam()
-		end
-	end
-
-	do
 		jdmg.materials = jdmg.materials or {}
 
-		jdmg.materials.refract = create_material("particle/warp5_warp")
-		jdmg.materials.refract2 = create_material("particle/warp1_warp")
-		jdmg.materials.refract3 = create_material("particle/warp2_warp")
-		jdmg.materials.splash_disc = create_material("effects/splashwake3")
-		jdmg.materials.beam = create_material("particle/warp3_warp_NoZ")
+		jdmg.materials.refract = jeffects.CreateMaterial("particle/warp5_warp")
+		jdmg.materials.refract2 = jeffects.CreateMaterial("particle/warp1_warp")
+		jdmg.materials.refract3 = jeffects.CreateMaterial("particle/warp2_warp")
+		jdmg.materials.splash_disc = jeffects.CreateMaterial("effects/splashwake3")
+		jdmg.materials.beam = jeffects.CreateMaterial("particle/warp3_warp_NoZ")
 
-		jdmg.materials.trail = create_material({
+		jdmg.materials.trail = jeffects.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "particle/smokesprites0331",
@@ -136,7 +69,7 @@ if CLIENT then
 			Translucent = 1,
 		})
 
-		jdmg.materials.hypno = create_material({
+		jdmg.materials.hypno = jeffects.CreateMaterial({
 			Shader = "UnlitGeneric",
 			BaseTexture = "effects/flashlight/circles",
 			Aditive = 1,
@@ -145,7 +78,7 @@ if CLIENT then
 			Translucent = 1,
 		})
 
-		jdmg.materials.ring = create_material({
+		jdmg.materials.ring = jeffects.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "particle/particle_Ring_Wave_2",
@@ -154,7 +87,7 @@ if CLIENT then
 			VertexAlpha = 1,
 		})
 
-		jdmg.materials.glow = create_material({
+		jdmg.materials.glow = jeffects.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "sprites/light_glow02",
@@ -178,7 +111,7 @@ do
 	do
 		jdmg.statuses.error = {}
 		if CLIENT then
-			jdmg.statuses.error.icon = create_material({
+			jdmg.statuses.error.icon = jeffects.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "error",
 				VertexAlpha = 1,
@@ -193,7 +126,7 @@ do
 		jdmg.statuses.poison = {}
 		jdmg.statuses.poison.negative = true
 		if CLIENT then
-			jdmg.statuses.poison.icon = create_material({
+			jdmg.statuses.poison.icon = jeffects.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "sprites/greenspit1",
 				VertexAlpha = 1,
@@ -208,7 +141,7 @@ do
 		jdmg.statuses.fire = {}
 		jdmg.statuses.fire.negative = true
 		if CLIENT then
-			jdmg.statuses.fire.icon = create_material({
+			jdmg.statuses.fire.icon = jeffects.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/env_fire",
 				VertexAlpha = 1,
@@ -222,7 +155,7 @@ do
 		jdmg.statuses.confused = {}
 		jdmg.statuses.confused.negative = true
 		if CLIENT then
-			jdmg.statuses.confused.icon = create_material({
+			jdmg.statuses.confused.icon = jeffects.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/choreo_manager",
 				VertexAlpha = 1,
@@ -236,7 +169,7 @@ do
 		jdmg.statuses.lightning = {}
 		jdmg.statuses.lightning.negative = true
 		if CLIENT then
-			jdmg.statuses.lightning.icon = create_material({
+			jdmg.statuses.lightning.icon = jeffects.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/choreo_manager",
 				VertexAlpha = 1,
@@ -250,7 +183,7 @@ do
 		jdmg.statuses.frozen = {}
 		jdmg.statuses.frozen.negative = true
 		if CLIENT then
-			jdmg.statuses.frozen.icon = create_material({
+			jdmg.statuses.frozen.icon = jeffects.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/env_particles",
 				VertexAlpha = 1,
@@ -355,7 +288,7 @@ do
 			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
 
 			if not simple then
-				jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jeffects.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 			end
 		end
 	end
@@ -443,7 +376,7 @@ do
 			render.DrawSprite(ent:GetPos(), 64*size + math.sin(RealTime()*4)*10, 64*size + math.cos(RealTime()*4)*10, Color(255,255,255, 150 + math.sin(RealTime()*4)*50))
 
 			if not simple then
-				jdmg.DrawTrail(ent, 0.1, 0, ent:GetPos(), jdmg.materials.dark, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 30, 0, 2)
+				jeffects.DrawTrail(ent, 0.1, 0, ent:GetPos(), jdmg.materials.dark, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 30, 0, 2)
 			end
 		end
 	end
@@ -503,7 +436,7 @@ do
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 150))
 
 			if not simple then
-				jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jeffects.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 			end
 		end
 	end
@@ -565,7 +498,7 @@ do
 		local flames ={}
 
 		for i = 1, 5 do
-			table.insert(flames, create_material({
+			table.insert(flames, jeffects.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "sprites/flamelet" .. i,
 				VertexAlpha = 1,
@@ -584,7 +517,7 @@ do
 			"particle/smokesprites0331",
 		}
 		for i, path in ipairs(smoke) do
-			smoke[i] = create_material({
+			smoke[i] = jeffects.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = path,
 				VertexAlpha = 1,
@@ -665,7 +598,7 @@ do
 			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
 
 			if not simple then
-				jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jeffects.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 			end
 
 			local p = emitter:Add(table.Random(flames), ent:GetPos())
@@ -769,7 +702,7 @@ do
 	if CLIENT then
 		local mat = create_overlay_material("effects/filmscan256")
 
-		local ice_mat = create_material({
+		local ice_mat = jeffects.CreateMaterial({
 			Name = "magic_ice",
 			Shader = "VertexLitGeneric",
 			CloakPassEnabled = 1,
@@ -833,7 +766,7 @@ do
 
 			if not simple then
 
-				jdmg.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jeffects.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 
 
 				if not ent.next_emit or ent.next_emit < RealTime() then
@@ -957,7 +890,7 @@ do
 
 			if simple then return end
 
-			--jdmg.DrawTrail(ent, 1, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			--jeffects.DrawTrail(ent, 1, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 
 			local p = emitter:Add("effects/bubble", ent:GetPos() + VectorRand() * 5)
 			local size = math.Rand(1,4)
