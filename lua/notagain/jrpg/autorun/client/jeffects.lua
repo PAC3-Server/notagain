@@ -1,3 +1,5 @@
+jeffects = {}
+
 function jeffects.CreateMaterial(data)
 	if type(data) == "string" then
 		return Material(data)
