@@ -399,53 +399,53 @@ if CLIENT then
 			end
 		end
 	end)
-end
 
-function SWEP:DrawWorldModel()
+	function SWEP:DrawWorldModel()
 
-end
-
-function SWEP:DrawWorldModelTranslucent()
-
-	for _, bone_name in ipairs({"ValveBiped.Bip01_R_Hand", "ValveBiped.Bip01_L_Hand"}) do
-		local pos, ang
-
-		if self.Owner:IsValid() then
-			local id = self.Owner:LookupBone(bone_name)
-			if id then
-				pos, ang = self.Owner:GetBonePosition(id)
-				pos = pos + ang:Forward()*2
-			end
-
-			self:SetPos(pos)
-			self:SetAngles(ang)
-		end
-
- 		for _, name in ipairs(self:GetDamageTypes()) do
-			if jdmg.types[name] and jdmg.types[name].draw_projectile then
-				jdmg.types[name].draw_projectile(self, 40, true)
-			end
-		end
-
-		if not self.Owner:IsValid() then
-			return
-		end
 	end
 
+	function SWEP:DrawWorldModelTranslucent()
 
-	if CurTime()%0.5 < 0.25 then
-		if not self.lol then
-			self.Owner:AnimResetGestureSlot(GESTURE_SLOT_VCD)
-			self.Owner:AnimRestartGesture(GESTURE_SLOT_VCD,  self.Owner:GetSequenceActivity(self.Owner:LookupSequence("jump_land")), true)
-			self.Owner:AnimRestartGesture(GESTURE_SLOT_CUSTOM,  self.Owner:GetSequenceActivity(self.Owner:LookupSequence("flinch_stomach_02")), true)
-			self.Owner:AnimSetGestureWeight(GESTURE_SLOT_VCD, math.Rand(0.2,0.35))
-			self.Owner:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, math.Rand(0.2,0.35))
-			self.lol = true
+		for _, bone_name in ipairs({"ValveBiped.Bip01_R_Hand", "ValveBiped.Bip01_L_Hand"}) do
+			local pos, ang
+
+			if self.Owner:IsValid() then
+				local id = self.Owner:LookupBone(bone_name)
+				if id then
+					pos, ang = self.Owner:GetBonePosition(id)
+					pos = pos + ang:Forward()*2
+				end
+
+				self:SetPos(pos)
+				self:SetAngles(ang)
+			end
+
+			for _, name in ipairs(self:GetDamageTypes()) do
+				if jdmg.types[name] and jdmg.types[name].draw_projectile then
+					jdmg.types[name].draw_projectile(self, 40, true)
+				end
+			end
+
+			if not self.Owner:IsValid() then
+				return
+			end
 		end
-	elseif self.lol then
-		self.lol = false
-	end
 
+
+		if CurTime()%0.5 < 0.25 then
+			if not self.lol then
+				self.Owner:AnimResetGestureSlot(GESTURE_SLOT_VCD)
+				self.Owner:AnimRestartGesture(GESTURE_SLOT_VCD,  self.Owner:GetSequenceActivity(self.Owner:LookupSequence("jump_land")), true)
+				self.Owner:AnimRestartGesture(GESTURE_SLOT_CUSTOM,  self.Owner:GetSequenceActivity(self.Owner:LookupSequence("flinch_stomach_02")), true)
+				self.Owner:AnimSetGestureWeight(GESTURE_SLOT_VCD, math.Rand(0.2,0.35))
+				self.Owner:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, math.Rand(0.2,0.35))
+				self.lol = true
+			end
+		elseif self.lol then
+			self.lol = false
+		end
+
+	end
 end
 
 function SWEP:TranslateActivity(act)
