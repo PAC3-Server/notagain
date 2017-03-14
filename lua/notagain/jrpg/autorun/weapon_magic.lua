@@ -195,6 +195,8 @@ function SWEP:PrimaryAttack()
 	self:SetNextPrimaryFire(CurTime() + 0.6)
 
 	if SERVER then
+		if jattributes.DrainMana(self.Owner, self, 50) == false then return end
+
 		self.left_hand_anim = not self.left_hand_anim
 
 		net.Start(SWEP.ClassName, true)
@@ -208,8 +210,6 @@ function SWEP:PrimaryAttack()
 		local snd = CreateSound(self, "music/hl2_song10.mp3")
 		snd:PlayEx(0.5, 255)
 		snd:FadeOut(2)
-
-		--do return end
 
 		local bone_id = self.Owner:LookupBone(self.left_hand_anim and "ValveBiped.Bip01_L_Hand" or "ValveBiped.Bip01_R_Hand")
 

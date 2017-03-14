@@ -102,18 +102,7 @@ jattributes.types = {
 			end
 
 			if wepstats.IsElemental(wep) then
-				local mana = math.max(jattributes.GetMana(attacker) - dmg, 0)
-				if mana == 0 then
-					attacker:EmitSound("plats/crane/vertical_stop.wav", 75, 255)
-					attacker:EmitSound("plats/crane/vertical_stop.wav", 75, 200)
-					attacker:EmitSound("plats/crane/vertical_stop.wav", 75, 100)
-					wep:SetNextPrimaryFire(CurTime() + 1)
-					wep:SetNextSecondaryFire(CurTime() + 1)
-					wep.jattributes_not_enough_mana = true
-					return false
-				end
-				jattributes.SetMana(attacker, mana)
-				wep.jattributes_mana_drained = true
+				return jattributes.DrainMana(attacker, wep, dmg)
 			end
 		end,
 		on_give_damage = function(stats, dmginfo, attacker)
@@ -345,6 +334,21 @@ if SERVER then
 
 		function jattributes.SetMana(ent, num)
 			ent:SetNWFloat("jattributes_mana", num)
+		end
+
+		function jattributes.DrainMana(ply, wep, amt)
+			local mana = math.max(jattributes.GetMana(ply) - amt, 0)
+			if mana == 0 then
+				ply:EmitSound("plats/crane/vertical_stop.wav", 75, 255)
+				ply:EmitSound("plats/crane/vertical_stop.wav", 75, 200)
+				ply:EmitSound("plats/crane/vertical_stop.wav", 75, 100)
+				wep:SetNextPrimaryFire(CurTime() + 1)
+				wep:SetNextSecondaryFire(CurTime() + 1)
+				wep.jattributes_not_enough_mana = true
+				return false
+			end
+			jattributes.SetMana(ply, mana)
+			wep.jattributes_not_enough_mana = false
 		end
 	end
 
