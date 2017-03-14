@@ -258,7 +258,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 	if ply:GetNWBool("rpg") then
 		for _, ply in ipairs(player.GetAll()) do
-			if (ply:GetFriendStatus() == "friend" or ply:GetFriendStatus() == "requested") and ply:GetPos():Distance(LocalPlayer():GetPos()) < 1000 then
+			if (ply:GetFriendStatus() == "friend" or ply:GetFriendStatus() == "requested") and ply:GetNWBool("rpg") and ply:GetPos():Distance(LocalPlayer():GetPos()) < 1000 then
 				local x = ScrW() - 200 * i - 75
 				local y = ScrH() - 100
 
