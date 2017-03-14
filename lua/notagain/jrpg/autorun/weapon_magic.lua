@@ -17,7 +17,7 @@ function SWEP:GetDamageTypes()
 		if not self.damage_types[1] then
 			table.insert(self.damage_types, "generic")
 		end
-		self.last_damage_types = types
+		self.last_damage_types = self.damage_types
 	end
 	return self.last_damage_types
 end
