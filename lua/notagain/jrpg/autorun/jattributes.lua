@@ -375,7 +375,7 @@ if SERVER then
 				if ply.rpg_cheat then
 					jattributes.SetStamina(ply, 9999)
 					jattributes.SetMana(ply, 9999)
-					return
+					continue
 				end
 				if math.random() > 0.9 and jattributes.HasMana(ply) and wepstats.ContainsElement(ply:GetActiveWeapon(), "dark") then
 					jattributes.SetMana(ply, math.min(jattributes.GetMana(ply) + 1, jattributes.GetMaxMana(ply)))
