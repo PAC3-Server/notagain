@@ -4,6 +4,7 @@ aowl.AddCommand("rpg", function(ply)
 	if ply:GetNWBool("rpg") then
 		jattributes.SetTable(ply, {mana = 75, stamina = 25, health = 100})
 		jlevel.LoadStats(ply)
+		ply:SetHealth(ply:GetMaxHealth())
 		jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
 		jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
 
