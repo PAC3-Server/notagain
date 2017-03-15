@@ -254,10 +254,13 @@ do -- view
 				local ent_pos = LerpVector(math.max(dist, 0.5), battlecam.FindHeadPos(ent), ent:NearestPoint(ent:EyePos()))
 
 				local offset = ent_pos - ply_pos
-				offset.z = offset.z / 2
 
-				offset:Rotate(Angle(smooth_visible*-offset.z/10,0,0))
-				offset:Rotate(battlecam.target_cam_rotation)
+				--offset:Rotate(Angle(smooth_visible*-offset.z/10,0,0))
+				offset:Rotate(Angle(0,battlecam.target_cam_rotation.y,0))
+
+				local p = battlecam.target_cam_rotation.p
+				offset.z = p
+
 
 				target_pos = (LerpVector(0.5, ply_pos, ent_pos) - offset/2) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-500))
 
@@ -270,7 +273,7 @@ do -- view
 
 				target_fov = target_fov + math.Clamp(smooth_visible*50, -40, 20) - 30
 			else
-				local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 230), 0, 1) ^ 10 - 0.05, 0)
+				local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 240), 0, 1) ^ 10 - 0.05, 0)
 				target_pos = Lerp(inside_sphere, smooth_pos, ply:EyePos())
 
 				local cam_ang = smooth_dir:Angle()
@@ -283,8 +286,8 @@ do -- view
 				local right = cam_ang:Right() * FrameTime() * - battlecam.cam_rotation_velocity.y
 				local up = cam_ang:Up() * FrameTime() * battlecam.cam_rotation_velocity.x
 
-				smooth_pos = smooth_pos + right*400 + up*400
-				smooth_dir = smooth_dir - right*3.5 - up*3.5
+				smooth_pos = smooth_pos + right*1500 + up*1500
+				smooth_dir = smooth_dir - right*8 - up*8
 
 
 				do -- trace block
@@ -296,7 +299,7 @@ do -- view
 					})
 
 					if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
-						smooth_pos = Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
+						smooth_pos = data.HitPos--Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
 					end
 				end
 
@@ -327,7 +330,7 @@ do -- view
 
 			if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
 				smooth_pos = data.HitPos
-				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - (lerp_thing*2-1)*0.1
+				--battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - (lerp_thing*2-1)*0.1
 			end
 		end
 
@@ -378,7 +381,7 @@ do -- selection
 			if hitmarkers then
 				hitmarkers.ShowHealth(ent, true)
 			end
-			battlecam.target_cam_rotation = Angle(0,12.5,0)
+			battlecam.target_cam_rotation = Angle(-30,0,0)
 		end
 	end
 
@@ -629,7 +632,7 @@ do
 
 		do
 			if input.IsButtonDown(KEY_PAD_5) or input.IsButtonDown(KEY_XBUTTON_STICK2) then
-				battlecam.target_cam_rotation = Angle(0,12.5,0)
+				battlecam.target_cam_rotation = Angle(-30,0,0)
 			end
 
 			if input.IsButtonDown(KEY_XSTICK2_RIGHT) or input.IsButtonDown(KEY_PAD_6) then
