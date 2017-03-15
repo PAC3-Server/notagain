@@ -29,19 +29,35 @@ if SERVER then
 	end
 
 	util.AddNetworkString( "s2c_mpyt" )
+	
+	local urls = {
+		"youtu%.be/([%w_%-]+)",
+		"youtube%.com/watch%?v%=([%w_%-]+)"
+	}
+	
+	function getYoutubeID( url )
+		for _, v in pairs( urls ) do
+			for m in string.gmatch( url, v ) do
+				return m
+			end
+		end
+		
+		return false
+	end
+	
 
 	aowl.AddCommand( {"ytplay"}, function( player, line, q )
-		if ( string.find( q, "https?://[%w-_%.%?%.:/%+=&]+" ) ) then
+		local id = getYoutubeID( q )
+	
+		if ( id ) then
 			net.Start( "s2c_mpyt" )
-			net.WriteBool( true )
-			net.WriteString( q ) 
+			net.WriteString( id ) 
 			net.Send( player )
 		else
 			RequestYTSearch( q, function( data )
 				if data then
 					net.Start( "s2c_mpyt" )
-					net.WriteBool( false )
-					net.WriteString( data ) 
+					net.WriteString( data )
 					net.Send( player )
 				end
 			end )
@@ -49,12 +65,11 @@ if SERVER then
 	end)
 else
 	net.Receive( "s2c_mpyt", function()
-		local isUrl = net.ReadBool()
 		local data = net.ReadString()
 		local ent = LocalPlayer():GetEyeTrace().Entity
 		
 		if ent.IsMediaPlayerEntity then
-			local q = (isUrl) and data or string.format( "https://www.youtube.com/watch?v=%s", data ) 
+			local q = string.format( "https://www.youtube.com/watch?v=%s", data ) 
 			MediaPlayer.Request( ent, q )
 		end
 	end )
