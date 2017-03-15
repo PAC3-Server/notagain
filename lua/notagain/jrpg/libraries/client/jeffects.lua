@@ -27,8 +27,15 @@ function jeffects.CreateMaterial(data)
 
 	for k, v in pairs(data) do
 		if type(v) == "string" and v:StartWith("http") then
-			urlimage.URLMaterial(v, function(m,w,h)
-				mat:SetTexture("$" .. k, m:GetTexture("$BaseTexture"))
+			hook.Add("Think", v, function()
+				local m,w,h = urlimage.GetURLImage(v)
+				if m == nil then
+					print(m,w,h)
+					hook.Remove("Think", v)
+				elseif m then
+					mat:SetTexture("$" .. k, m:GetTexture("$BaseTexture"))
+					hook.Remove("Think", v)
+				end
 			end)
 		end
 	end
