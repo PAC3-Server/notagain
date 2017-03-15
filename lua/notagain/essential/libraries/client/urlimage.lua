@@ -140,12 +140,12 @@ local function ParsePNG(fh)
       parse_cHRM(tbl,fh, len)
     elseif stype == 'IDAT' then
       parse_IDAT(tbl,fh, len, compression_method)
-    else
-      local data = fh:Read(len)
+    --else
+      --local data = fh:Read(len)
       --print("data=", len == 0 and "(empty)" or "(not displayed)")
     end
 
-	local crc = read_msb_uint32(fh)
+---	local crc = read_msb_uint32(fh)
 
     if stype == 'IEND' then
       break
@@ -166,9 +166,10 @@ local function ParseJPG(file)
 
 	dimheader[1] = string.char(255) .. string.char(192)
 	dimheader[2] = string.char(255) .. string.char(194)
-	validjpg = string.char(255) .. string.char(216)
+	local validjpg = string.char(255) .. string.char(216)
 	if file:Read(2) == validjpg then
 		while foundheader == 0 do
+			local readheader
 			if file:Tell() + 2 < endofjpg then
 				readheader = file:Read(2)
 			else
@@ -484,34 +485,28 @@ local function find_purgeable()
 	return a,b
 end
 
-function update_dimensions(fileid,w,h)
+local function update_dimensions(fileid,w,h)
 	dbg("update_dimensions()",fileid,w,h)
 	assert(tonumber(fileid))
 	return db:update("w = %d, h=%d WHERE fileid=%d",w,h,fileid)
 end
 
-function record_use(fileid,nolock)
+local function record_use(fileid,nolock)
 	dbg("record_use()",fileid,nolock)
 	assert(tonumber(fileid))
 	nolock = nolock and "" or ", locked = 1"
 	return db:update("last_used = (cast(strftime('%%s', 'now') as int) - 1477777422)"..nolock.." WHERE fileid=%d",fileid)
 end
 
-function get_record(urlid)
+local function get_record(urlid)
 	dbg("get_record()",urlid)
 	local record = assert(db:select1('*',isnumber(urlid) and "WHERE fileid = %d" or "WHERE url = %s",urlid))
 	return record~=true and record
 end
 
-function record_validate(r)
-	if not istable(r) then r = get_record(r) end
-	dbg("record_validate()",r,r and r.url or r.fileid)
-	if not r or not r.w or r.w==0 then return false end
 
-	return r and file.Exists(FPATH(r.fileid,r.ext),'DATA') and r
-end
 
-function new_record(url,ext)
+local function new_record(url,ext)
 	dbg("new_record()",url,ext)
 	local fileid = assert(db:insert{url = url,ext = ext})
 	return fileid
@@ -527,7 +522,7 @@ end
 urlimage.BASE = "cache/uimg"
 file.CreateDir("cache",'DATA')
 file.CreateDir(urlimage.BASE,'DATA')
-function FPATH(a,ext,open_as)
+local function FPATH(a,ext,open_as)
 	--Msg(("FPATH %q %q %q -> "):format(a or "",ext or "",tostring(open_as or "")))
 	if ext=="vmt" then
 		a=a..'_vmt'
@@ -543,8 +538,16 @@ function FPATH(a,ext,open_as)
 	return ret
 end
 
-function FPATH_R(...)
+local function FPATH_R(...)
 	return ("../data/%s"):format(FPATH(...))
+end
+
+local function record_validate(r)
+	if not istable(r) then r = get_record(r) end
+	dbg("record_validate()",r,r and r.url or r.fileid)
+	if not r or not r.w or r.w==0 then return false end
+
+	return r and file.Exists(FPATH(r.fileid,r.ext),'DATA') and r
 end
 
 function urlimage.Material(fileid,ext,...)
@@ -572,13 +575,13 @@ function urlimage.Material(fileid,ext,...)
 	return a,b,path
 end
 
-function fwrite(fileid,ext,data)
+local function fwrite(fileid,ext,data)
 	dbg("fwrite()",fileid,ext,#data)
 	local path = FPATH(fileid,ext)
 	file.Write(path,data)
 	return path
 end
-function fopen(fileid,ext)
+local function fopen(fileid,ext)
 	dbg("fopen()",fileid,ext)
 	return file.Open(FPATH(fileid,ext),'rb','DATA')
 end
@@ -605,18 +608,6 @@ local delete_record delete_record = function(record)
 	else error"wtf" end
 end
 
-function delete_fileid(fileid,ext)
-	dbg("delete_fileid()",fileid,ext)
-	if ext then
-		return file.Delete(FPATH(fileid,ext),'DATA')
-	end
-	file.Delete(FPATH(fileid,'vmt'),'DATA')
-	file.Delete(FPATH(fileid,'jpg'),'DATA')
-	file.Delete(FPATH(fileid,'png'),'DATA')
-	file.Delete(FPATH(fileid,'vtf'),'DATA')
-end
-
-
 --TODO: Purge on start and live
 local purgeable = assert(find_purgeable())
 if purgeable~=true then
@@ -624,7 +615,7 @@ if purgeable~=true then
 end
 
 
-function data_format(bytes)
+local function data_format(bytes)
 	if 		IsJPG(bytes) then return 'jpg'
 	elseif 	IsPNG(bytes) then return 'png'
 	elseif 	IsVTF(bytes) then return 'vtf'
@@ -634,7 +625,7 @@ end
 
 local mw,mh = 	render.MaxTextureWidth(),render.MaxTextureHeight()
 mw=mw>2048 and 2048 mh=mh>2048 and 2048
-function read_image_dimensions(fh,fmt)
+local function read_image_dimensions(fh,fmt)
 	dbg("read_image_dimensions()",fh,fmt)
 	local reader = fmt=='png' and ParsePNG or fmt=='jpg' and ParseJPG or fmt=='vtf' and ParseVTF
 	if not reader then return nil,'No reader for format: '..tostring(fmt) end
@@ -653,7 +644,7 @@ function read_image_dimensions(fh,fmt)
 	return w,h
 end
 
-function record_to_material(r)
+local function record_to_material(r)
 	dbg("record_to_material()",r and r.fileid)
 	if not r.used then
 		assert(record_use(r.fileid))
@@ -672,7 +663,7 @@ local cache = urlimage.cache
 
 local fastdl = GetConVarString"sv_downloadurl":gsub("/$","")..'/'
 
-function FixupURL(url)
+local function FixupURL(url)
 	if not url:sub(3,10):find("://",1,true) then
 		url = fastdl..url
 	else
@@ -693,7 +684,7 @@ end
 
 -- Returns: mat,w,h
 -- Returns: false = processing, nil = error
-function GetURLImage(url)
+function urlimage.GetURLImage(url)
 
 	url = FixupURL(url)
 
@@ -796,24 +787,20 @@ function GetURLImage(url)
 end
 
 
-function urlimage.URLMaterial(url, cb)
-	local mat,w,h = GetURLImage(url)
-
+function urlimage.URLMaterial(url)
+	local mat,w,h = urlimage.GetURLImage(url)
 	local function setmat()
-		if cb then cb(mat,w,h) cb = nil end
 		surface.SetMaterial(mat)
 		return w,h
 	end
 
 	if mat then
-		if cb then cb(mat,w,h) cb = nil end
 		dbg("URLImage",url,"instant mat",mat)
 		return setmat
 	end
 
 	local trampoline trampoline = function()
-		mat,w,h = GetURLImage(url)
-
+		mat,w,h = urlimage.GetURLImage(url)
 		if not mat then
 			if mat==nil then
 				trampoline = function() end
@@ -821,11 +808,6 @@ function urlimage.URLMaterial(url, cb)
 			end
 
 			return
-		end
-
-		if cb then
- 			cb(mat,w,h)
-			cb = nil
 		end
 		trampoline = setmat
 		return setmat()
