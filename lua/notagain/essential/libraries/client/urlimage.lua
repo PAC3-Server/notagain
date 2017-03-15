@@ -796,20 +796,24 @@ function GetURLImage(url)
 end
 
 
-function urlimage.URLMaterial(url)
+function urlimage.URLMaterial(url, cb)
 	local mat,w,h = GetURLImage(url)
+
 	local function setmat()
+		if cb then cb(mat,w,h) cb = nil end
 		surface.SetMaterial(mat)
 		return w,h
 	end
 
 	if mat then
+		if cb then cb(mat,w,h) cb = nil end
 		dbg("URLImage",url,"instant mat",mat)
 		return setmat
 	end
 
 	local trampoline trampoline = function()
 		mat,w,h = GetURLImage(url)
+
 		if not mat then
 			if mat==nil then
 				trampoline = function() end
@@ -817,6 +821,11 @@ function urlimage.URLMaterial(url)
 			end
 
 			return
+		end
+
+		if cb then
+ 			cb(mat,w,h)
+			cb = nil
 		end
 		trampoline = setmat
 		return setmat()

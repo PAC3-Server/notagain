@@ -64,8 +64,8 @@ if CLIENT then
 		jdmg.materials.trail = jeffects.CreateMaterial({
 			Shader = "UnlitGeneric",
 
-			BaseTexture = "particle/smokesprites0331",
-			Aditive = 1,
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291702123689934849/trail.png",
+			Additive = 1,
 			GlowAlpha = 1,
 			VertexColor = 1,
 			VertexAlpha = 1,
@@ -75,7 +75,7 @@ if CLIENT then
 		jdmg.materials.hypno = jeffects.CreateMaterial({
 			Shader = "UnlitGeneric",
 			BaseTexture = "effects/flashlight/circles",
-			Aditive = 1,
+			Additive = 1,
 			VertexColor = 1,
 			VertexAlpha = 1,
 			Translucent = 1,
@@ -85,7 +85,7 @@ if CLIENT then
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "particle/particle_Ring_Wave_2",
-			Aditive = 1,
+			Additive = 1,
 			VertexColor = 1,
 			VertexAlpha = 1,
 		})
