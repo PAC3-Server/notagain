@@ -102,14 +102,13 @@ if SERVER then
 
 		if not victim:IsPlayer() then return end
 
+		local attacker = dmginfo:GetAttacker()
+
 		if victim:GetInfoNum("cl_godmode", 1) == 2 or victim:GetInfoNum("cl_godmode", 1) == 3 then
-			if dmginfo:GetAttacker() == victim or dmginfo:GetAttacker():IsWorld() or (attacker.CPPIGetOwner and not attacker:CPPIGetOwner()) then
+			if attacker == victim or attacker:IsWorld() or (attacker.CPPIGetOwner and not attacker:CPPIGetOwner()) then
 				return
 			end
 		end
-
-		local attacker = dmginfo:GetAttacker()
-
 
 		if (not attacker:IsNPC() and not attacker:IsPlayer()) and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
 			attacker = attacker:CPPIGetOwner()
