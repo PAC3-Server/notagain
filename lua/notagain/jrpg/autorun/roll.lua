@@ -194,7 +194,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 		dir = dir * mult * 0.75
 
 		--ply:SetEyeAngles(ply.roll_ang)
-		mv:SetVelocity(dir)
+		mv:SetVelocity(dir + physenv.GetGravity())
 	end
 end)
 
