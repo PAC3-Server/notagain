@@ -1,8 +1,17 @@
 local luadev = requirex("luadev")
 local last = {}
 
+local find_cache = {}
+local function find(path)
+	if not find_cache[path] then
+		find_cache[path] = file.Find(path, "MOD")
+	end
+
+	return find_cache[path]
+end
+
 local function check_dir(dir, cb, what, lib)
-	for _, path in ipairs((file.Find(dir .. "*", "MOD"))) do
+	for _, path in ipairs(find(dir .. "*")) do
 		local name = path:match("(.+)%.lua")
 		path = dir .. path
 
@@ -36,6 +45,7 @@ end
 concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 	if b == "1" then
 		timer.Create("luadev_monitor_notagain", 0.1, 0, function()
+			if system.HasFocus() then return end
 			for _, dir in pairs(notagain.directories) do
 				check_dir("addons/notagain/lua/"..dir.."/autorun/", callback, "shared")
 				check_dir("addons/notagain/lua/"..dir.."/autorun/client/", callback, "clients")
@@ -49,6 +59,7 @@ concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 			end
 		end)
 	else
+		table.Empty(find_cache)
 		timer.Remove("luadev_monitor_notagain")
 	end
 end)
