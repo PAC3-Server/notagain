@@ -61,7 +61,7 @@ end
 do
 	local temp_color = Color(255, 255, 255)
 
-	function jeffects.DrawTrail(self, len, spc, pos, mat, start_color, end_color, start_size, end_size, stretch)
+	function jeffects.DrawTrail(self, len, spc, pos, mat, start_color, end_color, start_size, end_size, stretch, gravity)
 		self.trail_points = self.trail_points or {}
 		self.trail_last_add = self.trail_last_add or 0
 
@@ -98,6 +98,21 @@ do
 				end
 			end
 		render.EndBeam()
+
+		if true or gravity then
+			local center = Vector(0,0,0)
+			for _, data in ipairs(self.trail_points) do
+				center:Zero()
+				for _, data in ipairs(self.trail_points) do
+					center:Add(data.pos)
+				end
+				center:Mul(1 / #self.trail_points)
+				center:Sub(data.pos)
+				center:Mul(-FrameTime())
+
+				data.pos:Add(center)
+			end
+		end
 	end
 end
 
@@ -113,7 +128,7 @@ do
 		Shader = "UnlitGeneric",
 
 		BaseTexture = "particle/smokesprites0331",
-		Aditive = 1,
+		Additive = 1,
 		GlowAlpha = 1,
 		VertexColor = 1,
 		VertexAlpha = 1,
@@ -123,7 +138,7 @@ do
 	jeffects.materials.hypno = jeffects.CreateMaterial({
 		Shader = "UnlitGeneric",
 		BaseTexture = "effects/flashlight/circles",
-		Aditive = 1,
+		Additive = 1,
 		VertexColor = 1,
 		VertexAlpha = 1,
 		Translucent = 1,
@@ -133,7 +148,7 @@ do
 		Shader = "UnlitGeneric",
 
 		BaseTexture = "particle/particle_Ring_Wave_2",
-		Aditive = 1,
+		Additive = 1,
 		VertexColor = 1,
 		VertexAlpha = 1,
 	})
