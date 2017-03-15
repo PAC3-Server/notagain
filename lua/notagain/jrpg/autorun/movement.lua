@@ -103,7 +103,7 @@ if CLIENT then
 			local dot = ang:Right():Dot(vel)
 
 			if ang:Forward():Dot(vel) > 200 then
-				manip_angles(ply, 0, Angle(0,dot*-0.15,0))
+				manip_angles(ply, 0, Angle(0,math.Clamp(dot*-0.15, -15, 15),0))
 			else
 				manip_angles(ply, 0, Angle(0,0,0))
 			end
