@@ -1,5 +1,7 @@
 local jeffects = {}
 
+local urlimage = requirex("urlimage")
+
 function jeffects.CreateMaterial(data)
 	if type(data) == "string" then
 		return Material(data)
@@ -11,6 +13,7 @@ function jeffects.CreateMaterial(data)
 	data.Shader = nil
 
 	local params = {}
+	local mat
 
 	for k, v in pairs(data) do
 		if k == "Proxies" then
@@ -20,7 +23,17 @@ function jeffects.CreateMaterial(data)
 		end
 	end
 
-	return CreateMaterial(name, shader, params)
+	local mat = CreateMaterial(name, shader, params)
+
+	for k, v in pairs(data) do
+		if type(v) == "string" and v:StartWith("http") then
+			urlimage.URLMaterial(v, function(m,w,h)
+				mat:SetTexture("$" .. k, m:GetTexture("$BaseTexture"))
+			end)
+		end
+	end
+
+	return mat
 end
 
 function jeffects.CreateModel(data)
@@ -127,7 +140,7 @@ do
 	jeffects.materials.trail = jeffects.CreateMaterial({
 		Shader = "UnlitGeneric",
 
-		BaseTexture = "particle/smokesprites0331",
+		BaseTexture = "particle/trail",
 		Additive = 1,
 		GlowAlpha = 1,
 		VertexColor = 1,

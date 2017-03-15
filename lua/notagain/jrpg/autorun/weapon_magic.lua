@@ -69,26 +69,34 @@ if CLIENT then
 			jeffects:StartEffect(tbl.length or 1)
 			table.insert(active, jeffects)
 
-			hook.Add("PostDrawOpaqueRenderables", "jeffects", function()
+			hook.Add("RenderScreenspaceEffects", "jeffects", function()
+				render.UpdateScreenEffectTexture()
+				cam.Start3D()
 				for _, jeffects in ipairs(active) do
-					jeffects:Draw("opaque")
+					local ok, err = pcall(jeffects.Draw, jeffects, "opaque")
+					if not ok then
+						jeffects:Remove()
+						print(err)
+					end
 				end
-			end)
 
-			hook.Add("PostDrawTranslucentRenderables", "jeffects", function()
 				for _, jeffects in ipairs(active) do
-					jeffects:Draw("translucent")
+					local ok, err = pcall(jeffects.Draw, jeffects, "translucent")
+					if not ok then
+						jeffects:Remove()
+						print(err)
+					end
 				end
+				cam.End3D()
 			end)
 		end
 	end
 
 	local feather_mat = jeffects.CreateMaterial({
-		Name = "magic_feather_mat",
 		Shader = "VertexLitGeneric",
 
-		BaseTexture = "effects/spark",
-		Additive = 1,
+		BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291622281333964801/feather.png",
+		Additive = 0,
 		VertexColor = 1,
 		VertexAlpha = 1,
 		Translucent = 1,
@@ -110,6 +118,53 @@ if CLIENT then
 	})
 
 	do
+
+		local glyph_disc = jeffects.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678820698947584/disc.png",
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		local ring = jeffects.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678934834085888/ring2.png",
+			Additive = 0,
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		local hand = jeffects.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291690387033161728/clock_hand.png",
+			Additive = 0,
+			VertexColor = 1,
+			VertexAlpha = 1,
+			BaseTextureTransform = "center .5 .5 scale 1 5 rotate 0 translate 0 1.25",
+		})
+
+		local glow = jeffects.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291695131914928128/glow.png",
+			Additive = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		local glow2 = jeffects.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "sprites/light_glow02",
+			Additive = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+			Translucent = 1,
+		})
+
 		local META = {}
 		META.Name = "something"
 
@@ -119,25 +174,41 @@ if CLIENT then
 			self.color = self.color or Color(255, 217, 104, 255)
 			self.size = self.size or self.ent:BoundingRadius() / 70
 			self.something = self.something or 1
+
 		end
 
 		function META:DrawSprites(time, f, f2)
 			local s = self.size
-			local c = Color(self.color.r, self.color.g, self.color.b)
+			local c = Color(self.color.r^1.15, self.color.g^1.15, self.color.b^1.15)
 			c.a = 200*f2^5
 
+			local dark =  Color(0,0,0,c.a)
+
 			cam.Start3D(EyePos(), EyeAngles())
-				render.SetMaterial(jeffects.materials.splash_disc)
-				render.DrawQuadEasy(self.position, -EyeVector(), (80*s) - f*5, (80*s) - f*5, c, f*45)
+				render.SetMaterial(glyph_disc)
+				render.DrawQuadEasy(self.position, -EyeVector(), (95*s) - f*5, (95*s) - f*5, dark, f*45)
 
-				render.SetMaterial(jeffects.materials.splash_disc)
-				render.DrawQuadEasy(self.position, Vector(0,0,1), (100*s) - f*5, (100*s) - f*5, c, f*45)
+				render.SetMaterial(glyph_disc)
+				render.DrawQuadEasy(self.position, Vector(0,0,1), (100*s) - f*5, (100*s) - f*5,  dark, f*45)
 
-				render.SetMaterial(jeffects.materials.ring)
-				render.DrawQuadEasy(self.position, -EyeVector(), 100*s, 100*s, c, f*-45)
+				render.SetMaterial(ring)
+				render.DrawQuadEasy(self.position, -EyeVector(), 105*s, 105*s, dark, f*-45)
 
-				render.SetMaterial(jeffects.materials.glow)
-				render.DrawQuadEasy(self.position, -EyeVector(), 64*s, 64*s, c, f*-45)
+				render.SetMaterial(hand)
+
+				dark.a = dark.a*self.something
+
+				local hands = 6
+				for i = 1, hands do
+					render.DrawQuadEasy(self.position, -EyeVector(), 10*s, 250*s, dark, (i/hands)*360 + (f*150 * (math.sin(1+i/hands*math.pi)*i%3*(f^0.01))))
+				end
+
+				render.SetMaterial(glow)
+				render.DrawQuadEasy(self.position, -EyeVector(), 10*s, 10*s, c, f*-45)
+
+				render.SetMaterial(glow2)
+				render.DrawQuadEasy(self.position, -EyeVector(), 220*s, 220*s, c, f*45)
+
 			cam.End3D()
 		end
 
@@ -148,7 +219,7 @@ if CLIENT then
 
 			cam.Start3D(EyePos(), EyeAngles())
 			cam.IgnoreZ(true)
-				render.SetMaterial(jeffects.materials.glow)
+				render.SetMaterial(glow)
 				local size = 500*s
 				render.DrawSprite(self.position, size, size, c)
 			cam.IgnoreZ(false)
@@ -158,7 +229,7 @@ if CLIENT then
 		function META:DrawRefraction(time, f, f2)
 			local s = self.size
 			local c = Color(self.color.r, self.color.g, self.color.b)
-			c.a = 200*f2*self.something
+			c.a = 100*f2*self.something
 
 			cam.Start3D(EyePos(), EyeAngles())
 				render.SetMaterial(jeffects.materials.refract)
@@ -169,7 +240,7 @@ if CLIENT then
 		function META:DrawRefraction2(time, f, f2)
 			local s = self.size
 			local c = Color(self.color.r, self.color.g, self.color.b)
-			c.a = (self.something*255)*f2
+			c.a = (self.something*100)*f2
 
 			cam.Start3D(EyePos(), EyeAngles())
 				render.SetMaterial(jeffects.materials.refract2)
@@ -182,48 +253,7 @@ if CLIENT then
 			local pos = self.position
 			local screen_pos = pos:ToScreen()
 
-			DrawSunbeams(0, (f2*self.visible*0.1)*self.something, 30 * (1/pos:Distance(EyePos()))*s, screen_pos.x / ScrW(), screen_pos.y / ScrH())
-		end
-
-		function META:DrawSpikes(time, f, f2)
-			local s = self.size
-			render.SetColorModulation(0,0,0)
-			render.SuppressEngineLighting(true)
-			render.SetBlend(f2 * (self.something)^6)
-
-			spike_model:SetModelScale(1)
-
-			local max = 10
-			for i = 1, max do
-				local p = (i / max) * math.pi * 2
-				p = p + f
-				local dist = 30*s
-				local offset = Vector(math.sin(p+i+time)*dist, math.cos(p+i+time)*dist, math.sin(p+time)*dist)
-				spike_model:SetPos(self.position + offset)
-				spike_model:SetAngles(offset:Angle() + Angle(-90,0,0))
-				spike_model:Draw()
-			end
-
-			render.SuppressEngineLighting(false)
-		end
-
-		function META:DrawRing(time, f, f2)
-			local s = self.size
-			render.SetColorModulation(self.color.r/255*5,self.color.g/255*5,self.color.b/255*5)
-			render.SuppressEngineLighting(true)
-			render.SetBlend(f2^3)
-			ring_model:ManipulateBoneScale(0, Vector(0,0,0))
-
-			for i = 1, 10 do
-				ring_model:ManipulateBoneAngles(i, Angle(0,((i/5)*2-1)*RealTime()*500,0))
-				ring_model:ManipulateBoneScale(i, Vector(1,1,math.max(self.something,0.2)))
-			end
-
-			ring_model:SetModelScale(0.75*s)
-			ring_model:SetPos(self.position)
-			ring_model:Draw()
-
-			render.SuppressEngineLighting(false)
+			DrawSunbeams(0, (f2*self.visible*0.05)*self.something, 30 * (1/pos:Distance(EyePos()))*s, screen_pos.x / ScrW(), screen_pos.y / ScrH())
 		end
 
 		function META:EmitParticle()
@@ -236,19 +266,13 @@ if CLIENT then
 
 			local m = Matrix()
 			m:Translate(Vector(0,20,0)*s)
-			m:Scale(Vector(1,0.25,1))
+			m:Scale(Vector(1,1,1))
 			ent:EnableMatrix("RenderMultiply", m)
 
 			ent.RenderOverride = function()
 				local f = (ent.life_time - RealTime()) / 5
 
-				do
-					local h,s,v = ColorToHSV(self.color)
-					s = s / 2
-					local c = HSVToColor(h,s,v)
-					render.SetColorModulation(2*c.r/255, 2*c.g/255, 2*c.b/255)
-				end
-
+				render.SetColorModulation(255, 255, 255)
 				render.SetBlend(f^0.5)
 
 				render.SuppressEngineLighting(true)
@@ -297,7 +321,7 @@ if CLIENT then
 				render.SetMaterial(jeffects.materials.beam)
 				render.DrawQuadEasy(self.position+ Vector(0,0,300), -ang:Forward(), 100*s, 2500, Color(255,255,255,100*f2*self.something), 0)
 
-				render.SetMaterial(jeffects.materials.glow)
+				render.SetMaterial(glow)
 				render.DrawQuadEasy(self.position+ Vector(0,0,300*f2), -ang:Forward(), 200*f2*s, 2500/f, c, 0)
 			--cam.End3D()
 		end
@@ -325,9 +349,19 @@ if CLIENT then
 		end
 
 		function META:DrawOpaque(time, f, f2)
-			self:DrawSpikes(time, f, f2)
 			self:DrawRefraction2(time, f, f2)
-			self:DrawRing(time, f, f2)
+
+			local dlight = DynamicLight( self.ent:EntIndex() )
+			if dlight then
+				dlight.pos = self.ent:GetPos()
+				dlight.r = self.color.r
+				dlight.g = self.color.g
+				dlight.b = self.color.b
+				dlight.brightness = 2
+				dlight.Decay = 1000
+				dlight.Size = self.size*300
+				dlight.DieTime = CurTime() + 1
+			end
 		end
 
 		jeffects.RegisterEffect(META)
@@ -513,7 +547,7 @@ if CLIENT then
 			something = 1,
 			length = 2,
 		})
-
+do return end
 		local snd = CreateSound(self.Owner, "music/hl2_song10.mp3")
 		snd:PlayEx(0.5, 150)
 		snd:FadeOut(2)
@@ -599,7 +633,7 @@ function SWEP:PrimaryAttack()
 
 		ent:Spawn()
 
-		timer.Simple(0.25, function()
+		timer.Simple(0.2, function()
 			ent:SetParent(NULL)
 			local pos
 
