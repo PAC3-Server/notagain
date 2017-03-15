@@ -388,20 +388,12 @@ do -- selection
 	function battlecam.CalcEnemySelect()
 		local ply = LocalPlayer()
 
-		if battlecam.IsKeyDown("target") and last_enemy_target < RealTime() then
-			battlecam.want_select = not battlecam.want_select
-			if not battlecam.want_select then
-				battlecam.SelectTarget()
-			end
-			last_enemy_target = RealTime() + 0.25
-		end
-
 		local target = battlecam.selected_enemy
 
 		if target:IsValid() and not target.battlecam_probably_dead then
 			battlecam.last_target_pos = target:GetPos()
 
-			if battlecam.IsKeyDown("target") and last_enemy_target < RealTime() then
+			if battlecam.IsKeyDown("target") and last_enemy_target < RealTime() or target:GetPos():Distance(ply:GetPos()) > 1000 then
 				battlecam.SelectTarget()
 				last_enemy_target = RealTime() + 0.25
 			end
@@ -483,7 +475,7 @@ do -- selection
 			else
 				last_enemy_scroll = 0
 			end
-		elseif (battlecam.IsKeyDown("target") and last_enemy_target < RealTime()) or battlecam.want_select then
+		elseif battlecam.IsKeyDown("target") and last_enemy_target < RealTime() then
 			local data = ply:GetEyeTrace()
 
 			if not data.Entity:IsValid() then
