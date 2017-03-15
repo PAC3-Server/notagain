@@ -610,7 +610,7 @@ if CLIENT then
 		end
 
 		for _, ent in pairs(ents.FindInSphere(ply:GetPos(), 1000)) do
-			if ent:IsNPC() or ent:IsPlayer() then
+			if ent:IsNPC() then
 				local wep = ent:GetActiveWeapon()
 				local name
 
@@ -651,10 +651,6 @@ if CLIENT then
 					end
 
 					hitmarkers.ShowAttack(ent, name)
-
-					if ent ~= LocalPlayer() then
-						hitmarkers.ShowHealth(ent)
-					end
 				end
 			end
 		end
@@ -685,6 +681,21 @@ if CLIENT then
 		local pos = net.ReadVector()
 
 		hitmarkers.ShowDamage(ent, xp, pos, true)
+	end)
+
+	net.Receive("hitmark_attack", function()
+		local ent = net.ReadEntity()
+		local str = net.ReadString()
+
+		if language.GetPhrase(str) then
+			str = language.GetPhrase(str)
+		end
+
+		str = str:gsub("^%l", function(s) return s:upper() end)
+		str = str:gsub(" %l", function(s) return s:upper() end)
+		str = str:Trim()
+
+		hitmarkers.ShowAttack(ent, str)
 	end)
 end
 
@@ -723,6 +734,17 @@ if SERVER then
 	end
 
 	util.AddNetworkString("hitmark_xp")
+
+	function hitmarkers.ShowAttack(ent, str, filter)
+		filter = filter or player.GetAll()
+
+		net.Start("hitmark_attack", true)
+			net.WriteEntity(ent)
+			net.WriteString(str)
+		net.Send(filter)
+	end
+
+	util.AddNetworkString("hitmark_attack")
 
 	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
 		if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
