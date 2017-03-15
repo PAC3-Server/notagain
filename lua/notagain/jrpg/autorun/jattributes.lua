@@ -60,6 +60,7 @@ jattributes.types = {
 		end,]]
 		on_fire_bullet = function(attacker, data, stats)
 			local wep = attacker:GetActiveWeapon()
+			if attacker.rpg_cheat then return end
 			if wep.jattributes_stamina_drained and wep.jattributes_stamina_drained > os.clock() then return end
 			local dmg = get_damage(wep) or data.Damage
 
@@ -74,6 +75,7 @@ jattributes.types = {
 		end,
 		on_give_damage = function(stats, dmginfo, attacker)
 			local wep = attacker:GetActiveWeapon()
+			if attacker.rpg_cheat then return end
 			if wep.jattributes_stamina_drained and wep.jattributes_stamina_drained > os.clock() then return end
 			if not wepstats.IsElemental(wep) then
 				jattributes.SetStamina(attacker, math.max(jattributes.GetStamina(attacker) - dmginfo:GetDamage(), 0))
@@ -370,6 +372,11 @@ if SERVER then
 
 		timer.Create("jattributes_stamina", 0.05, 0, function()
 			for _, ply in ipairs(player.GetAll()) do
+				if ply.rpg_cheat then
+					jattributes.SetStamina(ply, 9999)
+					jattributes.SetMana(ply, 9999)
+					return
+				end
 				if math.random() > 0.9 and jattributes.HasMana(ply) and wepstats.ContainsElement(ply:GetActiveWeapon(), "dark") then
 					jattributes.SetMana(ply, math.min(jattributes.GetMana(ply) + 1, jattributes.GetMaxMana(ply)))
 				end
