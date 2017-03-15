@@ -334,12 +334,23 @@ if CLIENT then
 	end
 
 	do
+		local trail = jeffects.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "particle/fire",
+			Additive = 1,
+			GlowAlpha = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+			Translucent = 1,
+		})
+
 		local META = {}
 		META.Name = "trails"
 
 		function META:DrawTranslucent(time, f, f2)
 			self.trails = self.trails or {}
-			for i = 1, 5 do
+			for i = 1, 3 do
 				self.trails[i] = self.trails[i] or {data = {}}
 				self.trails[i].vec = self.trails[i].vec or VectorRand()
 				self.trails[i].vec2 = self.trails[i].vec2 or VectorRand()
@@ -351,7 +362,7 @@ if CLIENT then
 				local t = RealTime()*500
 				offset:Rotate(Angle(t*v2.x, t*v2.y, t*v2.z))
 
-				jeffects.DrawTrail(self.trails[i], 1, 2, self.position2 + offset, jeffects.materials.trail, Color(self.color.r, self.color.g, self.color.b, 255*(f2^2)), Color(255, 255, 255, 0), 10, 10, f2)
+				jeffects.DrawTrail(self.trails[i], 1, 2, self.position2 + offset, trail, Color(self.color.r, self.color.g, self.color.b, 255*(f2^2)), Color(self.color.r*2, self.color.g*2, self.color.b*2, 0), 10, 10, f2)
 			end
 		end
 
@@ -520,11 +531,11 @@ if CLIENT then
 			length = 1,
 		})
 
-		--[[jeffects.CreateEffect("trails", {
+		jeffects.CreateEffect("trails", {
 			ent = self.Owner,
-			color = Color(255, 255, 255, 255),
-			length = 1,
-		})]]
+			color = Color(r, g, b, 50),
+			length = 2,
+		})
 	end
 end
 
