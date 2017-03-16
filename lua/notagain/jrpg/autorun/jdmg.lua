@@ -242,32 +242,6 @@ do
 	end
 end
 
-do
-	jdmg.types.heal = {}
-
-	if CLIENT then
-		local mat = create_overlay_material("effects/filmscan256")
-
-		jdmg.types.heal.think = function(ent, f, s, t)
-			if math.random() > 0.9 then
-				ent:EmitSound("items/smallmedkit1.wav", 75, math.Rand(230,235), f)
-			end
-		end
-		jdmg.types.heal.draw = function(ent, f, s, t)
-			render.ModelMaterialOverride(mat)
-			render.SetColorModulation(0.75, 1*s, 0.75)
-			render.SetBlend(f)
-
-			local m = mat:GetMatrix("$BaseTextureTransform")
-			m:Identity()
-			m:Scale(Vector(1,1,1)*0.05)
-			m:Translate(Vector(1,1,1)*t/20)
-			mat:SetMatrix("$BaseTextureTransform", m)
-
-			draw_model(ent)
-		end
-	end
-end
 
 do
 	jdmg.types.dark = {}
@@ -479,6 +453,65 @@ do
 
 					ent.next_emit = RealTime() + math.random()*0.25
 				end
+			end
+		end
+	end
+end
+
+
+do
+	jdmg.types.heal = {}
+
+	if CLIENT then
+		local mat = create_overlay_material("effects/filmscan256")
+
+		jdmg.types.heal.think = function(ent, f, s, t)
+			if math.random() > 0.9 then
+				ent:EmitSound("items/smallmedkit1.wav", 75, math.Rand(230,235), f)
+			end
+		end
+		jdmg.types.heal.draw = function(ent, f, s, t)
+			render.ModelMaterialOverride(mat)
+			render.SetColorModulation(0.75, 1*s, 0.75)
+			render.SetBlend(f)
+
+			local m = mat:GetMatrix("$BaseTextureTransform")
+			m:Identity()
+			m:Scale(Vector(1,1,1)*0.05)
+			m:Translate(Vector(1,1,1)*t/20)
+			mat:SetMatrix("$BaseTextureTransform", m)
+
+			draw_model(ent)
+		end
+
+		local color = Color(150, 255, 150)
+		jdmg.types.heal.color = color
+
+		function jdmg.types.heal.draw_projectile(ent, dmg, simple, vis)
+			local size = dmg / 100
+
+			render.SetMaterial(jfx.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jfx.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 200))
+
+			render.SetMaterial(jfx.materials.refract3)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 150))
+
+			if not simple then
+
+				for i = 1, 3 do
+					local pos = ent:GetPos()
+					pos = pos + Vector(jfx.GetRandomOffset(pos, i, 2))*size*10
+
+					ent.trail_data = ent.trail_data or {}
+					ent.trail_data[i] = ent.trail_data[i] or {}
+					jfx.DrawTrail(ent.trail_data[i], 0.25, 0, pos, jfx.materials.trail, color.r, color.g, color.b, 255, color.r, color.g, color.b, 0, 15*size, 0)
+				end
+
+				render.SetMaterial(jfx.materials.glow)
+				render.DrawSprite(ent:GetPos(), 200*size, 200*size, Color(color.r, color.g, color.b, 50))
 			end
 		end
 	end
@@ -696,21 +729,10 @@ do
 					ent.trail_data[i] = ent.trail_data[i] or {}
 					jfx.DrawTrail(ent.trail_data[i], 0.2*rand, 0, pos, jfx.materials.trail, color.r, color.g, color.b, 255, color.r*1.5, color.g*1.5, color.b*1.5, 0, 7*rand*size, 0)
 				end
-			end
-			do return end
 
-			local p = emitter:Add(table.Random(flames), ent:GetPos())
-			p:SetStartSize(math.Rand(5,10))
-			p:SetEndSize(math.Rand(5,10))
-			p:SetStartAlpha(255)
-			p:SetEndLength(math.Rand(p:GetEndSize(),20))
-			p:SetEndAlpha(0)
-			p:SetColor(math.Rand(230,255),math.Rand(230,255),math.Rand(230,255))
-			p:SetGravity(physenv.GetGravity()*-0.25)
-			p:SetRoll(math.random()*360)
-			p:SetAirResistance(5)
-			p:SetLifeTime(0.25)
-			p:SetDieTime(math.Rand(0.25,0.75))
+				math.randomseed(os.clock())
+			end
+
 		end
 	end
 end
@@ -935,6 +957,7 @@ do
 				ent.trail_data[i] = ent.trail_data[i] or {}
 				jfx.DrawTrail(ent.trail_data[i], 0.4*rand, 0, pos, trail, color.r, color.g, color.b, 50, color.r, color.g, color.b, 0, 60*size, 0, 1)
 			end
+			math.randomseed(os.clock())
 		end
 	end
 end
