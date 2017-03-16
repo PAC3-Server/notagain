@@ -665,11 +665,12 @@ do -- effects
 				dmginfo = self:CopyDamageInfo(dmginfo)
 				dmginfo:SetDamageCustom(type)
 				dmginfo:SetDamage(dmginfo:GetDamage() * self:GetStatusMultiplier())
-				self:TakeDamageInfo(victim, dmginfo)
 
 				if on_damage then
 					on_damage(self, attacker, victim, dmginfo)
 				end
+
+				self:TakeDamageInfo(victim, dmginfo)
 			end
 
 			wepstats.Register(META)
@@ -709,6 +710,10 @@ do -- effects
 		basic_elemental("holy", JDMG_HOLY, nil, {"angelic", "divine", "spiritual", "sublime", "celestial", "spirited"}, {"light", "holyness"})
 		basic_elemental("water", JDMG_WATER, nil, {"soggy", "doused", "soaked", "rainy", "misty", "wet"}, {"water", "rain", "aqua", "h2o"})
 		basic_elemental("wind", JDMG_WIND, nil, {"windy", "stormy", "gusty", "drafty", "airy", "windswept"}, {"wind", "ozone", "breath", "whiff"})
+		basic_elemental("heal", JDMG_HEAL, function(self, attacker, victim, dmginfo)
+			victim:SetHealth(math.min(victim:Health() + dmginfo:GetDamage(), victim:GetMaxHealth()))
+			dmginfo:SetDamage(0)
+		end, {"healing", "curative", "medicinal"}, {"health", "wellbeing", "healthiness"})
 		basic_elemental("poison", JDMG_POISON, function(self, attacker, victim, dmginfo)
 			local dmg = dmginfo:GetDamage()
 			jdmg.SetStatus(victim, "poison", true)
