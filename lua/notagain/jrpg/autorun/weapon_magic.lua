@@ -1,98 +1,7 @@
 if CLIENT then
-	local jeffects = requirex("jeffects")
+	local jfx = requirex("jfx")
 
-	do
-		local BASE = {}
-
-		function BASE:Initialize() end
-		function BASE:DrawTranslucent() end
-		function BASE:DrawOpaque() end
-
-		function BASE:StartEffect(time)
-			self.time = RealTime() + time
-			self.length = time
-		end
-
-		function BASE:Draw(how)
-			local time = RealTime()
-			local f = -math.max((self.time - RealTime())/self.length, 0)+1
-
-			if f == 1 then
-				self:Remove()
-			end
-
-			local f2 = math.sin(f*math.pi) ^ 0.5
-
-			if self.ent:IsValid() then
-				local m = self.ent:GetBoneMatrix(self.ent:LookupBone("ValveBiped.Bip01_Pelvis"))
-				if m then
-					self.position = m:GetTranslation()
-				else
-					self.position = self.ent:GetPos() + self.ent:OBBCenter()
-				end
-				self.position2 = self.ent:GetPos() + self.ent:OBBCenter()
-
-				if how == "opaque" then
-					self:DrawOpaque(time, f, f2)
-				else
-					self:DrawTranslucent(time, f, f2)
-				end
-			else
-				self:Remove()
-			end
-		end
-
-		local active = {}
-
-		function BASE:Remove()
-			for i, jeffects in ipairs(active) do
-				if jeffects == self then
-					table.remove(active, i)
-					break
-				end
-			end
-		end
-
-		jeffects.effects = jeffects.effects or {}
-
-		function jeffects.RegisterEffect(META)
-			META.__index = function(self, key)
-				if META[key] then return META[key] end
-				if BASE[key] then return BASE[key] end
-			end
-			jeffects.effects[META.Name] = META
-		end
-
-		function jeffects.CreateEffect(name, tbl)
-			local jeffects = setmetatable(tbl or {}, jeffects.effects[name])
-			jeffects:Initialize()
-			jeffects:StartEffect(tbl.length or 1)
-			table.insert(active, jeffects)
-
-			hook.Add("RenderScreenspaceEffects", "jeffects", function()
-				render.UpdateScreenEffectTexture()
-				cam.Start3D()
-				for _, jeffects in ipairs(active) do
-					local ok, err = pcall(jeffects.Draw, jeffects, "opaque")
-					if not ok then
-						jeffects:Remove()
-						print(err)
-					end
-				end
-
-				for _, jeffects in ipairs(active) do
-					local ok, err = pcall(jeffects.Draw, jeffects, "translucent")
-					if not ok then
-						jeffects:Remove()
-						print(err)
-					end
-				end
-				cam.End3D()
-			end)
-		end
-	end
-
-	local feather_mat = jeffects.CreateMaterial({
+	local feather_mat = jfx.CreateMaterial({
 		Shader = "VertexLitGeneric",
 
 		BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291622281333964801/feather.png",
@@ -102,7 +11,7 @@ if CLIENT then
 		Translucent = 1,
 	})
 
-	local spike_model = jeffects.CreateModel({
+	local spike_model = jfx.CreateModel({
 		Path = "models/props_combine/tprotato1.mdl",
 		Scale = Vector(0.1, 0.02, 0.3),
 		NoCull = true,
@@ -111,7 +20,7 @@ if CLIENT then
 	m:Scale(Vector(0.1,0.02,0.3))
 	spike_model:EnableMatrix("RenderMultiply", m)
 
-	local ring_model = jeffects.CreateModel({
+	local ring_model = jfx.CreateModel({
 		Path = "models/props_combine/breentp_rings.mdl",
 		Scale = Vector(1, 1, 4),
 		Material = "models/gibs/combine_helicopter_gibs/combine_helicopter01",
@@ -119,7 +28,7 @@ if CLIENT then
 
 	do
 
-		local glyph_disc = jeffects.CreateMaterial({
+		local glyph_disc = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678820698947584/disc.png",
@@ -127,7 +36,7 @@ if CLIENT then
 			VertexAlpha = 1,
 		})
 
-		local ring = jeffects.CreateMaterial({
+		local ring = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678934834085888/ring2.png",
@@ -136,7 +45,7 @@ if CLIENT then
 			VertexAlpha = 1,
 		})
 
-		local hand = jeffects.CreateMaterial({
+		local hand = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291690387033161728/clock_hand.png",
@@ -146,7 +55,7 @@ if CLIENT then
 			BaseTextureTransform = "center .5 .5 scale 1 5 rotate 0 translate 0 1.25",
 		})
 
-		local glow = jeffects.CreateMaterial({
+		local glow = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291695131914928128/glow.png",
@@ -155,7 +64,7 @@ if CLIENT then
 			VertexAlpha = 1,
 		})
 
-		local glow2 = jeffects.CreateMaterial({
+		local glow2 = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "sprites/light_glow02",
@@ -232,7 +141,7 @@ if CLIENT then
 			c.a = 100*f2*self.something
 
 			cam.Start3D(EyePos(), EyeAngles())
-				render.SetMaterial(jeffects.materials.refract)
+				render.SetMaterial(jfx.materials.refract)
 				render.DrawQuadEasy(self.position, -EyeVector(), 128*s, 128*s, c, f*45)
 			cam.End3D()
 		end
@@ -243,7 +152,7 @@ if CLIENT then
 			c.a = (self.something*100)*f2
 
 			cam.Start3D(EyePos(), EyeAngles())
-				render.SetMaterial(jeffects.materials.refract2)
+				render.SetMaterial(jfx.materials.refract2)
 				render.DrawQuadEasy(self.position, -EyeVector(), 130*s, 130*s, c, f*45)
 			cam.End3D()
 		end
@@ -318,7 +227,7 @@ if CLIENT then
 				local ang = EyeAngles()
 				ang.p = 0
 
-				render.SetMaterial(jeffects.materials.beam)
+				render.SetMaterial(jfx.materials.beam)
 				render.DrawQuadEasy(self.position+ Vector(0,0,300), -ang:Forward(), 100*s, 2500, Color(255,255,255,100*f2*self.something), 0)
 
 				render.SetMaterial(glow)
@@ -364,11 +273,11 @@ if CLIENT then
 			end
 		end
 
-		jeffects.RegisterEffect(META)
+		jfx.RegisterEffect(META)
 	end
 
 	do
-		local trail = jeffects.CreateMaterial({
+		local trail = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
 			BaseTexture = "particle/fire",
@@ -396,11 +305,11 @@ if CLIENT then
 				local t = RealTime()*500
 				offset:Rotate(Angle(t*v2.x, t*v2.y, t*v2.z))
 
-				jeffects.DrawTrail(self.trails[i], 1, 2, self.position2 + offset, trail, Color(self.color.r, self.color.g, self.color.b, 255*(f2^2)), Color(self.color.r*2, self.color.g*2, self.color.b*2, 0), 10, 10, f2)
+				jfx.DrawTrail(self.trails[i], 1, 2, self.position2 + offset, trail, Color(self.color.r, self.color.g, self.color.b, 255*(f2^2)), Color(self.color.r*2, self.color.g*2, self.color.b*2, 0), 10, 10, f2)
 			end
 		end
 
-		jeffects.RegisterEffect(META)
+		jfx.RegisterEffect(META)
 	end
 end
 
@@ -515,7 +424,7 @@ function SWEP:Initialize()
 end
 
 if CLIENT then
-	local jeffects = requirex("jeffects")
+	local jfx = requirex("jfx")
 
 	function SWEP:GetMagicColor()
 		local r = 0
@@ -540,14 +449,14 @@ if CLIENT then
 
 	function SWEP:DeployMagic()
 		local r,g,b = self:GetMagicColor()
-		jeffects.CreateEffect("something", {
+		jfx.CreateEffect("something", {
 			ent = self.Owner,
 			color = Color(r, g, b, 255),
 			size = nil,
 			something = 1,
 			length = 2,
 		})
-do return end
+
 		local snd = CreateSound(self.Owner, "music/hl2_song10.mp3")
 		snd:PlayEx(0.5, 150)
 		snd:FadeOut(2)
@@ -557,7 +466,7 @@ do return end
 
 	function SWEP:ShootMagic()
 		local r,g,b = self:GetMagicColor()
-		jeffects.CreateEffect("something", {
+		jfx.CreateEffect("something", {
 			ent = self.Owner,
 			color = Color(r, g, b, 50),
 			size = nil,
@@ -565,7 +474,7 @@ do return end
 			length = 1,
 		})
 
-		jeffects.CreateEffect("trails", {
+		jfx.CreateEffect("trails", {
 			ent = self.Owner,
 			color = Color(r, g, b, 50),
 			length = 2,
