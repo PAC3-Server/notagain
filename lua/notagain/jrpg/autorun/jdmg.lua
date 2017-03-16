@@ -881,7 +881,7 @@ do
 
 		jdmg.types.wind.think = function(ent, f, s, t)
 			if math.random() > 0.8 then
-				ent:EmitSound("ambient/wind/wave"..math.random(1,6)..".wav", 75, math.Rand(200,255), f)
+				ent:EmitSound("ambient/wind/wind_hit"..math.random(1,3)..".wav", 75, math.Rand(150,180), f)
 			end
 		end
 
@@ -889,27 +889,8 @@ do
 		jdmg.types.wind.color = color
 
 		jdmg.types.wind.draw = function(ent, f, s, t)
-			local pos = ent:GetBoneMatrix(math.random(1, ent:GetBoneCount()))
-			if pos then
-				pos = pos:GetTranslation()
-
-				local p = emitter:Add(table.Random(wind), pos + VectorRand() * 5)
-				p:SetStartSize(20)
-				p:SetEndSize(20)
-				p:SetStartAlpha(50*f)
-				p:SetEndAlpha(0)
-				p:SetVelocity(VectorRand()*10)
-				p:SetGravity(physenv.GetGravity()*0.025)
-				p:SetColor(color.r, color.g, color.b)
-				--p:SetLighting(true)
-				p:SetRoll(math.random())
-				p:SetRollDelta(math.random()*2-1)
-				p:SetLifeTime(1)
-				p:SetDieTime(math.Rand(0.75,1.5)*2)
-			end
-
 			render.ModelMaterialOverride(mat)
-			render.SetColorModulation(0.5,0.75,1*s)
+			render.SetColorModulation(1,1,1*s)
 			render.SetBlend(f)
 
 			local m = mat:GetMatrix("$BaseTextureTransform")
