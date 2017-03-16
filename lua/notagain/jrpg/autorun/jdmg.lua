@@ -3,10 +3,10 @@ jdmg = jdmg or {}
 local emitter
 local create_overlay_material
 local draw_model
-local jeffects
+local jfx
 
 if CLIENT then
-	jeffects = requirex("jeffects")
+	jfx = requirex("jfx")
 
 	draw_model = function(ent)
 		if ent.pacDrawModel then
@@ -19,7 +19,7 @@ if CLIENT then
 
 	create_overlay_material = function(tex, override)
 		override = override or {}
-		return jeffects.CreateMaterial(table.Merge({
+		return jfx.CreateMaterial(table.Merge({
 			Name = "fire",
 			Shader = "VertexLitGeneric",
 			Additive = 1,
@@ -51,61 +51,6 @@ if CLIENT then
 			BumpMap = "dev/bump_normal",
 		}, override))
 	end
-
-	do
-		jdmg.materials = jdmg.materials or {}
-
-		jdmg.materials.refract = jeffects.CreateMaterial("particle/warp5_warp")
-		jdmg.materials.refract2 = jeffects.CreateMaterial("particle/warp1_warp")
-		jdmg.materials.refract3 = jeffects.CreateMaterial("particle/warp2_warp")
-		jdmg.materials.splash_disc = jeffects.CreateMaterial("effects/splashwake3")
-		jdmg.materials.beam = jeffects.CreateMaterial("particle/warp3_warp_NoZ")
-
-		jdmg.materials.trail = jeffects.CreateMaterial({
-			Shader = "UnlitGeneric",
-
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291702123689934849/trail.png",
-			Additive = 1,
-			GlowAlpha = 1,
-			VertexColor = 1,
-			VertexAlpha = 1,
-			Translucent = 1,
-		})
-
-		jdmg.materials.hypno = jeffects.CreateMaterial({
-			Shader = "UnlitGeneric",
-			BaseTexture = "effects/flashlight/circles",
-			Additive = 1,
-			VertexColor = 1,
-			VertexAlpha = 1,
-			Translucent = 1,
-		})
-
-		jdmg.materials.ring = jeffects.CreateMaterial({
-			Shader = "UnlitGeneric",
-
-			BaseTexture = "particle/particle_Ring_Wave_2",
-			Additive = 1,
-			VertexColor = 1,
-			VertexAlpha = 1,
-		})
-
-		jdmg.materials.glow = jeffects.CreateMaterial({
-			Shader = "UnlitGeneric",
-
-			BaseTexture = "sprites/light_glow02",
-			Additive = 1,
-			VertexColor = 1,
-			VertexAlpha = 1,
-			Translucent = 1,
-		})
-
-		jdmg.materials.dark = Material("effects/bluespark")
-		jdmg.materials.dark_trail = Material("sprites/scanner_bottom")
-
-
-		jdmg.materials.glow2 = Material("sprites/light_ignorez")
-	end
 end
 
 
@@ -114,7 +59,7 @@ do
 	do
 		jdmg.statuses.error = {}
 		if CLIENT then
-			jdmg.statuses.error.icon = jeffects.CreateMaterial({
+			jdmg.statuses.error.icon = jfx.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "error",
 				VertexAlpha = 1,
@@ -129,7 +74,7 @@ do
 		jdmg.statuses.poison = {}
 		jdmg.statuses.poison.negative = true
 		if CLIENT then
-			jdmg.statuses.poison.icon = jeffects.CreateMaterial({
+			jdmg.statuses.poison.icon = jfx.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "sprites/greenspit1",
 				VertexAlpha = 1,
@@ -144,7 +89,7 @@ do
 		jdmg.statuses.fire = {}
 		jdmg.statuses.fire.negative = true
 		if CLIENT then
-			jdmg.statuses.fire.icon = jeffects.CreateMaterial({
+			jdmg.statuses.fire.icon = jfx.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/env_fire",
 				VertexAlpha = 1,
@@ -158,7 +103,7 @@ do
 		jdmg.statuses.confused = {}
 		jdmg.statuses.confused.negative = true
 		if CLIENT then
-			jdmg.statuses.confused.icon = jeffects.CreateMaterial({
+			jdmg.statuses.confused.icon = jfx.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/choreo_manager",
 				VertexAlpha = 1,
@@ -172,7 +117,7 @@ do
 		jdmg.statuses.lightning = {}
 		jdmg.statuses.lightning.negative = true
 		if CLIENT then
-			jdmg.statuses.lightning.icon = jeffects.CreateMaterial({
+			jdmg.statuses.lightning.icon = jfx.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/choreo_manager",
 				VertexAlpha = 1,
@@ -186,7 +131,7 @@ do
 		jdmg.statuses.frozen = {}
 		jdmg.statuses.frozen.negative = true
 		if CLIENT then
-			jdmg.statuses.frozen.icon = jeffects.CreateMaterial({
+			jdmg.statuses.frozen.icon = jfx.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "editor/env_particles",
 				VertexAlpha = 1,
@@ -284,14 +229,14 @@ do
 		function jdmg.types.generic.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
-			render.SetMaterial(jdmg.materials.glow)
+			render.SetMaterial(jfx.materials.glow)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
 
-			render.SetMaterial(jdmg.materials.glow2)
+			render.SetMaterial(jfx.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
 
 			if not simple then
-				jeffects.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 			end
 		end
 	end
@@ -329,6 +274,7 @@ do
 
 	if CLIENT then
 		local mat = create_overlay_material("effects/filmscan256", {Additive = 0, RimlightBoost = 1})
+
 		jdmg.types.dark.sounds = {
 			{
 				path = "ambient/atmosphere/tone_quiet.wav",
@@ -365,21 +311,23 @@ do
 			ent:DisableMatrix("RenderMultiply")
 		end
 
+		local dark = Material("effects/bluespark")
+
 		local color = Color(255, 50, 200)
 		jdmg.types.dark.color = color
 		function jdmg.types.dark.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
-			render.SetMaterial(jdmg.materials.dark)
+			render.SetMaterial(dark)
 			for i = 1, 20 do
 				render.DrawQuadEasy(ent:GetPos(), -EyeVector(), 32*size * math.random(), 32*size * math.random(), Color(color.r, color.g, color.b, 255), (i/20)*360)
 			end
 
-			render.SetMaterial(jdmg.materials.refract3)
+			render.SetMaterial(jfx.materials.refract3)
 			render.DrawSprite(ent:GetPos(), 64*size + math.sin(RealTime()*4)*10, 64*size + math.cos(RealTime()*4)*10, Color(255,255,255, 150 + math.sin(RealTime()*4)*50))
 
 			if not simple then
-				jeffects.DrawTrail(ent, 0.1, 0, ent:GetPos(), jdmg.materials.dark, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 30, 0, 2)
+				jfx.DrawTrail(ent, 0.1, 0, ent:GetPos(), dark, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 30, 0, 2)
 			end
 		end
 	end
@@ -429,17 +377,17 @@ do
 		function jdmg.types.holy.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
-			render.SetMaterial(jdmg.materials.glow)
+			render.SetMaterial(jfx.materials.glow)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
 
-			render.SetMaterial(jdmg.materials.glow2)
+			render.SetMaterial(jfx.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 200))
 
-			render.SetMaterial(jdmg.materials.refract3)
+			render.SetMaterial(jfx.materials.refract3)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 150))
 
 			if not simple then
-				jeffects.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 			end
 		end
 	end
@@ -501,7 +449,7 @@ do
 		local flames ={}
 
 		for i = 1, 5 do
-			table.insert(flames, jeffects.CreateMaterial({
+			table.insert(flames, jfx.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = "sprites/flamelet" .. i,
 				VertexAlpha = 1,
@@ -520,7 +468,7 @@ do
 			"particle/smokesprites0331",
 		}
 		for i, path in ipairs(smoke) do
-			smoke[i] = jeffects.CreateMaterial({
+			smoke[i] = jfx.CreateMaterial({
 				Shader = "UnlitGeneric",
 				BaseTexture = path,
 				VertexAlpha = 1,
@@ -594,14 +542,18 @@ do
 		function jdmg.types.fire.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
-			render.SetMaterial(jdmg.materials.glow)
+			render.SetMaterial(jfx.materials.refract3)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(0,0,0, 255))
+
+
+			render.SetMaterial(jfx.materials.glow)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
 
-			render.SetMaterial(jdmg.materials.glow2)
+			render.SetMaterial(jfx.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
 
 			if not simple then
-				jeffects.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 			end
 
 			local p = emitter:Add(table.Random(flames), ent:GetPos())
@@ -705,7 +657,7 @@ do
 	if CLIENT then
 		local mat = create_overlay_material("effects/filmscan256")
 
-		local ice_mat = jeffects.CreateMaterial({
+		local ice_mat = jfx.CreateMaterial({
 			Name = "magic_ice",
 			Shader = "VertexLitGeneric",
 			CloakPassEnabled = 1,
@@ -761,15 +713,15 @@ do
 		jdmg.types.ice.draw_projectile = function(ent, dmg, simple)
 			local size = dmg / 100
 
-			render.SetMaterial(jdmg.materials.glow)
+			render.SetMaterial(jfx.materials.glow)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
 
-			render.SetMaterial(jdmg.materials.glow2)
+			render.SetMaterial(jfx.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 128*size, 128*size, Color(color.r, color.g, color.b, 150))
 
 			if not simple then
 
-				jeffects.DrawTrail(ent, 0.4, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 
 
 				if not ent.next_emit or ent.next_emit < RealTime() then
@@ -885,15 +837,15 @@ do
 		jdmg.types.poison.draw_projectile = function(ent, dmg, simple)
 			local size = dmg / 100
 
-			render.SetMaterial(jdmg.materials.glow)
+			render.SetMaterial(jfx.materials.glow)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
 
-			render.SetMaterial(jdmg.materials.glow2)
+			render.SetMaterial(jfx.materials.glow2)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 150))
 
 			if simple then return end
 
-			--jeffects.DrawTrail(ent, 1, 0, ent:GetPos(), jdmg.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			--jfx.DrawTrail(ent, 1, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
 
 			local p = emitter:Add("effects/bubble", ent:GetPos() + VectorRand() * 5)
 			local size = math.Rand(1,4)
