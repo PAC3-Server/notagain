@@ -36,6 +36,7 @@ do
 		end
 
 		if CLIENT then
+			self:SetRenderBounds(Vector(1,1,1)*-200, Vector(1,1,1)*200)
 			self.pixvis = util.GetPixelVisibleHandle()
 			self.damage_types = self:GetDamageTypes():Split(",")
 			if not self.damage_types[1] then
@@ -145,7 +146,8 @@ do
 
 			for _, name in ipairs(self.damage_types) do
 				if jdmg.types[name] and jdmg.types[name].draw_projectile then
-					jdmg.types[name].draw_projectile(self, math.max(self:GetDamage(), 50) + math.Rand(0.75,1.25))
+					local rad = math.max(self:GetDamage(), 50) + math.Rand(0.75,1.25)
+					jdmg.types[name].draw_projectile(self, rad, nil, util.PixelVisible(self:GetPos(), rad, self.pixvis))
 				end
 			end
 		end
@@ -213,30 +215,30 @@ do
 		end
 
 		function ENT:PhysicsCollide(data, phys)
-			if self.damaged then return end
+			if self.damaged or self:GetParent():IsValid() then return end
 			self.damaged = true
-
-			self:StopMotionController()
-			phys:Sleep()
-			phys:SetVelocity(Vector(0,0,0))
 
 			self:SetCollisionPoint(data.HitPos)
 			self:SetCollisionNormal(data.HitNormal)
 			self:SetCollisionEntity(data.HitEntity)
 
 			timer.Simple(0, function()
+				self:StopMotionController()
+				phys:Sleep()
+				phys:SetVelocity(Vector(0,0,0))
+
 				self:OnDamage()
 			end)
 		end
 
 		function ENT:Think()
-			if self.damaged then return end
+			if self.damaged or self:GetParent():IsValid() then return end
 
-			self:GetPhysicsObject():Wake()
+			self:PhysWake()
 		end
 
 		function ENT:PhysicsSimulate(phys, delta)
-			if self.damaged then return end
+			if self.damaged or self:GetParent():IsValid() then return end
 
 			local ply = self:GetOwner()
 			if ply:IsValid() then
@@ -247,9 +249,8 @@ do
 				elseif not pos or not pos:IsValid() then
 					local filter = ents.FindByClass(ENT.ClassName)
 					table.insert(filter, ply)
-					pos = util.TraceLine({start = ply:EyePos(), endpos = ply:EyePos() + ply:GetAimVector()*100000, filter = filter}).HitPos
+					pos = util.TraceLine({start = ply:EyePos(), endpos = ply:EyePos() + ply:GetAimVector()*10000, filter = filter}).HitPos
 				end
-
 				local dir = pos - phys:GetPos()
 				local dist = dir:Length()
 				dir:Normalize()

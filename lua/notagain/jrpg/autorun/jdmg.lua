@@ -236,7 +236,7 @@ do
 			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
 
 			if not simple then
-				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, color.r, color.g, color.b, 50, color.r, color.g, color.b, 0, 10, 0, 1)
 			end
 		end
 	end
@@ -318,16 +318,18 @@ do
 		function jdmg.types.dark.draw_projectile(ent, dmg, simple)
 			local size = dmg / 100
 
+			jfx.DrawSprite(jfx.materials.refract2, ent:GetPos(), 60*size, nil,0, 10,2,0, 255)
+
 			render.SetMaterial(dark)
 			for i = 1, 20 do
 				render.DrawQuadEasy(ent:GetPos(), -EyeVector(), 32*size * math.random(), 32*size * math.random(), Color(color.r, color.g, color.b, 255), (i/20)*360)
 			end
 
 			render.SetMaterial(jfx.materials.refract3)
-			render.DrawSprite(ent:GetPos(), 64*size + math.sin(RealTime()*4)*10, 64*size + math.cos(RealTime()*4)*10, Color(255,255,255, 150 + math.sin(RealTime()*4)*50))
+			render.DrawSprite(ent:GetPos(), 60*size + math.sin(RealTime()*4)*3, 60*size + math.cos(RealTime()*4)*3, Color(255,255,255, 30 + (math.sin(RealTime()*4)*0.5+0.5)*50))
 
 			if not simple then
-				jfx.DrawTrail(ent, 0.1, 0, ent:GetPos(), dark, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 30, 0, 2)
+				jfx.DrawTrail(ent, 0.1, 0, ent:GetPos(), dark, color.r, color.g, color.b, 50, color.r, color.g, color.b, 0, 30, 0, 2)
 			end
 		end
 	end
@@ -374,7 +376,15 @@ do
 		local color = Color(255, 200, 150)
 		jdmg.types.holy.color = color
 
-		function jdmg.types.holy.draw_projectile(ent, dmg, simple)
+		local feather_mat = jfx.CreateMaterial({
+			Shader = "VertexLitGeneric",
+
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291905352876687360/feather.png",
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		function jdmg.types.holy.draw_projectile(ent, dmg, simple, vis)
 			local size = dmg / 100
 
 			render.SetMaterial(jfx.materials.glow)
@@ -387,7 +397,88 @@ do
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 150))
 
 			if not simple then
-				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+
+				for i = 1, 3 do
+					local pos = ent:GetPos()
+					pos = pos + Vector(jfx.GetRandomOffset(pos, i, 2))*size*10
+
+					ent.trail_data = ent.trail_data or {}
+					ent.trail_data[i] = ent.trail_data[i] or {}
+					jfx.DrawTrail(ent.trail_data[i], 0.25, 0, pos, jfx.materials.trail, color.r, color.g, color.b, 255, color.r, color.g, color.b, 0, 15*size, 0)
+				end
+
+				render.SetMaterial(jfx.materials.glow)
+				render.DrawSprite(ent:GetPos(), 200*size, 200*size, Color(color.r, color.g, color.b, 50))
+
+
+				if not ent.next_emit or ent.next_emit < RealTime() then
+					local life_time = 2
+
+					local feather = ents.CreateClientProp()
+					SafeRemoveEntityDelayed(feather, life_time)
+
+					feather:SetModel("models/pac/default.mdl")
+					feather:SetPos(ent:GetPos() + (VectorRand()*size))
+					feather:SetAngles(VectorRand():Angle())
+					feather:SetModelScale(size)
+
+					feather:SetRenderMode(RENDERMODE_TRANSADD)
+
+					feather.life_time = RealTime() + life_time
+					feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+					feather:PhysicsInitSphere(5)
+					local phys = feather:GetPhysicsObject()
+					phys:Wake()
+					phys:EnableGravity(false)
+					phys:AddVelocity(VectorRand()*20)
+					phys:AddAngleVelocity(VectorRand()*20)
+
+					local m = Matrix()
+					m:Translate(Vector(0,20,0)*size)
+					m:Scale(Vector(1,1,1))
+					feather:EnableMatrix("RenderMultiply", m)
+
+					feather.RenderOverride = function()
+						local f = (feather.life_time - RealTime()) / 2
+						if f <= 0 then return end
+						local f2 = math.sin((-f+1)*math.pi)
+
+
+						render.SuppressEngineLighting(true)
+						render.SetColorModulation(color.r/200, color.g/200, color.b/200)
+						render.SetBlend(f2)
+
+						render.MaterialOverride(feather_mat)
+						render.SetMaterial(feather_mat)
+						render.CullMode(MATERIAL_CULLMODE_CW)
+						feather:DrawModel()
+						render.CullMode(MATERIAL_CULLMODE_CCW)
+						feather:DrawModel()
+						render.MaterialOverride()
+						render.SuppressEngineLighting(false)
+
+						local phys = feather:GetPhysicsObject()
+						phys:AddVelocity(Vector(0,0,-FrameTime()*100)*size)
+
+						local vel = phys:GetVelocity()
+
+						if vel.z < 0 then
+							local delta= FrameTime()*2
+							phys:AddVelocity(Vector(-vel.x*delta,-vel.y*delta,-vel.z*delta*2)*size)
+						end
+					end
+
+					feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+					feather:PhysicsInitSphere(5)
+
+					local phys = feather:GetPhysicsObject()
+					phys:EnableGravity(false)
+					phys:AddVelocity(Vector(math.Rand(-1, 1), math.Rand(-1, 1), math.Rand(1, 2))*20*size)
+					phys:AddAngleVelocity(VectorRand()*50)
+					feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+
+					ent.next_emit = RealTime() + math.random()*0.25
+				end
 			end
 		end
 	end
@@ -409,7 +500,7 @@ do
 			end
 		end
 
-		local color = Color(255, 255, 255)
+		local color = Color(230, 230, 255)
 		jdmg.types.lightning.color = color
 
 		jdmg.types.lightning.draw = function(ent, f, s, t)
@@ -432,6 +523,41 @@ do
 			mat:SetMatrix("$BaseTextureTransform", m)
 
 			draw_model(ent)
+		end
+
+		local arc = jfx.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291918796027985920/lightning.png",
+			BaseTextureTransform = "center .5 .5 scale 2 2 rotate 0 translate -0.45 -0.45",
+			Additive = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		function jdmg.types.lightning.draw_projectile(ent, dmg, simple, vis)
+			local size = dmg / 100
+
+			render.SetMaterial(jfx.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jfx.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 200))
+
+			render.SetMaterial(jfx.materials.refract3)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 150))
+			if not simple then
+
+				render.SetMaterial(jfx.materials.glow)
+				render.DrawSprite(ent:GetPos(), 200*size, 200*size, Color(color.r, color.g, color.b, 50))
+
+
+
+				if not ent.next_emit or ent.next_emit < RealTime() then
+					jfx.DrawSprite(arc, ent:GetPos(), 25*size + math.random(-20,20), 25*size + math.random(-20,20) * (math.random()^4*10), math.random(360), color.r,color.g,color.b,255)
+					ent.next_emit = RealTime() + math.random()*0.05
+				end
+			end
 		end
 	end
 end
@@ -537,24 +663,41 @@ do
 			draw_model(ent)
 		end
 
-		local color = Color(255, 130, 0)
+		local trail = jfx.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "particle/fire",
+			Additive = 1,
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		local color = Color(255, 125, 25)
 		jdmg.types.fire.color = color
 		function jdmg.types.fire.draw_projectile(ent, dmg, simple)
-			local size = dmg / 100
-
-			render.SetMaterial(jfx.materials.refract3)
-			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(0,0,0, 255))
+			local size = dmg / 200
 
 
-			render.SetMaterial(jfx.materials.glow)
-			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+			jfx.DrawSprite(jfx.materials.glow, ent:GetPos(), 100*size, nil, 0, color.r,color.g,color.b,255, 2)
+			jfx.DrawSprite(jfx.materials.refract2, ent:GetPos(), 32*size, nil,0, 10,2,0, 255)
 
-			render.SetMaterial(jfx.materials.glow2)
-			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 150))
+
+			jfx.DrawSprite(jfx.materials.glow, ent:GetPos(), 256*size, nil, 0, color.r, color.g, color.b, 20)
 
 			if not simple then
-				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				for i = 1, 7 do
+					local pos = ent:GetPos()
+					pos = pos + Vector(jfx.GetRandomOffset(pos, i, 2))*size*40
+
+					math.randomseed(i+ent:EntIndex())
+					local rand = (math.random()^2)*3
+
+					ent.trail_data = ent.trail_data or {}
+					ent.trail_data[i] = ent.trail_data[i] or {}
+					jfx.DrawTrail(ent.trail_data[i], 0.2*rand, 0, pos, jfx.materials.trail, color.r, color.g, color.b, 255, color.r*1.5, color.g*1.5, color.b*1.5, 0, 7*rand*size, 0)
+				end
 			end
+			do return end
 
 			local p = emitter:Add(table.Random(flames), ent:GetPos())
 			p:SetStartSize(math.Rand(5,10))
@@ -597,7 +740,7 @@ do
 			end
 		end
 
-		local color = Color(100, 200, 255)
+		local color = Color(50, 200, 255)
 		jdmg.types.water.color = color
 
 		jdmg.types.water.draw = function(ent, f, s, t)
@@ -633,20 +776,165 @@ do
 			draw_model(ent)
 		end
 
-		function jdmg.types.water.draw_projectile(ent, dmg, simple)
-			local p = emitter:Add(table.Random(water), ent:GetPos())
-			p:SetStartSize(20)
+		local refract = jfx.CreateMaterial({
+			Shader = "Refract",
+			NormalMap = "http://files.gamebanana.com/bitpit/psfixnormal.jpg",
+			RefractAmount = -0.4,
+			VertexColor = 1,
+			VertexAlpha = 1,
+			Translucent = 1,
+			Additive = 1,
+			ForceRefract = 1,
+			BlurAmount = 1,
+			NoFog = 1,
+			VertexColorModulate = 1,
+		})
+
+		function jdmg.types.water.draw_projectile(ent, dmg, simple, vis)
+			local size = dmg / 100
+
+			render.SetMaterial(jfx.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jfx.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 200))
+
+			render.SetMaterial(jfx.materials.refract3)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 100))
+
+			if simple then return end
+
+			for i = 1, 2 do
+				local pos = ent:GetPos()
+				pos = pos + Vector(jfx.GetRandomOffset(pos, i, 2))*size*80
+
+				math.randomseed(i+ent:EntIndex())
+				local rand = (math.random()^2)*3
+
+
+				ent.trail_data = ent.trail_data or {}
+				ent.trail_data[i] = ent.trail_data[i] or {}
+				--jfx.DrawTrail(ent.trail_data[i], 0.25*rand, 0, pos, jfx.materials.trail, color.r, color.g, color.b, 5, color.r*1.5, color.g*1.5, color.b*1.5, 0, 30*rand*size, 1)
+				jfx.DrawTrail(ent.trail_data[i], 0.5*rand, 0, pos, refract, color.r,color.g,color.b, 255, color.r,color.g,color.b, 30*size, 15*rand*size,0)
+			end
+
+			math.randomseed(os.clock())
+
+			local p = emitter:Add(refract, ent:GetPos())
+			p:SetStartSize(0)
 			p:SetEndSize(20)
-			p:SetStartAlpha(50)
+			p:SetStartAlpha(30)
 			p:SetEndAlpha(0)
 			p:SetVelocity(VectorRand()*10)
-			p:SetGravity(physenv.GetGravity()*0.025)
+			p:SetGravity(physenv.GetGravity()*0.05)
 			p:SetColor(100, 200, 255)
 			--p:SetLighting(true)
 			p:SetRoll(math.random())
 			p:SetRollDelta(math.random()*2-1)
 			p:SetLifeTime(1)
 			p:SetDieTime(math.Rand(0.75,1.5)*2)
+		end
+	end
+end
+
+
+do
+	jdmg.types.wind = {
+		translate = {
+			DMG_DROWN = true,
+		}
+	}
+
+	if CLIENT then
+		local mat = create_overlay_material("effects/filmscan256")
+
+		local wind = {
+			"particle/particle_noisesphere",
+			"effects/splash1",
+			"effects/splash2",
+			"effects/splash4",
+			"effects/blood",
+
+		}
+
+		jdmg.types.wind.think = function(ent, f, s, t)
+			if math.random() > 0.8 then
+				ent:EmitSound("ambient/wind/wave"..math.random(1,6)..".wav", 75, math.Rand(200,255), f)
+			end
+		end
+
+		local color = Color(255, 255, 255)
+		jdmg.types.wind.color = color
+
+		jdmg.types.wind.draw = function(ent, f, s, t)
+			local pos = ent:GetBoneMatrix(math.random(1, ent:GetBoneCount()))
+			if pos then
+				pos = pos:GetTranslation()
+
+				local p = emitter:Add(table.Random(wind), pos + VectorRand() * 5)
+				p:SetStartSize(20)
+				p:SetEndSize(20)
+				p:SetStartAlpha(50*f)
+				p:SetEndAlpha(0)
+				p:SetVelocity(VectorRand()*10)
+				p:SetGravity(physenv.GetGravity()*0.025)
+				p:SetColor(color.r, color.g, color.b)
+				--p:SetLighting(true)
+				p:SetRoll(math.random())
+				p:SetRollDelta(math.random()*2-1)
+				p:SetLifeTime(1)
+				p:SetDieTime(math.Rand(0.75,1.5)*2)
+			end
+
+			render.ModelMaterialOverride(mat)
+			render.SetColorModulation(0.5,0.75,1*s)
+			render.SetBlend(f)
+
+			local m = mat:GetMatrix("$BaseTextureTransform")
+			m:Identity()
+			m:Scale(Vector(1,1,1)*0.05)
+			m:Translate(Vector(1,1,1)*t/20)
+			mat:SetMatrix("$BaseTextureTransform", m)
+
+			draw_model(ent)
+		end
+		local trail = Material("particle/smokesprites_0009")
+
+
+		local trail = jfx.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "particle/particle_smokegrenade",
+			Additive = 0,
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		function jdmg.types.wind.draw_projectile(ent, dmg, simple)
+			local size = dmg / 100
+
+			render.SetMaterial(jfx.materials.glow)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
+
+			render.SetMaterial(jfx.materials.glow2)
+			render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(color.r, color.g, color.b, 200))
+
+			render.SetMaterial(jfx.materials.refract3)
+			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 100))
+
+			if simple then return end
+
+			for i = 1, 4 do
+				local pos = ent:GetPos()
+				pos = pos + Vector(jfx.GetRandomOffset(pos, i, 1))*size*50
+
+				math.randomseed(i+ent:EntIndex())
+				local rand = (math.random()^2) + 1
+
+				ent.trail_data = ent.trail_data or {}
+				ent.trail_data[i] = ent.trail_data[i] or {}
+				jfx.DrawTrail(ent.trail_data[i], 0.4*rand, 0, pos, trail, color.r, color.g, color.b, 50, color.r, color.g, color.b, 0, 60*size, 0, 1)
+			end
 		end
 	end
 end
@@ -721,7 +1009,7 @@ do
 
 			if not simple then
 
-				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+				jfx.DrawTrail(ent, 0.4, 0, ent:GetPos(), jfx.materials.trail, color.r, color.g, color.b, 50, color.r, color.g, color.b, 0, 10, 0, 1)
 
 
 				if not ent.next_emit or ent.next_emit < RealTime() then
@@ -832,20 +1120,18 @@ do
 
 			draw_model(ent)
 		end
-		local color = Color(0,255,0)
+		local color = Color(100,255,100)
 		jdmg.types.poison.color = color
 		jdmg.types.poison.draw_projectile = function(ent, dmg, simple)
 			local size = dmg / 100
 
-			render.SetMaterial(jfx.materials.glow)
-			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
 
-			render.SetMaterial(jfx.materials.glow2)
-			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 150))
+			render.SetMaterial(jfx.materials.refract)
+			render.DrawSprite(ent:GetPos(), 20*size, 20*size, Color(color.r/4, color.g/4, color.b/4, 255))
 
 			if simple then return end
 
-			--jfx.DrawTrail(ent, 1, 0, ent:GetPos(), jfx.materials.trail, Color(color.r, color.g, color.b, 50), Color(color.r, color.g, color.b, 0), 10, 0, 1)
+			--jfx.DrawTrail(ent, 1, 0, ent:GetPos(), jfx.materials.trail, color.r, color.g, color.b, 50, color.r, color.g, color.b, 0, 10, 0, 1)
 
 			local p = emitter:Add("effects/bubble", ent:GetPos() + VectorRand() * 5)
 			local size = math.Rand(1,4)
