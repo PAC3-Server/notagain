@@ -691,10 +691,12 @@ do -- effects
 					return
 				end
 
-				local wep = victim:GetActiveWeapon()
-				if wep and wep:IsValid() then
-					wep:SetNextPrimaryFire(CurTime()+math.random())
-					wep:SetNextSecondaryFire(CurTime()+math.random())
+				if victim.GetActiveWeapon then
+					local wep = victim:GetActiveWeapon()
+					if wep and wep:IsValid() then
+						wep:SetNextPrimaryFire(CurTime()+math.random())
+						wep:SetNextSecondaryFire(CurTime()+math.random())
+					end
 				end
 
 				if (not victim:IsPlayer() or not victim:Alive()) or time < CurTime() then
@@ -706,6 +708,7 @@ do -- effects
 		basic_elemental("dark", JDMG_DARK, nil, {"eerie", "ghastly", "cursed", "evil", "darkened", "haunted", "scary", "corrupt", "malicious", "unpleasant", "hateful", "wrathful", "ill"}, {"misery", "sin", "suffering", "darkness", "evil", "hades", "corruption", "heinousness"})
 		basic_elemental("holy", JDMG_HOLY, nil, {"angelic", "divine", "spiritual", "sublime", "celestial", "spirited"}, {"light", "holyness"})
 		basic_elemental("water", JDMG_WATER, nil, {"soggy", "doused", "soaked", "rainy", "misty", "wet"}, {"water", "rain", "aqua", "h2o"})
+		basic_elemental("wind", JDMG_WIND, nil, {"windy", "stormy", "gusty", "drafty", "airy", "windswept"}, {"wind", "ozone", "breath", "whiff"})
 		basic_elemental("poison", JDMG_POISON, function(self, attacker, victim, dmginfo)
 			local dmg = dmginfo:GetDamage()
 			jdmg.SetStatus(victim, "poison", true)

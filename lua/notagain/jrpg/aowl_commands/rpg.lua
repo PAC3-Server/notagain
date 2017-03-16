@@ -1,4 +1,4 @@
-aowl.AddCommand("rpg", function(ply)
+aowl.AddCommand("rpg", function(ply, _, cheat)
 	ply:SetNWBool("rpg", not ply:GetNWBool("rpg"))
 
 	if ply:GetNWBool("rpg") then
@@ -22,6 +22,10 @@ aowl.AddCommand("rpg", function(ply)
 		jattributes.Disable(ply)
 		ply:ChatPrint("rpg mode disabled")
 	end
+
+	if cheat then
+		ply.rpg_cheat = true
+	end
 end)
 
 aowl.AddCommand("level", function(ply, what)
@@ -33,4 +37,11 @@ aowl.AddCommand("level", function(ply, what)
 	end
 
 	ply:ChatPrint(ply:GetNWInt("jlevel_attribute_points", 0) .. " attribute points left")
+end)
+
+aowl.AddCommand("element", function(ply, _, ...)
+	local args = {...}
+	if #args == 1 then
+		wepstats.AddToWeapon(ply:GetActiveWeapon(), nil, nil, args[1])
+	end
 end)

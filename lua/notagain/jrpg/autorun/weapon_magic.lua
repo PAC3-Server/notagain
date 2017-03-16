@@ -1,16 +1,6 @@
 if CLIENT then
 	local jfx = requirex("jfx")
 
-	local feather_mat = jfx.CreateMaterial({
-		Shader = "VertexLitGeneric",
-
-		BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291622281333964801/feather.png",
-		Additive = 0,
-		VertexColor = 1,
-		VertexAlpha = 1,
-		Translucent = 1,
-	})
-
 	local spike_model = jfx.CreateModel({
 		Path = "models/props_combine/tprotato1.mdl",
 		Scale = Vector(0.1, 0.02, 0.3),
@@ -87,21 +77,25 @@ if CLIENT then
 		end
 
 		function META:DrawSprites(time, f, f2)
-			local s = self.size
+			local s = self.size*1.5
 			local c = Color(self.color.r^1.15, self.color.g^1.15, self.color.b^1.15)
 			c.a = 200*f2^5
 
 			local dark =  Color(0,0,0,c.a)
 
 			cam.Start3D(EyePos(), EyeAngles())
-				render.SetMaterial(glyph_disc)
-				render.DrawQuadEasy(self.position, -EyeVector(), (95*s) - f*5, (95*s) - f*5, dark, f*45)
+
+				local pos = self.ent:GetPos()
 
 				render.SetMaterial(glyph_disc)
-				render.DrawQuadEasy(self.position, Vector(0,0,1), (100*s) - f*5, (100*s) - f*5,  dark, f*45)
+				render.DrawQuadEasy(pos, Vector(0,0,1), (95*s) - f*5, (95*s) - f*5, dark, f*45)
+
 
 				render.SetMaterial(ring)
-				render.DrawQuadEasy(self.position, -EyeVector(), 105*s, 105*s, dark, f*-45)
+				render.DrawQuadEasy(pos, Vector(0,0,1), 105*s, 105*s, dark, f*-45)
+
+				render.SetMaterial(glow2)
+				render.DrawQuadEasy(pos, Vector(0,0,1), 420*s, 420*s, c, f*45)
 
 				render.SetMaterial(hand)
 
@@ -109,7 +103,7 @@ if CLIENT then
 
 				local hands = 6
 				for i = 1, hands do
-					render.DrawQuadEasy(self.position, -EyeVector(), 10*s, 250*s, dark, (i/hands)*360 + (f*150 * (math.sin(1+i/hands*math.pi)*i%3*(f^0.01))))
+					render.DrawQuadEasy(pos, Vector(0,0,1), 10*s, 250*s, dark, (i/hands)*360 + (f*150 * (math.sin(1+i/hands*math.pi)*i%3*(f^0.01))))
 				end
 
 				render.SetMaterial(glow)
@@ -165,59 +159,6 @@ if CLIENT then
 			DrawSunbeams(0, (f2*self.visible*0.05)*self.something, 30 * (1/pos:Distance(EyePos()))*s, screen_pos.x / ScrW(), screen_pos.y / ScrH())
 		end
 
-		function META:EmitParticle()
-			local s = self.size
-			local ent = ents.CreateClientProp()
-			ent:SetModel("models/pac/default.mdl")
-			ent:SetPos(self.position + (VectorRand()*10*s))
-			ent:SetAngles(VectorRand():Angle())
-			ent:SetModelScale(s)
-
-			local m = Matrix()
-			m:Translate(Vector(0,20,0)*s)
-			m:Scale(Vector(1,1,1))
-			ent:EnableMatrix("RenderMultiply", m)
-
-			ent.RenderOverride = function()
-				local f = (ent.life_time - RealTime()) / 5
-
-				render.SetColorModulation(255, 255, 255)
-				render.SetBlend(f^0.5)
-
-				render.SuppressEngineLighting(true)
-				render.MaterialOverride(feather_mat)
-				render.SetMaterial(feather_mat)
-				render.CullMode(MATERIAL_CULLMODE_CW)
-				ent:DrawModel()
-				render.CullMode(MATERIAL_CULLMODE_CCW)
-				ent:DrawModel()
-				render.MaterialOverride()
-				render.SuppressEngineLighting(false)
-
-				local phys = ent:GetPhysicsObject()
-				phys:AddVelocity(Vector(0,0,-FrameTime()*100)*s)
-
-				local vel = phys:GetVelocity()
-
-				if vel.z < 0 then
-					local delta= FrameTime()*2
-					phys:AddVelocity(Vector(-vel.x*delta,-vel.y*delta,-vel.z*delta*2)*s)
-				end
-			end
-
-			ent:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
-			ent:PhysicsInitSphere(5)
-
-			local phys = ent:GetPhysicsObject()
-			phys:EnableGravity(false)
-			phys:AddVelocity(Vector(math.Rand(-1, 1), math.Rand(-1, 1), math.Rand(1, 2))*80*s)
-			phys:AddAngleVelocity(VectorRand()*50)
-			ent:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
-			ent.life_time = RealTime() + 5
-
-			SafeRemoveEntityDelayed(ent, 5)
-		end
-
 		function META:DrawDownBeam(time, f, f2)
 			local s = self.size
 			local c = Color(self.color.r, self.color.g, self.color.b)
@@ -236,17 +177,6 @@ if CLIENT then
 		end
 
 		function META:DrawTranslucent(time, f, f2)
-			if f < 0.25 and self.something == 1 then
-				if not self.emitted then
-					for i = 1, math.random(5,10) do
-						self:EmitParticle()
-					end
-					self.emitted = true
-				end
-			else
-				self.emitted = false
-			end
-
 			self.visible = util.PixelVisible(self.position, 50, self.pixvis)
 			self:DrawDownBeam(time, f, f2)
 			self:DrawSprites(time, f, f2)
@@ -305,7 +235,7 @@ if CLIENT then
 				local t = RealTime()*500
 				offset:Rotate(Angle(t*v2.x, t*v2.y, t*v2.z))
 
-				jfx.DrawTrail(self.trails[i], 1, 2, self.position2 + offset, trail, Color(self.color.r, self.color.g, self.color.b, 255*(f2^2)), Color(self.color.r*2, self.color.g*2, self.color.b*2, 0), 10, 10, f2)
+				jfx.DrawTrail(self.trails[i], 1, 2, self.position2 + offset, trail, self.color.r, self.color.g, self.color.b, 255*(f2^2), self.color.r*2, self.color.g*2, self.color.b*2, 0, 10, 10, f2)
 			end
 		end
 
@@ -314,7 +244,7 @@ if CLIENT then
 end
 
 
-local SWEP = {Primary = {}, Secondary = {}}
+local SWEP = {Primary = {Automatic = true}, Secondary = {}}
 
 SWEP.ClassName = "weapon_magic"
 SWEP.PrintName = "magic"
@@ -533,14 +463,13 @@ function SWEP:PrimaryAttack()
 
 		local ent = ents.Create("jprojectile_bullet")
 		ent:SetOwner(self.Owner)
-		ent:SetProjectileData(self.Owner, self.Owner:GetShootPos(), self.Owner:GetAimVector(), 1, self)
+		ent:SetProjectileData(self.Owner, self.Owner:GetShootPos(), self.Owner:GetAimVector(), 50, self)
+		ent:Spawn()
 
 		if bone_id then
 			ent:FollowBone(self.Owner, bone_id)
 			ent:SetLocalPos(Vector(0,0,0))
 		end
-
-		ent:Spawn()
 
 		timer.Simple(0.2, function()
 			ent:SetParent(NULL)
@@ -552,7 +481,7 @@ function SWEP:PrimaryAttack()
 				pos = self.Owner:EyePos() + self.Owner:GetVelocity()/4
 			end
 
-			ent:SetProjectileData(self.Owner, pos, self.Owner:GetAimVector(), 1, self)
+			ent:SetProjectileData(self.Owner, pos, self.Owner:GetAimVector(), 50, self)
 		end)
 	end
 end
