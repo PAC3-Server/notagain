@@ -9,6 +9,7 @@ battlecam = battlecam or {}
 local joystick_remap = {
 	[KEY_XBUTTON_A] = IN_JUMP,
 	[KEY_XBUTTON_X] = IN_SPEED,
+	[KEY_XBUTTON_B] = IN_USE,
 
 	[KEY_XBUTTON_STICK1] = IN_DUCK,
 
@@ -138,6 +139,8 @@ function battlecam.CreateCrosshair()
 	battlecam.crosshair_ent = ent
 end
 
+local cvar = CreateClientConVar("battlecam_enabled", "0", false, true)
+
 function battlecam.Enable()
 	RunConsoleCommand("joystick", "0")
 	RunConsoleCommand("joy_advanced", "0")
@@ -168,6 +171,8 @@ function battlecam.Enable()
 
 	battlecam.pixvis = util.GetPixelVisibleHandle()
 	battlecam.pixvis2 = util.GetPixelVisibleHandle()
+
+	cvar:SetInt(1)
 end
 
 function battlecam.Disable()
@@ -188,6 +193,7 @@ function battlecam.Disable()
 	battlecam.want_select = false
 
 	battlecam.DestroyHUD()
+	cvar:SetInt(0)
 end
 
 function battlecam.IsEnabled()
@@ -628,19 +634,19 @@ do
 			end
 
 			if input.IsButtonDown(KEY_XSTICK2_RIGHT) or input.IsButtonDown(KEY_PAD_6) then
-				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - FrameTime()*40
-				battlecam.cam_rotation_velocity.y = 1
+				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - FrameTime()*20
+				battlecam.cam_rotation_velocity.y = FrameTime()*15
 			elseif input.IsButtonDown(KEY_XSTICK2_LEFT) or input.IsButtonDown(KEY_PAD_4) then
-				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y + FrameTime()*40
-				battlecam.cam_rotation_velocity.y = -1
+				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y + FrameTime()*20
+				battlecam.cam_rotation_velocity.y = -FrameTime()*15
 			end
 
 			if input.IsButtonDown(KEY_XSTICK2_UP) or input.IsButtonDown(KEY_PAD_8) then
-				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x - FrameTime()*40
-				battlecam.cam_rotation_velocity.x = 1
+				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x - FrameTime()*20
+				battlecam.cam_rotation_velocity.x = FrameTime()*8
 			elseif input.IsButtonDown(KEY_XSTICK2_DOWN) or input.IsButtonDown(KEY_PAD_2) then
 				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x + FrameTime()*40
-				battlecam.cam_rotation_velocity.x = -1
+				battlecam.cam_rotation_velocity.x = -FrameTime()*8
 			end
 
 			battlecam.target_cam_rotation:Normalize()
@@ -649,6 +655,7 @@ do
 		if battlecam.IsKeyDown("attack") and not ucmd:KeyDown(IN_ATTACK) then
 			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
 		end
+
 --[[
 		if ucmd:KeyDown(IN_SPEED) and ply:GetVelocity() == vector_origin then
 			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_USE))
@@ -676,12 +683,12 @@ do
 			ucmd:SetViewAngles(aim_ang)
 		end
 
-		--[[
+
 		if battlecam.last_select < RealTime() then
-			if input.IsKeyDown(KEY_DOWN) or input.IsButtonDown(KEY_XBUTTON_DOWN) then
+			if input.IsKeyDown(KEY_LEFT) or input.IsButtonDown(KEY_XBUTTON_LEFT) then
 				battlecam.weapon_i = battlecam.weapon_i + 1
 				battlecam.last_select = RealTime() + 0.15
-			elseif input.IsKeyDown(KEY_UP) or input.IsButtonDown(KEY_XBUTTON_UP) then
+			elseif input.IsKeyDown(KEY_RIGHT) or input.IsButtonDown(KEY_XBUTTON_RIGHT) then
 				battlecam.weapon_i = battlecam.weapon_i - 1
 				battlecam.last_select = RealTime() + 0.15
 			end
@@ -691,14 +698,13 @@ do
 				battlecam.weapon_i = battlecam.weapon_i - delta
 				battlecam.last_select = RealTime() + 0.01
 			end
-		end
 
-		local wep = battlecam.GetWeapons()[battlecam.GetWeaponIndex()]
+			local wep = battlecam.GetWeapons()[battlecam.GetWeaponIndex()]
 
-		if wep then
-			ucmd:SelectWeapon(wep)
+			if wep then
+				ucmd:SelectWeapon(wep)
+			end
 		end
-		]]
 
 		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and (not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) then
 
