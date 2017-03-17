@@ -6,7 +6,7 @@ if SERVER then
 				local found = {}
 				for _, ent in pairs(ents.FindInSphere(ply:EyePos(), 70)) do
 					local name = ent:GetClass()
-					if (ent:IsNPC() and IsFriendEntityName(name)) or (ent:IsPlayer() and ent ~= ply and ent:IsFriend(ply)) or name:find("button") or name == "func_movelinear" then
+					if (ent:IsNPC() and IsFriendEntityName(name)) or (ent:IsPlayer() and ent ~= ply) or name:find("button") or name == "func_movelinear" then
 						table.insert(found, {ent = ent, dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())})
 					end
 				end
