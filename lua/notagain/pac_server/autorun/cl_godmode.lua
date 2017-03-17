@@ -105,7 +105,7 @@ if SERVER then
 		local attacker = dmginfo:GetAttacker()
 
 		if victim:GetInfoNum("cl_godmode", 1) == 2 or victim:GetInfoNum("cl_godmode", 1) == 3 then
-			if attacker == victim or attacker:IsWorld() or (attacker.CPPIGetOwner and not attacker:CPPIGetOwner()) then
+			if attacker == victim or attacker:IsWorld() or (not attacker:IsPlayer() and attacker.CPPIGetOwner and not attacker:CPPIGetOwner()) then
 				return
 			end
 		end
