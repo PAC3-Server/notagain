@@ -6,7 +6,7 @@ if SERVER then
 				local found = {}
 				for _, ent in pairs(ents.FindInSphere(ply:EyePos(), 70)) do
 					local name = ent:GetClass()
-					if name:find("button") or name == "func_movelinear" then
+					if (ent:IsNPC() and IsFriendEntityName(name)) or (ent:IsPlayer() and ent ~= ply and ent:IsFriend(ply)) or name:find("button") or name == "func_movelinear" then
 						table.insert(found, {ent = ent, dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())})
 					end
 				end
@@ -24,7 +24,12 @@ if SERVER then
 		if button:IsValid() then
 			button:Use(ply, ply, USE_TOGGLE, 1)
 			button:Use(ply, ply, USE_ON, 1)
-			ply:SetEyeAngles((button:WorldSpaceCenter() - ply:EyePos()):Angle())
+			ply:SetEyeAngles(((button:IsNPC() and button:EyePos() or button:WorldSpaceCenter()) - ply:EyePos()):Angle())
+
+			net.Start("juse")
+				net.WriteEntity(ply)
+				net.WriteEntity(button)
+			net.Broadcast()
 		end
 	end)
 
@@ -33,9 +38,21 @@ if SERVER then
 			return false
 		end
 	end)
+
+	util.AddNetworkString("juse")
 end
 
 if CLIENT then
+	net.Receive("juse", function()
+		local ply = net.ReadEntity()
+		local ent = net.ReadEntity()
+		if ply:IsValid() and ent:IsValid() then
+			hook.Run("PlayerUsedEntity", ply, ent)
+		end
+	end)
+
+
+
 	local prettytext = requirex("pretty_text")
 	local jfx = requirex("jfx")
 	local gradient = Material("gui/center_gradient")
@@ -50,9 +67,12 @@ if CLIENT then
 	local fade_in_time
 	local fade_out_time
 	local last_pos
+	local last_str
 
 	hook.Add("HUDPaint", "juse", function()
 		local ent = LocalPlayer():GetNWEntity("juse_ent")
+
+
 		if not ent:IsValid() then
 			fade_in_time = nil
 			fade_out_time = fade_out_time or (RealTime() + 1)
@@ -88,7 +108,8 @@ if CLIENT then
 		local x = ScrW()/2
 		local y = ScrH()/3
 		local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
-		local str = "EXAMINE"
+		local str = ent:IsValid() and (ent.GetActiveWeapon and "TALK" or "EXAMINE") or last_str
+		last_str = str
 		local w,h = prettytext.GetTextSize(str, "gabriola", txt_size, 0, 3)
 		local key_width, key_height = prettytext.GetTextSize(key, "gabriola", txt_size, 0, 3)
 		local bg_width = w + 100
