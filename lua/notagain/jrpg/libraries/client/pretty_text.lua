@@ -46,12 +46,13 @@ local hsv_cache = {}
 
 local prettytext = {}
 
-function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color2, x_align, y_align)
+function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color2, x_align, y_align, shadow_overdraw)
 	font = font or "arial"
 	size = size or 14
 	weight = weight or 0
 	blursize = blursize or 1
 	color1 = color1 or def_color1
+	shadow_overdraw = shadow_overdraw or 15
 
 	if color2 == true then
 		hsv_cache[color1.r] = hsv_cache[color1.r] or {}
@@ -80,7 +81,8 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 	if not fonts[font] then fonts[font] = {} end
 	if not fonts[font][size] then fonts[font][size] = {} end
 	if not fonts[font][size][weight] then fonts[font][size][weight] = {} end
-	if not fonts[font][size][weight][blursize] then fonts[font][size][weight][blursize] = create_fonts(font, size, weight, blursize) end
+	if not fonts[font][size][weight][blursize] then fonts[font][size][weight][blursize] = {} end
+	if not fonts[font][size][weight][blursize][shadow_overdraw] then fonts[font][size][weight][blursize][shadow_overdraw] = create_fonts(font, size, weight, blursize) end
 
 	local w, h = prettytext.GetTextSize(text, font, size, weight, blursize)
 	if x_align then
@@ -91,15 +93,15 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 		y = y + (h * y_align)
 	end
 
-	surface_SetFont(fonts[font][size][weight][blursize].blur)
+	surface_SetFont(fonts[font][size][weight][blursize][shadow_overdraw].blur)
 	surface_SetTextColor(Color(color2.r, color2.g, color2.b, color2.a * (color1.a/255)))
 
-	for i = 1, 5 do
+	for i = 1, shadow_overdraw do
 		surface_SetTextPos(x, y) -- this resets for some reason after drawing
 		surface_DrawText(text)
 	end
 
-	surface_SetFont(fonts[font][size][weight][blursize].main)
+	surface_SetFont(fonts[font][size][weight][blursize][shadow_overdraw].main)
 	surface_SetTextColor(color1)
 	surface_SetTextPos(x, y)
 	surface_DrawText(text)
@@ -107,18 +109,20 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 	return w, h
 end
 
-function prettytext.GetTextSize(text, font, size, weight, blursize)
+function prettytext.GetTextSize(text, font, size, weight, blursize, shadow_overdraw)
 	font = font or "arial"
 	size = size or 14
 	weight = weight or 0
 	blursize = blursize or 1
+	shadow_overdraw = shadow_overdraw or 15
 
 	if not fonts[font] then fonts[font] = {} end
 	if not fonts[font][size] then fonts[font][size] = {} end
 	if not fonts[font][size][weight] then fonts[font][size][weight] = {} end
-	if not fonts[font][size][weight][blursize] then fonts[font][size][weight][blursize] = create_fonts(font, size, weight, blursize) end
+	if not fonts[font][size][weight][blursize] then fonts[font][size][weight][blursize] = {} end
+	if not fonts[font][size][weight][blursize][shadow_overdraw] then fonts[font][size][weight][blursize][shadow_overdraw] = create_fonts(font, size, weight, blursize) end
 
-	surface_SetFont(fonts[font][size][weight][blursize].main)
+	surface_SetFont(fonts[font][size][weight][blursize][shadow_overdraw].main)
 	return surface_GetTextSize(text)
 end
 
