@@ -83,6 +83,8 @@ if CLIENT then
 	local shadow_size = 10
 
 	hook.Add("RenderScreenspaceEffects", "coh", function()
+		if hook.Run("HUDShouldDraw", "ChatOverHead") == false then return end
+
 		cam.Start3D()
 		for _, ply in ipairs(player.GetAll()) do
 			if ply.coh_text_history and ply.coh_text_history[1] then

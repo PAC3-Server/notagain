@@ -28,7 +28,7 @@ function jchat.Start(stop_cb)
 	end)
 
 	hook.Add("HUDShouldDraw", "jchat", function(str)
-		if str ~= "CHudWeaponSelection" and str ~= "CHudGMod"  then
+		if str ~= "CHudWeaponSelection" and str ~= "CHudGMod" then
 			return false
 		end
 	end)
@@ -36,6 +36,16 @@ function jchat.Start(stop_cb)
 	hook.Add("ShouldDrawLocalPlayer", "jchat", function()
 		if jchat.HasPlayer(LocalPlayer()) then
 			return true
+		end
+	end)
+
+	hook.Add("NPCSpeak", "jchat", function(npc, str)
+		if jchat.HasPlayer(npc) then
+			local str = language.GetPhrase(str)
+			if str then
+				str = str:gsub("%b<>", ""):Trim()
+				jchat.PlayerSay(npc, str)
+			end
 		end
 	end)
 
@@ -207,9 +217,13 @@ do -- view
 			end
 		end
 
+		id = id or ply:LookupBone("ValveBiped.Bip01_Neck")
+
 		if id then
 			local pos, ang = ply:GetBonePosition(id)
-			return pos + ang:Forward() * 2
+			if pos:Distance(ply:GetPos()) > 10 then
+				return pos + ang:Forward() * 2
+			end
 		end
 
 		return ply:NearestPoint(ply:EyePos() + Vector(0,0,100)), ply:EyeAngles()
@@ -430,7 +444,7 @@ hook.Add("PlayerUsedEntity", "jchat", function(ply, ent)
 		end)
 		jchat.AddPlayer(ply)
 		jchat.AddPlayer(ent)
-		jchat.PlayerSay(ent, "hi")
+		jchat.PlayerSay(ent, "")
 		battlecam.Disable()
 	end
 end)

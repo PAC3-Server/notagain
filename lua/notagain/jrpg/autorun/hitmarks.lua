@@ -228,7 +228,7 @@ if CLIENT then
 	end
 
 	hook.Add("HUDPaint", "hitmarks", function()
-		if hook.Call("HideHitmarks") then
+		if hook.Run("HUDShouldDraw", "JHitmarkers") == false then
 			return
 		end
 

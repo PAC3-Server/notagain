@@ -93,6 +93,8 @@ local function draw_bar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, cente
 end
 
 hook.Add("HUDPaint", "jhud", function()
+	if hook.Run("HUDShouldDraw", "JHUD") == false then return end
+
 	local ply = LocalPlayer()
 
 	local offset = 0
