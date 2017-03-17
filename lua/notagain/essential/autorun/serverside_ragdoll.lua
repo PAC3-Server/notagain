@@ -63,6 +63,9 @@ if SERVER then
 		hook.Add("OnEntityCreated", "serverside_ragdoll", function(ent)
 			if ply:IsValid()  then
 				if ent:GetOwner() == ply then
+					if ent.CPPISetOwner then
+						ent:CPPISetOwner(ply)
+					end
 					ply:SetNWEntity("serverside_ragdoll", ent)
 					for i = 1, ent:GetPhysicsObjectCount() - 1 do
 						local phys = ent:GetPhysicsObjectNum(i)
