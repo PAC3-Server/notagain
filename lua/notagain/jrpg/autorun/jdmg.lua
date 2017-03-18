@@ -861,11 +861,7 @@ end
 
 
 do
-	jdmg.types.wind = {
-		translate = {
-			DMG_DROWN = true,
-		}
-	}
+	jdmg.types.wind = {}
 
 	if CLIENT then
 		local mat = create_overlay_material("effects/filmscan256")
