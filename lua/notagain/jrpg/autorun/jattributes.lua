@@ -47,7 +47,7 @@ jattributes.types = {
 	stamina = {
 		default = 0,
 		on_receive_damage = function(stats, dmginfo, victim)
-			jattributes.SetStamina(victim, math.max(jattributes.GetStamina(victim) - dmginfo:GetDamage(), 0))
+		--	jattributes.SetStamina(victim, math.max(jattributes.GetStamina(victim) - dmginfo:GetDamage(), 0))
 		end,
 		--[[on_probable_attack = function(wep, attacker, what)
 			local dmg = get_damage(wep)
