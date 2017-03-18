@@ -15,7 +15,7 @@ hook.Add("InitPostEntity", "fixmap", function()
 		for _, ent in pairs(ents.GetAll()) do
 			local class = ent:GetClass()
 
-			if remove_these[ent:GetClass()] or ent:GetClass():match("trigger_*") then
+			if remove_these[ent:GetClass()] or ent:GetClass():find("trigger_", nil, true) then
 				ent:Remove()
 			end
 		end
