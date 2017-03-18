@@ -692,13 +692,7 @@ do
 				battlecam.weapon_i = battlecam.weapon_i - 1
 				battlecam.last_select = RealTime() + 0.15
 			end
-
-			local delta = ucmd:GetMouseWheel()
-			if delta ~= 0 then
-				battlecam.weapon_i = battlecam.weapon_i - delta
-				battlecam.last_select = RealTime() + 0.01
-			end
-
+		else
 			local wep = battlecam.GetWeapons()[battlecam.GetWeaponIndex()]
 
 			if wep then
