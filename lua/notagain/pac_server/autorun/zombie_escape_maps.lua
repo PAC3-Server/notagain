@@ -1,6 +1,6 @@
 if not game.GetMap():lower():StartWith("ze_") then return end
 
-hook.Add("InitPostEntity", "fixmap", function()
+timer.Simple(0.1, function()
 	if SERVER then
 		local remove_these = {
 			point_teleport = true,
@@ -24,6 +24,4 @@ hook.Add("InitPostEntity", "fixmap", function()
 	if CLIENT then
 		RunConsoleCommand("mat_colorcorrection", "0")
 	end
-
-	hook.Remove("InitPostEntity", "fixmap")
 end)
