@@ -204,7 +204,7 @@ if SERVER then
 			attacker = self.cl_godmode_owner_override
 		end
 
-		if victim:IsPlayer() and attacker and attacker:IsPlayer() and not attacker:CanAlter(victim) then
+		if victim:IsPlayer() and attacker and attacker:IsPlayer() and not attacker:CanAlter(victim) and data.OurOldVelocity:Length() > 25 then
 			local dmg = DamageInfo()
 			dmg:SetDamageType(DMG_CRUSH)
 			dmg:SetAttacker(attacker)
