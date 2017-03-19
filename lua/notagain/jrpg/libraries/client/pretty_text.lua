@@ -52,7 +52,7 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 	weight = weight or 0
 	blursize = blursize or 1
 	color1 = color1 or def_color1
-	shadow_overdraw = shadow_overdraw or 15
+	shadow_overdraw = shadow_overdraw or 5
 
 	if color2 == true then
 		hsv_cache[color1.r] = hsv_cache[color1.r] or {}
@@ -114,7 +114,7 @@ function prettytext.GetTextSize(text, font, size, weight, blursize, shadow_overd
 	size = size or 14
 	weight = weight or 0
 	blursize = blursize or 1
-	shadow_overdraw = shadow_overdraw or 15
+	shadow_overdraw = shadow_overdraw or 5
 
 	if not fonts[font] then fonts[font] = {} end
 	if not fonts[font][size] then fonts[font][size] = {} end
