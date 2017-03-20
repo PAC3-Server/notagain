@@ -337,10 +337,10 @@ if SERVER then
 
 	function EMF.GenerateEnts()
 		
-		EMF.AmScale = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
-		
 		local MaxEntries = #EMF.Topology
 		local ToSpawn    = EMF.Ents
+
+		EMF.AmScale = math.Round( MaxEntries / 25 * ( 1 + EMF.GetRenewedTopology() ) )
 
 		timer.Create( "EMFGenerateEnts" , 600 / EMF.AmScale , EMF.AmScale , function()
 			
