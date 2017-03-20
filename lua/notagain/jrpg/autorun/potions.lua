@@ -60,7 +60,7 @@ do
 			if not IsValid(ply) then self.emitter:Finish() return false end
 			if self.duration < 0 then ply.pukeactive = false self.emitter:Finish() return false end
 
-			if math.random(10) == 1 then ply:EmitSound("npc/zombie/zombie_pain3.wav", 100, math.random(90,110)) end
+			if math.random(10) == 1 then ply:EmitSound("npc/barnacle/barnacle_die"..math.random(1,2)..".wav",75, math.random(125,200)) end
 
 			local factor, color = get_effect(ply)
 			if not factor then return end
@@ -264,7 +264,7 @@ do
 
 		hook.Add("PrePlayerDraw", "potion", function(ply)
 			if suppress_player_draw then
-				return true
+			--	return true
 			end
 		end)
 
