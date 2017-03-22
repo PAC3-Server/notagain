@@ -191,7 +191,7 @@ if SERVER then
 
 		local refmins = ent:OBBMins()
 		local refmaxs = ent:OBBMaxs()
-		local refpos  = EMF.Topology[ref]
+		local refpos  = EMF.Topology[ref].Pos
 		local randpos = RandPosToRef( refpos , EMF.MinDistToRef , EMF.MaxDistToRef )
 
 		local tr = util.TraceHull({
