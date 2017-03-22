@@ -65,6 +65,7 @@ if SERVER then
 
 	hook.Add("EntityTakeDamage", "jlevel", function(victim, dmginfo)
 		local attacker = dmginfo:GetAttacker()
+		if not attacker:GetNWBool("rpg") then return end
 
 		if attacker:IsPlayer() then
 			local dmg = dmginfo:GetDamage()
@@ -79,7 +80,7 @@ if SERVER then
 
 		if ent.jlevel_attackers then
 			for attacker, dmg in pairs(ent.jlevel_attackers) do
-				if attacker:IsValid() and attacker:IsPlayer() and dmg ~= 0 then
+				if attacker:IsValid() and attacker:IsPlayer() and dmg ~= 0 and attacker:GetNWBool("rpg") then
 					local xp = math.min(dmg, ent:GetMaxHealth())
 					jlevel.GiveXP(attacker, xp)
 					hitmarkers.ShowXP(ent, xp)
