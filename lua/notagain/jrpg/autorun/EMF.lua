@@ -355,9 +355,9 @@ if SERVER then
 			EMF.SetValidAngle( ent )
 			EMF.ActiveEnts[ent.EMFID] = ent
 
-			if !ToSpawn[random].Unique then
+			if ToSpawn[random].Unique then
 				
-				ToSpawn[random] = nil 
+				table.remove(ToSpawn,random) 
 			
 			end
 		
