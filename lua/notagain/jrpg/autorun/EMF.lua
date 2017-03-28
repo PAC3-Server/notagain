@@ -53,6 +53,8 @@ if SERVER then
 
 	function EMF.AddTopology( pos )
 		
+		if !pos then return end
+		
 		local add = true
 		
 		for index , topo in pairs( EMF.Topology ) do
@@ -149,7 +151,9 @@ if SERVER then
 	end
 
 	function EMF.IsStuck( ent )
-
+		
+		if !ent or !Isvalid(ent) then return end
+		
 		local refpos  = ent:WorldSpaceCenter() - Vector( 0 , 0 , ( ent:WorldSpaceCenter() - ent:NearestPoint( ent:GetPos() - Vector( 0 , 0 , BigValue ) ) ) )
 		local refmins = ent:OBBMins()
 		local refmaxs = ent:OBBMaxs()
@@ -380,7 +384,9 @@ if SERVER then
 	end
 
 	function EMF.AddEnt( class , unique )
-
+		
+		if !class then return end
+		
 		local add = true
 		local unique = unique or false
 
