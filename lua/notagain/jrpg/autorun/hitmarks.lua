@@ -274,7 +274,11 @@ if CLIENT then
 				local max_distance = scale * radius
 				fraction = fraction * ((-(dist / max_distance)+1) ^ 2)
 
-				if pos.visible and dist < max_distance then
+				ent.hm_pixvis = ent.hm_pixvis or util.GetPixelVisibleHandle()
+				ent.hm_pixvis_vis = util.PixelVisible(world_pos, ent:BoundingRadius(), ent.hm_pixvis)
+				local vis = ent.hm_pixvis_vis
+
+				if pos.visible and dist < max_distance and fraction > 0 then
 					local cur = ent.hm_cur_health or ent:Health()
 					local max = ent.hm_max_health or ent:GetMaxHealth()
 					local last = ent.hm_last_health or max
@@ -298,6 +302,7 @@ if CLIENT then
 					local last = data.last_health_smooth
 
 					local fade = math.Clamp(fraction ^ 0.25, 0, 1)
+					fade = fade * vis
 
 					local w, h = prettytext.GetTextSize(name, "candara", 20, 30, 2)
 
@@ -376,12 +381,14 @@ if CLIENT then
 			end
 
 			local pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2)):ToScreen()
+			local vis = ent.hm_pixvis_vis or 1
 
 			if pos.visible then
 				local time = RealTime()
 
 				if data.time > time then
 					local fade = math.min(((data.time - time) / data.length) + 0.75, 1)
+					fade = fade * vis
 					local w, h = prettytext.GetTextSize(data.name, "arial", 20, 800, 2)
 
 					local x, y = pos.x, pos.y
@@ -419,6 +426,7 @@ if CLIENT then
 				local data = hitmarks[i]
 
 				local pos = data.real_pos
+				local vis = 1
 
 				if data.ent:IsValid() then
 					if data.ent == LocalPlayer() and not data.ent:ShouldDrawLocalPlayer() then
@@ -427,6 +435,8 @@ if CLIENT then
 
 					pos = LocalToWorld(data.real_pos, Angle(0,0,0), data.ent:GetPos(), data.first_angle)
 					data.last_pos = pos
+
+					vis = data.ent.hm_pixvis_vis or vis
 				else
 					pos = data.last_pos or pos
 				end
@@ -477,6 +487,8 @@ if CLIENT then
 					if fade < 0.5 then
 						y = y + (fade-0.5)*150
 					end
+
+					fade = fade * vis
 
 					surface.SetAlphaMultiplier(fade)
 
