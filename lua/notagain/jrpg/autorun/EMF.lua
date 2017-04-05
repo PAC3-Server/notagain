@@ -152,7 +152,7 @@ if SERVER then
 
 	function EMF.IsStuck( ent )
 		
-		if !ent or !Isvalid(ent) then return end
+		if !ent or !IsValid(ent) then return end
 		
 		local refpos  = ent:WorldSpaceCenter() - Vector( 0 , 0 , ( ent:WorldSpaceCenter() - ent:NearestPoint( ent:GetPos() - Vector( 0 , 0 , BigValue ) ) ) )
 		local refmins = ent:OBBMins()
