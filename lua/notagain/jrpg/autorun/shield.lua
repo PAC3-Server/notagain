@@ -81,6 +81,9 @@ do
 						ply:SetNWBool("shield_stunned", false)
 					end)
 				end
+				ply.shield_suppress_damage = true
+				ply:TakeDamageInfo(dmginfo)
+				ply.shield_suppress_damage = nil
 			end
 		end
 	end
@@ -319,6 +322,8 @@ local shields = {
 			ang:RotateAroundAxis(ang:Forward(), 45)
 			return pos, ang
 		end,
+		MagicDefence = 0.5,
+		PhysicalDefence = 1,
 	},
 	{
 		Name = "scanner2",
@@ -486,6 +491,11 @@ hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 
 		if jdmg.GetDamageType(dmginfo) then
 			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.MagicDefence+1))
+		end
+
+		if ent.shield_suppress_damage then
+			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.PhysicalDefence+1))
+			return
 		end
 
 		if type == DMG_CRUSH or type == DMG_SLASH then
