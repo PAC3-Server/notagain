@@ -11,6 +11,8 @@ aowl.AddCommand("rpg", function(ply, _, cheat)
 		ply:Give("potion_health")
 		ply:Give("potion_mana")
 		ply:Give("potion_stamina")
+		ply:Give("weapon_shield_scanner")
+
 		--ply:Give("weapon_magic")
 
 		ply:SetNWFloat("hp_overload", 0)
