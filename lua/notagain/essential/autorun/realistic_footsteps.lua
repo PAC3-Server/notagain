@@ -269,6 +269,13 @@ if CLIENT then
 								for _, pattern in ipairs(info.find) do
 									if mdl:find(pattern) then
 										if not info.play_only or info.play_only == which then
+
+											local pitch = info.pitch or data.pitch
+
+											if type(pitch) == "table" then
+												pitch = math.Rand(pitch[1], pitch[2])
+											end
+
 											EmitSound(
 												table.Random(info.sounds),
 												pos,
@@ -277,7 +284,7 @@ if CLIENT then
 												data.volume * volume * 0.1,
 												data.level,
 												SND_NOFLAGS,
-												math.Clamp(((info.pitch or data.pitch) / scale) + math.Rand(-10,10) * (info.random_pitch or 1), 0, 255)
+												math.Clamp((pitch / scale) + math.Rand(-10,10) * (info.random_pitch or 1), 0, 255)
 											)
 										end
 									end
