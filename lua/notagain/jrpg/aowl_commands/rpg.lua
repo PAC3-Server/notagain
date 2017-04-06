@@ -1,5 +1,12 @@
-aowl.AddCommand("rpg", function(ply, _, cheat)
-	ply:SetNWBool("rpg", not ply:GetNWBool("rpg"))
+local function loadout(ply)
+	ply:Give("potion_health")
+	ply:Give("potion_mana")
+	ply:Give("potion_stamina")
+	ply:Give("weapon_shield_scanner")
+end
+
+local function set_rpg(ply, b, cheat)
+	ply:SetNWBool("rpg", b)
 
 	if ply:GetNWBool("rpg") then
 		jattributes.SetTable(ply, {mana = 75, stamina = 25, health = 100})
@@ -8,16 +15,7 @@ aowl.AddCommand("rpg", function(ply, _, cheat)
 		jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
 		jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
 
-		ply:Give("potion_health")
-		ply:Give("potion_mana")
-		ply:Give("potion_stamina")
-		ply:Give("weapon_shield_scanner")
-
-		--ply:Give("weapon_magic")
-
-		ply:SetNWFloat("hp_overload", 0)
-		ply:SetNWFloat("mp_overload", 0)
-		ply:SetNWFloat("sp_overload", 0)
+		loadout(ply)
 
 		ply:ChatPrint("rpg mode enabled")
 	else
@@ -25,9 +23,11 @@ aowl.AddCommand("rpg", function(ply, _, cheat)
 		ply:ChatPrint("rpg mode disabled")
 	end
 
-	if cheat then
-		ply.rpg_cheat = true
-	end
+	ply.rpg_cheat = cheat
+end
+
+aowl.AddCommand("rpg", function(ply, _, cheat)
+	set_rpg(ply, not ply:GetNWBool("rpg"), cheat == "1")
 end)
 
 aowl.AddCommand("level", function(ply, what)
@@ -46,4 +46,11 @@ aowl.AddCommand("element", function(ply, _, ...)
 	if #args == 1 then
 		wepstats.AddToWeapon(ply:GetActiveWeapon(), nil, nil, args[1])
 	end
+end)
+
+hook.Add("PlayerSpawn", "rpg_loadout", function(ply)
+	if not ply:GetNWBool("rpg") then return end
+	timer.Simple(0.1, function()
+		loadout(ply)
+	end)
 end)

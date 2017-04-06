@@ -404,13 +404,6 @@ if SERVER then
 
 	hook.Add("PlayerSpawn", "potion", function(ply)
 		if not ply:GetNWBool("rpg") then return end
-		timer.Simple(0.1, function()
-			ply:Give("potion_health")
-			ply:Give("potion_mana")
-			ply:Give("potion_stamina")
-			--ply:Give("weapon_magic")
-		end)
-
 		ply:SetNWFloat("hp_overload", 0)
 		ply:SetNWFloat("mp_overload", 0)
 		ply:SetNWFloat("sp_overload", 0)

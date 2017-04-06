@@ -1,8 +1,12 @@
 do
 	local ENT = {}
+
 	ENT.Type = "anim"
 	ENT.Base = "base_anim"
 	ENT.ClassName = "shield_base"
+
+	ENT.MagicDefence = 0
+	ENT.PhysicalDefence = 1
 
 	function ENT:TranslateModelPosAng(pos, ang)
 		return pos, ang
@@ -145,14 +149,17 @@ end
 
 do
 	local SWEP = {Primary = {}, Secondary = {}}
+	SWEP.MagicDefence = 0
+	SWEP.PhysicalDefence = 1
+
 	SWEP.ClassName = "weapon_shield_base"
 
 	SWEP.PrintName = "shield"
 	SWEP.Spawnable = true
 
 	SWEP.WorldModel = "models/hunter/plates/plate1x1.mdl"
-	SWEP.ViewModel = ""
-	SWEP.UseHands = true
+	SWEP.ViewModel = Model("models/weapons/c_medkit.mdl")
+	SWEP.UseHands = false
 	SWEP.is_shield = true
 
 	if CLIENT then
@@ -266,6 +273,8 @@ local shields = {
 	{
 		Name = "gunship eye",
 		Model = "models/gibs/gunship_gibs_eye.mdl",
+		MagicDefence = 1,
+		PhysicalDefence = 0,
 		TranslateModelPosAng = function(self, pos, ang)
 			ang:RotateAroundAxis(ang:Forward(), 100)
 			ang:RotateAroundAxis(ang:Right(), 35)
@@ -475,9 +484,13 @@ hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 	if shield:IsValid() then
 		local type = dmginfo:GetDamageType()
 
+		if jdmg.GetDamageType(dmginfo) then
+			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.MagicDefence+1))
+		end
+
 		if type == DMG_CRUSH or type == DMG_SLASH then
 			shield:OnTakeDamage(dmginfo)
-			dmginfo:SetDamage(0)
+			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.PhysicalDefence+1))
 			ent:ChatPrint("block!")
 			return
 		end
@@ -486,7 +499,7 @@ hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 
 		if data.Entity == shield then
 			shield:OnTakeDamage(dmginfo)
-			dmginfo:SetDamage(0)
+			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.PhysicalDefence+1))
 		end
 	end
 end)
