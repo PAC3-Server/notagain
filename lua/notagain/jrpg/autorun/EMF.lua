@@ -59,7 +59,7 @@ if SERVER then
 		
 		for index , topo in pairs( EMF.Topology ) do
 			
-			if !EMF.Topology[index].CreatedOnInit and topo:Distance( pos ) < EMF.MaxDistToRef / 2 then
+			if !EMF.Topology[index].CreatedOnInit and topo.Pos:Distance( pos ) < EMF.MaxDistToRef / 2 then
 				
 				add = false
 				break
