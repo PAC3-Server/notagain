@@ -207,6 +207,7 @@ if SERVER then
     end
 
 	local after = 0
+	local lastid
 	--It was either this or websockets. But this shouldn't be that bad of a solution
 	timer.Create("DiscordRelayFetchMessages", 1.5, 0, function()
 		local url
@@ -219,7 +220,7 @@ if SERVER then
 		discordrelay.HTTPRequest({["method"] = "get", ["url"] = url}, function(headers, body)
 			local json = util.JSONToTable(body)
 
-			if after ~= 0 then
+			if json and json[1] and after ~= 0 and lastid ~= json[1].id then
 				for k,v in pairs(json) do
 					if not (v and v.author) and discordrelay.user.id == v.author.id or type(v) == "number" then continue end
 
@@ -435,6 +436,7 @@ if SERVER then
 
 			if json and json[1] then
 				after = json[1].id
+				lastid = json[1].id
 			end
 		end)
 	end)
