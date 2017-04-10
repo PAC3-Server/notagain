@@ -41,8 +41,12 @@ end
 
 if SERVER then
 	hook.Add("DoPlayerDeath", "serverside_ragdoll", function(ply, attacker, dmginfo)
-		if dmginfo:GetDamageForce() ~= vector_origin then
-			ply.serverside_ragdoll_vel = dmginfo:GetDamageForce()
+		if not dmginfo:GetDamageForce():IsZero() then
+			local force = dmginfo:GetDamageForce()
+			local length = force:Length()
+			force:Normalize()
+
+			ply.serverside_ragdoll_vel = force * math.min(length, 500)
 		end
 	end)
 
@@ -59,6 +63,9 @@ if SERVER then
 		hook.Add("OnEntityCreated", "serverside_ragdoll", function(ent)
 			if ply:IsValid()  then
 				if ent:GetOwner() == ply then
+					if ent.CPPISetOwner then
+						ent:CPPISetOwner(ply)
+					end
 					ply:SetNWEntity("serverside_ragdoll", ent)
 					for i = 1, ent:GetPhysicsObjectCount() - 1 do
 						local phys = ent:GetPhysicsObjectNum(i)
@@ -84,6 +91,7 @@ if SERVER then
 		ply:Kill()
 		local rag = ply:GetNWEntity("serverside_ragdoll")
 		rag.serverside_ragdoll_disconnected = ply:UniqueID()
+		rag.serverside_ragdoll_eyeangles = ply:EyeAngles()
 		SafeRemoveEntityDelayed(rag, 120)
 	end)
 
@@ -93,6 +101,7 @@ if SERVER then
 			for _, ent in pairs(ents.FindByClass("prop_ragdoll")) do
 				if ent.serverside_ragdoll_disconnected == ply:UniqueID() then
 					ply:SetPos(ent:GetPos())
+					ply:SetEyeAngles(ent.serverside_ragdoll_eyeangles)
 					ent:Remove()
 					break
 				end

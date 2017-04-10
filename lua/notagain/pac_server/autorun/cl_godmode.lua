@@ -1,4 +1,4 @@
-local dmgvar = CreateClientConVar("cl_godmode", "1", true, true)
+local dmgvar = CreateClientConVar("cl_godmode", "3", true, true, "0 = off, 1 = on, 2 = world damage, 3 = friend damage + world damage")
 
 if CLIENT then
 	local victim = NULL
@@ -81,12 +81,14 @@ if SERVER then
 			if victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
 				victim:SetNWBool("cl_godmode", false)
 			end
+			local mode = victim:GetInfoNum("cl_godmode", 1)
+
+			victim:SetNWBool("cl_godmode", mode == 0)
 		end
 	end)
 
-	hook.Add("InitPostEntity", "cl_godmode", function()
+	timer.Simple(0.1, function()
 		RunConsoleCommand("sbox_godmode", "0")
-		hook.Remove("InitPostEntity", "cl_godmode")
 	end)
 
 	hook.Add("PlayerSpawn", "cl_godmode", function(ply)
@@ -98,107 +100,146 @@ if SERVER then
 	hook.Add("EntityTakeDamage", "cl_godmode", function(victim, dmginfo)
 		if suppress then return end
 
+		if not victim:IsPlayer() then return end
+
 		local attacker = dmginfo:GetAttacker()
 
-		if victim:IsPlayer() then
-			if attacker:IsPlayer() then
+		if victim:GetInfoNum("cl_godmode", 1) == 2 or victim:GetInfoNum("cl_godmode", 1) == 3 then
+			if attacker == victim or attacker:IsWorld() or (not attacker:IsPlayer() and attacker.CPPIGetOwner and not attacker:CPPIGetOwner()) then
+				return
+			end
+		end
+
+		if (not attacker:IsNPC() and not attacker:IsPlayer()) and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
+			attacker = attacker:CPPIGetOwner()
+		end
+
+		local npc
+
+		if attacker:IsNPC() and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
+			npc = attacker
+			attacker = attacker:CPPIGetOwner()
+		end
+
+		if attacker:IsPlayer() then
+			if attacker.CanAlter and attacker:CanAlter(victim) and victim:GetInfoNum("cl_godmode", 1) == 3 then
+				return
+			end
+
+			if attacker ~= victim then
 				attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
 				attacker.cl_dmg_mode_want_attack[victim] = true
 			end
+		end
 
-			if attacker:IsPlayer() and victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
-				victim:SetNWBool("cl_godmode", false)
-				return
-			else
-				victim:SetNWBool("cl_godmode", victim:GetInfoNum("cl_godmode", 1) == 1)
-			end
+		local godmode = victim:GetInfoNum("cl_godmode", 1) > 0
 
-			if victim:GetInfoNum("cl_godmode", 1) == 1 then
-				if attacker:IsPlayer() then
+		if attacker:IsPlayer() and victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
+			victim:SetNWBool("cl_godmode", false)
+			return
+		else
+			victim:SetNWBool("cl_godmode", godmode)
+		end
+
+		if godmode then
+			if attacker:IsPlayer() then
+				if attacker ~= victim then
 					attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
 					attacker.cl_dmg_mode_want_attack[victim] = true
+				end
 
-					local wep = attacker:GetActiveWeapon()
-					if wep:IsValid() then
-						wep:SetNWBool("cl_godmode_lethal", true)
-					end
+				local wep = attacker:GetActiveWeapon()
+				if wep:IsValid() then
+					wep:SetNWBool("cl_godmode_lethal", true)
+				end
 
+				if attacker ~= victim then
 					suppress = true
 					dmginfo:SetAttacker(victim)
+					dmginfo:SetDamageForce(vector_origin)
 					attacker:TakeDamageInfo(dmginfo)
+
+					if npc then
+						npc:TakeDamageInfo(dmginfo)
+					end
 					suppress = false
 				end
-
-				dmginfo:SetDamage(0)
-				dmginfo:SetDamageForce(vector_origin)
-
-				net.Start("cl_godmode_clear_decals", true) net.WriteEntity(victim) net.Broadcast()
-
-				-- no blood
-				if not victim.damage_mode_bleed_color then
-					victim.damage_mode_bleed_color = victim:GetBloodColor()
-					victim:SetBloodColor(DONT_BLEED)
-				end
-
-				return false
 			end
 
-			if victim.damage_mode_bleed_color then
-				victim:SetBloodColor(victim.damage_mode_bleed_color)
-				victim.damage_mode_bleed_color = nil
+			dmginfo:SetDamage(0)
+			dmginfo:SetDamageForce(vector_origin)
+
+			net.Start("cl_godmode_clear_decals", true) net.WriteEntity(victim) net.Broadcast()
+
+			-- no blood
+			if not victim.damage_mode_bleed_color then
+				victim.damage_mode_bleed_color = victim:GetBloodColor()
+				victim:SetBloodColor(DONT_BLEED)
 			end
+
+			return false
+		end
+
+		if victim.damage_mode_bleed_color then
+			victim:SetBloodColor(victim.damage_mode_bleed_color)
+			victim.damage_mode_bleed_color = nil
 		end
 	end)
 
-	local function PassGoddedVarToPhysChild(data, physobj)
-		if IsValid(data.Entity) and not data.Entity:IsWorld() and IsValid(data.Entity:GetPhysicsObject()) and not data.Entity.cl_godmode_dropped then
-			data.Entity.cl_godmode_dropped = true
-			local phys = data.Entity:GetPhysicsObject()
-			if phys:IsValid() then
-				phys:AddGameFlag(FVPHYSICS_NO_IMPACT_DMG)
-				data.Entity:AddCallback("PhysicsCollide", PassGoddedVarToPhysChild)
+	function _G.cl_godmode_physics_collide(self, data)
+		local victim = data.HitEntity
+		if not victim:IsPlayer() then return end
+
+		if victim:GetInfoNum("cl_godmode", 1) == 0 then
+			return
+		end
+
+		local attacker = self:CPPIGetOwner()
+
+		if self:GetOwner():IsPlayer() then
+			attacker = self
+		end
+
+		if self.cl_godmode_owner_override and self.cl_godmode_owner_override:IsValid() then
+			attacker = self.cl_godmode_owner_override
+		end
+
+		if victim:IsPlayer() and attacker and attacker:IsPlayer() and not attacker:CanAlter(victim) and data.OurOldVelocity:Length() > 25 then
+			local dmg = DamageInfo()
+			dmg:SetDamageType(DMG_CRUSH)
+			dmg:SetAttacker(attacker)
+			dmg:SetInflictor(self)
+			dmg:SetDamage(data.Speed/10)
+			dmg:SetDamageForce(self:GetVelocity())
+			suppress = true
+			attacker:TakeDamageInfo(dmg)
+			suppress = false
+
+			if not victim.cl_godmode_nocollide_hack then
+				victim:SetVelocity(Vector(0,0,0))
+				local old = victim:GetMoveType()
+				victim:SetMoveType(MOVETYPE_NOCLIP)
+				victim.cl_godmode_nocollide_hack = true
+				timer.Simple(0, function()
+					if victim:IsValid() then
+						victim:SetMoveType(old)
+						victim.cl_godmode_nocollide_hack = nil
+						victim:SetVelocity(-victim:GetVelocity())
+					end
+				end)
 			end
 		end
 	end
 
-	local function PreventGoddedPropKills(ply,ent)
-		if ply:GetInfoNum("cl_godmode", 1) == 1 then
-			if not ent.cl_godmode_dropped then
-				ent.cl_godmode_dropped = true
-				local phys = ent:GetPhysicsObject()
-				if phys:IsValid() then
-					phys:AddGameFlag(FVPHYSICS_NO_IMPACT_DMG)
-					ent:AddCallback("PhysicsCollide", PassGoddedVarToPhysChild)
-				end
-			elseif ent.cl_godmode_dropped then
-				local phys = ent:GetPhysicsObject()
-				if phys:IsValid() then
-					phys:ClearGameFlag(FVPHYSICS_NO_IMPACT_DMG)
-				end
-				ent.cl_godmode_dropped = false
-			end
+	hook.Add("PhysgunPickup", "cl_godmode", function(ply, ent)
+		ent.cl_godmode_owner_override = ply
+		if not ent.cl_godmode_physics_collide_added and ply.CanAlter and ent.CPPIGetOwner then
+			ent.cl_godmode_physics_collide_added = true
+			ent:AddCallback("PhysicsCollide", function(...) _G.cl_godmode_physics_collide(...) end)
 		end
-	end
+	end)
 
-	local function AddGoddedVarToSpawnedProps(ply, mdl, ent)
-		if ply:GetInfoNum("cl_godmode",1) == 1 then
-			if not ent.cl_godmode_dropped then
-				ent.cl_godmode_dropped = true
-				local phys = ent:GetPhysicsObject()
-				if IsValid(phys) then
-					phys:ClearGameFlag(FVPHYSICS_NO_IMPACT_DMG)
-					ent:AddCallback("PhysicsCollide", PassGoddedVarToPhysChild)
-				end
-			end
-		end
-	end
-
-	hook.Add("PhysgunPickup", "cl_godmode", PreventGoddedPropKills)
-	hook.Add("PhysgunDrop", "cl_godmode", PreventGoddedPropKills)
-	hook.Add("PlayerSpawnedSENT", "cl_godmode", PreventGoddedPropKills)
-	hook.Add("PlayerSpawnedVehicle", "cl_godmode", PreventGoddedPropKills)
-	hook.Add("PlayerSpawnedProp", "cl_godmode", AddGoddedVarToSpawnedProps)
-	hook.Add("PlayerSpawnedRagdoll", "cl_godmode", AddGoddedVarToSpawnedProps)
-	hook.Add("PlayerSpawnedSWEP", "cl_godmode", function(ply, ent) AddGoddedVarToSpawnedProps(ply, _, ent) end)
-
+	hook.Add("PhysgunDrop", "cl_godmode", function(ply, ent)
+		ent.cl_godmode_owner_override = nil
+	end)
 end

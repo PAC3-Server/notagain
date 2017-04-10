@@ -77,7 +77,7 @@ if SERVER then
 
 		if rag:IsValid() then
 			local path
-			if victim:LookupBone("ValveBiped.Bip01_R_Latt") then
+			if victim:LookupBone("ValveBiped.Bip01_R_Pectoral") then
 				path = "pac_server/throw/female/" .. math.random(1,9) .. ".ogg"
 			else
 				path = "pac_server/throw/male/" .. math.random(1,19) .. ".ogg"
@@ -140,7 +140,7 @@ if SERVER then
 	hook.Add("PhysgunThrowPlayer", "teamrocket", function(attacker, victim)
 		local res = util.TraceLine({start = victim:GetPos(), endpos = victim:GetPos() + victim:GetVelocity() * 10, filter = victim})
 
-		if res.HitSky and victim:GetPos():Distance(res.HitPos) > 1000 then
+		if (res.HitSky or util.GetSurfacePropName(res.SurfaceProps) == "no_decal") and victim:GetPos():Distance(res.HitPos) > 1000 then
 			team_rocket_death(victim, attacker, victim:GetVelocity():GetNormalized())
 		end
 	end)

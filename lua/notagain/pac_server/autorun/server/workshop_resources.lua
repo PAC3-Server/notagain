@@ -1,6 +1,12 @@
 resource.AddWorkshop("546392647") -- Media Player
-resource.AddWorkshop("131759821") -- VJ NPC Base
-resource.AddWorkshop("111626188") -- Dark Messiah NPCS
+resource.AddWorkshop("879302614") -- cuustom server content
+
+-- wos custom animations
+resource.AddWorkshop("757604550")
+resource.AddWorkshop("848953359")
+resource.AddWorkshop("873302121")
+-- resource.AddWorkshop("848953609") age of chivalry causes issues
+
 
 do
 	local map_content = {
@@ -10,7 +16,7 @@ do
 	}
 
 	local map = game.GetMap():lower()
-	
+
 	if map_content[map] and not file.Exists("maps/" .. map .. ".bz2", "GAME") then
 		for _, id in ipairs(map_content[map]) do
 			resource.AddWorkshop(id)

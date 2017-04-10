@@ -367,6 +367,7 @@ end
 
 function luadev.COMMAND(str,func,complete)
 	if SERVER then
+		if not game.IsDedicated() then return end
 		concommand.Add('lua_'..str,function(pl,command,cmds,strcmd)
 			local id=pl
 			if IsValid(pl) then
@@ -403,10 +404,6 @@ if SERVER then
 			info=who,
 			extra=extra,
 		}
-
-		if luadev.Verbose() then
-			luadev.Print(script,tostring(who).." running on clients")
-		end
 
 		net.Start(Tag)
 			luadev.WriteCompressed(script)
@@ -459,17 +456,6 @@ if SERVER then
 
 		if table.Count(targets)==0 then return nil,"no players" end
 
-		local targetslist
-		for _,target in pairs(targets) do
-			local pre = targetslist and ", " or ""
-			targetslist=(targetslist or "")..pre..tostring(target)
-		end
-
-
-		if luadev.Verbose() then
-			luadev.Print(script,tostring(who).." running on "..tostring(targetslist or "NONE"))
-		end
-
 		net.Start(Tag)
 			luadev.WriteCompressed(script)
 			net.WriteTable(data)
@@ -478,15 +464,11 @@ if SERVER then
 			end
 		net.Send(targets)
 
-		return #targets
+		return #targets, targets
 	end
 
 	function luadev.RunOnServer(script,who,extra)
 		if not who and extra and isentity(extra) then extra = {ply=extra} end
-
-		if luadev.Verbose() then
-			luadev.Print(script,tostring(who).." running on server")
-		end
 
 		return luadev.Run(script,tostring(who),extra)
 	end
@@ -528,6 +510,22 @@ if SERVER then
 		end
 	end
 
+	local function log_script(script, ply, where, identifier, targets)
+		if IsEntity(targets) then targets = {targets} end
+		hook.Run("LuaDevRunScript", script, ply, where, identifier, targets)
+		luadev.Print(ply, " running ", identifier, " on ", where)
+		if luadev.Verbose() then
+			luadev.Print(script)
+			luadev.Print("\n\n")
+		else
+			local t = script:Split("\n")
+			luadev.Print(t[1] .. "..")
+			luadev.Print("#" .. #t .. "lines")
+			luadev.Print("#" .. #script .. "bytes")
+		end
+		if targets then for k,v in pairs(targets) do luadev.Print(v) end end
+	end
+
 	function luadev._ReceivedData(_, ply)
 
 		local script = luadev.ReadCompressed() -- luadev.WriteCompressed(data)
@@ -551,13 +549,16 @@ if SERVER then
 	--	if luadev.TransmitHook(data)~=nil then return end
 
 		local identifier = luadev.GetPlayerIdentifier(ply,info)
+		local where
 		local ok,err
-		if 		target==luadev.TO_SERVER  then ok,err=luadev.RunOnServer (script,				identifier,extra)
-		elseif  target==luadev.TO_CLIENT  then	ok,err=luadev.RunOnClient (script,target_ply,	identifier,extra)
-		elseif  target==luadev.TO_CLIENTS then	ok,err=luadev.RunOnClients(script,				identifier,extra)
-		elseif  target==luadev.TO_SHARED  then	ok,err=luadev.RunOnShared (script,				identifier,extra)
+		if 		target==luadev.TO_SERVER  then ok,err=luadev.RunOnServer (script,				identifier,extra) where = "server"
+		elseif  target==luadev.TO_CLIENT  then	ok,err=luadev.RunOnClient (script,target_ply,	identifier,extra) where = "client"
+		elseif  target==luadev.TO_CLIENTS then	ok,err=luadev.RunOnClients(script,				identifier,extra) where = "clients"
+		elseif  target==luadev.TO_SHARED  then	ok,err=luadev.RunOnShared (script,				identifier,extra) where = "shared"
 		else  	luadev.S2C(ply,"Unknown target")
 		end
+
+		log_script(script, ply, where, identifier, target_ply)
 
 		-- no callback system yet
 		if not ok then
@@ -572,21 +573,37 @@ local function CMD(who)
 	return CLIENT and "CMD" or who or "CMD"
 end
 
+function luadev.RepeatLastCommand()
+	if luadev.last_run then
+		luadev.last_run.func(unpack(luadev.last_run.args))
+	end
+end
+
+function luadev.GetLastRunPath()
+	if luadev.last_run then
+		return luadev.last_run.path, luadev.last_run.searchpath
+	end
+end
+
 function luadev.AddCommands()
 	luadev.COMMAND('run_sv',function(ply,_,script,who)
-		luadev.RunOnServer(script,CMD(who),luadev.MakeExtras(ply))
+		who = CMD(who)
+		luadev.RunOnServer(script,who,luadev.MakeExtras(ply))
 	end,true)
 
 	luadev.COMMAND('run_sh',function(ply,_,script,who)
-		luadev.RunOnShared(script,CMD(who),luadev.MakeExtras(ply))
+		who = CMD(who)
+		luadev.RunOnShared(script,who,luadev.MakeExtras(ply))
 	end,true)
 
 	luadev.COMMAND('run_clients',function(ply,_,script,who)
-		luadev.RunOnClients(script,CMD(who),luadev.MakeExtras(ply))
+		who = CMD(who)
+		luadev.RunOnClients(script,who,luadev.MakeExtras(ply))
 	end,true)
 
 	luadev.COMMAND('run_self',function(ply,_,script,who)
-		luadev.RunOnSelf(script,CMD(who),luadev.MakeExtras(ply))
+		who = CMD(who)
+		luadev.RunOnSelf(script,who,luadev.MakeExtras(ply))
 	end,true)
 
 	luadev.COMMAND('run_client',function(ply,tbl,script,who)
@@ -615,7 +632,6 @@ function luadev.AddCommands()
 		script = script:Trim()
 
 		luadev.RunOnClient(script,cl,CMD(who),luadev.MakeExtras(ply))
-
 	end)
 
 	luadev.COMMAND('send_cl',function(ply,tbl,_,who)
@@ -636,13 +652,12 @@ function luadev.AddCommands()
 
 		local content = Path and luadev.GiveFileContent(Path,searchpath)
 		if not content then luadev.Print("Could not read the file\n") return end
+		who = who or CMD(who)
 
-		luadev.RunOnClient(content,cl,who or CMD(who),luadev.MakeExtras(ply))
-
+		luadev.RunOnClient(content,cl,who,luadev.MakeExtras(ply))
 	end)
 
-	luadev.COMMAND('send_sv',function(ply,c)
-
+	local function handle(ply, c, func)
 		local Path,searchpath=luadev.RealFilePath(c[2] and luadev.TableToString(c) or c[1])
 		if not Path then luadev.Print("Could not find the file\n") return end
 
@@ -650,51 +665,29 @@ function luadev.AddCommands()
 		if not content then luadev.Print("Could not read the file\n") return end
 
 		local who=string.GetFileFromFilename(Path)
+		who = who or CMD(who)
 
-		luadev.RunOnServer(content,who or CMD(who),luadev.MakeExtras(ply))
+		if content then
+			luadev.last_run = {func = handle, args = {ply, c, func}, path = Path, searchpath = searchpath}
+		end
 
+		func(content, who, luadev.MakeExtras(ply))
+	end
+
+	luadev.COMMAND('send_sv',function(ply,c)
+		handle(ply, c, luadev.RunOnServer)
 	end)
 
 	luadev.COMMAND('send_clients',function(ply,c)
-
-		local Path,searchpath=luadev.RealFilePath(c[2] and luadev.TableToString(c) or c[1])
-		if not Path then luadev.Print("Could not find the file\n") return end
-
-		local content = Path and luadev.GiveFileContent(Path,searchpath)
-		if not content then luadev.Print("Could not read the file\n") return end
-
-		local who=string.GetFileFromFilename(Path)
-
-		luadev.RunOnClients(content,who or CMD(who),luadev.MakeExtras(ply))
-
+		handle(ply, c, luadev.RunOnClients)
 	end)
 
 	luadev.COMMAND('send_sh',function(ply,c)
-
-		local Path,searchpath=luadev.RealFilePath(c[2] and luadev.TableToString(c) or c[1])
-		if not Path then luadev.Print("Could not find the file\n") return end
-
-		local content = Path and luadev.GiveFileContent(Path,searchpath)
-		if not content then luadev.Print("Could not read the file\n") return end
-
-		local who=string.GetFileFromFilename(Path)
-
-		luadev.RunOnShared(content,who or CMD(who),luadev.MakeExtras(ply))
-
+		handle(ply, c, luadev.RunOnShared)
 	end)
 
 	luadev.COMMAND('send_self',function(ply,c)
-
-		local Path,searchpath=luadev.RealFilePath(c[2] and luadev.TableToString(c) or c[1])
-		if not Path then luadev.Print("Could not find the file\n") return end
-
-		local content = luadev.GiveFileContent(Path,searchpath)
-		if not content then luadev.Print("Could not read the file\n") return end
-
-		local who=string.GetFileFromFilename(Path)
-
-		luadev.RunOnSelf(content,who or CMD(who),luadev.MakeExtras(ply))
-
+		handle(ply, c, luadev.RunOnSelf)
 	end)
 end
 

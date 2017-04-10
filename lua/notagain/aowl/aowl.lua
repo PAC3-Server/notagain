@@ -573,8 +573,12 @@ do -- groups
 			return true
 		end
 
-		if not b:IsPlayer() and b.CPPIGetOwner then
+		if not b:IsPlayer() and b.CPPIGetOwner and b:CPPIGetOwner() then
 			return a:CanAlter(b:CPPIGetOwner())
+		end
+
+		if a:IsAdmin() and b:IsAdmin() then
+			return true
 		end
 
 		return b:IsFriend(a)

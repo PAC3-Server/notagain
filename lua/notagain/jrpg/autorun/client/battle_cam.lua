@@ -9,6 +9,7 @@ battlecam = battlecam or {}
 local joystick_remap = {
 	[KEY_XBUTTON_A] = IN_JUMP,
 	[KEY_XBUTTON_X] = IN_SPEED,
+	[KEY_XBUTTON_B] = IN_USE,
 
 	[KEY_XBUTTON_STICK1] = IN_DUCK,
 
@@ -138,6 +139,8 @@ function battlecam.CreateCrosshair()
 	battlecam.crosshair_ent = ent
 end
 
+local cvar = CreateClientConVar("battlecam_enabled", "0", false, true)
+
 function battlecam.Enable()
 	RunConsoleCommand("joystick", "0")
 	RunConsoleCommand("joy_advanced", "0")
@@ -161,13 +164,15 @@ function battlecam.Enable()
 	battlecam.aim_pos = Vector()
 	battlecam.aim_dir = Vector()
 	--battlecam.CreateCrosshair()
-	battlecam.CreateHUD()
+	--battlecam.CreateHUD()
 
 	battlecam.enemy_visibility = 0
 	battlecam.player_visibility = 0
 
 	battlecam.pixvis = util.GetPixelVisibleHandle()
 	battlecam.pixvis2 = util.GetPixelVisibleHandle()
+
+	cvar:SetInt(1)
 end
 
 function battlecam.Disable()
@@ -188,6 +193,7 @@ function battlecam.Disable()
 	battlecam.want_select = false
 
 	battlecam.DestroyHUD()
+	cvar:SetInt(0)
 end
 
 function battlecam.IsEnabled()
@@ -254,10 +260,13 @@ do -- view
 				local ent_pos = LerpVector(math.max(dist, 0.5), battlecam.FindHeadPos(ent), ent:NearestPoint(ent:EyePos()))
 
 				local offset = ent_pos - ply_pos
-				offset.z = offset.z / 2
 
-				offset:Rotate(Angle(smooth_visible*-offset.z/10,0,0))
-				offset:Rotate(battlecam.target_cam_rotation)
+				--offset:Rotate(Angle(smooth_visible*-offset.z/10,0,0))
+				offset:Rotate(Angle(0,battlecam.target_cam_rotation.y,0))
+
+				local p = battlecam.target_cam_rotation.p
+				offset.z = p
+
 
 				target_pos = (LerpVector(0.5, ply_pos, ent_pos) - offset/2) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-500))
 
@@ -270,7 +279,7 @@ do -- view
 
 				target_fov = target_fov + math.Clamp(smooth_visible*50, -40, 20) - 30
 			else
-				local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 230), 0, 1) ^ 10 - 0.05, 0)
+				local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 240), 0, 1) ^ 10 - 0.05, 0)
 				target_pos = Lerp(inside_sphere, smooth_pos, ply:EyePos())
 
 				local cam_ang = smooth_dir:Angle()
@@ -283,8 +292,8 @@ do -- view
 				local right = cam_ang:Right() * FrameTime() * - battlecam.cam_rotation_velocity.y
 				local up = cam_ang:Up() * FrameTime() * battlecam.cam_rotation_velocity.x
 
-				smooth_pos = smooth_pos + right*400 + up*400
-				smooth_dir = smooth_dir - right*3.5 - up*3.5
+				smooth_pos = smooth_pos + right*1500 + up*1500
+				smooth_dir = smooth_dir - right*8 - up*8
 
 
 				do -- trace block
@@ -296,7 +305,7 @@ do -- view
 					})
 
 					if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
-						smooth_pos = Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
+						smooth_pos = data.HitPos--Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
 					end
 				end
 
@@ -327,7 +336,7 @@ do -- view
 
 			if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
 				smooth_pos = data.HitPos
-				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - (lerp_thing*2-1)*0.1
+				--battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - (lerp_thing*2-1)*0.1
 			end
 		end
 
@@ -378,27 +387,19 @@ do -- selection
 			if hitmarkers then
 				hitmarkers.ShowHealth(ent, true)
 			end
-			battlecam.target_cam_rotation = Angle(0,12.5,0)
+			battlecam.target_cam_rotation = Angle(-30,0,0)
 		end
 	end
 
 	function battlecam.CalcEnemySelect()
 		local ply = LocalPlayer()
 
-		if battlecam.IsKeyDown("target") and last_enemy_target < RealTime() then
-			battlecam.want_select = not battlecam.want_select
-			if not battlecam.want_select then
-				battlecam.SelectTarget()
-			end
-			last_enemy_target = RealTime() + 0.25
-		end
-
 		local target = battlecam.selected_enemy
 
 		if target:IsValid() and not target.battlecam_probably_dead then
 			battlecam.last_target_pos = target:GetPos()
 
-			if battlecam.IsKeyDown("target") and last_enemy_target < RealTime() then
+			if battlecam.IsKeyDown("target") and last_enemy_target < RealTime() or target:GetPos():Distance(ply:GetPos()) > 1000 then
 				battlecam.SelectTarget()
 				last_enemy_target = RealTime() + 0.25
 			end
@@ -480,7 +481,7 @@ do -- selection
 			else
 				last_enemy_scroll = 0
 			end
-		elseif (battlecam.IsKeyDown("target") and last_enemy_target < RealTime()) or battlecam.want_select then
+		elseif battlecam.IsKeyDown("target") and last_enemy_target < RealTime() then
 			local data = ply:GetEyeTrace()
 
 			if not data.Entity:IsValid() then
@@ -629,23 +630,23 @@ do
 
 		do
 			if input.IsButtonDown(KEY_PAD_5) or input.IsButtonDown(KEY_XBUTTON_STICK2) then
-				battlecam.target_cam_rotation = Angle(0,12.5,0)
+				battlecam.target_cam_rotation = Angle(-30,0,0)
 			end
 
 			if input.IsButtonDown(KEY_XSTICK2_RIGHT) or input.IsButtonDown(KEY_PAD_6) then
-				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - FrameTime()*40
-				battlecam.cam_rotation_velocity.y = 1
+				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - FrameTime()*20
+				battlecam.cam_rotation_velocity.y = FrameTime()*15
 			elseif input.IsButtonDown(KEY_XSTICK2_LEFT) or input.IsButtonDown(KEY_PAD_4) then
-				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y + FrameTime()*40
-				battlecam.cam_rotation_velocity.y = -1
+				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y + FrameTime()*20
+				battlecam.cam_rotation_velocity.y = -FrameTime()*15
 			end
 
 			if input.IsButtonDown(KEY_XSTICK2_UP) or input.IsButtonDown(KEY_PAD_8) then
-				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x - FrameTime()*40
-				battlecam.cam_rotation_velocity.x = 1
+				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x - FrameTime()*20
+				battlecam.cam_rotation_velocity.x = FrameTime()*8
 			elseif input.IsButtonDown(KEY_XSTICK2_DOWN) or input.IsButtonDown(KEY_PAD_2) then
 				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x + FrameTime()*40
-				battlecam.cam_rotation_velocity.x = -1
+				battlecam.cam_rotation_velocity.x = -FrameTime()*8
 			end
 
 			battlecam.target_cam_rotation:Normalize()
@@ -654,6 +655,7 @@ do
 		if battlecam.IsKeyDown("attack") and not ucmd:KeyDown(IN_ATTACK) then
 			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
 		end
+
 --[[
 		if ucmd:KeyDown(IN_SPEED) and ply:GetVelocity() == vector_origin then
 			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_USE))
@@ -681,26 +683,21 @@ do
 			ucmd:SetViewAngles(aim_ang)
 		end
 
+
 		if battlecam.last_select < RealTime() then
-			if input.IsKeyDown(KEY_DOWN) or input.IsButtonDown(KEY_XBUTTON_DOWN) then
+			if input.IsKeyDown(KEY_LEFT) or input.IsButtonDown(KEY_XBUTTON_LEFT) then
 				battlecam.weapon_i = battlecam.weapon_i + 1
 				battlecam.last_select = RealTime() + 0.15
-			elseif input.IsKeyDown(KEY_UP) or input.IsButtonDown(KEY_XBUTTON_UP) then
+			elseif input.IsKeyDown(KEY_RIGHT) or input.IsButtonDown(KEY_XBUTTON_RIGHT) then
 				battlecam.weapon_i = battlecam.weapon_i - 1
 				battlecam.last_select = RealTime() + 0.15
 			end
+		else
+			local wep = battlecam.GetWeapons()[battlecam.GetWeaponIndex()]
 
-			local delta = ucmd:GetMouseWheel()
-			if delta ~= 0 then
-				battlecam.weapon_i = battlecam.weapon_i - delta
-				battlecam.last_select = RealTime() + 0.01
+			if wep then
+				ucmd:SelectWeapon(wep)
 			end
-		end
-
-		local wep = battlecam.GetWeapons()[battlecam.GetWeaponIndex()]
-
-		if wep then
-			ucmd:SelectWeapon(wep)
 		end
 
 		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and (not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) then
@@ -732,23 +729,12 @@ do
 
 			dir.z = 0
 
-			--dir = dir - ply:LocalToWorldAngles(Vector(joy_forward/10000, joy_side/10000, 0):Angle()):Right()
-			--dir:Normalize()
-
-			if (smooth_dir - dir):Length() > 1.5 then
-				smooth_forward = 0
-			end
-
 			if dir ~= Vector(0,0,0) then
 				smooth_dir = smooth_dir + ((dir - smooth_dir) * FrameTime() * 10)
 				ucmd:SetViewAngles(smooth_dir:Angle())
 
-				ucmd:SetForwardMove(smooth_forward)
+				ucmd:SetForwardMove(10000)
 				ucmd:SetSideMove(0)
-
-				smooth_forward = smooth_forward + ((1000 - smooth_forward) * FrameTime()*0.25)
-			else
-				smooth_forward = smooth_forward + ((0 - smooth_forward) * FrameTime()*0.25)
 			end
 		end
 
@@ -760,12 +746,13 @@ end
 
 function battlecam.HUDShouldDraw(hud_type)
 	if
-		hud_type == "CHudCrosshair" or
+		hud_type == "CHudCrosshair" --[[or
 		hud_type == "CHudHealth" or
 		hud_type == "CHudBattery" or
 		hud_type == "CHudAmmo" or
 		hud_type == "CHudSecondaryAmmo" or
 		hud_type == "CHudWeaponSelection"
+		]]
 	then
 		return false
 	end
@@ -1081,8 +1068,8 @@ function battlecam.PreDrawHUD()
 	render.SuppressEngineLighting(true)
 	render.SetColorModulation(1,1,1)
 
-	battlecam.DrawHPMP()
-	battlecam.DrawWeaponSelection()
+	--battlecam.DrawHPMP()
+	--battlecam.DrawWeaponSelection()
 
 	render.SetColorModulation(1,1,1)
 	render.SuppressEngineLighting(false)

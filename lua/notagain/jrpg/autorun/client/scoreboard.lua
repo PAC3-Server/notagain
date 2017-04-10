@@ -4,7 +4,7 @@ local draw_rect = requirex("draw_skewed_rect")
 local scrW, scrH = ScrW(), ScrH()
 local resolutionScale = math.Min(scrW/1600 , scrH/900)
 local mainMenuSize = {
-    w = scrW * .75,
+    w = 1000,
     h = scrH * .8
 }
 local line_height = 70
@@ -193,7 +193,7 @@ local PLAYER_LINE = {
 		local dir = self.Friend and 1 or -1
 		local skew = 30 * dir
 		--skew = skew * math.sin(os.clock()*5)
-		local size_div = 1.2
+		local size_div = 1.35
 		local spacing = 8
 		local border_size = 10
 
@@ -201,12 +201,6 @@ local PLAYER_LINE = {
 
 		local color = self.Friend and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS)
 		local text_blur_color = Color(color.r*0.6, color.g*0.6, color.b*0.6, 150)
-
-		if dir < 0 then
-			x = x + w - w / size_div
-		end
-
-		w = w / size_div
 
 		do
 			surface.DisableClipping(true)
@@ -294,21 +288,40 @@ local PLAYER_LINE = {
 		end
 
 		do
-			local size = h * 1.15
-			local x = x - size / 2
-			local y = y - size / 2
+			if _G.avatar then
+				surface.SetDrawColor(255,255,255,255)
+				local size = h * 1.75
+				local x = x - size / 1.75
+				local y = y - size / 2
 
-			y = y + h / 2
-			x = x + (size/3.7 * dir)
+				y = y + h / 2.5
+				x = x + (size/3.7 * dir)
 
-			if dir < 0 then
-				x = x + w
+				if dir < 0 then
+					x = x + w
+				else
+					x = x + size
+				end
+
+				avatar.Draw(ent, x,y+size/2, size)
+			else
+
+				local size = h * 1.15
+				local x = x - size / 2
+				local y = y - size / 2
+
+				y = y + h / 2
+				x = x + (size/3.7 * dir)
+
+				if dir < 0 then
+					x = x + w
+				end
+
+				--cam.PushModelMatrix
+
+				self.Avatar:SetSize(size,size)
+				self.Avatar:PaintAt(x, y)
 			end
-
-			--cam.PushModelMatrix
-
-			self.Avatar:SetSize(size,size)
-			self.Avatar:PaintAt(x, y)
 		end
 
 		do -- frame
@@ -374,13 +387,15 @@ local PLAYER_LINE = {
 
             self.Menu:AddOption("Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end):SetImage("icon16/tab_edit.png")
             self.Menu:AddOption("Open Profile",function() self.Player:ShowProfile() end):SetImage("icon16/world.png")
+            self.Menu:AddOption("Mute/Unmute",function() self.Player:SetMuted(!self.Player:IsMuted()) end):SetImage("icon16/sound_mute.png")
 
 
             RegisterDermaMenuForClose( self.Menu )
             self.Menu:Open()
 
         elseif num == MOUSE_LEFT then
-            RunConsoleCommand( "aowl", "goto", PlayerID )
+            if PlayerID == tostring( LocalPlayer():UniqueID() ) then return end
+			RunConsoleCommand( "aowl", "goto", PlayerID )
         end
 
     end,
@@ -428,8 +443,8 @@ local SCORE_BOARD = {
     PerformLayout = function( self )
 
         self:SetSize( mainMenuSize.w, mainMenuSize.h )
-		self.ScoresLeft:SetWide(mainMenuSize.w/2)
-		self.ScoresRight:SetWide(mainMenuSize.w/2)
+		self.ScoresLeft:SetWide(450)
+		self.ScoresRight:SetWide(450)
 		self.ScoresRight:SetTall(select(2, self.ScoresRight:ChildrenSize()))
 		self.ScoresLeft:SetTall(select(2, self.ScoresLeft:ChildrenSize()))
         self:Center()

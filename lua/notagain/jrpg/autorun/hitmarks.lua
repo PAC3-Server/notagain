@@ -32,19 +32,20 @@ if CLIENT then
 		["$VertexColor"] = 1,
 	})
 
-	local function draw_health_bar(x,y, w,h, health, last_health, fade, border_size, skew)
+	local function draw_health_bar(ent, x,y, w,h, health, last_health, fade, border_size, skew, r,g,b, is_health)
 		surface.SetDrawColor(200, 200, 200, 50*fade)
 		draw.NoTexture()
 		draw_rect(x,y,w,h, skew)
 
 		surface.SetMaterial(gradient)
 
-		surface.SetDrawColor(200, 50, 50, 255*fade)
+		surface.SetDrawColor(is_health and 200 or 50, 50, 50, 255*fade)
+
 		for _ = 1, 2 do
 			draw_rect(x,y,w*last_health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
 
-		surface.SetDrawColor(0, 200, 100, 255*fade)
+		surface.SetDrawColor(r,g,b, 255*fade)
 		for _ = 1, 2 do
 			draw_rect(x,y,w*health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
@@ -54,6 +55,34 @@ if CLIENT then
 
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew, 1, 64,border_size, border:GetTexture("$BaseTexture"):Width(), true)
+		end
+
+		local size = 24
+		x = x + 16
+		y = y + 5
+		if is_health then
+			for i, status in ipairs(jdmg.GetStatuses(ent)) do
+				if status.negative then
+					surface.SetDrawColor(150, 0, 0, 255*fade)
+				elseif status.positive then
+					surface.SetDrawColor(0, 0, 150, 255*fade)
+				else
+					surface.SetDrawColor(0, 0, 0, 255*fade)
+				end
+				draw.NoTexture()
+				draw_rect(x+w-size,y+h,size,size)
+
+				surface.SetDrawColor(255, 255, 255, 255*fade)
+				surface.SetMaterial(border)
+				draw_rect(x+w-size,y+h,size,size, 0, 1, 64,border_size/1.5, border:GetTexture("$BaseTexture"):Width(), true)
+
+				surface.SetDrawColor(255, 255, 255, 255*fade)
+				surface.SetMaterial(status.icon)
+				draw_rect(x+w-size,y+h,size,size)
+				draw_rect(x+w-size,y+h,size,size)
+
+				x = x - 24 - 5
+			end
 		end
 	end
 
@@ -67,7 +96,6 @@ if CLIENT then
 	})
 
 	local function draw_weapon_info(x,y, w,h, color, fade)
-		set_blend_mode("additive")
 		local skew = 0
 		surface.SetDrawColor(25, 25, 25, 200*fade)
 		draw.NoTexture()
@@ -86,7 +114,6 @@ if CLIENT then
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew, 3, 64,4, border:GetTexture("$BaseTexture"):Width(), true)
 		end
-		set_blend_mode()
 	end
 
 	local hitmark_fonts = {
@@ -201,7 +228,7 @@ if CLIENT then
 	end
 
 	hook.Add("HUDPaint", "hitmarks", function()
-		if hook.Call("HideHitmarks") then
+		if hook.Run("HUDShouldDraw", "JHitmarkers") == false then
 			return
 		end
 
@@ -242,11 +269,16 @@ if CLIENT then
 				local world_pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2))
 				local pos = world_pos:ToScreen()
 				local dist = world_pos:Distance(EyePos())
-				fraction = fraction * ((-(dist / 1000)+1) ^ 2)
+				local scale = (ent:GetModelScale() or 1)
+				local radius = ent:BoundingRadius() * 10
+				local max_distance = scale * radius
+				fraction = fraction * ((-(dist / max_distance)+1) ^ 2)
 
-				if pos.visible and dist < 1000 then
-					surface.DrawRect(pos.x, pos.y, 1,1)
+				ent.hm_pixvis = ent.hm_pixvis or util.GetPixelVisibleHandle()
+				ent.hm_pixvis_vis = util.PixelVisible(world_pos, ent:BoundingRadius(), ent.hm_pixvis)
+				local vis = ent.hm_pixvis_vis
 
+				if pos.visible and dist < max_distance and fraction > 0 then
 					local cur = ent.hm_cur_health or ent:Health()
 					local max = ent.hm_max_health or ent:GetMaxHealth()
 					local last = ent.hm_last_health or max
@@ -270,13 +302,14 @@ if CLIENT then
 					local last = data.last_health_smooth
 
 					local fade = math.Clamp(fraction ^ 0.25, 0, 1)
+					fade = fade * vis
 
 					local w, h = prettytext.GetTextSize(name, "candara", 20, 30, 2)
 
-					local height = 8
+					local height = 10
 					local border_size = 3
-					local skew = 0
-					local width = math.Clamp(ent:BoundingRadius() * 3.5 * (ent:GetModelScale() or 1), w * 1.5,  ScrW()/2)
+					local skew = -30
+					local width = math.Clamp(radius * scale, w * 1.5 + 100,  ScrW()/2)
 
 					if max > 1000 then
 						height = 35
@@ -287,14 +320,49 @@ if CLIENT then
 						skew = 30
 						border_size = 10
 						boss_bar_y = boss_bar_y + height + 20
+					else
+						width = math.Clamp(width + (max - 50), 0, 500)
 					end
 
 					local width2 = width/2
 					local text_x_offset = 15
+					local y = pos.y-height/2
+					local x = pos.x - width2
 
-					draw_health_bar(pos.x - width2, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, skew)
+					draw_health_bar(ent, x, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, -12, 0, 200, 100, true)
 
-					prettytext.Draw(name, pos.x - width2 - text_x_offset, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
+					y = y + math.ceil(height + border_size / 2)
+
+					local height = height
+					local border_size = border_size / 2
+
+					do
+						local cur = ent:GetNWFloat("jattributes_mana", -1)
+						if cur ~= -1 then
+							local max = ent:GetNWFloat("jattributes_max_mana", 100)
+							local width = math.Clamp(max*3, 0, 500)
+
+							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12, 0, 0, 255)
+							y = y + height-border_size
+						end
+					end
+
+
+					do
+						local cur = ent:GetNWFloat("jattributes_stamina", -1)
+						if cur ~= -1 then
+							local max = ent:GetNWFloat("jattributes_max_stamina", 100)
+							local width = math.Clamp(max*3, 0, 500)
+
+							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12, 255, 255, 0)
+						end
+					end
+
+					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, 0, -1)
+
+					if ent:GetNWBool("rpg") then
+						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, -1, -1)
+					end
 				end
 
 				if fraction <= 0 then
@@ -313,12 +381,14 @@ if CLIENT then
 			end
 
 			local pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2)):ToScreen()
+			local vis = ent.hm_pixvis_vis or 1
 
 			if pos.visible then
 				local time = RealTime()
 
 				if data.time > time then
 					local fade = math.min(((data.time - time) / data.length) + 0.75, 1)
+					fade = fade * vis
 					local w, h = prettytext.GetTextSize(data.name, "arial", 20, 800, 2)
 
 					local x, y = pos.x, pos.y
@@ -354,17 +424,26 @@ if CLIENT then
 
 			for i = #hitmarks, 1, -1 do
 				local data = hitmarks[i]
-				local t = RealTime() + data.offset
 
-				local fraction =  (data.life - t) / life_time
 				local pos = data.real_pos
+				local vis = 1
 
 				if data.ent:IsValid() then
+					if data.ent == LocalPlayer() and not data.ent:ShouldDrawLocalPlayer() then
+						continue
+					end
+
 					pos = LocalToWorld(data.real_pos, Angle(0,0,0), data.ent:GetPos(), data.first_angle)
 					data.last_pos = pos
+
+					vis = data.ent.hm_pixvis_vis or vis
 				else
 					pos = data.last_pos or pos
 				end
+
+				local t = RealTime() + data.offset
+
+				local fraction =  (data.life - t) / life_time
 
 				local fade = math.Clamp(fraction ^ 0.25, 0, 1)
 
@@ -392,7 +471,9 @@ if CLIENT then
 
 				local txt = math.Round(Lerp(math.Clamp(fraction-0.95, 0, 1), data.dmg, 0))
 
-				if data.dmg == 0 then
+				if data.xp then
+					txt = "xp +" .. txt
+				elseif data.dmg == 0 then
 					txt = "MISS"
 				elseif data.dmg > 0 then
 					txt = "+" .. txt
@@ -406,6 +487,8 @@ if CLIENT then
 					if fade < 0.5 then
 						y = y + (fade-0.5)*150
 					end
+
+					fade = fade * vis
 
 					surface.SetAlphaMultiplier(fade)
 
@@ -428,7 +511,9 @@ if CLIENT then
 					local w, h = prettytext.GetTextSize(txt, font_info.font, font_info.size, font_info.weight, font_info.blur_size)
 					local hoffset = data.height_offset * -h * 0.5
 
-					if data.dmg == 0 then
+					if data.xp then
+						surface.SetDrawColor(100, 0, 255, 255)
+					elseif data.dmg == 0 then
 						surface.SetDrawColor(255, 255, 255, 255)
 					elseif data.rec then
 						surface.SetDrawColor(100, 255, 100, 255)
@@ -483,7 +568,7 @@ if CLIENT then
 		table.insert(weapon_info, {name = name, ent = ent, time = RealTime() + length, length = length})
 	end
 
-	function hitmarkers.ShowDamage(ent, dmg, pos, type)
+	function hitmarkers.ShowDamage(ent, dmg, pos, xp)
 		ent = ent or NULL
 		dmg = dmg or 0
 		pos = pos or ent:EyePos()
@@ -516,13 +601,15 @@ if CLIENT then
 
 				offset = offset,
 				height_offset = height_offset,
+				xp = xp,
 
-				bounced = 0,
-				type = type,
+				bounced = 0
 			}
 		)
 
-		hitmarkers.ShowHealth(ent)
+		if ent ~= LocalPlayer() then
+			hitmarkers.ShowHealth(ent)
+		end
 	end
 
 	timer.Create("hitmark", 0.25, 0, function()
@@ -535,7 +622,7 @@ if CLIENT then
 		end
 
 		for _, ent in pairs(ents.FindInSphere(ply:GetPos(), 1000)) do
-			if ent:IsNPC() or ent:IsPlayer() then
+			if ent:IsNPC() then
 				local wep = ent:GetActiveWeapon()
 				local name
 
@@ -576,7 +663,6 @@ if CLIENT then
 					end
 
 					hitmarkers.ShowAttack(ent, name)
-					hitmarkers.ShowHealth(ent)
 				end
 			end
 		end
@@ -588,7 +674,6 @@ if CLIENT then
 		local pos = net.ReadVector()
 		local cur = math.Round(net.ReadFloat())
 		local max = math.Round(net.ReadFloat())
-		local type = net.ReadInt(32)
 
 		if not ent.hm_last_health_time or ent.hm_last_health_time < CurTime() then
 			ent.hm_last_health = ent.hm_cur_health or max
@@ -599,34 +684,82 @@ if CLIENT then
 		ent.hm_cur_health = cur
 		ent.hm_max_health = max
 
+		hitmarkers.ShowDamage(ent, dmg, pos)
+	end)
 
-		hitmarkers.ShowDamage(ent, dmg, pos, type)
+	net.Receive("hitmark_xp", function()
+		local ent = net.ReadEntity()
+		local xp = math.Round(net.ReadFloat())
+		local pos = net.ReadVector()
+
+		hitmarkers.ShowDamage(ent, xp, pos, true)
+	end)
+
+	net.Receive("hitmark_attack", function()
+		local ent = net.ReadEntity()
+		local str = net.ReadString()
+
+		if language.GetPhrase(str) then
+			str = language.GetPhrase(str)
+		end
+
+		str = str:gsub("^%l", function(s) return s:upper() end)
+		str = str:gsub(" %l", function(s) return s:upper() end)
+		str = str:Trim()
+
+		hitmarkers.ShowAttack(ent, str)
 	end)
 end
 
 if SERVER then
-	function hitmarkers.ShowDamage(ent, dmg, pos, type, filter)
+	function hitmarkers.ShowDamage(ent, dmg, pos, filter)
 		ent = ent or NULL
 		dmg = dmg or 0
 		pos = pos or ent:EyePos()
-		type = type or 0
 		filter = filter or player.GetAll()
 
-		net.Start("hitmark")
+		net.Start("hitmark", true)
 			net.WriteEntity(ent)
 			net.WriteFloat(dmg)
 			net.WriteVector(pos)
-			net.WriteFloat(ent.ACF and ent.ACF.Health or ent.ee_cur_hp or ent:Health())
-			net.WriteFloat(ent.ACF and ent.ACF.MaxHealth or ent.ee_max_hp or ent:GetMaxHealth())
-			net.WriteInt(type, 32)
+			net.WriteFloat(ent:Health())
+			net.WriteFloat(ent:GetMaxHealth())
 		net.Send(filter)
+
+		-- to prevent the timer from showing damage as well
+		ent.hm_last_health = ent:Health()
 	end
 
 	util.AddNetworkString("hitmark")
 
+	function hitmarkers.ShowXP(ent, xp, pos, filter)
+		ent = ent or NULL
+		xp = xp or 0
+		pos = pos or ent:EyePos()
+		filter = filter or player.GetAll()
+
+		net.Start("hitmark_xp", true)
+			net.WriteEntity(ent)
+			net.WriteFloat(xp)
+			net.WriteVector(pos)
+		net.Send(filter)
+	end
+
+	util.AddNetworkString("hitmark_xp")
+
+	function hitmarkers.ShowAttack(ent, str, filter)
+		filter = filter or player.GetAll()
+
+		net.Start("hitmark_attack", true)
+			net.WriteEntity(ent)
+			net.WriteString(str)
+		net.Send(filter)
+	end
+
+	util.AddNetworkString("hitmark_attack")
+
 	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
 		if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
-
 		local filter = {}
 		for k,v in pairs(player.GetAll()) do
 			if v ~= ent and v:GetPos():Distance(ent:GetPos()) < 1500 * (ent:GetModelScale() or 1) then
@@ -642,15 +775,10 @@ if SERVER then
 			pos = ent:GetPos()
 		end
 
-		if ent.ee_cur_hp then
-			last_health = ent.ee_cur_hp
-		end
 
-		timer.Simple(0, function()
+		timer.Create(tostring(ent).."_hitmarker", 0, 1, function()
 			if ent:IsValid() then
-				if ent.ee_cur_hp then
-					health = -(last_health - ent.ee_cur_hp)
-				elseif last_health == ent:Health() then
+				if last_health == ent:Health() then
 					if ent:IsNPC() or ent:IsPlayer() then
 						health = 0
 					else
@@ -660,38 +788,28 @@ if SERVER then
 					health = ent:Health() - last_health
 				end
 
-				hitmarkers.ShowDamage(ent, health, pos, dmg:GetDamageType(), filter)
+				hitmarkers.ShowDamage(ent, health, pos, filter)
 			end
 		end)
 	end)
 
-	if ACF_Damage then
-		old_ACF_Damage = old_ACF_Damage or ACF_Damage
-
-		function ACF_Damage(...)
-			local res = {old_ACF_Damage(...)}
-
-			local data = res[1]
-			if type(data) == "table" and data.Damage then
-				local ent = select(1, ...)
-				if IsEntity(ent) and ent:IsValid() and math.floor(data.Damage) ~= 0 then
-					hitmarkers.ShowDamage(ent, -data.Damage, ent:GetPos(), data.Damage > 500)
-				end
-			end
-
-			return unpack(res)
-		end
-	end
-
-	timer.Create("hitmarker",1, 0, function()
+	timer.Create("hitmarker", 1, 0, function()
 		for _, ent in ipairs(ents.GetAll()) do
 			if ent:IsPlayer() or ent:IsNPC() then
 				if ent.hm_last_health ~= ent:Health() then
 					local diff = ent:Health() - (ent.hm_last_health or 0)
 					if diff > 0 then
 						hitmarkers.ShowDamage(ent, diff)
+						jdmg.DamageEffect(ent, "heal")
+					elseif diff < 0 then
+						hitmarkers.ShowDamage(ent, diff)
 					end
 					ent.hm_last_health = ent:Health()
+				end
+
+				if ent.hm_last_max_health ~= ent:GetMaxHealth() then
+					hitmarkers.ShowDamage(ent, 0)
+					ent.hm_last_max_health = ent:GetMaxHealth()
 				end
 			end
 		end
