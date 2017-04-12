@@ -221,6 +221,7 @@ if SERVER then
 			local json = util.JSONToTable(body)
 
 			if json and json[1] and after ~= 0 and lastid ~= json[1].id then
+				lastid = json[1].id
 				for k,v in pairs(json) do
 					if not (v and v.author) and discordrelay.user.id == v.author.id or type(v) == "number" then continue end
 
@@ -436,7 +437,6 @@ if SERVER then
 
 			if json and json[1] then
 				after = json[1].id
-				lastid = json[1].id
 			end
 		end)
 	end)
