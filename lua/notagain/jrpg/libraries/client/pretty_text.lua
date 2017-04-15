@@ -106,6 +106,7 @@ function prettytext.DrawText(tbl)
 	local foreground_color = tbl.foreground_color or default_foreground_color
 	local background_color = tbl.background_color or default_background_color
 	local alpha = (tbl.alpha or 1) * (foreground_color.a / 255)
+
 	alpha = alpha ^ 2
 
 	surface.SetAlphaMultiplier(alpha)
@@ -219,7 +220,7 @@ function prettytext.DrawText(tbl)
 
 	surface_SetTextColor(background_color)
 
-	for _ = 1, tbl.blur_overdraw or 5 do
+	for _ = 1, tbl.blur_overdraw or 2 do
 		surface_SetTextPos(x, y)
 		surface_DrawText(text)
 	end
