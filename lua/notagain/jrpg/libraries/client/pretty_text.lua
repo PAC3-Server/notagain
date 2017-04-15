@@ -273,6 +273,8 @@ function prettytext.DrawText(tbl)
 		render.PopFilterMin()
 	end
 
+	surface.SetAlphaMultiplier(1)
+
 	return w, h
 end
 
