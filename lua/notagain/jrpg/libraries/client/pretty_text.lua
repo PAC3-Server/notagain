@@ -4,37 +4,30 @@ local function create_fonts(font, size, weight, blursize)
 	local main = "pretty_text_" .. size .. "_" .. weight .. "_" .. blursize
 	local blur = "pretty_text_blur_" .. size  .. "_" .. weight .. "_" .. blursize
 
-	surface.CreateFont(
-		main,
-		{
-			font = font,
-			size = size,
-			weight = weight,
-			antialias = true,
-		}
-	)
+	surface.CreateFont(main, {
+		font = font,
+		size = size,
+		weight = weight,
+		antialias = true,
+	})
 
-	surface.CreateFont(
-		blur,
-		{
-			font = font,
-			size = size,
-			weight = weight,
-			antialias= true,
-			blursize = blursize/2,
-			outline = true,
-		}
-	)
+	surface.CreateFont(blur, {
+		font = font,
+		size = size,
+		weight = weight,
+		antialias= true,
+		blursize = blursize / 2,
+		outline = true,
+	})
 
-	return
-	{
+	return {
 		main = main,
 		blur = blur,
 	}
 end
 
-local def_color1 = Color(255, 255, 255, 255)
-local def_color2 = Color(0, 0, 0, 255)
+local default_foreground_color = Color(255, 255, 255, 255)
+local default_background_color = Color(0, 0, 0, 255)
 
 local STENCILOPERATION_KEEP = STENCILOPERATION_KEEP
 local STENCILOPERATION_REPLACE = STENCILOPERATION_REPLACE
@@ -74,10 +67,10 @@ local hsv_cache = {}
 
 local prettytext = {}
 
-local stencil_tex = GetRenderTarget("pretty_text_stencil_" .. os.clock(), ScrW(),ScrH(), false)
+local stencil_tex = GetRenderTarget("pretty_text_stencil_" .. os.clock(), ScrW(), ScrH(), false)
 local stencil_mat = CreateMaterial("pretty_text_stencil_mat" .. os.clock(), "UnlitGeneric", {
 	["$alphatest"] = "1",
-	["$alphatestreference"] = "0.01",
+	["$alphatestreference"] = "0.005",
 	["$translucent"] = "1",
 	["$vertexcolor"] = "1",
 	["$vertexalpha"] = "1",
@@ -85,20 +78,44 @@ local stencil_mat = CreateMaterial("pretty_text_stencil_mat" .. os.clock(), "Unl
 
 stencil_mat:SetTexture("$basetexture", stencil_tex)
 
-function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color2, x_align, y_align, blur_overdraw, shadow, gradient_mat, gr,gg,gb,ga)
-	font = font or "arial"
-	size = size or 14
-	weight = weight or 0
-	blursize = blursize or 1
-	color1 = color1 or def_color1
-	blur_overdraw = blur_overdraw or 5
+local temp_vec = Vector()
+local temp_ang = Angle()
+local temp_matrix = Matrix()
+local temp_matrix2 = Matrix()
 
-	if color2 == true then
-		hsv_cache[color1.r] = hsv_cache[color1.r] or {}
-		hsv_cache[color1.r][color1.g] = hsv_cache[color1.r][color1.g] or {}
+local function skew_matrix(m, x, y)
+	x = math.rad(x)
+	y = math.rad(y or x)
 
-		if not hsv_cache[color1.r][color1.g][color1.b] then
-			local h,s,v = ColorToHSV(color1)
+	temp_matrix2:Identity()
+	temp_matrix2:SetField(1,1, 1)
+	temp_matrix2:SetField(1,2, math.tan(x))
+	temp_matrix2:SetField(2,1, math.tan(y))
+	temp_matrix2:SetField(2,2, 1)
+	m:Set(m * temp_matrix2)
+end
+
+function prettytext.DrawText(tbl)
+	local text = tbl.text or "nil"
+	local x = tbl.x or 0
+	local y = tbl.y or 0
+	local font = tbl.font or "arial"
+	local size = tbl.size or 14
+	local weight = tbl.weight or 0
+	local blur_size = tbl.blur_size or 1
+	local foreground_color = tbl.foreground_color or default_foreground_color
+	local background_color = tbl.background_color or default_background_color
+	local alpha = (tbl.alpha or 1) * (foreground_color.a / 255)
+	alpha = alpha ^ 2
+
+	surface.SetAlphaMultiplier(alpha)
+
+	if background_color == true then
+		hsv_cache[foreground_color.r] = hsv_cache[foreground_color.r] or {}
+		hsv_cache[foreground_color.r][foreground_color.g] = hsv_cache[foreground_color.r][foreground_color.g] or {}
+
+		if not hsv_cache[foreground_color.r][foreground_color.g][foreground_color.b] then
+			local h,s,v = ColorToHSV(foreground_color)
 			local v2 = v
 			s = s * 0.5
 			v = v * 0.5
@@ -107,57 +124,118 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 			if math.abs(v-v2) < 0.1 then
 				v = v - 0.25
 			end
-			color2 = HSVToColor(h,s,v)
+			background_color = HSVToColor(h,s,v)
 
-			hsv_cache[color1.r][color1.g][color1.b] = hsv_cache[color1.r][color1.g][color1.b] or color2
+			hsv_cache[foreground_color.r][foreground_color.g][foreground_color.b] = hsv_cache[foreground_color.r][foreground_color.g][foreground_color.b] or background_color
 		end
 
-		color2 = hsv_cache[color1.r][color1.g][color1.b]
+		background_color = hsv_cache[foreground_color.r][foreground_color.g][foreground_color.b]
 	end
 
-	color2 = color2 or def_color2
+	background_color = background_color or default_background_color
 
 	if not fonts[font] then fonts[font] = {} end
 	if not fonts[font][size] then fonts[font][size] = {} end
 	if not fonts[font][size][weight] then fonts[font][size][weight] = {} end
-	if not fonts[font][size][weight][blursize] then fonts[font][size][weight][blursize] = create_fonts(font, size, weight, blursize) end
+	if not fonts[font][size][weight][blur_size] then fonts[font][size][weight][blur_size] = create_fonts(font, size, weight, blur_size) end
 
-	local w, h = prettytext.GetTextSize(text, font, size, weight, blursize)
-	if x_align then
-		x = x + (w * x_align)
+	local w, h = prettytext.GetTextSize(text, font, size, weight, blur_size)
+
+	if tbl.x_align then
+		x = x + (w * tbl.x_align)
 	end
 
-	if y_align then
-		y = y + (h * y_align)
+	if tbl.y_align then
+		y = y + (h * tbl.y_align)
 	end
 
-	surface_SetFont(fonts[font][size][weight][blursize].blur)
+	surface_SetFont(fonts[font][size][weight][blur_size].blur)
 
-	if shadow then
-		surface_SetTextColor(0,0,0,255)
+	local scale_x
+	local scale_y
+	local angle = tbl.angle
+	local render_x = tbl.render_x
+	local render_y = tbl.render_y
+	local skew_x = tbl.skew_x or tbl.skew
+	local skew_y = tbl.skew_y or 0
+
+	if tbl.scale_x or tbl.scale_y or tbl.scale then
+		scale_x = tbl.scale_x or tbl.scale
+		scale_y = tbl.scale_y or scale_x
+	end
+
+	if scale_x or angle or tbl.skew_x or tbl.skew_y or render_x or render_y then
+		local x = x + w / 2
+		local y = y + h / 2
+
+		temp_matrix:Identity()
+
+		temp_vec.x = x
+		temp_vec.y = y
+
+		temp_matrix:Translate(temp_vec)
+
+		if scale_x then
+			temp_vec.x = scale_x
+			temp_vec.y = scale_y
+			temp_matrix:Scale(temp_vec)
+		end
+
+		if angle then
+			temp_ang.y = angle
+			temp_matrix:Rotate(temp_ang)
+		end
+
+		if tbl.skew_x or tbl.skew_y then
+			skew_matrix(temp_matrix, skew_x or 0, skew_y)
+		end
+
+		if render_x or render_y then
+			temp_vec.x = render_x
+			temp_vec.y = render_y
+			temp_matrix:Translate(temp_vec)
+		end
+
+		temp_vec.x = -x
+		temp_vec.y = -y
+		temp_matrix:Translate(temp_vec)
+
+		cam.PushModelMatrix(temp_matrix)
+		render.PushFilterMag(TEXFILTER.LINEAR)
+		render.PushFilterMin(TEXFILTER.LINEAR)
+	end
+
+	if tbl.shadow_x or tbl.shadow_y then
+		surface_SetTextColor(0, 0, 0, 255)
+
+		local shadow_x = x + (tbl.shadow_x or tbl.shadow_y)
+		local shadow_y = y + (tbl.shadow_y or tbl.shadow_x)
+
 		for _ = 1, 15 do
-			surface_SetTextPos(x+shadow, y+shadow)
+			surface_SetTextPos(shadow_x, shadow_y)
 			surface_DrawText(text)
 		end
 	end
 
-	surface_SetTextColor(Color(color2.r, color2.g, color2.b, color2.a * (color1.a/255)))
+	surface_SetTextColor(background_color)
 
-	for _ = 1, blur_overdraw do
+	for _ = 1, tbl.blur_overdraw or 5 do
 		surface_SetTextPos(x, y)
 		surface_DrawText(text)
 	end
 
-	if gradient_mat then
+	if tbl.gradient_material then
+		surface.SetAlphaMultiplier(1)
 		render_PushRenderTarget(stencil_tex)
-		render_OverrideAlphaWriteEnable( true, true )
+		render_OverrideAlphaWriteEnable(true, true)
 		render_Clear(0, 0, 0, 0)
-		surface_SetTextColor(255, 255, 255, 255)
-		surface_SetFont(fonts[font][size][weight][blursize].main)
+		surface_SetTextColor(255, 255, 255, 1)
+		surface_SetFont(fonts[font][size][weight][blur_size].main)
 		surface_SetTextPos(x, y)
 		surface_DrawText(text)
 		render_OverrideAlphaWriteEnable(false)
 		render_PopRenderTarget()
+		surface.SetAlphaMultiplier(alpha)
 
 		surface_DisableClipping(true)
 		render_ClearStencil()
@@ -175,27 +253,67 @@ function prettytext.Draw(text, x, y, font, size, weight, blursize, color1, color
 	end
 
 	-- draw text1
-	surface_SetFont(fonts[font][size][weight][blursize].main)
-	surface_SetTextColor(color1)
+	surface_SetFont(fonts[font][size][weight][blur_size].main)
+	surface_SetTextColor(foreground_color)
 	surface_SetTextPos(x, y)
 	surface_DrawText(text)
 
-	if gradient_mat then
-		gr = gr or 255
-		gg = gg or 255
-		gb = gb or 255
-		ga = ga or 255
-
-		-- draw gradient
-		surface_SetDrawColor(gr,gg,gb,ga)
-		surface_SetMaterial(gradient_mat)
+	if tbl.gradient_material then
+		surface_SetDrawColor(foreground_color)
+		surface_SetMaterial(tbl.gradient_material)
 		surface_DrawTexturedRect(x,y,w,h)
 
 		render_SetStencilEnable(false)
 		surface_DisableClipping(false)
 	end
 
+	if tbl.scale_x or tbl_scale_y or tbl.scale or tbl.skew_x or tbl.skew_y then
+		cam.PopModelMatrix()
+		render.PopFilterMag()
+		render.PopFilterMin()
+	end
+
 	return w, h
+end
+
+function prettytext.Draw(
+		text,
+		x,
+		y,
+		font,
+		size,
+		weight,
+		blursize,
+		color1,
+		color2,
+		x_align,
+		y_align,
+		blur_overdraw,
+		shadow,
+		gradient_mat,
+		gr,gg,gb,ga
+	)
+
+	prettytext.DrawText({
+		text = text,
+		x = x,
+		y = y,
+		font = font,
+		size = size,
+		weight = weight,
+		blur_size = blursize,
+		foreground_color = color1,
+		background_color = color2,
+		x_align = x_align,
+		y_align = y_align,
+		blur_overdraw = blur_overdraw,
+		shadow_x = shadow,
+		gradient_mat = gradient_mat,
+		gr = gr,
+		gg = gg,
+		gb = gb,
+		ga = ga,
+	})
 end
 
 function prettytext.GetTextSize(text, font, size, weight, blursize)
