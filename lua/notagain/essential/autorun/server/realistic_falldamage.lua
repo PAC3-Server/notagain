@@ -1,3 +1,8 @@
+local function GetFallDamage(ply, len)
+	ply.fdmg_read = true
+	return hook.Run("GetFallDamage", ply, len) 
+end
+
 hook.Add("Move", "realistic_falldamage", function(ply, data)
 	local vel = data:GetVelocity()
 
@@ -14,44 +19,37 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 			local res = util.TraceHull(params)
 
 			local dmg = (len - 500) / 4
-
-			if not res.HitWorld and res.Entity:IsValid() then
-				local owner = res.Entity.CPPIGetOwner and res.Entity:CPPIGetOwner()
-				if owner and not owner:CanAlter(ply) then return end
-
-				local info = DamageInfo()
-				info:SetDamagePosition(data:GetOrigin())
-				info:SetDamage(dmg)
-				info:SetDamageType(DMG_FALL)
-				info:SetAttacker(ply)
-				info:SetInflictor(ply)
-				info:SetDamageForce(ply.fdmg_last_vel)
-				res.Entity:TakeDamageInfo(info)
-			end
-
 			local z = math.abs(res.HitNormal.z)
 
 			if res.Hit and (z < 0.1 or z > 0.9) then
-				local fall_damage = hook.Run("GetFallDamage", ply, len)
-				if fall_damage ~= 0 then
-					if fall_damage < dmg then
-						dmg = dmg - fall_damage
-						local pos = data:GetOrigin()
-						if hook.Run("RealisticFallDamage", ply, pos, dmg, len, res, params) ~= true then
-							local info = DamageInfo()
-							info:SetDamagePosition(pos)
-							info:SetDamage(dmg)
-							info:SetDamageType(DMG_FALL)
-							info:SetAttacker(Entity(0))
-							info:SetInflictor(Entity(0))
-							info:SetDamageForce(ply.fdmg_last_vel)
-							ply:TakeDamageInfo(info)
-						end
-					end
+				local fall_damage = GetFallDamage(ply, len) -- Prepare Override & Check Expected Fall Damage
+				if fall_damage <= 0 then return end
+
+				local pos = data:GetOrigin()
+				local info = DamageInfo()
+				info:SetDamagePosition(pos)
+				info:SetDamage(dmg)
+				info:SetDamageType(DMG_FALL)
+				info:SetAttacker(Entity(0))
+				info:SetInflictor(Entity(0))
+				info:SetDamageForce(ply.fdmg_last_vel)
+
+				if hook.Run("RealisticFallDamage", ply, info, len, dmg, fall_damage, res, params) ~= true then
+					ply:TakeDamageInfo(info)
 				end
 			end
 		end
 	end
 
 	ply.fdmg_last_vel = vel
+end)
+
+hook.Add("EntityTakeDamage", "realistic_falldamage", function(ply, di)
+	if di:IsFallDamage() then
+		if ply.fdmg_read then
+			ply.fdmg_read = nil
+		else
+			return true
+		end
+	end
 end)
