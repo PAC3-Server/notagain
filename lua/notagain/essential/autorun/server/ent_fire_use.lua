@@ -44,7 +44,7 @@ hook.Add( "KeyPress", "OpenDoors", function( ply, key )
 			
 		local tr = ply:GetEyeTrace()
 
-		if ToOpen[tr.Entity:GetClass()] and tr.HitPos:Distance(ply:GetPos()) <= 100 and IsValid(tr.Entity) then
+		if tr.HitPos:Distance(ply:GetPos()) <= 100 and IsValid(tr.Entity) then
 			
 			if DoorIsOpen(tr.Entity) then
 				
