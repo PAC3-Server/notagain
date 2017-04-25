@@ -197,11 +197,15 @@ if CLIENT then
 	hook.Add("HUDPaint", "jtarget", jtarget.DrawSelection)
 
 	hook.Add("OnContextMenuOpen", "jtarget", function()
-		jtarget.StartSelection()
+		if LocalPlayer():GetNWBool("rpg") then
+			jtarget.StartSelection()
+		end
 	end)
 
 	hook.Add("OnContextMenuClose", "jtarget", function()
-		jtarget.StopSelection()
+		if LocalPlayer():GetNWBool("rpg") then
+			jtarget.StopSelection()
+		end
 	end)
 end
 
@@ -261,19 +265,18 @@ local function get_aim_angles(ply)
 end
 
 if CLIENT then
-	hook.Add("InputMouseApply", "jtarget", function(mv, x, y)
-
-		if math.abs(x) > 100 or math.abs(y) > 100 then
-			jtarget.SetEntity(LocalPlayer())
-			jtarget.StopSelection()
-			return
-		end
-
+	hook.Add("CreateMove", "jtarget", function(mv)
 		local ang = get_aim_angles(LocalPlayer())
 
 		if ang then
 			mv:SetViewAngles(ang)
-			return true
+		end
+	end)
+
+	hook.Add("InputMouseApply", "jtarget", function(mv, x, y)
+		if math.abs(x) > 100 or math.abs(y) > 100 then
+			jtarget.SetEntity(LocalPlayer())
+			jtarget.StopSelection()
 		end
 	end)
 end
