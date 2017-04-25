@@ -297,7 +297,7 @@ function prettytext.Draw(
 		gr,gg,gb,ga
 	)
 
-	prettytext.DrawText({
+	return prettytext.DrawText({
 		text = text,
 		x = x,
 		y = y,

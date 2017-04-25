@@ -355,6 +355,16 @@ do
 	local smooth_y = 0
 	local last_select = 0
 
+	function battlecam.InputMouseApply(ucmd, x, y, ang)
+		smooth_x = smooth_x + ((x - smooth_x) * FrameTime() * 10)
+		smooth_y = smooth_y + ((y - smooth_y) * FrameTime() * 10)
+
+		battlecam.cam_rotation_velocity.y = smooth_x / 60
+		battlecam.cam_rotation_velocity.x = smooth_y / 60
+
+		return true
+	end
+
 	local smooth_forward = 0
 	local reset_forward = false
 
