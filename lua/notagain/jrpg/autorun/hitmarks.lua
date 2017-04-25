@@ -243,34 +243,13 @@ if CLIENT then
 				local t = RealTime()
 				local fraction = (data.time - t) / life_time * 2
 
-				local name
-
-				if ent:IsPlayer() then
-					name = ent:Nick()
-				else
-					name = ent:GetClass()
-
-					local npcs = ents.FindByClass(name)
-					if npcs[2] then
-						for i, other in ipairs(npcs) do
-							other.hm_letter = string.char(64 + i%26)
-						end
-					end
-
-					if language.GetPhrase(name) then
-						name = language.GetPhrase(name)
-					end
-
-					if ent.hm_letter then
-						name = name .. " " .. ent.hm_letter
-					end
-				end
+				local name = jrpg.GetFriendlyName(ent)
 
 				local world_pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2))
 				local pos = world_pos:ToScreen()
 				local dist = world_pos:Distance(EyePos())
 				local scale = (ent:GetModelScale() or 1)
-				local radius = ent:BoundingRadius() * 10
+				local radius = ent:BoundingRadius() * 7
 				local max_distance = scale * radius
 				fraction = fraction * ((-(dist / max_distance)+1) ^ 2)
 

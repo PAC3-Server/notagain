@@ -159,7 +159,7 @@ do
 		c.b = c.b/3
 		c.a = 255
 
-		prettytext.Draw(ply.Nick and ply:Nick() or language.GetPhrase(ply:GetClass()) or ply:GetClass(), x + 10, y, "gabriola", 30, 0, 3, Color(255, 255, 255, 255*alpha), c, nil, -0.25)
+		prettytext.Draw(jrpg.GetFriendlyName(ply), x + 10, y, "gabriola", 30, 0, 3, Color(255, 255, 255, 255*alpha), c, nil, -0.25)
 
 		y = y + 15
 
