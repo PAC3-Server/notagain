@@ -120,7 +120,7 @@ function battlecam.CreateCrosshair()
 		local c = Vector(GetConVarString("cl_weaponcolor")) * 1.5
 
 		if battlecam.selected_enemy:IsValid() then
-			if battlecam.selected_enemy:IsPlayer() and battlecam.selected_enemy:GetFriendStatus() == "friend" then
+			if jrpg.IsFriend(battlecam.selected_enemy) then
 				c = Vector(0.5,1,0.5)*2
 			else
 				c = Vector(1,0.5,0.5)*2
@@ -425,7 +425,7 @@ do -- selection
 					local ents = ents.FindInSphere(battlecam.cam_pos, 1000)
 					for _, val in ipairs(ents) do
 						if
-							(val:IsNPC() or (val:IsPlayer() and val ~= ply and val:GetFriendStatus() ~= "friend")) and
+							not jrpg.IsFriend(val) and
 							val ~= target and
 							not util.TraceLine({start = ply:EyePos(), endpos = val:EyePos(), filter = ents}).Hit
 						then
@@ -510,7 +510,7 @@ do -- selection
 				for _, val in ipairs(ents) do
 					if
 						not val.battlecam_probably_dead and
-						(val:IsNPC() or (val:IsPlayer() and val ~= ply and val:GetFriendStatus() ~= "friend")) and
+						not jrpg.IsFriend(val) and
 						not util.TraceLine({start = ply:EyePos(), endpos = val:EyePos(), filter = ents}).Hit
 					then
 						table.insert(found, val)
