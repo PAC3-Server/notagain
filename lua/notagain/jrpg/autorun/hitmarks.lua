@@ -398,7 +398,7 @@ if CLIENT then
 					local bg
 					local fg
 
-					if ent == ply or (ent:IsPlayer() and (ent:GetFriendStatus() == "friend")) then
+					if ent == ply or jrpg.IsFriend(ent) then
 						fg = Color(200, 220, 255, 255 * fade)
 						bg = Color(25, 75, 150, 255 * fade)
 					else
