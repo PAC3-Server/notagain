@@ -144,7 +144,6 @@ function battlecam.Disable()
 
 	battlecam.enabled = false
 
-	battlecam.DestroyHUD()
 	cvar:SetInt(0)
 end
 
