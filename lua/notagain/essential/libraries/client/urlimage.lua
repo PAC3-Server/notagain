@@ -791,7 +791,7 @@ function urlimage.URLMaterial(url)
 	local mat,w,h = urlimage.GetURLImage(url)
 	local function setmat()
 		surface.SetMaterial(mat)
-		return w,h
+		return w,h,mat
 	end
 
 	if mat then
