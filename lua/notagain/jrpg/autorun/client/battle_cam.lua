@@ -74,31 +74,6 @@ function battlecam.LimitAngles(pos, dir, fov, prevpos)
 end
 
 
-function battlecam.FindHeadPos(ent)
-	if not ent.bc_head or ent.bc_last_mdl ~= ent:GetModel() then
-		for i = 0, ent:GetBoneCount() do
-			local name = ent:GetBoneName(i):lower()
-			if name:find("head") then
-				ent.bc_head = i
-				ent.bc_last_mdl = ent:GetModel()
-				break
-			end
-		end
-	end
-
-	if ent.bc_head then
-		local m = ent:GetBoneMatrix(ent.bc_head)
-		if m then
-			local pos = m:GetTranslation()
-			if pos ~= ent:GetPos() then
-				return pos
-			end
-		end
-	end
-
-	return ent:EyePos(), ent:EyeAngles()
-end
-
 local cvar = CreateClientConVar("battlecam_enabled", "0", false, true)
 
 function battlecam.Enable()
@@ -208,7 +183,7 @@ do -- view
 				local ply_pos = ply:EyePos()
 
 				local dist = math.min((enemy_size/4)/ent:NearestPoint(ply:GetPos()):Distance(ply:NearestPoint(ent:GetPos())), 1)
-				local ent_pos = LerpVector(math.max(dist, 0.5), battlecam.FindHeadPos(ent), ent:NearestPoint(ent:EyePos()))
+				local ent_pos = LerpVector(math.max(dist, 0.5), jrpg.FindHeadPos(ent), ent:NearestPoint(ent:EyePos()))
 
 				local offset = ent_pos - ply_pos
 
@@ -430,8 +405,6 @@ do
 ]]
 		if not ply:Alive() or vgui.CursorVisible() then return end
 
-		local ent = jtarget.GetEntity(ply)
-
 		if battlecam.last_select < RealTime() then
 			if input.IsKeyDown(KEY_LEFT) or input.IsButtonDown(KEY_XBUTTON_LEFT) then
 				battlecam.weapon_i = battlecam.weapon_i + 1
@@ -483,12 +456,14 @@ do
 
 				ucmd:SetForwardMove(10000)
 				ucmd:SetSideMove(0)
+
+				if pac and pac.CreateMove then pac.CreateMove(ucmd) end
+
+				return true
 			end
 		end
 
-		if pac and pac.CreateMove then
-			pac.CreateMove(ucmd)
-		end
+		if pac and pac.CreateMove then pac.CreateMove(ucmd) end
 	end
 end
 
