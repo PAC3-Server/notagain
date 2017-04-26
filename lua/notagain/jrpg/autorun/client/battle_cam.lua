@@ -421,6 +421,8 @@ do
 			end
 		end
 
+		local ent = jtarget.GetEntity(ply)
+
 		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and (not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) then
 
 			local dir = Vector()

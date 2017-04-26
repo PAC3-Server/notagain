@@ -11,6 +11,7 @@ if CLIENT then
 		local ents = ents.FindInSphere(EyePos(), 1000)
 		for _, val in ipairs(ents) do
 			if
+				(not val:IsNPC() or not val.jtarget_probably_dead) and
 				(val:IsNPC() or (val:IsPlayer() and val ~= ply)) and
 				((friends_only and jrpg.IsFriend(val)) or (not friends_only and not jrpg.IsFriend(val))) and
 				val ~= prev_target and
@@ -269,6 +270,18 @@ if CLIENT then
 		local ang = get_aim_angles(LocalPlayer())
 
 		if ang then
+
+			local ent = jtarget.GetEntity(LocalPlayer())
+
+			for _, val in ipairs(ents.FindInSphere(ent:GetPos(), 500)) do
+				if val:GetRagdollOwner() == ent then
+					jtarget.SetEntity(LocalPlayer())
+					jtarget.StartSelection()
+					ent.jtarget_probably_dead = true
+					return
+				end
+			end
+
 			mv:SetViewAngles(ang)
 		end
 	end)
