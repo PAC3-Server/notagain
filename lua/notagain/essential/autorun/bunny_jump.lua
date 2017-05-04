@@ -1,4 +1,10 @@
 local default = 1.5
+local hook_key = "bhop"
+
+if SERVER then
+	util.AddNetworkString(hook_key.."_effect")
+	util.AddNetworkString(hook_key)
+end
 
 do
 	local META = FindMetaTable("Player")
@@ -7,9 +13,9 @@ do
 		self.super_jump_multiplier = mult
 
 		if SERVER and not dont_update_client then
-			umsg.Start("bhop", self)
-				umsg.Float(mult)
-			umsg.End()
+			net.Start(hook_key)
+				net.WriteFloat(mult)
+			net.Send(self)
 		end
 
 		self:SetDuckSpeed(0.05)
@@ -44,7 +50,7 @@ local function play_effect(ply, fraction, origin, normal)
 end
 
 if CLIENT then
-	net.Receive("bhop_effect", function(len)
+	net.Receive(hook_key.."_effect", function(len)
 		local ply = net.ReadEntity()
 		if ply:IsValid() then
 			local fraction = net.ReadFloat()
@@ -55,15 +61,13 @@ if CLIENT then
 		end
 	end)
 
-	usermessage.Hook("bhop", function(u)
-		LocalPlayer():SetSuperJumpMultiplier(u:ReadFloat())
+	net.Receive(hook_key, function()
+		LocalPlayer():SetSuperJumpMultiplier(net.ReadFloat())
 	end)
 end
 
 if SERVER then
-	util.AddNetworkString("bhop_effect")
-
-	hook.Add("GetFallDamage", "bhop", function(ply, speed)
+	hook.Add("GetFallDamage", hook_key, function(ply, speed)
 		if ply:KeyDown(IN_JUMP) then
 			return 0
 		end
@@ -78,7 +82,7 @@ local function send_effect(ply, fraction, origin, normal)
 	end
 
 	if SERVER then
-		net.Start("bhop_effect", true)
+		net.Start(hook_key.."_effect", true)
 			net.WriteEntity(ply)
 			net.WriteFloat(fraction)
 			net.WriteVector(origin)
@@ -87,7 +91,7 @@ local function send_effect(ply, fraction, origin, normal)
 	end
 end
 
-hook.Add("Move", "bhop", function(ply, data)
+hook.Add("Move", hook_key, function(ply, data)
 	if ply:GetMoveType() ~= MOVETYPE_WALK then return end
 
 	local mult = ply:GetSuperJumpMultiplier()
@@ -142,7 +146,7 @@ hook.Add("Move", "bhop", function(ply, data)
 	end
 end)
 
-hook.Add("Initialize", "bhop", function()
+hook.Add("Initialize", hook_key, function()
 	function GAMEMODE:StartMove() end
 	function GAMEMODE:FinishMove() end
 
@@ -151,5 +155,5 @@ hook.Add("Initialize", "bhop", function()
 		RunConsoleCommand("sv_maxvelocity", "20000")
 	end
 
-	hook.Remove("Initialize","bhop")
+	hook.Remove("Initialize",hook_key)
 end)
