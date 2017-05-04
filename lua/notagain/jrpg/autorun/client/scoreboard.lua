@@ -456,8 +456,8 @@ local SCORE_BOARD = {
 
             if ( IsValid( ScoreEntries[pl:UniqueID()] ) ) then continue end
 
-            local line = vgui.CreateFromTable( PLAYER_LINE )
-            line:Setup( pl, pl:GetFriendStatus() == "friend" or pl == LocalPlayer() )
+            local line = vgui.CreateFromTable(PLAYER_LINE)
+            line:Setup(pl, jrpg.IsFriend(pl))
 
 			if line.Friend then
 				self.ScoresLeft:Add( line )

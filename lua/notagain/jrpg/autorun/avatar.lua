@@ -2,6 +2,7 @@ avatar = avatar or {}
 
 avatar.avatars = avatar.avatars or {}
 avatar.steam_avatars = avatar.steam_avatars or {}
+avatar.npc_avatars = avatar.npc_avatars or {}
 
 if CLIENT then
 	local urlimage = requirex("urlimage")
@@ -131,6 +132,18 @@ if CLIENT then
 			cam.PushModelMatrix(m)
 			surface.DrawTexturedRect(0, 0, w, h)
 			cam.PopModelMatrix()
+		elseif ply:IsNPC() then
+			if not avatar.npc_avatars[ply] then
+				avatar.npc_avatars[ply] = Material("entities/" .. ply:GetClass() .. ".png")
+			end
+
+			local x, y = x-size/2,y-size/2
+
+			surface.SetMaterial(avatar.npc_avatars[ply])
+			surface.DrawTexturedRect(x, y, size, size)
+
+			surface.SetMaterial(border)
+			draw_rect(x,y,size,size, 0, 4, 70, 5, border:GetTexture("$BaseTexture"):Width(), true)
 		else
 			if not avatar.steam_avatars[ply] then
 				local pnl = vgui.Create("AvatarImage")
