@@ -1,8 +1,3 @@
-local function GetFallDamage(ply, len)
-	ply.fdmg_read = true
-	return hook.Run("GetFallDamage", ply, len) 
-end
-
 hook.Add("Move", "realistic_falldamage", function(ply, data)
 	local vel = data:GetVelocity()
 
@@ -22,19 +17,21 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 			local z = math.abs(res.HitNormal.z)
 
 			if res.Hit and (z < 0.1 or z > 0.9) then
-				local fall_damage = GetFallDamage(ply, len) -- Prepare Override & Check Expected Fall Damage
+				local fall_damage = hook.Run("GetFallDamage", ply, len) -- Prepare Override & Check Expected Fall Damage
 				if fall_damage <= 0 then return end
 
+				local world = game.GetWorld()
 				local pos = data:GetOrigin()
 				local info = DamageInfo()
+
 				info:SetDamagePosition(pos)
 				info:SetDamage(dmg)
 				info:SetDamageType(DMG_FALL)
-				info:SetAttacker(Entity(0))
-				info:SetInflictor(Entity(0))
+				info:SetAttacker(world)
+				info:SetInflictor(world)
 				info:SetDamageForce(ply.fdmg_last_vel)
 
-				if hook.Run("RealisticFallDamage", ply, info, len, dmg, fall_damage, res, params) ~= true then
+				if hook.Run("RealisticFallDamage", ply, info, len, fall_damage, res, params) ~= true then
 					ply:TakeDamageInfo(info)
 				end
 			end
@@ -44,12 +41,13 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 	ply.fdmg_last_vel = vel
 end)
 
-hook.Add("EntityTakeDamage", "realistic_falldamage", function(ply, di)
-	if di:IsFallDamage() then
-		if ply.fdmg_read then
-			ply.fdmg_read = nil
-		else
-			return true
+--- Supress Engine Fall Damage
+
+hook.Add("EntityTakeDamage", "realistic_falldamage", function(ply, dmginfo)
+	if dmginfo:IsFallDamage() then
+		local dbug = debug.getinfo(3)
+		if (not dbug) or dbug.what ~= "C" then
+			return true 
 		end
 	end
 end)
