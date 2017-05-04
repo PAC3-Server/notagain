@@ -110,17 +110,12 @@ end
 if SERVER then
 	util.AddNetworkString("rockfall_death")
 
-	hook.Add("RealisticFallDamage", "rockfall_death", function(ply, pos, dmg, speed, trace_res, trace_params)
+	hook.Add("RealisticFallDamage", "rockfall_death", function(ply, info, speed, dmg, fall_dmg, trace_res, trace_params)
 		if speed < 2000 then return end
 
-		local info = DamageInfo()
-		info:SetDamagePosition(pos)
-		info:SetDamage(dmg)
-		info:SetDamageType(DMG_FALL)
-		info:SetAttacker(Entity(0))
-		info:SetInflictor(Entity(0))
 		info:SetDamageForce(Vector(0,0,0))
-		ply:TakeDamageInfo(info)
+		local pos = info:GetDamagePosition()
+
 		net.Start("rockfall_death", true)
 			net.WriteEntity(ply)
 			net.WriteVector(pos)
@@ -147,7 +142,5 @@ if SERVER then
 				end
 			end
 		end)
-
-		return true
 	end)
 end
