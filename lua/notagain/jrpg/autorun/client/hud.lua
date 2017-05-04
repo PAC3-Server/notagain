@@ -1,3 +1,5 @@
+jhud = jhud or {}
+
 local draw_rect = requirex("draw_skewed_rect")
 local prettytext = requirex("pretty_text")
 
@@ -89,6 +91,117 @@ local function draw_bar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, cente
 
 	if txt then
 		prettytext.Draw(txt, x, y, "gabriola", health_height*2, 0, 3, Color(230, 230, 230, 255), Color(r/5,g/5,b/5,255), -1.3, -0.3)
+	end
+end
+
+do
+	local width = 100
+	local spacing = 3
+	local color_white = Color(255, 255, 255, 255)
+
+	function jhud.DrawInfoSmall(ply, x, y, alpha, color)
+		alpha = alpha or 1
+		color = color or color_white
+
+		if true then
+			surface.DisableClipping(true)
+			render.ClearStencil()
+			render.SetStencilEnable(true)
+			render.SetStencilWriteMask(255)
+			render.SetStencilTestMask(255)
+			render.SetStencilReferenceValue(15)
+			render.SetStencilFailOperation(STENCILOPERATION_KEEP)
+			render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
+			render.SetStencilPassOperation(STENCILOPERATION_REPLACE)
+			render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_ALWAYS)
+			render.SetBlend(0)
+				surface.SetDrawColor(0,0,0,1)
+				draw.NoTexture()
+				surface.DrawRect(x-width-100,y-width, width + 200, width+70)
+			render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
+		end
+
+		surface.SetAlphaMultiplier(alpha)
+
+		do
+			local cur = ply:Health()
+			local max = ply:GetMaxHealth()
+			local critical = (cur/max)
+			if critical < 0.5 then
+				critical = critical + math.sin(os.clock() * (2/critical))*0.5+0.5
+				critical = critical ^ 0.5
+			else
+				critical = 1
+			end
+
+			local lost = 0
+
+			if smoothers["health"..ply:EntIndex()] then
+				lost = math.max(smoothers["health"..ply:EntIndex()] - math.max(ply:Health(), 0), 0)
+			end
+
+			lost = lost + 1
+			x = x + math.Rand(-1,1) * (lost-1)
+			y = y + math.Rand(-1,1) * (lost-1)
+			surface.SetDrawColor(255,critical*255/lost,critical*255/lost,255)
+
+			avatar.Draw(ply, x-80,y+15, width/1.5)
+		end
+
+		local health_height = 8
+
+		x = x - 50
+		y = y + 20
+
+		local c = color or team.GetColor(TEAM_FRIENDS)
+		c.r = c.r/3
+		c.g = c.g/3
+		c.b = c.b/3
+		c.a = 255
+
+		prettytext.Draw(jrpg.GetFriendlyName(ply), x + 10, y, "gabriola", 30, 0, 3, Color(255, 255, 255, 255*alpha), c, nil, -0.25)
+
+		y = y + 15
+
+		surface.SetAlphaMultiplier(alpha)
+
+		do
+			local real_cur = ply:Health()
+			local cur = smooth(math.max(real_cur, 0), "health"..ply:EntIndex())
+			local max = ply:GetMaxHealth()
+
+			draw_bar(x, y, width,health_height,cur,max,border_size, 50,160,50)
+
+			y = y + health_height + spacing
+			x = x + skew/4
+		end
+
+		if jattributes.HasMana(ply) then
+			local real_cur = math.Round(jattributes.GetMana(ply))
+			local cur = smooth(real_cur, "mana"..ply:EntIndex())
+			local max = jattributes.GetMaxMana(ply)
+
+			draw_bar(x,y,width,health_height,cur,max,border_size, 50,50,175)
+
+			y = y + health_height + spacing
+			x = x + skew/4
+		end
+
+		if jattributes.HasStamina(ply) then
+			local real_cur = jattributes.GetStamina(ply)
+			local cur = smooth(real_cur, "stamina"..ply:EntIndex())
+			local max = jattributes.GetMaxStamina(ply)
+
+			draw_bar(x,y,width,health_height,cur,max,border_size, 150,150,50)
+
+			y = y + health_height + spacing
+			x = x + skew/4
+		end
+
+		surface.SetAlphaMultiplier(1)
+
+		surface.DisableClipping(false)
+		render.SetStencilEnable(false)
 	end
 end
 
@@ -260,107 +373,11 @@ hook.Add("HUDPaint", "jhud", function()
 
 	if ply:GetNWBool("rpg") then
 		for _, ply in ipairs(player.GetAll()) do
-			if (ply:GetFriendStatus() == "friend" or ply:GetFriendStatus() == "requested") and ply:GetNWBool("rpg") and ply:GetPos():Distance(LocalPlayer():GetPos()) < 1000 then
+			if jrpg.IsFriend(ply) and ply ~= LocalPlayer() and ply:GetNWBool("rpg") and ply:GetPos():Distance(LocalPlayer():GetPos()) < 1000 then
 				local x = ScrW() - 200 * i - 75
 				local y = ScrH() - 100
 
-				local width = 100
-				local spacing = 3
-
-				if true then
-					surface.DisableClipping(true)
-					render.ClearStencil()
-					render.SetStencilEnable(true)
-					render.SetStencilWriteMask(255)
-					render.SetStencilTestMask(255)
-					render.SetStencilReferenceValue(15)
-					render.SetStencilFailOperation(STENCILOPERATION_KEEP)
-					render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
-					render.SetStencilPassOperation(STENCILOPERATION_REPLACE)
-					render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_ALWAYS)
-					render.SetBlend(0)
-						surface.SetDrawColor(0,0,0,1)
-						draw.NoTexture()
-						surface.DrawRect(x-width-100,y-width, width + 200, width+70)
-					render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
-				end
-
-				do
-					local cur = ply:Health()
-					local max = ply:GetMaxHealth()
-					local critical = (cur/max)
-					if critical < 0.5 then
-						critical = critical + math.sin(os.clock() * (2/critical))*0.5+0.5
-						critical = critical ^ 0.5
-					else
-						critical = 1
-					end
-
-					local lost = 0
-
-					if smoothers["health"..ply:EntIndex()] then
-						lost = math.max(smoothers["health"..ply:EntIndex()] - math.max(ply:Health(), 0), 0)
-					end
-
-					lost = lost + 1
-					x = x + math.Rand(-1,1) * (lost-1)
-					y = y + math.Rand(-1,1) * (lost-1)
-					surface.SetDrawColor(255,critical*255/lost,critical*255/lost,255)
-
-					avatar.Draw(ply, x-80,y+15, width/1.5)
-				end
-
-				local health_height = 8
-
-				x = x - 50
-				y = y + 20
-
-				local c = team.GetColor(TEAM_FRIENDS)
-				c.r = c.r/5
-				c.g = c.g/5
-				c.b = c.b/5
-				c.a = 255
-
-				prettytext.Draw(ply:Nick(), x + 10, y, "gabriola", 30, 0, 3, Color(255, 255, 255, 255), c, nil, -0.25)
-
-				y = y + 15
-
-
-				do
-					local real_cur = ply:Health()
-					local cur = smooth(math.max(real_cur, 0), "health"..ply:EntIndex())
-					local max = ply:GetMaxHealth()
-
-					draw_bar(x, y, width,health_height,cur,max,border_size, 50,160,50)
-
-					y = y + health_height + spacing
-					x = x + skew/4
-				end
-
-				if jattributes.HasMana(ply) then
-					local real_cur = math.Round(jattributes.GetMana(ply))
-					local cur = smooth(real_cur, "mana"..ply:EntIndex())
-					local max = jattributes.GetMaxMana(ply)
-
-					draw_bar(x,y,width,health_height,cur,max,border_size, 50,50,175)
-
-					y = y + health_height + spacing
-					x = x + skew/4
-				end
-
-				if jattributes.HasStamina(ply) then
-					local real_cur = jattributes.GetStamina(ply)
-					local cur = smooth(real_cur, "stamina"..ply:EntIndex())
-					local max = jattributes.GetMaxStamina(ply)
-
-					draw_bar(x,y,width,health_height,cur,max,border_size, 150,150,50)
-
-					y = y + health_height + spacing
-					x = x + skew/4
-				end
-
-				surface.DisableClipping(false)
-				render.SetStencilEnable(false)
+				jhud.DrawInfoSmall(ply, x, y)
 
 				i = i + 1
 			end
