@@ -648,7 +648,7 @@ do -- effects
 			wepstats.Register(META)
 		end
 
-		local function basic_elemental(name, type, on_damage, adjectives, names)
+		local function basic_elemental(name, type, on_damage, adjectives, names, dont_copy)
 			local META = {}
 			META.ClassName = name
 			META.Positive = true
@@ -662,7 +662,9 @@ do -- effects
 			end
 
 			function META:OnDamage(attacker, victim, dmginfo)
-				dmginfo = self:CopyDamageInfo(dmginfo)
+				if type ~= JDMG_HEAL then
+					dmginfo = self:CopyDamageInfo(dmginfo)
+				end
 				dmginfo:SetDamageCustom(type)
 				dmginfo:SetDamage(dmginfo:GetDamage() * self:GetStatusMultiplier())
 
