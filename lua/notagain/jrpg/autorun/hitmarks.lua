@@ -746,6 +746,8 @@ if SERVER then
 			end
 		end
 
+		--if jdmg.GetDamageType(dmg) == "heal" then return end
+
 		local last_health = ent:Health()
 		local health = -dmg:GetDamage()
 		local pos = dmg:GetDamagePosition()
