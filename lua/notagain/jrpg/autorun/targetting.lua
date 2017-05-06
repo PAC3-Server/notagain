@@ -43,6 +43,7 @@ if CLIENT then
 	function jtarget.Scroll(delta)
 		local ply = LocalPlayer()
 		local prev_target = jtarget.GetEntity(ply)
+		jtarget.prev_target = prev_target
 		local targets = jtarget.GetTargetsOnScreen(prev_target:IsValid() and prev_target, input.IsKeyDown(KEY_LSHIFT))
 
 		if delta > 0 then
@@ -134,7 +135,11 @@ if CLIENT then
 				f = f * 7
 				f = f ^ 2
 
-				--offset = f*180*-jtarget.scroll_dir
+				if jtarget.prev_target:IsValid() then
+					current_target = jtarget.prev_target
+				end
+
+--				offset = f*180*-jtarget.scroll_dir
 			end
 
 			local targets = jtarget.GetTargetsOnScreen(current_target, input.IsKeyDown(KEY_LSHIFT))
@@ -164,22 +169,12 @@ if CLIENT then
 				jhud.DrawInfoSmall(info.ent, offset + pos.x + i * 160 + 30, pos.y - 50, -(i / #targets.right - 0.8 ^ 5) + 1, jrpg.IsFriend(info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
 				--draw_world_target(info.pos.x, info.pos.y, 0.25)
 			end
-
-			if next_scroll < RealTime() then
-				if input.IsKeyDown(KEY_LEFT) then
-					jtarget.Scroll(-1)
-					next_scroll = RealTime() + 0.15
-				end
-
-				if input.IsKeyDown(KEY_RIGHT) then
-					jtarget.Scroll(1)
-					next_scroll = RealTime() + 0.15
-				end
-			end
 		end
 	end
 
 	function jtarget.StartSelection()
+		if jtarget.selecting then return end
+
 		jtarget.selecting = true
 		jtarget.Scroll(1)
 		jtarget.Scroll(-1)
@@ -196,18 +191,6 @@ if CLIENT then
 	end
 
 	hook.Add("HUDPaint", "jtarget", jtarget.DrawSelection)
-
-	hook.Add("OnContextMenuOpen", "jtarget", function()
-		if LocalPlayer():GetNWBool("rpg") then
-			jtarget.StartSelection()
-		end
-	end)
-
-	hook.Add("OnContextMenuClose", "jtarget", function()
-		if LocalPlayer():GetNWBool("rpg") then
-			jtarget.StopSelection()
-		end
-	end)
 end
 
 jtarget.prev_target = NULL

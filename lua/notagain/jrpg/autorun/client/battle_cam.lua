@@ -19,7 +19,7 @@ local joystick_remap = {
 	[KEY_XSTICK1_RIGHT] = IN_MOVERIGHT,
 
 	[KEY_XBUTTON_RTRIGGER] = IN_ATTACK,
-	[KEY_XBUTTON_LTRIGGER] = IN_ATTACK2,
+	[KEY_XBUTTON_RIGHT_SHOULDER] = IN_ATTACK2,
 }
 
 local mouse_buttons = {
@@ -38,18 +38,24 @@ end
 function battlecam.IsKeyDown(key)
 	if key == "target" then
 		return input.IsButtonDown(KEY_XBUTTON_STICK2) or input.IsMouseDown(MOUSE_MIDDLE)
-	elseif key == "select_left" then
-		if battlecam.select_left then
+	elseif key == "select_target_left" then
+		return input.IsButtonDown(KEY_XBUTTON_LEFT)
+	elseif key == "select_target_right" then
+		return input.IsButtonDown(KEY_XBUTTON_RIGHT)
+	elseif key == "select_prev_weapon" then
+		if battlecam.select_prev_weapon then
 			return true
 		end
-		return input.IsKeyDown(KEY_LEFT) or input.IsButtonDown(KEY_XBUTTON_LEFT)
-	elseif key == "select_right" then
-		if battlecam.select_right then
+		return input.IsKeyDown(KEY_UP) or input.IsButtonDown(KEY_XBUTTON_UP)
+	elseif key == "select_next_weapon" then
+		if battlecam.select_next_weapon then
 			return true
 		end
-		return input.IsKeyDown(KEY_RIGHT) or input.IsButtonDown(KEY_XBUTTON_RIGHT)
+		return input.IsKeyDown(KEY_DOWN) or input.IsButtonDown(KEY_XBUTTON_DOWN)
 	elseif key == "attack" then
 		return input.IsButtonDown(KEY_XBUTTON_RTRIGGER) or input.IsButtonDown(KEY_XBUTTON_LTRIGGER)
+	elseif key == "shield" then
+		return input.IsButtonDown(KEY_XBUTTON_LTRIGGER)
 	end
 end
 
@@ -145,6 +151,8 @@ do -- view
 
 	local last_pos = Vector()
 
+	battlecam.last_target_select = 0
+
 	function battlecam.CalcView()
 		local ply = LocalPlayer()
 		battlecam.aim_pos = ply:GetShootPos()
@@ -167,14 +175,32 @@ do -- view
 
 		local lerp_thing = 0
 
+		if battlecam.last_target_select < RealTime() then
+			if battlecam.IsKeyDown("select_target_left") then
+				jtarget.Scroll(-1)
+				battlecam.last_target_select = RealTime() + 0.15
+			elseif battlecam.IsKeyDown("select_target_right") then
+				jtarget.Scroll(1)
+				battlecam.last_target_select = RealTime() + 0.15
+			end
+		end
+
 		-- do a more usefull and less cinematic view if we're holding ctrl
-		if (input.IsButtonDown(KEY_PAD_5) or input.IsMouseDown(MOUSE_MIDDLE) or input.IsButtonDown(KEY_XBUTTON_STICK2)) and not jtarget.GetEntity(ply):IsValid() then
+		if battlecam.IsKeyDown("target") then
 			battlecam.aim_dir = ply:GetAimVector()
 			target_dir = battlecam.aim_dir * 1
 			target_pos = target_pos + battlecam.aim_dir * - 175
 
 			delta = delta * 2
+
+			if jtarget then
+				jtarget.StartSelection()
+			end
 		else
+			if jtarget then
+				jtarget.StopSelection()
+			end
+
 			local ent = jtarget.GetEntity(ply)
 
 			if ent:IsValid() then
@@ -398,6 +424,16 @@ do
 			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
 		end
 
+		if battlecam.IsKeyDown("shield") then
+			if not ply:GetNWEntity("shield"):IsValid() then
+				RunConsoleCommand("+jshield")
+			end
+		else
+			if ply:GetNWEntity("shield"):IsValid() then
+				RunConsoleCommand("-jshield")
+			end
+		end
+
 --[[
 		if ucmd:KeyDown(IN_SPEED) and ply:GetVelocity() == vector_origin then
 			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_USE))
@@ -406,10 +442,10 @@ do
 		if not ply:Alive() or vgui.CursorVisible() then return end
 
 		if battlecam.last_select < RealTime() then
-			if input.IsKeyDown(KEY_LEFT) or input.IsButtonDown(KEY_XBUTTON_LEFT) then
+			if battlecam.IsKeyDown("select_prev_weapon") then
 				battlecam.weapon_i = battlecam.weapon_i + 1
 				battlecam.last_select = RealTime() + 0.15
-			elseif input.IsKeyDown(KEY_RIGHT) or input.IsButtonDown(KEY_XBUTTON_RIGHT) then
+			elseif battlecam.IsKeyDown("select_next_weapon") then
 				battlecam.weapon_i = battlecam.weapon_i - 1
 				battlecam.last_select = RealTime() + 0.15
 			end
