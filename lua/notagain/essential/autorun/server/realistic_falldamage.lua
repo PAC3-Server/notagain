@@ -33,6 +33,8 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 
 				if hook.Run("RealisticFallDamage", ply, info, len, fall_damage, res, params) ~= true then
 					ply:TakeDamageInfo(info)
+
+					hook.Run("PostRealisticFallDamage", ply, info, len, fall_damage, res, params)
 				end
 			end
 		end
@@ -47,7 +49,7 @@ hook.Add("EntityTakeDamage", "realistic_falldamage", function(ply, dmginfo)
 	if dmginfo:IsFallDamage() then
 		local dbug = debug.getinfo(3)
 		if (not dbug) or dbug.what ~= "C" then
-			return true 
+			return true
 		end
 	end
 end)
