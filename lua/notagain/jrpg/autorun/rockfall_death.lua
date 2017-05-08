@@ -110,8 +110,8 @@ end
 if SERVER then
 	util.AddNetworkString("rockfall_death")
 
-	hook.Add("RealisticFallDamage", "rockfall_death", function(ply, info, speed, dmg, fall_dmg, trace_res, trace_params)
-		if speed < 2000 then return end
+	hook.Add("RealisticFallDamage", "rockfall_death", function(ply, info, dmg, fall_dmg, trace_res, trace_params)
+		if ply:GetVelocity():Length() < 2000 then return end
 
 		info:SetDamageForce(Vector(0,0,0))
 		local pos = info:GetDamagePosition()
