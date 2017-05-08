@@ -125,7 +125,7 @@ if SERVER then
 		if not trace_res.HitNormal or trace_res.HitNormal.z ~= 1 then return end
 		
 		local dmg = info:GetDamage()
-		if dmg > ply:GetMaxHealth()*2 then return end
+		if dmg < ply:GetMaxHealth()*2 then return end
 
 		ply:SetSequence(ply:LookupSequence("death_04"))
 		ply:SetCycle(0.97)
