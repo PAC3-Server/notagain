@@ -13,11 +13,8 @@ local DoorFunctions = {
 	end,
 	
 	["func_movelinear"] = function( self )
-		
-		local PreState = self:GetSaveTable().m_toggle_state
-		self:GetSaveTable().m_toggle_state = (self:GetSaveTable().m_toggle_state == 0 and 1 or 0)
-		
-		return ( PreState == 0 )
+
+		return ( self:GetSaveTable().m_toggle_state == 0 )
 	
 	end,
 	
