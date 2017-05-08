@@ -122,7 +122,7 @@ if SERVER then
 	util.AddNetworkString("darksouls_death")
 
 	hook.Add("RealisticFallDamage", "darksouls_death", function(ply, info, speed, dmg, fall_dmg, trace_res, trace_params)
-		if trace_res.HitNormal.z ~= 1 then return end
+		if not trace_res.HitNormal or trace_res.HitNormal.z ~= 1 then return end
 		if dmg > ply:GetMaxHealth()*2 then return end
 
 		ply:SetSequence(ply:LookupSequence("death_04"))
