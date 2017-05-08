@@ -112,6 +112,7 @@ if SERVER then
 
 	hook.Add("RealisticFallDamage", "rockfall_death", function(ply, info, speed, dmg, fall_dmg, trace_res, trace_params)
 		if speed < 2000 then return end
+		if not trace_res.HitNormal then return end
 
 		info:SetDamageForce(Vector(0,0,0))
 		local pos = info:GetDamagePosition()
