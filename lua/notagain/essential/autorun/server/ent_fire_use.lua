@@ -13,9 +13,9 @@ local DoorFunctions = {
 	end,
 	
 	["func_movelinear"] = function( self )
-		
-		return (self:GetSaveTable().m_toggle_state == 0)
-		
+
+		return ( self:GetSaveTable().m_toggle_state == 0 )
+	
 	end,
 	
 	["prop_door_rotating"] = function( self )

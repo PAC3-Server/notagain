@@ -406,25 +406,42 @@ hook.Add("SetupMove", "shield", function(ply, ucmd)
 end)
 
 if SERVER then
-	hook.Add("KeyPress", "shield", function(ply, key)
-		if key ~= IN_WALK then return end
-		for k,v in pairs(ply:GetWeapons()) do
-			if v.is_shield and ply:GetActiveWeapon() ~= v then
-				v:ShowShield()
-				break
+	function EnableShield(ply, b)
+		if b then
+			if ply:GetNWEntity("shield"):IsValid() then return end
+			for k,v in pairs(ply:GetWeapons()) do
+				if v.is_shield and ply:GetActiveWeapon() ~= v then
+					v:ShowShield()
+					break
+				end
+			end
+		else
+			if not ply:GetNWEntity("shield"):IsValid() then return end
+			for k,v in pairs(ply:GetWeapons()) do
+				if v.is_shield and ply:GetActiveWeapon() ~= v then
+					v:HideShield()
+					break
+				end
 			end
 		end
+	end
+
+	concommand.Add("+jshield", function(ply)
+		EnableShield(ply, true)
+	end)
+
+	concommand.Add("-jshield", function(ply)
+		EnableShield(ply, false)
+	end)
+
+	hook.Add("KeyPress", "shield", function(ply, key)
+		if key ~= IN_WALK then return end
+		EnableShield(ply, true)
 	end)
 
 	hook.Add("KeyRelease", "shield", function(ply, key)
 		if key ~= IN_WALK then return end
-
-		for k,v in pairs(ply:GetWeapons()) do
-			if v.is_shield and ply:GetActiveWeapon() ~= v then
-				v:HideShield()
-				break
-			end
-		end
+		EnableShield(ply, false)
 	end)
 
 	hook.Add("PostPlayerDeath", "shield", function(ply)

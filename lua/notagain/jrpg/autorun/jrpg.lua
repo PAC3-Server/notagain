@@ -46,7 +46,7 @@ end
 
 function jrpg.FindHeadPos(ent)
 	if not ent.bc_head or ent.bc_last_mdl ~= ent:GetModel() then
-		for i = 0, ent:GetBoneCount() do
+		for i = 0, ent:GetBoneCount() or 0 do
 			local name = ent:GetBoneName(i):lower()
 			if name:find("head") then
 				ent.bc_head = i

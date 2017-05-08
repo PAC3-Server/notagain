@@ -5,7 +5,7 @@ local function bounce(ent,vel)
 	end)
 end
 
-hook.Add("RealisticFallDamage", "goomba_stomp", function(ply, info, dmg, _, _, trace)
+hook.Add("RealisticFallDamage", "goomba_stomp", function(ply, info, dmg, _, trace, _)
 	local vel = ply.fdmg_last_vel or info:GetDamageForce()
 	if trace.HitNormal.z == 1 and vel.z < 0 then
 		if not trace.HitWorld and IsValid(trace.Entity) then
