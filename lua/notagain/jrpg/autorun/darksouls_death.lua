@@ -122,10 +122,8 @@ if SERVER then
 	util.AddNetworkString("darksouls_death")
 
 	hook.Add("RealisticFallDamage", "darksouls_death", function(ply, info, speed, fall_dmg, trace_res, trace_params)
-		if not trace_res.HitNormal or trace_res.HitNormal.z ~= 1 then return end
-		
-		local dmg = info:GetDamage()
-		if dmg < ply:GetMaxHealth()*2 then return end
+		if trace_res.HitNormal.z ~= 1 then return end
+		if info:GetDamage() > ply:GetMaxHealth()*2 then return end
 
 		ply:SetSequence(ply:LookupSequence("death_04"))
 		ply:SetCycle(0.97)
@@ -133,6 +131,7 @@ if SERVER then
 		info:SetDamageForce(Vector(0,0,0))
 
 		local rag = ply:GetNWEntity("serverside_ragdoll")
+
 		if rag:IsValid() then
 			local phys = rag:GetPhysicsObject()
 			phys:SetVelocity(Vector(0,0,0))
