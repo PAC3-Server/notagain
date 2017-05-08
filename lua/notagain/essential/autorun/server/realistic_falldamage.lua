@@ -31,7 +31,7 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 				info:SetInflictor(world)
 				info:SetDamageForce(ply.fdmg_last_vel)
 
-				if hook.Run("RealisticFallDamage", ply, info, dmg, fall_damage, res, params) ~= true then
+				if hook.Run("RealisticFallDamage", ply, info, len, fall_damage, res, params) ~= true then
 					ply:TakeDamageInfo(info)
 
 					hook.Run("PostRealisticFallDamage", ply, info, len, fall_damage, res, params)

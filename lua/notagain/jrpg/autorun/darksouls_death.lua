@@ -121,7 +121,7 @@ end
 if SERVER then
 	util.AddNetworkString("darksouls_death")
 
-	hook.Add("PostRealisticFallDamage", "darksouls_death", function(ply, info, speed, fall_dmg, trace_res, trace_params)
+	hook.Add("RealisticFallDamage", "darksouls_death", function(ply, info, speed, fall_dmg, trace_res, trace_params)
 		if trace_res.HitNormal.z ~= 1 then return end
 		if info:GetDamage() > ply:GetMaxHealth()*2 then return end
 
