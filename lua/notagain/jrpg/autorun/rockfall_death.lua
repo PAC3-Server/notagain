@@ -70,7 +70,13 @@ if CLIENT then
 					ent:SetPos(trace.HitPos)
 				end
 
-				local color = render.GetSurfaceColor(trace.HitPos + normal, trace.HitPos + (normal * -100))
+				local trace_check = trace.Hit and trace.HitTexture ~= "**empty**" -- Check if we're actually hitting a texture that exists.
+				local color = Vector(0,0,0)
+
+				if trace_check then 
+					color = render.GetSurfaceColor(trace.HitPos + normal, trace.HitPos + (normal * -100))
+				end
+				
 				ent:SetColor(Color(color.x*255, color.y*255, color.z*255))
 
 				local p = emitter:Add("particle/smokesprites_000" .. math.random(1,6), trace.HitPos)
