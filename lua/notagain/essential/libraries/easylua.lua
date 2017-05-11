@@ -385,6 +385,7 @@ function easylua.Start(ply)
 		end
 
 		vars.E = easylua.FindEntity
+		vars.T = function(val) local vals = {} for _,v in next, val.__index() do table.insert(vals,v.ent) end return vals end
 		vars.last = ply.easylua_lastvars
 
 
@@ -656,6 +657,7 @@ do -- all
 
 	all = CreateAllFunction(function(v) return v:IsPlayer() end)
 	us = CreateAllFunction(function(v) return table.HasValue(we, v) end)
+	them = CreateAllFunction(function(v) return table.HasValue(we, v) and me ~= v end)
 	props = CreateAllFunction(function(v) return v:GetClass() == "prop_physics" end)
 	-- props = CreateAllFunction(function(v) return util.IsValidPhysicsObject(vm) end)
 	bots = CreateAllFunction(function(v) return v:IsPlayer() and v:IsBot() end)
