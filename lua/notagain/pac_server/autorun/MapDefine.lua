@@ -115,13 +115,14 @@ MapDefine.SaveArea = function(area)
 	tbl = MapDefine.Areas[area]
 	tbl.Name = area
 	local json = util.TableToJSON( tbl ) 
-	file.CreateDir( "MapSavedAreas" ) 
-	file.Write( "MapSavedAreas/"..tbl.Map.."/"..area..".txt", json ) 
+	file.CreateDir( "mapsavedareas" ) 
+	file.CreateDir( "mapsavedareas/"..tbl.Map)
+	file.Write( "mapsavedareas/"..tbl.Map.."/"..area..".txt", json ) 
 end
 
 MapDefine.LoadAreas = function()
-	local path = "MapSavedAreas/"..game.GetMap().."/"
-	for _,file_name in ipairs(file.Find(path.."*.txt","DATA")) do
+	local path = "mapsavedareas/"..game.GetMap().."/"
+	for _,file_name in ipairs((file.Find(path.."*.txt","DATA"))) do
 		local tbl = util.JSONToTable(file.Read(path..file_name,"DATA"))
 		MapDefine.Areas[tbl.Name] = tbl
 		MapDefine.Areas[tbl.Name].Name = nil
