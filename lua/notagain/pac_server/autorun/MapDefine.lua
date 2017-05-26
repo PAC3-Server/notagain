@@ -164,13 +164,16 @@ if SERVER then
 		end
 		
 		MapDefine.Areas = areas
-		
-		net.Start("MapSyncAreas")
-		net.WriteTable(areas)
-		net.Broadcast()
 	
 	end
 
+	MapDefine.ClientSync = function(client)
+		net.Start("MapSyncAreas")
+		net.WriteTable(areas)
+		net.Send(client)
+	end
+
+	hook.Add("PlayerInitialSpawn","AreasSync",MapDefine.ClientSync)
 	hook.Add("Initialize","LoadMapDefineAreas",MapDefine.LoadAreas)
 
 end
