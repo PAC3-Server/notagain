@@ -299,9 +299,11 @@ if CLIENT then
 					pos, ang = self.Owner:GetBonePosition(id)
 					pos = pos + ang:Forward()*2
 				end
-
-				self:SetPos(pos)
-				self:SetAngles(ang)
+				
+				if pos and ang then
+					self:SetPos(pos)
+					self:SetAngles(ang)
+				end
 			end
 
 			for _, name in ipairs(self:GetDamageTypes()) do
