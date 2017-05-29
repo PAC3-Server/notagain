@@ -60,7 +60,7 @@ if SERVER then
 			if IsValid(ent) and ent:IsPlayer() then
 				if ply.precleanupareas and ply.precleanupareas[self.AreaName] then
 					ply.precleanupareas[self.AreaName] = nil 
-					if table.Count(ply.precleanupareas) = 0 then
+					if table.Count(ply.precleanupareas) == 0 then
 						ply.precleanupareas = nil 
 					end
 				else
@@ -77,7 +77,7 @@ if SERVER then
 				if ply.precleanupareas and ply.precleanupareas[self.AreaName] then
 					ply.precleanupareas = nil
 					ply.precleanupareas[self.AreaName] = nil 
-					if table.Count(ply.precleanupareas) = 0 then
+					if table.Count(ply.precleanupareas) == 0 then
 						ply.precleanupareas = nil 
 					end
 				else
