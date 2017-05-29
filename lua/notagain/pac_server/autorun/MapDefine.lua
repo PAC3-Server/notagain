@@ -32,7 +32,7 @@ MapDefine.GetCurrentAreas = function(ent)
 	for area,_ in pairs(MapDefine.Areas) do
 		local a = tostring(area)
 		if MapDefine.IsInArea(a,ent) then 
-			table.insert(areas,a)
+			areas[a] = a
 		end
 	end
 	return areas
@@ -58,23 +58,40 @@ if SERVER then
 		end,
 		StartTouch = function( self , ent )
 			if IsValid(ent) and ent:IsPlayer() then
-				hook.Run("MD_OnAreaEntered",ent,self.AreaName) 
-				net.Start("MapDefineOnAreaEntered")
-				net.WriteEntity(ent)
-				net.WriteString(self.AreaName)
-				net.Broadcast()
+				if ply.precleanupareas and ply.precleanupareas[self.AreaName] then
+					ply.precleanupareas[self.AreaName] = nil 
+					if table.Count(ply.precleanupareas) = 0 then
+						ply.precleanupareas = nil 
+					end
+				else
+					hook.Run("MD_OnAreaEntered",ent,self.AreaName) 
+					net.Start("MapDefineOnAreaEntered")
+					net.WriteEntity(ent)
+					net.WriteString(self.AreaName)
+					net.Broadcast()
+				end
 			end
 		end,
 		EndTouch = function( self , ent)
 			if IsValid( ent ) and ent:IsPlayer() then
-				hook.Run("MD_OnAreaLeft",ent,self.AreaName) 
-				net.Start("MapDefineOnAreaLeft")
-				net.WriteEntity(ent)
-				net.WriteString(self.AreaName)
-				net.Broadcast()
+				if ply.precleanupareas and ply.precleanupareas[self.AreaName] then
+					ply.precleanupareas = nil
+					ply.precleanupareas[self.AreaName] = nil 
+					if table.Count(ply.precleanupareas) = 0 then
+						ply.precleanupareas = nil 
+					end
+				else
+					hook.Run("MD_OnAreaLeft",ent,self.AreaName) 
+					net.Start("MapDefineOnAreaLeft")
+					net.WriteEntity(ent)
+					net.WriteString(self.AreaName)
+					net.Broadcast()
+				end
 			end
 		end,
 	}
+
+	scripted_ents.Register(ENT,"AREA_TRIGGER")
 	
 	MapDefine.CreateArea = function(name,minvec,maxvec)
 		local x1,y1,z1 = minvec.x,minvec.y,minvec.z 
@@ -210,8 +227,34 @@ if SERVER then
 		net.Send(client)
 	end
 
+	MapDefine.ResetAreas = function()
+		for _,ent in pairs(ents.FindByClass("AREA_TRIGGER")) do
+			SafeRemoveEntity(ent)
+		end
+		
+		for name,area in pairs(MapDefine.Areas) do
+			local trigger = ents.Create("AREA_TRIGGER")
+			trigger.VecMin,trigger.VecMax = area.Points.minworldbound,area.Points.maxworldbound
+			trigger.AreaName = name
+			trigger:Spawn()
+		end
+	end
+
+	local blyadcleanup = function()
+		for k,v in pairs(player.GetAll()) do
+			if IsValid(v) then
+				local areas = MapDefine.GetCurrentAreas(ply)
+				if table.Count(areas) > 0 then
+					ply.precleanupareas = areas 
+				end
+			end
+		end
+	end
+
 	hook.Add("PlayerInitialSpawn","MapDefineAreasSync",MapDefine.ClientSync)
 	hook.Add("Initialize","MapDefineLoadAreas",MapDefine.LoadAreas)
+	hook.Add("PreCleanupMap","MapDefineYOUREALLYAREGONNAFUCKITALL",blyadcleanup)
+	hook.Add("PostCleanupMap","MapDefineDONOTDELETEMYTRIGGERSYOUBLYAD",MapDefine.ResetAreas)
 
 end
 
