@@ -10,9 +10,9 @@ end
 MapDefine.IsInArea = function(area,ent)
 	if not IsValid(ent) or not MapDefine.IsExistingArea(area) then return false end
 
-	local area = MapDefine.Areas[area]
-	local refs = area.Refs
-	local pos  = ent:WorldSpaceCenter()
+	local area  = MapDefine.Areas[area]
+	local refs  = area.Refs
+	local pos   = ent:WorldSpaceCenter()
 	local x,y,z = pos.x,pos.y,pos.z 
 
 	if x >= refs.XMax or x <= refs.XMin then
@@ -38,40 +38,43 @@ MapDefine.GetCurrentAreas = function(ent)
 	return areas
 end
 
-hook.Add("Think","MapDefineOnChangedArea",function() 
-	local nextcall = CurTime()
-	if CurTime() > nextcall then
-		nextcall = CurTime() + 1
-		for _,ply in pairs(player.GetAll()) do
-			if not ply.Pos or ply.Pos ~= ply:GetPos() then
-				ply.Pos = ply:GetPos()
-				local areas = MapDefine.GetCurrentAreas(ply)
-				if ply.Areas and ply.Areas ~= areas then
-					if #ply.Areas > areas then
-						for area,_ in pairs(ply.Areas) do
-							if not areas[area] then
-								hook.Run("MD_OnAreaLeft",ply,area)
-								break 
-							end
-						end
-					elseif #ply.Areas < areas then
-						for area,_ in pairs(area) do
-							if not ply.Areas[area] then
-								hook.Run("MD_OnAreaEntered",ply,area)
-								break 
-							end
-						end
-					end
-				end
-				ply.Areas = areas
-			end
-		end
-	end
-end)
-
 if SERVER then 
 
 	util.AddNetworkString("MapDefineSyncAreas")
+	util.AddNetworkString("MapDefineOnAreaEntered")
+	util.AddNetworkString("MapDefineOnAreaLeft")
+
+	local ENT = {
+		Base = "base_brush",
+		Type = "brush",
+		ClassName = "AREA_TRIGGER",
+		VecMin = Vector(0,0,0),
+		VecMax = Vector(0,0,0),
+		AreaName = "Default",
+		Initialize = function( self )
+			self:SetSolid(SOLID_BBOX)
+			self:SetCollisionBoundsWS(self.VecMin,self.VecMax)
+			self:SetTrigger(true)
+		end,
+		StartTouch = function( self , ent )
+			if IsValid(ent) and ent:IsPlayer() then
+				hook.Run("MD_OnAreaEntered",ent,self.AreaName) 
+				net.Start("MapDefineOnAreaEntered")
+				net.WriteEntity(ent)
+				net.WriteString(self.AreaName)
+				net.Broadcast()
+			end
+		end,
+		EndTouch = function( self , ent)
+			if IsValid( ent ) and ent:IsPlayer() then
+				hook.Run("MD_OnAreaLeft",ent,self.AreaName) 
+				net.Start("MapDefineOnAreaLeft")
+				net.WriteEntity(ent)
+				net.WriteString(self.AreaName)
+				net.Broadcast()
+			end
+		end,
+	}
 	
 	MapDefine.CreateArea = function(name,minvec,maxvec)
 		local x1,y1,z1 = minvec.x,minvec.y,minvec.z 
@@ -125,16 +128,8 @@ if SERVER then
 		end
 
 		local points = {
-			
-			["1"] = Vector(refs.XMin,refs.YMin,refs.ZMin),
-			["2"] = Vector(refs.XMax,refs.YMin,refs.ZMin),
-			["3"] = Vector(refs.XMax,refs.YMax,refs.ZMin),
-			["4"] = Vector(refs.XMin,refs.YMax,refs.ZMin),
-			["5"] = Vector(refs.XMin,refs.YMin,refs.ZMax),
-			["6"] = Vector(refs.XMax,refs.YMin,refs.ZMax),
-			["7"] = Vector(refs.XMax,refs.YMax,refs.ZMax),
-			["8"] = Vector(refs.XMin,refs.YMax,refs.ZMax),
-		
+			["minworldbound"] = minvec,
+			["maxworldbound"] = maxvec,
 		}
 
 		MapDefine.Areas[name] = {}
@@ -145,6 +140,11 @@ if SERVER then
 		net.Start("MapDefineSyncAreas")
 		net.WriteTable(MapDefine.Areas)
 		net.Broadcast()
+
+		local trigger = ents.Create("AREA_TRIGGER")
+		trigger.VecMin,trigger.VecMax = minvec,maxvec
+		trigger.AreaName = name
+		trigger:Spawn()
 
 		return refs,points
 	end
@@ -190,6 +190,12 @@ if SERVER then
 		local areas = {}
 		for _,file_name in ipairs((file.Find(path.."*.txt","DATA"))) do
 			local tbl = util.JSONToTable(file.Read(path..file_name,"DATA"))
+
+			local trigger = ents.Create("AREA_TRIGGER")
+			trigger.VecMin,trigger.VecMax = tbl.Points.minworldbound,tbl.Points.maxworldbound
+			trigger.AreaName = tbl.Name
+			trigger:Spawn()
+
 			areas[tbl.Name] = tbl
 			areas[tbl.Name].Name = nil
 		end
@@ -214,7 +220,18 @@ if CLIENT then
 	net.Receive("MapDefineSyncAreas",function()
 		local tbl = net.ReadTable()
 		MapDefine.Areas = tbl
-		LocalPlayer().Areas = MapDefine.GetCurrentAreas(LocalPlayer())
+	end)
+
+	net.Receive("MapDefineOnAreaEntered",function()
+		local ent = net.ReadEntity()
+		local area = net.ReadString()
+		hook.Run("MD_OnAreaEntered",ent,area)
+	end)
+
+	net.Receive("MapDefineOnAreaLeft",function()
+		local ent = net.ReadEntity()
+		local area = net.ReadString()
+		hook.Run("MD_OnAreaLeft",ent,area)
 	end)
 
 end
