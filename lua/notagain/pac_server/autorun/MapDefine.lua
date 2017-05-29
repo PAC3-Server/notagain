@@ -97,55 +97,16 @@ if SERVER then
 		local x2,y2,z2 = maxvec.x,maxvec.y,maxvec.z 
 		local refs = {}
 
-		-- x's --
-		do
-			local bigger,smaller 
-			if x1 > x2 then
-				bigger  = x1 
-				smaller = x2
-			else
-				bigger  = x2 
-				smaller = x1
-			end
-
-			refs.XMax = bigger 
-			refs.XMin = smaller
-
-		end
-
-		-- y's -- 
-		do
-			local bigger,smaller 
-			if y1 > y2 then
-				bigger  = y1
-				smaller = y2
-			else
-				bigger  = y2
-				smaller = y1
-			end
-
-			refs.YMax = bigger 
-			refs.YMin = smaller
-		end
-
-		-- z's --
-		do
-			local bigger,smaller 
-			if z1 > z2 then
-				bigger  = z1
-				smaller = z2
-			else
-				bigger  = z2
-				smaller = z1
-			end
-
-			refs.ZMax = bigger 
-			refs.ZMin = smaller
-		end
+		refs.XMax = math.max(x1,x2) 
+		refs.XMin = math.min(x1,x2)
+		refs.YMax = math.max(y1,y2) 
+		refs.YMin = math.min(y1,y2)
+		refs.ZMax = math.max(z1,z2)
+		refs.ZMin = math.min(z1,z2)
 
 		local points = {
-			["minworldbound"] = minvec,
-			["maxworldbound"] = maxvec,
+			MinWorldBound = minvec,
+			MaxWorldBound = maxvec,
 		}
 
 		MapDefine.Areas[name] = {}
@@ -208,7 +169,7 @@ if SERVER then
 			local tbl = util.JSONToTable(file.Read(path..file_name,"DATA"))
 
 			local trigger = ents.Create("AREA_TRIGGER")
-			trigger.VecMin,trigger.VecMax = tbl.Points.minworldbound,tbl.Points.maxworldbound
+			trigger.VecMin,trigger.VecMax = tbl.Points.MinWorldBound,tbl.Points.MaxWorldBound
 			trigger.AreaName = tbl.Name
 			trigger:Spawn()
 
@@ -233,7 +194,7 @@ if SERVER then
 		
 		for name,area in pairs(MapDefine.Areas) do
 			local trigger = ents.Create("AREA_TRIGGER")
-			trigger.VecMin,trigger.VecMax = area.Points.minworldbound,area.Points.maxworldbound
+			trigger.VecMin,trigger.VecMax = area.Points.MinWorldBound,area.Points.MaxWorldBound
 			trigger.AreaName = name
 			trigger:Spawn()
 		end
