@@ -205,7 +205,13 @@ if SERVER then
 		end
 	end
 
-	MapDefine.Logs = false
+	MapDefine.Logs = MapDefine.Logs or false
+
+	hook.Add("MD_OnAreaInit","MapDefineLogAreaInit",function(area)
+		if MapDefine.Logs then
+			print("[MapDefine]: ".."Area "..area.." has been initialized")
+		end
+	end)
 
 	hook.Add("MD_OnAreaEntered","MapDefineLogEntered",function(ply,area)
 		if MapDefine.Logs then
