@@ -17,6 +17,7 @@ if CLIENT then
 	local emitter = ParticleEmitter(vector_origin)
 
 	function RockImpact(ply, origin, normal, scale)
+		if not ply or not IsValid(ply) then return end
 		normal = normal or Vector(0,0,1)
 		scale = scale or 1
 
