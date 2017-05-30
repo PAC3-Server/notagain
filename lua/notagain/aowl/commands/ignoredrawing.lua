@@ -64,5 +64,5 @@ if CLIENT then
     if ignoreds[ply:GetName()] then
       pac.IgnoreEntity(ply)
     end 
-  end
+  end)
 end
