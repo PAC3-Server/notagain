@@ -1,6 +1,7 @@
-local Hooks = Hooks or {}
+local Hooks = hook.GetTable() -- so hooks called before get registered
 
 local old_hookadd = hook.Add 
+local old_hookremove = hook.Remove
 
 hook.Add = function(hk,hkname,callback)
 	Hooks[hk] = Hooks[hk] or {}
@@ -8,7 +9,13 @@ hook.Add = function(hk,hkname,callback)
 	old_hookadd(hk,hkname,callback)
 end
 
-hook.GetAll = function()
+hook.Remove = function(hk,hkname)
+	if Hooks[hk][hkname] then
+		Hooks[hk][hkname] = nil 
+	end
+end
+
+hook.GetAll = function() -- less intensive way to get all hooks
 	return Hooks 
 end
 
