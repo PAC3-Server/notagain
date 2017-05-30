@@ -1,4 +1,5 @@
-local Hooks = hook.GetTable() -- so hooks called before get registered
+local Hooks   = hook.GetTable() -- so hooks called before get registered
+local Faileds = Faileds or {}
 
 local old_hookadd    = hook.Add 
 local old_hookremove = hook.Remove
@@ -25,7 +26,7 @@ hook.Find = function(hk)
 	local hk = string.lower(hk)
 	for type,_ in pairs(Hooks) do
 		for name,callback in pairs(Hooks[type]) do
-			if string.match(tostring(name),string.PatternSafe(hk),1) then
+			if string.match(string.lower(tostring(name)),string.PatternSafe(hk),1) then
 				found[type] = found[type] or {}
 				found[type][name] = callback
 			end
@@ -33,3 +34,13 @@ hook.Find = function(hk)
 	end
 	return found
 end
+
+--dont look at this its an attempt to catch failed hooks
+--[[hook.Add("OnLuaError","debug_hook_failed",function(err,_,name,_)
+	local hookerr = string.match(err,"("..string.PatternSafe("lua/includes/modules/hook")..")")
+	if hookerr then
+		table.insert(Faileds,{
+
+			})
+
+end)]]--
