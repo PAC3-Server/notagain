@@ -42,31 +42,35 @@ end
 --logs--
 hook.Add("MD_OnAreaInit","MapDefineLogAreaInit",function(area)
 	if MapDefine.Logs then
-		print("[MapDefine]: ".."Area "..area.." has been initialized")
+		print("[MapDefine]: Area "..area.." has been initialized")
 	end
 end)
 
-hook.Add("MD_OnAreaEntered","MapDefineLogEntered",function(ply,area)
+hook.Add("MD_OnAreaEntered","MapDefineLogEntered",function(ent,area)
 	if MapDefine.Logs then
-		print("[MapDefine]: "..ply:GetName().." entered "..area)
+		local a = ent:GetName() or ent:GetClass()
+		print("[MapDefine]: "..a.." entered "..area)
 	end
 end)
 
-hook.Add("MD_OnAreaLeft","MapDefineLogLeft",function(ply,area)
+hook.Add("MD_OnAreaLeft","MapDefineLogLeft",function(ent,area)
 	if MapDefine.Logs then
-		print("[MapDefine]: "..ply:GetName().." left "..area)
+		local a = ent:GetName() or ent:GetClass()
+		print("[MapDefine]: "..a.." left "..area)
 	end
 end)
 
-hook.Add("MD_OnOverWorldEntered","MapDefineLogOWEntered",function(ply)
+hook.Add("MD_OnOverWorldEntered","MapDefineLogOWEntered",function(ent)
 	if MapDefine.Logs then
-		print("[MapDefine]: "..ply:GetName().." entered overworld")
+		local a = ent:GetName() or ent:GetClass()
+		print("[MapDefine]: "..a.." entered overworld")
 	end
 end)
 
-hook.Add("MD_OnOverWorldLeft","MapDefineLogOWLeft",function(ply)
+hook.Add("MD_OnOverWorldLeft","MapDefineLogOWLeft",function(ent)
 	if MapDefine.Logs then
-		print("[MapDefine]: "..ply:GetName().." left overworld")
+		local a = ent:GetName() or ent:GetClass()
+		print("[MapDefine]: "..a.." left overworld")
 	end
 end)
 
@@ -103,14 +107,14 @@ if SERVER then
 						ent.precleanupareas = nil
 					end
 				else
-					hook.Run("MD_OnAreaEntered",ent,self.AreaName)
-					if ply.IsInOverWorld then
-						ply.IsInOverWorld = false
-						hook.Run("MD_OnOverWorldLeft")
+					if ent.InOverWorld then
+						ent.InOverWorld = false
+						hook.Run("MD_OnOverWorldLeft",ent)
 						net.Start("MapDefineOnOverWorldLeft")
 						net.WriteEntity(ent)
 						net.Broadcast() 
 					end
+					hook.Run("MD_OnAreaEntered",ent,self.AreaName)
 					net.Start("MapDefineOnAreaEntered")
 					net.WriteEntity(ent)
 					net.WriteString(self.AreaName)
@@ -128,13 +132,13 @@ if SERVER then
 				else
 					hook.Run("MD_OnAreaLeft",ent,self.AreaName)
 					if table.Count(MapDefine.GetCurrentAreas(ent)) == 0 then
-						ply.InOverWorld = true
+						ent.InOverWorld = true
 						hook.Run("MD_OnOverWorldEntered",ent)
 						net.Start("MapDefineOnOverWorldEntered")
 						net.WriteEntity(ent)
 						net.Broadcast() 
 					else
-						ply.InOverWorld = false 
+						ent.InOverWorld = false 
 					end
 					net.Start("MapDefineOnAreaLeft")
 					net.WriteEntity(ent)
