@@ -13,6 +13,7 @@ hook.Remove = function(hk,hkname)
 	if Hooks[hk][hkname] then
 		Hooks[hk][hkname] = nil 
 	end
+	old_hookremove(hk,hkname)
 end
 
 hook.GetAll = function() -- less intensive way to get all hooks
