@@ -58,12 +58,26 @@ hook.Add("MD_OnAreaLeft","MapDefineLogLeft",function(ply,area)
 	end
 end)
 
+hook.Add("MD_OnOverWorldEntered","MapDefineLogOWEntered",function(ply)
+	if MapDefine.Logs then
+		print("[MapDefine]: "..ply:GetName().." entered overworld")
+	end
+end)
+
+hook.Add("MD_OnOverWorldLeft","MapDefineLogOWLeft",function(ply)
+	if MapDefine.Logs then
+		print("[MapDefine]: "..ply:GetName().." left overworld")
+	end
+end)
+
 if SERVER then
 
 	util.AddNetworkString("MapDefineSyncAreas")
 	util.AddNetworkString("MapDefineOnAreaInit")
 	util.AddNetworkString("MapDefineOnAreaEntered")
 	util.AddNetworkString("MapDefineOnAreaLeft")
+	util.AddNetworkString("MapDefineOnOverWorldEntered")
+	util.AddNetworkString("MapDefineOnOverWorldLeft")
 
 	local ENT = {
 		Base = "base_brush",
@@ -82,7 +96,7 @@ if SERVER then
 			net.Broadcast()
 		end,
 		StartTouch = function( self , ent )
-			if IsValid(ent) and ent:IsPlayer() then
+			if IsValid(ent) then
 				if ent.precleanupareas and ent.precleanupareas[self.AreaName] then
 					ent.precleanupareas[self.AreaName] = nil
 					if table.Count(ent.precleanupareas) == 0 then
@@ -90,6 +104,13 @@ if SERVER then
 					end
 				else
 					hook.Run("MD_OnAreaEntered",ent,self.AreaName)
+					if ply.IsInOverWorld then
+						ply.IsInOverWorld = false
+						hook.Run("MD_OnOverWorldLeft")
+						net.Start("MapDefineOnOverWorldLeft")
+						net.WriteEntity(ent)
+						net.Broadcast() 
+					end
 					net.Start("MapDefineOnAreaEntered")
 					net.WriteEntity(ent)
 					net.WriteString(self.AreaName)
@@ -98,7 +119,7 @@ if SERVER then
 			end
 		end,
 		EndTouch = function( self , ent)
-			if IsValid( ent ) and ent:IsPlayer() then
+			if IsValid( ent ) then
 				if ent.precleanupareas and ent.precleanupareas[self.AreaName] then
 					ent.precleanupareas[self.AreaName] = nil
 					if table.Count(ent.precleanupareas) == 0 then
@@ -106,6 +127,15 @@ if SERVER then
 					end
 				else
 					hook.Run("MD_OnAreaLeft",ent,self.AreaName)
+					if table.Count(MapDefine.GetCurrentAreas(ent)) == 0 then
+						ply.InOverWorld = true
+						hook.Run("MD_OnOverWorldEntered",ent)
+						net.Start("MapDefineOnOverWorldEntered")
+						net.WriteEntity(ent)
+						net.Broadcast() 
+					else
+						ply.InOverWorld = false 
+					end
 					net.Start("MapDefineOnAreaLeft")
 					net.WriteEntity(ent)
 					net.WriteString(self.AreaName)
@@ -206,6 +236,11 @@ if SERVER then
 		MapDefine.Areas = areas
 	end
 
+	MapDefine.PrintSavedAreas = function(map)
+		local map = map or game.GetMap()
+		PrintTable((file.Find("mapsavedareas/"..map.."/*","DATA")))
+	end
+
 	MapDefine.ClientSync = function(client)
 		net.Start("MapDefineSyncAreas")
 		net.WriteTable(MapDefine.Areas)
@@ -264,6 +299,16 @@ if CLIENT then
 		local ent = net.ReadEntity()
 		local area = net.ReadString()
 		hook.Run("MD_OnAreaLeft",ent,area)
+	end)
+
+	net.Receive("MapDefineOnOverWorldEntered",function()
+		local ent = net.ReadEntity()
+		hook.Run("MD_OnAreaEntered",ent)
+	end)
+
+	net.Receive("MapDefineOnOverWorldLeft",function()
+		local ent = net.ReadEntity()
+		hook.Run("MD_OnAreaLeft",ent)
 	end)
 
 end
