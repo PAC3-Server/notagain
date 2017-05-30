@@ -5,11 +5,11 @@ local old_timeradjust  = timer.Adjust
 local old_timerremove  = timer.Remove 
 local old_timerdestroy = timer.Destroy
 
-local removal = function(name,time)
+__debug_timer_removal = function(name,time) -- can only be global :/
 	if timer.Exists(name) then
-		timer.Simple(time,function() removal(name,time) end)
+		timer.Simple(time,function() __debug_timer_removal(name,time) end)
 	else
-		timers[name] = nil 
+		Timers[name] = nil 
 	end
 end
 
@@ -21,7 +21,7 @@ timer.Create = function(name,delay,rep,callback)
 	}
 	
 	if Timers[name].Repetitions ~= "inf" then
-		timer.Simple(Timers[name].Repetitions,function() removal(name,Timers[name].Repetitions) end)
+		timer.Simple(Timers[name].Repetitions,function() __debug_timer_removal(name,Timers[name].Repetitions) end)
 	end
 	
 	old_timercreate(name,delay,rep,callback)
