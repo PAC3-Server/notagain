@@ -41,6 +41,7 @@ end
 if SERVER then
 
 	util.AddNetworkString("MapDefineSyncAreas")
+	util.AddNetworkString("MapDefineOnAreaInit")
 	util.AddNetworkString("MapDefineOnAreaEntered")
 	util.AddNetworkString("MapDefineOnAreaLeft")
 
@@ -55,6 +56,10 @@ if SERVER then
 			self:SetSolid(SOLID_BBOX)
 			self:SetCollisionBoundsWS(self.VecMin,self.VecMax)
 			self:SetTrigger(true)
+			hook.Run("MD_OnAreaInit",self.Area)
+			net.Start("MapDefineOnAreaInit")
+			net.WriteString(self.AreaName)
+			net.Broadcast()
 		end,
 		StartTouch = function( self , ent )
 			if IsValid(ent) and ent:IsPlayer() then
@@ -200,7 +205,21 @@ if SERVER then
 		end
 	end
 
-	local blyadcleanup = function()
+	MapDefine.Logs = false
+
+	hook.Add("MD_OnAreaEntered","MapDefineLogEntered",function(ply,area)
+		if MapDefine.Logs then
+			print("[MapDefine]: "..ply:GetName().." entered "..area)
+		end
+	end)
+
+	hook.Add("MD_OnAreaLeft","MapDefineLogLeft",function(ply,area)
+		if MapDefine.Logs then
+			print("[MapDefine]: "..ply:GetName().." left "..area)
+		end
+	end)
+	
+	hook.Add("PreCleanupMap","MapDefineYOUREALLYAREGONNAFUCKITALL",function()
 		for _, ply in pairs(player.GetAll()) do
 			if IsValid(ply) then
 				local areas = MapDefine.GetCurrentAreas(ply)
@@ -209,11 +228,10 @@ if SERVER then
 				end
 			end
 		end
-	end
-
+	end)
+	
 	hook.Add("PlayerInitialSpawn","MapDefineAreasSync",MapDefine.ClientSync)
 	hook.Add("Initialize","MapDefineLoadAreas",MapDefine.LoadAreas)
-	hook.Add("PreCleanupMap","MapDefineYOUREALLYAREGONNAFUCKITALL",blyadcleanup)
 	hook.Add("PostCleanupMap","MapDefineDONOTDELETEMYTRIGGERSYOUBLYAD",MapDefine.ResetAreas)
 
 end
@@ -223,6 +241,11 @@ if CLIENT then
 	net.Receive("MapDefineSyncAreas",function()
 		local tbl = net.ReadTable()
 		MapDefine.Areas = tbl
+	end)
+
+	net.Receive("MapDefineOnAreaInit",function()
+		local area = net.ReadString()
+		hook.Run("MD_OnAreaInit",area)
 	end)
 
 	net.Receive("MapDefineOnAreaEntered",function()
