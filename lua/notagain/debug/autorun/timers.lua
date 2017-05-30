@@ -52,7 +52,7 @@ timer.Find = function(tim)
 	local found = {}
 	local tim = string.lower(tim)
 	for name,ti in pairs(Timers) do
-		if string.match(tostring(name),string.PatternSafe(tim),1) then
+		if string.match(string.lower(tostring(name)),string.PatternSafe(tim),1) then
 			found[name] = ti 
 		end
 	end
