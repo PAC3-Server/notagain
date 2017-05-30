@@ -190,7 +190,7 @@ hook.Add("HUDPaint", "jrpg_items", function()
 			local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
 			local str = key .. "  TAKE"
 			local w,h = prettytext.GetTextSize(str, "gabriola", 40, 800, 3)
-			local key_width = prettytext.GetTextSize(key, "gabriola", 40, 800, 3)
+			local key_width = prettytext.GetTextSize(key or "E", "gabriola", 40, 800, 3)
 			local bg_width = w + 100
 
 			surface.SetDrawColor(255,255,255,255)
