@@ -2,6 +2,7 @@ local MapDefine = {}
 _G.MapDefine = MapDefine
 
 MapDefine.Areas = {}
+MapDefine.Logs = false
 
 MapDefine.IsExistingArea = function(area)
 	return MapDefine.Areas[area] and true or false
@@ -38,6 +39,25 @@ MapDefine.GetCurrentAreas = function(ent)
 	return areas
 end
 
+--logs--
+hook.Add("MD_OnAreaInit","MapDefineLogAreaInit",function(area)
+	if MapDefine.Logs then
+		print("[MapDefine]: ".."Area "..area.." has been initialized")
+	end
+end)
+
+hook.Add("MD_OnAreaEntered","MapDefineLogEntered",function(ply,area)
+	if MapDefine.Logs then
+		print("[MapDefine]: "..ply:GetName().." entered "..area)
+	end
+end)
+
+hook.Add("MD_OnAreaLeft","MapDefineLogLeft",function(ply,area)
+	if MapDefine.Logs then
+		print("[MapDefine]: "..ply:GetName().." left "..area)
+	end
+end)
+
 if SERVER then
 
 	util.AddNetworkString("MapDefineSyncAreas")
@@ -56,7 +76,7 @@ if SERVER then
 			self:SetSolid(SOLID_BBOX)
 			self:SetCollisionBoundsWS(self.VecMin,self.VecMax)
 			self:SetTrigger(true)
-			hook.Run("MD_OnAreaInit",self.Area)
+			hook.Run("MD_OnAreaInit",self.AreaName)
 			net.Start("MapDefineOnAreaInit")
 			net.WriteString(self.AreaName)
 			net.Broadcast()
@@ -204,26 +224,6 @@ if SERVER then
 			trigger:Spawn()
 		end
 	end
-
-	MapDefine.Logs = MapDefine.Logs or false
-
-	hook.Add("MD_OnAreaInit","MapDefineLogAreaInit",function(area)
-		if MapDefine.Logs then
-			print("[MapDefine]: ".."Area "..area.." has been initialized")
-		end
-	end)
-
-	hook.Add("MD_OnAreaEntered","MapDefineLogEntered",function(ply,area)
-		if MapDefine.Logs then
-			print("[MapDefine]: "..ply:GetName().." entered "..area)
-		end
-	end)
-
-	hook.Add("MD_OnAreaLeft","MapDefineLogLeft",function(ply,area)
-		if MapDefine.Logs then
-			print("[MapDefine]: "..ply:GetName().." left "..area)
-		end
-	end)
 	
 	hook.Add("PreCleanupMap","MapDefineYOUREALLYAREGONNAFUCKITALL",function()
 		for _, ply in pairs(player.GetAll()) do
