@@ -168,28 +168,31 @@ if SERVER then
 			MaxWorldBound = maxvec,
 		}
 
-		MapDefine.Areas[name] = {}
-		MapDefine.Areas[name].Points = points
-		MapDefine.Areas[name].Refs   = refs
-		MapDefine.Areas[name].Map    = game.GetMap()
-
-		net.Start("MapDefineSyncAreas")
-		net.WriteTable(MapDefine.Areas)
-		net.Broadcast()
-
 		local trigger = ents.Create("area_trigger")
 		trigger.VecMin,trigger.VecMax = minvec,maxvec
 		trigger.AreaName = name
 		trigger:Spawn()
 
-		return refs,points
+		MapDefine.Areas[name]         = {}
+		MapDefine.Areas[name].Points  = points
+		MapDefine.Areas[name].Refs    = refs
+		MapDefine.Areas[name].Map     = game.GetMap()
+		MapDefine.Areas[name].Trigger = trigger 
+
+		net.Start("MapDefineSyncAreas")
+		net.WriteTable(MapDefine.Areas)
+		net.Broadcast()
+
 	end
 
 	MapDefine.SaveArea = function(area)
 		if not MapDefine.IsExistingArea(area) then return end
-		local tbl = MapDefine.Areas[area]
-		tbl.Name = area
-		local json = util.TableToJSON( tbl )
+		
+		local tbl   = MapDefine.Areas[area]
+		tbl.Trigger = nil
+		tbl.Name    = area
+		local json  = util.TableToJSON( tbl )
+		
 		file.CreateDir( "mapsavedareas" )
 		file.CreateDir( "mapsavedareas/"..tbl.Map)
 		file.Write( "mapsavedareas/"..tbl.Map.."/"..area..".txt", json )
@@ -198,6 +201,10 @@ if SERVER then
 	MapDefine.DeleteArea = function(area,map)
 		local map = map or game.GetMap()
 		file.Delete("mapsavedareas/"..map.."/"..area..".txt")
+		if map == game.GetMap() and MapDefine.IsExistingArea(area) then
+			MapDefine.Areas[area].Trigger:Remove()
+			MapDefine.Areas[area] = nil 
+		end
 	end
 
 	MapDefine.SaveAll = function()
@@ -233,7 +240,8 @@ if SERVER then
 			trigger.AreaName = tbl.Name
 			trigger:Spawn()
 
-			areas[tbl.Name] = tbl
+			tbl.Trigger          = trigger
+			areas[tbl.Name]      = tbl
 			areas[tbl.Name].Name = nil
 		end
 
