@@ -1,6 +1,6 @@
 local Hooks = hook.GetTable() -- so hooks called before get registered
 
-local old_hookadd = hook.Add 
+local old_hookadd    = hook.Add 
 local old_hookremove = hook.Remove
 
 hook.Add = function(hk,hkname,callback)
@@ -22,9 +22,10 @@ end
 
 hook.Find = function(hk)
 	local found = {}
+	local hk = string.lower(hk)
 	for type,_ in pairs(Hooks) do
 		for name,callback in pairs(Hooks[type]) do
-			if string.match(tostring(name),hk,1) then
+			if string.match(tostring(name),string.PatternSafe(hk),1) then
 				found[type] = found[type] or {}
 				found[type][name] = callback
 			end
