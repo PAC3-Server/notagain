@@ -7,7 +7,7 @@ local old_timerdestroy = timer.Destroy
 
 local removal = function(name,time)
 	if timer.Exists(name) then
-		timer.Simple(time,function() removal(time) end)
+		timer.Simple(time,function() removal(name,time) end)
 	else
 		timers[name] = nil 
 	end
