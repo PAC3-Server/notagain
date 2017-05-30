@@ -33,11 +33,10 @@ timer.Adjust = function(name,delay,rep,callback)
 			Repetitions = rep == 0 and "inf" or rep, 
 			Callback = callback,
 		}
-		old_timeradjust(name,delay,rep,callback)
-		return true 
-	else
-		return false 
 	end
+	
+	return old_timeradjust(name,delay,rep,callback)
+
 end
 
 timer.Remove = function(name)
