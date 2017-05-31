@@ -399,7 +399,7 @@ local SCORE_BOARD = {
 
 
 
-			prettytext.Draw(GetHostName(), w/2, 0, "gabriola", 120, 800, 10, Color(255, 255, 255, 200), Color(75,75, 75, 50), -0.5)
+			prettytext.Draw(GetHostName(), w/2, 0, "gabriola", 120, 800, 10, Color(255, 255, 255, 255), Color(75,75, 75, 150), -0.5)
 		end
 
         self.Scroll = self:Add( "DScrollPanel" )
