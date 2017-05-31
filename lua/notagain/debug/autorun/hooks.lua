@@ -76,7 +76,7 @@ if SERVER then
 		hook.Add(hk,netname,callback)
 
 		NWs[hk] = NWs[hk] or {}
-		NWs[hk] = NWs[hk][hkname] = callback 
+		NWs[hk][hkname] = callback 
 		
 		net.Start(HookAddNetString)
 		net.WriteTable(tbl)
@@ -113,7 +113,6 @@ if SERVER then
 	end
 
 	hook.RunNW = function(name,...)
-		local netname = "__NW__"
 		local tbl = {
 			Name = name,
 			Args = { ... },
@@ -152,12 +151,36 @@ if CLIENT then
 
 end
 
+local cachehookerr = function(name,err)
+	if #Faileds >= 30 then
+		table.remove(Faileds,1)
+	end 
+	local add = true
+	local tbl = {
+		File = name,
+		Line = string.match(err,"(%>%:(%d*)%:){1}")
+		Error = err 
+	}
+	for k,v in pairs(Faileds) do
+		if v == tbl then
+			add = false 
+			break 
+		end
+	end
+	
+	if add then
+		table.insert(Faileds,tbl)
+	end
+end
+
 --dont look at this its an attempt to catch failed hooks
---[[hook.Add("OnLuaError","debug_hook_failed",function(err,_,name,_)
-	local hookerr = string.match(err,"("..string.PatternSafe("lua/includes/modules/hook")..")")
+hook.Add("OnLuaError","__HOOKS__FAILED__",function(err,_,name,_)
+	local hookerr = string.match(err,"(lua%/includes%/modules%/hook)")
 	if hookerr then
-		table.insert(Faileds,{
+		cachehookerr(name,err)
+	end
+end)
 
-			})
-
-end)]]--
+hook.GetFailed = function()
+	return Faileds 
+end
