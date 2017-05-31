@@ -2,7 +2,8 @@ if SERVER then
 	timer.Create("juse", 0.5, 0, function()
 		for _, ply in pairs(player.GetAll()) do
 			ply:SetNWEntity("juse_ent", NULL)
-			if ply:GetInfoNum("ctp_enabled", 0) == 1 or ply:GetInfoNum("battlecam_enabled", 0) == 1 then
+			ply:SetNWBool("rpg",ply:GetNWBool("rpg")or false)
+			if ply:GetInfoNum("ctp_enabled", 0) == 1 and ply:GetNWBool("rpg") or ply:GetInfoNum("battlecam_enabled", 0) == 1 and and ply:GetNWBool("rpg") then
 				local found = {}
 				for _, ent in pairs(ents.FindInSphere(ply:EyePos(), 70)) do
 					local name = ent:GetClass()
