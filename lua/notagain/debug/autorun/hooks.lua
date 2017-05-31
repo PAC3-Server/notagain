@@ -158,8 +158,8 @@ local cachehookerr = function(name,err)
 	local add = true
 	local tbl = {
 		File = name,
-		Line = string.match(err,"(%>%:(%d*)%:){1}")
-		Error = err 
+		Line = string.match(err,"(%>%:(%d*)%:){1}"),
+		Error = err,
 	}
 	for k,v in pairs(Faileds) do
 		if v == tbl then
