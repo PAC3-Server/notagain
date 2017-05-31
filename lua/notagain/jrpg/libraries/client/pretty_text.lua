@@ -61,7 +61,15 @@ local surface_SetMaterial = surface.SetMaterial
 local surface_DrawTexturedRect = surface.DrawTexturedRect
 local ColorToHSV = ColorToHSV
 local HSVToColor = HSVToColor
-local Color = Color
+local TEXFILTER_LINEAR = TEXFILTER.LINEAR
+
+local cam_PushModelMatrix = cam_PushModelMatrix
+local render_PushFilterMag = render_PushFilterMag
+local render_PushFilterMin = render_PushFilterMin
+
+local cam_PopModelMatrix = cam_PopModelMatrix
+local render_PopFilterMag = render_PopFilterMag
+local render_PopFilterMin = render_PopFilterMin
 
 local hsv_cache = {}
 
@@ -202,9 +210,9 @@ function prettytext.DrawText(tbl)
 		temp_vec.y = -y
 		temp_matrix:Translate(temp_vec)
 
-		cam.PushModelMatrix(temp_matrix)
-		render.PushFilterMag(TEXFILTER.LINEAR)
-		render.PushFilterMin(TEXFILTER.LINEAR)
+		cam_PushModelMatrix(temp_matrix)
+		render_PushFilterMag(TEXFILTER_LINEAR)
+		render_PushFilterMin(TEXFILTER_LINEAR)
 	end
 
 	if tbl.shadow_x or tbl.shadow_y then
@@ -269,10 +277,10 @@ function prettytext.DrawText(tbl)
 		surface_DisableClipping(false)
 	end
 
-	if tbl.scale_x or tbl_scale_y or tbl.scale or tbl.skew_x or tbl.skew_y then
-		cam.PopModelMatrix()
-		render.PopFilterMag()
-		render.PopFilterMin()
+	if tbl.scale_x or tbl.scale_y or tbl.scale or tbl.skew_x or tbl.skew_y then
+		cam_PopModelMatrix()
+		render_PopFilterMag()
+		render_PopFilterMin()
 	end
 
 	surface.SetAlphaMultiplier(1)
