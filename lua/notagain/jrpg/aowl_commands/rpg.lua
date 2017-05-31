@@ -16,10 +16,11 @@ local function set_rpg(ply, b, cheat)
 		jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
 
 		loadout(ply)
-
+		ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
 		ply:ChatPrint("rpg mode enabled")
 	else
 		jattributes.Disable(ply)
+		ply:SendLua([[if battlecam and battlecam.IsEnabled() then battlecam.Disable() end]])
 		ply:ChatPrint("rpg mode disabled")
 	end
 
