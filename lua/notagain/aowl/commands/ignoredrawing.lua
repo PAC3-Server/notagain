@@ -3,6 +3,8 @@ local ignore = "aowl_ignore_draw"
 local unignore = "aowl_unignore_draw"
 
 if SERVER then
+  util.AddNetworkString(ignore)
+  util.AddNetworkString(unignore)
   aowl.AddCommand({"ignore","undraw"},function(ply,line,cmd,target)
     target = easylua.FindEntity(target)
 
@@ -61,7 +63,7 @@ if CLIENT then
   end)
 
   hook.Add("pac_OnWoreOutfit",unignore,function(_,ply)
-    if ignoreds[ply:GetName()] then
+    if IsValid(ply) ignoreds[ply:GetName()] then
       pac.IgnoreEntity(ply)
     end 
   end)
