@@ -48,29 +48,29 @@ end)
 
 hook.Add("MD_OnAreaEntered","MapDefineLogEntered",function(ent,area)
 	if MapDefine.Logs then
-		local a = ent:GetName() or ent:GetClass()
+		local a = (ent:GetName() or ent:GetClass()) or "[ent]???"
 		print("[MapDefine]: "..a.." entered "..area)
 	end
 end)
 
 hook.Add("MD_OnAreaLeft","MapDefineLogLeft",function(ent,area)
 	if MapDefine.Logs then
-		local a = ent:GetName() or ent:GetClass()
+		local a = (ent:GetName() or ent:GetClass()) or "[ent]???"
 		print("[MapDefine]: "..a.." left "..area)
 	end
 end)
 
 hook.Add("MD_OnOverWorldEntered","MapDefineLogOWEntered",function(ent)
 	if MapDefine.Logs then
-		local a = ent:GetName() or ent:GetClass()
-		print("[MapDefine]: "..a.." entered overworld")
+		local a = (ent:GetName() or ent:GetClass()) or "[ent]???"
+		print("[MapDefine]: "..a.." entered OverWorld")
 	end
 end)
 
 hook.Add("MD_OnOverWorldLeft","MapDefineLogOWLeft",function(ent)
 	if MapDefine.Logs then
-		local a = ent:GetName() or ent:GetClass()
-		print("[MapDefine]: "..a.." left overworld")
+		local a = (ent:GetName() or ent:GetClass()) or "[ent]???"
+		print("[MapDefine]: "..a.." left OverWorld")
 	end
 end)
 
@@ -131,6 +131,10 @@ if SERVER then
 					end
 				else
 					hook.Run("MD_OnAreaLeft",ent,self.AreaName)
+					net.Start("MapDefineOnAreaLeft")
+					net.WriteEntity(ent)
+					net.WriteString(self.AreaName)
+					net.Broadcast()
 					if table.Count(MapDefine.GetCurrentAreas(ent)) == 0 then
 						ent.InOverWorld = true
 						hook.Run("MD_OnOverWorldEntered",ent)
@@ -140,10 +144,6 @@ if SERVER then
 					else
 						ent.InOverWorld = false 
 					end
-					net.Start("MapDefineOnAreaLeft")
-					net.WriteEntity(ent)
-					net.WriteString(self.AreaName)
-					net.Broadcast()
 				end
 			end
 		end,
@@ -204,6 +204,9 @@ if SERVER then
 		if map == game.GetMap() and MapDefine.IsExistingArea(area) then
 			MapDefine.Areas[area].Trigger:Remove()
 			MapDefine.Areas[area] = nil 
+			net.Start("MapDefineSyncAreas")
+			net.WriteTable(MapDefine.Areas)
+			net.Broadcast()
 		end
 	end
 
@@ -292,7 +295,7 @@ end
 if CLIENT then
 
 	net.Receive("MapDefineSyncAreas",function()
-		local tbl = net.ReadTable()
+		local tbl = net.ReadTable() 
 		MapDefine.Areas = tbl
 	end)
 
@@ -315,12 +318,12 @@ if CLIENT then
 
 	net.Receive("MapDefineOnOverWorldEntered",function()
 		local ent = net.ReadEntity()
-		hook.Run("MD_OnAreaEntered",ent)
+		hook.Run("MD_OnOverWorldEntered",ent)
 	end)
 
 	net.Receive("MapDefineOnOverWorldLeft",function()
 		local ent = net.ReadEntity()
-		hook.Run("MD_OnAreaLeft",ent)
+		hook.Run("MD_OnOverWorldLeft",ent)
 	end)
 
 end
