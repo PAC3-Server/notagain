@@ -5,10 +5,10 @@ local unmute = "aowl_unmute_draw"
 if SERVER then
   util.AddNetworkString(mute)
   util.AddNetworkString(unmute)
-  aowl.AddCommand({"mute","block"},function(ply,line,cmd,target)
+  aowl.AddCommand({"mute","block"},function(ply,line,target)
     target = easylua.FindEntity(target)
 
-    if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
+    if target and IsValid(target) and IsValid(ply) and target:IsPlayer() then
 
       net.Start(mute)
       net.WriteEntity(target)
@@ -17,10 +17,10 @@ if SERVER then
     end
 
   end)
-  aowl.AddCommand({"unmute","unblock"},function(ply,line,cmd,target)
+  aowl.AddCommand({"unmute","unblock"},function(ply,line,target)
     target = easylua.FindEntity(target)
 
-    if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
+    if target and IsValid(target) and IsValid(ply) and target:IsPlayer() then
 
       net.Start(unmute)
       net.WriteEntity(target)
@@ -36,12 +36,14 @@ if CLIENT then
 
   net.Receive(mute,function()
     local ent = net.ReadEntity()
-    muteds[ent:GetName()] = ent 
+    muteds[ent:GetName()] = ent
+    ent:SetMuted(true) 
   end)
 
   net.Receive(unmute,function()
     local ent = net.ReadEntity()
     muteds[ent:GetName()] = nil
+    ent:SetMuted(false)
   end)
 
   hook.Add("OnPlayerChat",mute,function(ply)
