@@ -1,10 +1,7 @@
 local Hooks     = hook.GetTable() or {} -- so hooks called before get registered
 local Faileds   = Faileds or {}
-local NWs       = NWs or {}
 
-local HookAddNetString    = "__NW__HOOKS__ADD__"
-local HookRemoveNetString = "__NW__HOOKS__END__"
-local HookRunNetString    = "__NW__HOOKS__RUN__"
+local HookRunNetString = "__NW__HOOKS__RUN__"
 
 local old_hookadd    = hook.Add 
 local old_hookremove = hook.Remove
@@ -40,77 +37,9 @@ hook.Find = function(hk)
 	return found
 end
 
-hook.GetNWs = function()
-	return NWs
-end
-
-hook.FindNW = function(hk)
-	local found = {}
-	local hk = string.lower(hk)
-	for type,_ in pairs(NWs) do
-		for name,callback in pairs(NWs[type]) do
-			if string.match(string.lower(tostring(name)),string.PatternSafe(hk),1) then
-				found[type] = found[type] or {}
-				found[type][name] = callback
-			end
-		end
-	end
-	return found
-end
-
 if SERVER then
 
-	util.AddNetworkString(HookAddNetString)
-	util.AddNetworkString(HookRemoveNetString)
 	util.AddNetworkString(HookRunNetString)
-
-	hook.AddNW = function(hk,hkname,callback)
-
-		local netname = "__NW__"..hkname
-		local tbl = {
-				Type = hk,
-				Name = khname,
-				Callback = callback,
-		}
-					
-		hook.Add(hk,netname,callback)
-
-		NWs[hk] = NWs[hk] or {}
-		NWs[hk][hkname] = callback 
-		
-		net.Start(HookAddNetString)
-		net.WriteTable(tbl)
-		net.Broadcast()
-
-		hook.Add("OnPlayerInitialSpawn","__NW__INIT__"..hkname,function(ply)
-			net.Start(HookAddNetString)
-			net.WriteTable(tbl)
-			net.Send(ply)
-		end)
-
-	end
-
-	hook.RemoveNW = function(hk,hkname)
-
-		local netname = "__HW__"..hkname
-
-		NWs[hk][hkname] = nil
-
-		hook.Remove(hk,netname)
-
-		net.Start(HookRemoveNetString)
-		net.WriteString(hk)
-		net.WriteString(hkname)
-		net.Broadcast()
-
-		hook.Add("OnPlayerInitialSpawn","__NW__END__"..hkname,function(ply)
-			net.Start(HookRemoveNetString)
-			net.WriteString(hk)
-			net.WriteString(hkname)
-			net.Broadcast()
-		end)
-	
-	end
 
 	hook.RunNW = function(name,...)
 		local tbl = {
@@ -129,20 +58,6 @@ end
 
 	
 if CLIENT then
-	
-	net.Receive(HookAddNetString,function()
-		local tbl = net.ReadTable()
-		hook.Add(tbl.Type,tbl.Name,tbl.Callback)
-		NWs[tbl.Type] = NWs[tbl.Type] or {}
-		NWS[tbl.Type][tbl.Name] = tbl.Callback
-	end)
-
-	net.Receive(HookRemoveNetString,function()
-		local t = net.ReadString()
-		local n = net.ReadString()
-		hook.Remove(t,n)
-		NWs[hk][hkname] = nil
-	end)
 
 	net.Receive(HookRunNetString,function()
 		local tbl = net.ReadTable()
