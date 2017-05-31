@@ -3,6 +3,8 @@ local mute = "aowl_mute_draw"
 local unmute = "aowl_unmute_draw"
 
 if SERVER then
+  util.AddNetworkString(mute)
+  util.AddNetworkString(unmute)
   aowl.AddCommand({"mute","block"},function(ply,line,cmd,target)
     target = easylua.FindEntity(target)
 
