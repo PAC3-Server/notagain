@@ -25,10 +25,8 @@ local border = CreateMaterial(tostring({}), "UnlitGeneric", {
 
 local sprite = Material("particle/fire")
 
-local background = Material("gui/gradient")
-
 hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
-    if (ScrW() != scrW or ScrH() != scrH) then
+    if ScrW() ~= scrW or ScrH() ~= scrH then
         scrW, scrH = ScrW(), ScrH()
         mainMenuSize.w = mainMenuSize.w / resolutionScale
         mainMenuSize.h = mainMenuSize.h / resolutionScale
@@ -38,21 +36,6 @@ hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
     end
 end)
 
-
-local function formatTime (time)
-  local ttime = time or 0
-  ttime = math.floor(ttime / 60)
-  local m = ttime % 60
-  ttime = math.floor(ttime / 60)
-  local h = ttime % 24
-  ttime = math.floor( ttime / 24 )
-  local d = ttime % 7
-  local w = math.floor(ttime / 7)
-  local str = ""
-  str = (w>0 and w.."w " or "")..(d>0 and d.."d " or "")
-
-  return string.format( str.."%02ih %02im", h, m )
-end
 
 local function cinputs( command, mode )
 
@@ -137,7 +120,7 @@ local PLAYER_LINE = {
     Think = function( self )
         self:DockMargin( 0, 10, 0, 0 )
 
-        if ( !IsValid( self.Player ) ) then
+        if not IsValid( self.Player ) then
             self:SetZPos( 9999 ) -- Causes a rebuild
             self:Remove()
             return
@@ -151,7 +134,7 @@ local PLAYER_LINE = {
 		local player = self.Player
 		local x, y = self:LocalToScreen(0, 0)
 
-		if ( !IsValid( player ) ) then
+		if not IsValid( player ) then
 			return
 		end
 
@@ -164,20 +147,17 @@ local PLAYER_LINE = {
 		end
 
 		local hover = self.hover_fade
-		local open_fade = math.min(RealTime() - w_Scoreboard.scoreboard_open_time - (player:EntIndex()/30), 1)
 
 		local ent = player
 		local dir = self.Friend and 1 or -1
 		local skew = 30 * dir
 		--skew = skew * math.sin(os.clock()*5)
-		local size_div = 1.35
 		local spacing = 8
 		local border_size = 10
 
 		h = h - border_size - spacing
 
 		local color = self.Friend and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS)
-		local text_blur_color = Color(color.r*0.6, color.g*0.6, color.b*0.6, 150)
 
 		do
 			surface.DisableClipping(true)
@@ -219,7 +199,7 @@ local PLAYER_LINE = {
 			local blursize = 2
 			local text_border = 5
 
-			local str_w, str_h = prettytext.GetTextSize(text, font, size, weight, blursize)
+			local _, str_h = prettytext.GetTextSize(text, font, size, weight, blursize)
 
 			local y = y + 10
 
@@ -332,13 +312,13 @@ local PLAYER_LINE = {
             self.Menu:SetAutoDelete( true )
 
             if aowl then
-                local goto = self.Menu:AddOption("Goto", function()
+                local goto_ = self.Menu:AddOption("Goto", function()
                     RunConsoleCommand( "aowl", "goto", PlayerID )
                 end)
 
-                goto:SetImage("icon16/arrow_right.png")
+                goto_:SetImage("icon16/arrow_right.png")
 
-                local bring = goto:AddSubMenu( "Bring" )
+                local bring = goto_:AddSubMenu( "Bring" )
                 bring:AddOption("Bring",function() RunConsoleCommand( "aowl", "bring", PlayerID  ) end):SetImage("icon16/arrow_in.png")
 
                 local SubAdmin,pic = self.Menu:AddSubMenu("Staff")
@@ -364,7 +344,7 @@ local PLAYER_LINE = {
 
             self.Menu:AddOption("Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end):SetImage("icon16/tab_edit.png")
             self.Menu:AddOption("Open Profile",function() self.Player:ShowProfile() end):SetImage("icon16/world.png")
-            self.Menu:AddOption("Mute/Unmute",function() self.Player:SetMuted(!self.Player:IsMuted()) end):SetImage("icon16/sound_mute.png")
+            self.Menu:AddOption("Mute/Unmute",function() self.Player:SetMuted(not self.Player:IsMuted()) end):SetImage("icon16/sound_mute.png")
 
 
             RegisterDermaMenuForClose( self.Menu )
@@ -387,18 +367,6 @@ local SCORE_BOARD = {
         self.Header:SetHeight( 100 )
         self.Header:DockMargin( 0,0,0,15)
 		self.Header.Paint = function(_, w, h)
-			local maxw, maxh = 0,0
-
-			--local w, h = prettytext.Draw("FPS: " .. math.Round(1 / FrameTime()), 0, 0, "arial", 30, 800, 3)
-			--maxw = math.max(maxh, w)
-			--maxh = math.max(maxh, h)
-
-			--local w, h = prettytext.Draw("TIME: " .. os.date("%X"), 0, 0, "arial", 30, 800, 3)
-			--maxw = math.max(maxh, w)
-			--maxh = math.max(maxh, h)
-
-
-
 			prettytext.Draw(GetHostName(), w/2, 0, "gabriola", 120, 800, 10, Color(255, 255, 255, 255), Color(75,75, 75, 150), -0.5)
 		end
 
@@ -428,8 +396,8 @@ local SCORE_BOARD = {
 
     end,
 
-    Think = function( self, w, h )
-        for id, pl in pairs( player.GetAll() ) do
+    Think = function( self )
+        for _, pl in pairs( player.GetAll() ) do
 
             if ( IsValid( ScoreEntries[pl:UniqueID()] ) ) then continue end
 
@@ -462,7 +430,7 @@ w_Scoreboard = nil
 local function YScoreboardShow()
     if ysc_convar:GetInt() == 1 then
 
-        if ( !IsValid( w_Scoreboard ) ) then
+        if ( not IsValid( w_Scoreboard ) ) then
             w_Scoreboard = vgui.CreateFromTable( SCORE_BOARD )
         end
 
@@ -493,7 +461,7 @@ local function YScoreboardShow()
 
 			do
 				local x, y = w_Scoreboard:GetPos()
-				local w, h = w_Scoreboard:GetSize()
+				local w, _ = w_Scoreboard:GetSize()
 
 				surface.SetDrawColor(255, 255, 255, 255)
 
