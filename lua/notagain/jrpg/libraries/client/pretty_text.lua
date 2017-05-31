@@ -1,5 +1,7 @@
 local fonts = {}
 
+local linux_offset = system.IsLinux() and 1 or 0
+
 local function create_fonts(font, size, weight, blursize)
 	local main = "pretty_text_" .. size .. "_" .. weight .. "_" .. blursize
 	local blur = "pretty_text_blur_" .. size  .. "_" .. weight .. "_" .. blursize
@@ -10,12 +12,10 @@ local function create_fonts(font, size, weight, blursize)
 		weight = weight,
 		antialias = true,
 	})
-
 	surface.CreateFont(blur, {
 		font = font,
-		size = size,
+		size = size + (linux_offset * 2.5),
 		weight = weight,
-		antialias= true,
 		blursize = blursize / 2,
 		outline = true,
 	})
@@ -96,6 +96,7 @@ local function skew_matrix(m, x, y)
 end
 
 function prettytext.DrawText(tbl)
+
 	local text = tbl.text or "nil"
 	local x = tbl.x or 0
 	local y = tbl.y or 0
@@ -221,7 +222,7 @@ function prettytext.DrawText(tbl)
 	surface_SetTextColor(background_color)
 
 	for _ = 1, tbl.blur_overdraw or 2 do
-		surface_SetTextPos(x, y)
+		surface_SetTextPos(x + linux_offset, y)
 		surface_DrawText(text)
 	end
 
