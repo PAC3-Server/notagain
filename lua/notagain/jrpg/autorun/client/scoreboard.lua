@@ -39,29 +39,6 @@ hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
 end)
 
 
-surface.CreateFont( "InfoFont", {
-    font      = "arial",
-    size      = 21,
-    weight    = 600,
-    shadow    = true
-} )
-
-surface.CreateFont( "Sfont", {
-    font      = "arial",
-    size      = 17,
-    weight    = 600,
-    antialias = true,
-    additive  = true,
-    shadow    = true
-} )
-
-surface.CreateFont( "ScoreboardDefaultTitle", {
-    font    = "arial",
-    size    = 32,
-    weight  = 800,
-    shadow  = true
-} )
-
 local function formatTime (time)
   local ttime = time or 0
   ttime = math.floor(ttime / 60)
