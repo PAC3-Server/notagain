@@ -190,7 +190,7 @@ if SERVER then
 		local victim = data.HitEntity
 		if not IsValid(victim) and not victim:IsPlayer() then return end
 
-		if victim:GetInfoNum("cl_godmode", 1) == 0 then
+		if (victim:GetInfoNum("cl_godmode", 1) or 1) == 0 then
 			return
 		end
 
