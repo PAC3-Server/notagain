@@ -3,7 +3,7 @@ local ignore = "aowl_ignore_draw"
 local unignore = "aowl_unignore_draw"
 
 if SERVER then
-  aowl.AddCommand("ignore","undraw",function(ply,line,cmd,target)
+  aowl.AddCommand({"ignore","undraw"},function(ply,line,cmd,target)
     target = easylua.FindEntity(target)
 
     if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
@@ -15,7 +15,7 @@ if SERVER then
     end
 
   end)
-  aowl.AddCommand("unignore","draw",function(ply,line,cmd,target)
+  aowl.AddCommand({"unignore","draw"},function(ply,line,cmd,target)
     target = easylua.FindEntity(target)
 
     if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
