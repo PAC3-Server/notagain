@@ -3,7 +3,7 @@ local mute = "aowl_mute_draw"
 local unmute = "aowl_unmute_draw"
 
 if SERVER then
-  aowl.AddCommand("mute","block",function(ply,line,cmd,target)
+  aowl.AddCommand({"mute","block"},function(ply,line,cmd,target)
     target = easylua.FindEntity(target)
 
     if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
@@ -15,7 +15,7 @@ if SERVER then
     end
 
   end)
-  aowl.AddCommand("unmute","unblock",function(ply,line,cmd,target)
+  aowl.AddCommand({"unmute","unblock"},function(ply,line,cmd,target)
     target = easylua.FindEntity(target)
 
     if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
