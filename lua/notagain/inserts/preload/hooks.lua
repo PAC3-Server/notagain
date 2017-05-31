@@ -13,7 +13,7 @@ hook.Add = function(hk,hkname,callback)
 end
 
 hook.Remove = function(hk,hkname)
-	if Hooks[hk][hkname] then
+	if Hooks[k] and Hooks[hk][hkname] then
 		Hooks[hk][hkname] = nil 
 	end
 	old_hookremove(hk,hkname)
@@ -54,10 +54,28 @@ if SERVER then
 		net.Broadcast()
 	end
 
+	net.Receive(HookRunNetString,function()
+		local tbl = net.ReadTable()
+		hook.Run(tbl.Name,unpack(tbl.Args))
+	end)
+
 end
 
 	
 if CLIENT then
+
+	hook.RunNW = function(name,...)
+		local tbl = {
+			Name = name,
+			Args = { ... },
+		}
+
+		hook.Run(name,...)
+
+		net.Start(HookRunNetString)
+		net.WriteTable(tbl)
+		net.SendToServer()
+	end
 
 	net.Receive(HookRunNetString,function()
 		local tbl = net.ReadTable()
