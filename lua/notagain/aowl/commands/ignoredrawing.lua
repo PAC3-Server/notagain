@@ -5,10 +5,10 @@ local unignore = "aowl_unignore_draw"
 if SERVER then
   util.AddNetworkString(ignore)
   util.AddNetworkString(unignore)
-  aowl.AddCommand({"ignore","undraw"},function(ply,line,cmd,target)
+  aowl.AddCommand({"ignore","undraw"},function(ply,line,target)
     target = easylua.FindEntity(target)
 
-    if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
+    if target and IsValid(target) and IsValid(ply) and target:IsPlayer() then
 
       net.Start(ignore)
       net.WriteEntity(target)
@@ -17,10 +17,10 @@ if SERVER then
     end
 
   end)
-  aowl.AddCommand({"unignore","draw"},function(ply,line,cmd,target)
+  aowl.AddCommand({"unignore","draw"},function(ply,line,target)
     target = easylua.FindEntity(target)
 
-    if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
+    if target and IsValid(target) and IsValid(ply) and target:IsPlayer() then
 
       net.Start(unignore)
       net.WriteEntity(target)
@@ -63,7 +63,7 @@ if CLIENT then
   end)
 
   hook.Add("pac_OnWoreOutfit",unignore,function(_,ply)
-    if IsValid(ply) ignoreds[ply:GetName()] then
+    if IsValid(ply) and ignoreds[ply:GetName()] then
       pac.IgnoreEntity(ply)
     end 
   end)
