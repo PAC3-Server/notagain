@@ -46,7 +46,7 @@ LuaChat.DoLuaCommand = function(ply,str)
 			if LuaChat.OnClientCmds[cmd] == "lsc" then
 				chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(61,61,61)," -> ",Color(244,66,66),a[1],Color(175,175,175),": "..a[2]..table.concat(args," ",3,#args))
 			else
-				chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(61,61,61)," -> ",Color(244,66,66),a[1].."Print",Color(175,175,175),": "..a[2]..table.concat(args," ",3,#args))
+				chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(61,61,61)," -> ",Color(244,66,66),a[1].." Print",Color(175,175,175),": "..a[2]..table.concat(args," ",3,#args))
 			end
 			
 			return true 
