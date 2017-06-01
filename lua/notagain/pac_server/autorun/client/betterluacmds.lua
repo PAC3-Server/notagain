@@ -12,11 +12,11 @@ LuaChat.Cmds = {
 	["keys"]   = "Server Keys",
 	["printm"] = "Self Print",
 	["printb"] = "Both Print",
+	["printc"] = "Clients Print",
 }
 
-LuaChat.OnClientCmds = {
-	["lsc"]    = "lsc",
-	["printc"] = "printc",
+LuaChat.OnClientCmds = { --add commands ran on specific client here
+	["lsc"]    = "",
 }
 
 LuaChat.IsCommand = function(str)
@@ -35,19 +35,17 @@ LuaChat.DoLuaCommand = function(ply,str)
 
 		if LuaChat.Cmds[cmd] then
 			
-			chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(175,175,175)," -> ",Color(244,66,66),LuaChat.Cmds[cmd],Color(175,175,175),": "..table.concat(args," ",2,#args))
+			chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(61,61,61)," -> ",Color(244,66,66),LuaChat.Cmds[cmd],Color(175,175,175),": "..table.concat(args," ",2,#args))
 			
 			return true
-		
+			
 		elseif LuaChat.OnClientCmds[cmd] then
 			
 			local a = string.Explode(",",args[2])
 			
-			if LuaChat.OnClientCmds[cmd] == "lsc" then
-				chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(175,175,175)," -> ",Color(244,66,66),a[1],Color(175,175,175),": "..a[2]..table.concat(args," ",3,#args))
-			else
-				chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(175,175,175)," -> ",Color(244,66,66),a[1].." Print",Color(175,175,175),": "..a[2]..table.concat(args," ",3,#args))
-			end
+
+			chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(61,61,61)," -> ",Color(244,66,66),a[1].." "..LuaChat.OnClientCmds[cmd],Color(175,175,175),": "..a[2]..table.concat(args," ",3,#args))
+
 			
 			return true 
 		
