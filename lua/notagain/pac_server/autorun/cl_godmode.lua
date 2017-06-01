@@ -188,7 +188,7 @@ if SERVER then
 
 	function _G.cl_godmode_physics_collide(self, data)
 		local victim = data.HitEntity
-		if not IsValid(victim) and not victim:IsPlayer() then return end
+		if not IsValid(victim) or not victim:IsPlayer() then return end
 
 		if (victim:GetInfoNum("cl_godmode", 1) or 1) == 0 then
 			return
