@@ -24,6 +24,10 @@ local border = CreateMaterial(tostring({}), "UnlitGeneric", {
 })
 
 local sprite = Material("particle/fire")
+local pacicon = Material("icon64/pac3.png")
+if pacicon:IsError() then
+	pacicon = Material("icon16/package.png")
+end
 
 hook.Add("PreRender", "ScoreboardCheckResolutionChange", function()
     if ScrW() ~= scrW or ScrH() ~= scrH then
@@ -312,14 +316,16 @@ local PLAYER_LINE = {
             self.Menu:SetAutoDelete( true )
 
             if aowl then
-                local goto_ = self.Menu:AddOption("Goto", function()
-                    RunConsoleCommand( "aowl", "goto", PlayerID )
-                end)
+            	if PlayerID ~= tostring( LocalPlayer():UniqueID() ) then
+	                local goto_ = self.Menu:AddOption("Goto", function()
+	                    RunConsoleCommand( "aowl", "goto", PlayerID )
+	                end)
 
-                goto_:SetImage("icon16/arrow_right.png")
+	                goto_:SetImage("icon16/arrow_right.png")
 
-                local bring = goto_:AddSubMenu( "Bring" )
-                bring:AddOption("Bring",function() RunConsoleCommand( "aowl", "bring", PlayerID  ) end):SetImage("icon16/arrow_in.png")
+	                local bring = goto_:AddSubMenu( "Bring" )
+	                bring:AddOption("Bring",function() RunConsoleCommand( "aowl", "bring", PlayerID  ) end):SetImage("icon16/arrow_in.png")
+        	    end
 
                 local SubAdmin,pic = self.Menu:AddSubMenu("Staff")
                 pic:SetImage("icon16/shield.png")
@@ -334,17 +340,21 @@ local PLAYER_LINE = {
             end
 
             if pac then
-                local SubPac = self.Menu:AddSubMenu("PAC3")
+                local SubPac,Image = self.Menu:AddSubMenu("PAC3")
+                Image.PaintOver = function(self,w,h) -- little bit hacky but cant resize images with setimage
+                	surface.SetMaterial(pacicon)
+                	surface.SetDrawColor(255,255,255,255)
+                	surface.DrawTexturedRect(2,1,20,20)
+                end
 
-                SubPac:AddOption( "Ignore",function() pac.IgnoreEntity(self.Player) end):SetImage("icon16/cancel.png")
-                SubPac:AddOption( "Unignore",function() pac.UnIgnoreEntity(self.Player) end):SetImage("icon16/accept.png")
+                SubPac:AddOption( self.Player.pac_ignored and "Unignore" or "Ignore",function() if self.Player.pac_ignored then pac.UnIgnoreEntity(self.Player) else pac.IgnoreEntity(self.Player) end end):SetImage(self.Player.pac_ignored and "icon16/accept.png" or "icon16/cancel.png")
 
                 self.Menu:AddSpacer()
             end
 
             self.Menu:AddOption("Copy SteamID",function() SetClipboardText(self.Player:SteamID()) chat.AddText(Color(255,255,255),"You copied "..self.Player:Nick().."'s SteamID") end):SetImage("icon16/tab_edit.png")
             self.Menu:AddOption("Open Profile",function() self.Player:ShowProfile() end):SetImage("icon16/world.png")
-            self.Menu:AddOption("Mute/Unmute",function() self.Player:SetMuted(not self.Player:IsMuted()) end):SetImage("icon16/sound_mute.png")
+            self.Menu:AddOption(self.Player:IsMuted() and "Unmute" or "Mute",function() self.Player:SetMuted(not self.Player:IsMuted()) end):SetImage(self.Player:IsMuted() and "icon16/sound_add.png" or "icon16/sound_mute.png")
 
 
             RegisterDermaMenuForClose( self.Menu )
@@ -511,13 +521,9 @@ local function YScoreboardHide()
 end
 
 local function KeyRelease(_,pressed)
-
 	if pressed == IN_ATTACK2 and w_Scoreboard and w_Scoreboard:IsVisible() then
-
 		w_Scoreboard:SetMouseInputEnabled(true)
-
 	end
-
 end
 
 hook.Add("ScoreboardShow","YScoreboardShow",YScoreboardShow)
