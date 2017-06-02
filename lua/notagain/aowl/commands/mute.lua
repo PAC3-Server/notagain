@@ -48,7 +48,7 @@ if CLIENT then
 
   hook.Add("OnPlayerChat",mute,function(ply)
     if IsValid(ply) and muteds[ply:GetName()] then
-      return ""
+      return true
     end
   end)
 
