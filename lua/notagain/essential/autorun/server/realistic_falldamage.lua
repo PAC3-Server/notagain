@@ -18,23 +18,24 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 
 			if res.Hit and (z < 0.1 or z > 0.9) then
 				local fall_damage = hook.Run("GetFallDamage", ply, len) -- Prepare Override & Check Expected Fall Damage
-				if fall_damage <= 0 then return end
 
-				local world = game.GetWorld()
-				local pos = data:GetOrigin()
-				local info = DamageInfo()
+				if fall_damage > 0 then
+					local world = game.GetWorld()
+					local pos = data:GetOrigin()
+					local info = DamageInfo()
 
-				info:SetDamagePosition(pos)
-				info:SetDamage(dmg)
-				info:SetDamageType(DMG_FALL)
-				info:SetAttacker(world)
-				info:SetInflictor(world)
-				info:SetDamageForce(ply.fdmg_last_vel)
+					info:SetDamagePosition(pos)
+					info:SetDamage(dmg)
+					info:SetDamageType(DMG_FALL)
+					info:SetAttacker(world)
+					info:SetInflictor(world)
+					info:SetDamageForce(ply.fdmg_last_vel)
 
-				if hook.Run("RealisticFallDamage", ply, info, len, fall_damage, res, params) ~= true then
-					ply:TakeDamageInfo(info)
+					if hook.Run("RealisticFallDamage", ply, info, len, fall_damage, res, params) ~= true then
+						ply:TakeDamageInfo(info)
 
-					hook.Run("PostRealisticFallDamage", ply, info, len, fall_damage, res, params)
+						hook.Run("PostRealisticFallDamage", ply, info, len, fall_damage, res, params)
+					end
 				end
 			end
 		end
