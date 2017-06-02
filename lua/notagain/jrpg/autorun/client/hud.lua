@@ -11,14 +11,6 @@ local gradient = CreateMaterial(tostring({}), "UnlitGeneric", {
 	["$Additive"] = 0,
 })
 
-local gradient_up = CreateMaterial(tostring({}), "UnlitGeneric", {
-	["$BaseTexture"] = "vgui/gradient_up",
-
-	["$VertexAlpha"] = 1,
-	["$VertexColor"] = 1,
-	["$Additive"] = 0,
-})
-
 local border = CreateMaterial(tostring({}), "UnlitGeneric", {
 	["$BaseTexture"] = "props/metalduct001a",
 	["$VertexAlpha"] = 1,
@@ -30,13 +22,6 @@ local background_glow = CreateMaterial(tostring({}), "UnlitGeneric", {
 	["$VertexAlpha"] = 1,
 	["$VertexColor"] = 1,
 	["$Additive"] = 0,
-})
-
-local foreground_glow = CreateMaterial(tostring({}), "UnlitGeneric", {
-	["$BaseTexture"] = "particle/particle_glow_05",
-	["$VertexAlpha"] = 1,
-	["$VertexColor"] = 1,
-	["$Additive"] = 1,
 })
 
 local background_wing = Material("materials/pac_server/jrpg/wing.png", "smooth")
@@ -51,9 +36,7 @@ local function smooth(var, id)
 	return smoothers[id]
 end
 
-local last_hp = 0
 local last_hp_timer = 0
-local hide_time = 5
 
 local border_size = 2
 local skew = -40

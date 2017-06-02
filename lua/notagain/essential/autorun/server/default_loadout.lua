@@ -4,6 +4,7 @@ local weps = {
 	"gmod_camera",
 	"gmod_tool",
 	"none",
+	"weapon_medkit",
 }
 
 hook.Add("PlayerLoadout", "default_loadout", function(ply)

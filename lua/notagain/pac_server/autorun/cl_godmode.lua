@@ -188,9 +188,9 @@ if SERVER then
 
 	function _G.cl_godmode_physics_collide(self, data)
 		local victim = data.HitEntity
-		if not victim:IsPlayer() then return end
+		if not IsValid(victim) or not victim:IsPlayer() then return end
 
-		if victim:GetInfoNum("cl_godmode", 1) == 0 then
+		if (victim:GetInfoNum("cl_godmode", 1) or 1) == 0 then
 			return
 		end
 
@@ -204,7 +204,7 @@ if SERVER then
 			attacker = self.cl_godmode_owner_override
 		end
 
-		if victim:IsPlayer() and attacker and attacker:IsPlayer() and not attacker:CanAlter(victim) and data.OurOldVelocity:Length() > 25 then
+		if victim:IsPlayer() and attacker and IsValid(attacker) and attacker:IsPlayer() and not attacker:CanAlter(victim) and data.OurOldVelocity:Length() > 25 then
 			local dmg = DamageInfo()
 			dmg:SetDamageType(DMG_CRUSH)
 			dmg:SetAttacker(attacker)
