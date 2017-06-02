@@ -26,6 +26,16 @@ LuaChat.IsCommand = function(str)
 	return replaced >= 1 and true or false
 end
 
+local get = function(str)
+	if not str then return "" end
+
+	if player.FindByName then
+		return player.FindByName(str):GetName()
+	else
+		return str 
+	end
+end
+
 LuaChat.DoLuaCommand = function(ply,str)
 
 	if LuaChat.IsCommand(str) and IsValid(ply) then
@@ -35,7 +45,7 @@ LuaChat.DoLuaCommand = function(ply,str)
 
 		if LuaChat.Cmds[cmd] then
 			
-			chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(61,61,61)," -> ",Color(244,66,66),LuaChat.Cmds[cmd],Color(175,175,175),": "..table.concat(args," ",2,#args))
+			chat.AddText(team.GetColor(ply:Team()),ply,Color(61,61,61)," -> ",Color(244,66,66),LuaChat.Cmds[cmd],Color(175,175,175),": "..table.concat(args," ",2,#args))
 			
 			return true
 			
@@ -44,7 +54,7 @@ LuaChat.DoLuaCommand = function(ply,str)
 			local a = string.Explode(",",args[2])
 			
 
-			chat.AddText(team.GetColor(ply:Team()),ply:GetName(),Color(61,61,61)," -> ",Color(244,66,66),a[1].." "..LuaChat.OnClientCmds[cmd],Color(175,175,175),": "..a[2]..table.concat(args," ",3,#args))
+			chat.AddText(team.GetColor(ply:Team()),ply,Color(61,61,61)," -> ",Color(244,66,66),get(a[1]),(LuaChat.OnClientCmds[cmd] ~= "" and " "..LuaChat.OnClientCmds[cmd] or ""),Color(175,175,175),": "..a[2].." "..table.concat(args," ",3,#args))
 
 			
 			return true 
