@@ -2,7 +2,7 @@
 local LuaChat = {}
 
 CreateClientConVar("luachat_showtime", 0, true, false, "Show timestamp for Lua commands? (1 enables, 0 disables)")
-CreateClientConVar("luachat_tagcolors", 0, true, false, "Make all tag colours red! (1 enables, 0 disables)")
+CreateClientConVar("luachat_tagcolors", 0, true, false, "Show tag colours? (1 enables, 0 disables)")
 
 LuaChat.Cmds = {
 	["l"]      = {text = "Server",          color = Color(249, 38, 114)},
