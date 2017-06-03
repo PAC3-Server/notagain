@@ -42,7 +42,7 @@ local function get(str)
 end
 
 local function chatText(team_color, ply, line, cmd, target_name, slot_b)
-	local arrow = " >> "
+	local arrow = " ⮞⮞ "
 	local time_tag = GetConVar("luachat_showtime"):GetBool() and "["..os.date("%H:%M:%S").."] " or ""
 	local all_red = not GetConVar("luachat_tagcolors"):GetBool()
 
