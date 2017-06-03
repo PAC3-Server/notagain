@@ -130,26 +130,29 @@ if SERVER then
 
 		info:SetDamageForce(Vector(0,0,0))
 
-		local rag = ply:GetNWEntity("serverside_ragdoll")
+		timer.Simple(0, function()
+			local rag = ply:GetNWEntity("serverside_ragdoll")
 
-		if rag:IsValid() then
-			local phys = rag:GetPhysicsObject()
-			phys:SetVelocity(Vector(0,0,0))
-			for i = 1, rag:GetPhysicsObjectCount() - 1 do
-				local phys = rag:GetPhysicsObjectNum(i)
+			if rag:IsValid() then
+				local phys = rag:GetPhysicsObject()
 				phys:SetVelocity(Vector(0,0,0))
-			end
+				for i = 1, rag:GetPhysicsObjectCount() - 1 do
+					local phys = rag:GetPhysicsObjectNum(i)
+					phys:SetVelocity(Vector(0,0,0))
+				end
 
-			if ply:LookupBone("ValveBiped.Bip01_R_Pectoral") then
-				ply:EmitSound("pac_server/darksouls2/death/female/"..math.random(1,4)..".ogg", 75, math.random(95,105))
-			else
-				ply:EmitSound("pac_server/darksouls2/death/male/"..math.random(1,5)..".ogg", 75, math.random(95,105))
-			end
+				if ply:LookupBone("ValveBiped.Bip01_R_Pectoral") then
+					ply:EmitSound("pac_server/darksouls2/death/female/"..math.random(1,4)..".ogg", 75, math.random(95,105))
+				else
+					ply:EmitSound("pac_server/darksouls2/death/male/"..math.random(1,5)..".ogg", 75, math.random(95,105))
+				end
 
-			net.Start("darksouls_death")
-			net.WriteEntity(ply)
-			net.WriteEntity(rag)
-			net.Broadcast()
-		end
+				net.Start("darksouls_death")
+				net.WriteEntity(ply)
+				net.WriteEntity(rag)
+				net.Broadcast()
+			end
+		end)
+		
 	end)
 end
