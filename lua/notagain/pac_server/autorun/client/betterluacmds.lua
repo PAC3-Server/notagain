@@ -1,6 +1,8 @@
 ----lua chat beautify---
 local LuaChat = {}
 
+CreateClientConVar("luachat_showtime", 0, true, false, "Show timestamp for Lua commands? (1 enables, 0 disables)")
+
 LuaChat.Cmds = {
 	["l"]      = {text = "Server",          color = Color(249, 38, 114)},
 	["lm"]     = {text = "Self",            color = Color(102, 217, 239), onself = true},
@@ -39,9 +41,12 @@ end
 
 local function chatText(team_color, ply, line, cmd, target_name, slot_b)
 	local arrow = cmd.onself and " << " or " >> "
+	local time_tag = GetConVar("luachat_showtime"):GetBool() and "["..os.date("%H:%M:%S").."] " or ""
+
 	cmd = istable(cmd) and cmd or {text = cmd}
 
-	chat.AddText(team_color, ply, Color(38, 38, 33), arrow, cmd.color or Color(249, 38, 114), target_name or "", cmd.text, Color(158, 158, 153), ": "..(slot_b and slot_b.." " or "")..line)
+	chat.AddText(Color(158, 158, 153), time_tag, team_color, ply, Color(38, 38, 33), arrow, cmd.color or Color(249, 38, 114), target_name or "", cmd.text, Color(248, 248, 242), ": "..(slot_b and slot_b.." " or "")..line)
+	-- Alternative: Color(158, 158, 153)
 end
 
 LuaChat.DoLuaCommand = function(ply,str)
