@@ -2,7 +2,7 @@
 local LuaChat = {}
 
 CreateClientConVar("luachat_showtime", 0, true, false, "Show timestamp for Lua commands? (1 enables, 0 disables)")
-CreateClientConVar("luachat_tagcolors", 0, true, false, "Show tag specific colours? (1 enables, 0 disables)")
+CreateClientConVar("luachat_tagcolors", 0, true, false, "Make all tag colours red! (1 enables, 0 disables)")
 
 LuaChat.Cmds = {
 	["l"]      = {text = "Server",          color = Color(249, 38, 114)},
@@ -17,6 +17,7 @@ LuaChat.Cmds = {
 	["printb"] = {text = "Both Print",      color = Color(166, 226, 46)},
 	["printc"] = {text = "Clients Print",   color = Color(163, 126, 242)},
 	["cmd"]    = {text = "Console",         color = Color(102, 217, 239), onself = true},
+	["rcon"]   = {text = "Server Console",  color = Color(249, 38, 114)},
 }
 
 LuaChat.OnClientCmds = { --add commands ran on specific client here
@@ -41,7 +42,7 @@ local function get(str)
 end
 
 local function chatText(team_color, ply, line, cmd, target_name, slot_b)
-	local arrow = ">>"
+	local arrow = " >> "
 	local time_tag = GetConVar("luachat_showtime"):GetBool() and "["..os.date("%H:%M:%S").."] " or ""
 	local all_red = not GetConVar("luachat_tagcolors"):GetBool()
 
