@@ -517,9 +517,6 @@ if SERVER then
 		if luadev.Verbose() then
 			luadev.Print(script)
 			luadev.Print("\n\n")
-		else
-			local t = script:Split("\n")
-			luadev.Print(t[1] .. "..")
 			luadev.Print("#" .. #t .. "lines")
 			luadev.Print("#" .. #script .. "bytes")
 		end
