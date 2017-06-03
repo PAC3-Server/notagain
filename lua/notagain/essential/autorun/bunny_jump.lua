@@ -153,6 +153,7 @@ hook.Add("Initialize", hook_key, function()
 	if SERVER then
 		RunConsoleCommand("sv_airaccelerate", "1000000")
 		RunConsoleCommand("sv_maxvelocity", "20000")
+		RunConsoleCommand("sv_sticktoground", "0")
 	end
 
 	hook.Remove("Initialize",hook_key)
