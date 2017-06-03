@@ -65,9 +65,9 @@ if CLIENT then
 	net.Receive(tag,function()
 		local info = net.ReadTable()
 		if not info.reason then
-			chat.AddText(Color(20, 230, 20), "▶ ", Color(255,255,255),info.name,Color(220,220,220)," (" .. info.steamid .. ") is ", Color(20, 255, 20), "connecting", Color(220,220,220), " to the server!")
+			chat.AddText(Color(20, 230, 20), "⮞ ", Color(255,255,255),info.name,Color(220,220,220)," (" .. info.steamid .. ") is ", Color(20, 255, 20), "connecting", Color(220,220,220), " to the server!")
 		else
-			chat.AddText(Color(230, 20, 20), "▶ ", Color(255,255,255),info.name,Color(220,220,220)," (" .. info.steamid .. ") has ", Color(255, 20, 20), "disconnected", Color(220,220,220), " from the server! (" .. info.reason .. ")")
+			chat.AddText(Color(230, 20, 20), "⮞ ", Color(255,255,255),info.name,Color(220,220,220)," (" .. info.steamid .. ") has ", Color(255, 20, 20), "disconnected", Color(220,220,220), " from the server! (" .. info.reason .. ")")
 		end
 	end)
 
