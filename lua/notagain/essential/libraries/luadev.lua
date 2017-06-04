@@ -78,7 +78,7 @@ do -- helpers
 	if CLIENT then
 		luadev.verbose = CreateClientConVar( "luadev.verbose", "1",true)
 	else
-		luadev.verbose = CreateConVar( "luadev.verbose", "1", { FCVAR_NOTIFY ,FCVAR_ARCHIVE} )
+		luadev.verbose = CreateConVar( "luadev.verbose", "0", { FCVAR_NOTIFY ,FCVAR_ARCHIVE} )
 	end
 	function luadev.Verbose(lev)
 		return (luadev.verbose:GetInt() or 99)>=(lev or 1)
