@@ -11,6 +11,16 @@ local function IsStuck(ply)
 
 end
 
+local function LookAt(ply, pos)
+	if isentity(pos) and IsValid(pos) then
+		if pos:IsPlayer() or pos:IsNPC() then
+			pos = pos:EyePos()
+		end
+	end
+
+	ply:SetEyeAngles( (pos - ply:EyePos()):Angle() )
+end
+
 -- helper
 local function SendPlayer( from, to )
 	if not to:IsInWorld() then
@@ -136,8 +146,8 @@ local function Goto(ply,line,target)
 
 	local dir = ent:GetAngles(); dir.p = 0; dir.r = 0; dir = (dir:Forward() * -100)
 
-	if ply.LookAt and ent:GetPos():DistToSqr(ply:GetPos())< 256*256 and (not ply.IsStuck or not ply:IsStuck()) then
-		ply:LookAt(ent,0.35,.01)
+	if ent:GetPos():DistToSqr(ply:GetPos()) < 256*256 and (not ply.IsStuck or not ply:IsStuck()) then
+		LookAt(ply, ent)
 		return
 	end
 
