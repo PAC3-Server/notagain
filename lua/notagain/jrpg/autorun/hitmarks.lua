@@ -457,8 +457,10 @@ if CLIENT then
 				elseif data.dmg > 0 then
 					txt = "+" .. txt
 				end
+					
+				local tr = IsValid(data.ent) and data.ent:EyePos():Distance((util.TraceLine({start = EyePos(), endpos = data.ent:EyePos()})).HitPos) < 100
 
-				if pos.visible then
+				if pos.visible and tr then
 
 					local x = pos.x + data.pos.x
 					local y = pos.y + data.pos.y
