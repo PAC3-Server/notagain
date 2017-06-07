@@ -1,6 +1,4 @@
 sudo: false
-
-language: c
     
 before_install:
  # cd back to not download into the addon
