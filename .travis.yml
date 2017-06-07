@@ -1,12 +1,6 @@
 sudo: false
 
 language: c
-
-addons:
-  apt:
-    packages:
-    - libc6:i386
-    - libstdc++6:i386
     
 before_install:
  # cd back to not download into the addon
