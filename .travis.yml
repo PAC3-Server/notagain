@@ -19,4 +19,4 @@ before_install:
  # cd back to working dir
  - cd $TRAVIS_BUILD_DIR
 
-script: bash goluwa cli --gluacheck .
+script: bash goluwa cli --gluacheck $TRAVIS_BUILD_DIR/
