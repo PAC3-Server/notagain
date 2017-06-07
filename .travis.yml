@@ -9,13 +9,14 @@ addons:
     - libstdc++6:i386
     
 before_install:
- # Download the lua 
+ # cd back to not download into the addon
+ - cd ..
+ # Download the lua  and unzip
  - wget https://github.com/CapsAdmin/goluwa/archive/master.zip
  - unzip master.zip -d goluwa
-
- # Set the $PATH so gluac can be executed
+ # Set the $PATH so goluwa can be executed
  - export PATH=$PATH:`pwd`/goluwa/goluwa-master/
- 
- - echo $PWD
+ # cd back to working dir
+ - cd $TRAVIS_BUILD_DIR
 
-script: bash goluwa cli --gluacheck
+script: bash goluwa cli --gluacheck .
