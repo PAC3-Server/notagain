@@ -14,9 +14,7 @@ before_install:
  # Download the lua  and unzip
  - wget https://github.com/CapsAdmin/goluwa/archive/master.zip
  - unzip master.zip -d goluwa
- # Set the $PATH so goluwa can be executed
- - export PATH=$PATH:`pwd`/goluwa/goluwa-master/
- # cd back to working dir
- - cd $TRAVIS_BUILD_DIR
+ # go to goluwa working dir
+ - cd goluwa/goluwa-master/
 
 script: bash goluwa cli --gluacheck $TRAVIS_BUILD_DIR/
