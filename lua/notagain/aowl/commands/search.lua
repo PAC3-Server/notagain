@@ -17,6 +17,6 @@ end
 if CLIENT then
 	net.Receive(Tag,function()
 		local parts = string.Explode(" ",net.ReadString())
-		gui.OpenURL("https://www.google.co.uk/#q="..table.concat( parts, "+", 1, #parts ))
+		gui.OpenURL("https://www.google.com/#q="..table.concat( parts, "+", 1, #parts ))
 	end)
 end
