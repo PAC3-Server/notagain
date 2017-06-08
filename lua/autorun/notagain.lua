@@ -180,7 +180,10 @@ function _G.requirex(name, ...)
 	return res
 end
 
+--If external stuff needs to be called before notagain
+hook.Run("NotagainPreLoad")
+
 notagain.Load()
 
---Im adding this hook here, as some scripts are not loaded by notagain but still relies on it.
+--If external stuff need that notagain has fully loaded
 hook.Run("NotagainPostLoad")
