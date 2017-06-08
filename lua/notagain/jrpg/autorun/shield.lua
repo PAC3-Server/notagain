@@ -215,7 +215,7 @@ do
 
 			local shield = ply:GetNWEntity("shield")
 
-			if not shield:IsValid() then
+			if not shield:IsValid() and self.ShieldName then
 				shield = ents.Create(self.ShieldName)
 				shield:SetOwner(ply)
 				shield:SetPos(ply:GetPos())
