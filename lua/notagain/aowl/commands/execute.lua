@@ -136,11 +136,11 @@ aowl.AddCommand("god",function(player, line)
 		if not GetConVar("cl_godmode") then return end
 		LocalPlayer():ConCommand('cl_godmode '.."]]..newdmgmode..[[")
 		if (]]..newdmgmode..[[) == 1 then
-			chat.AddText(L"God mode enabled.")
+			chat.AddText("God mode enabled.")
 		elseif (]]..newdmgmode..[[) == 3 then
-			chat.AddText(L"God mode disabled.")
+			chat.AddText("God mode disabled.")
 		else
-			chat.AddText(string.format(L"Damage mode set to ".."%d.", (]]..newdmgmode..[[)))
+			chat.AddText(string.format("Damage mode set to ".."%d.", (]]..newdmgmode..[[)))
 		end
 	]])
 end, "players", true)
