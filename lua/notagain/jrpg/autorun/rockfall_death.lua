@@ -140,7 +140,7 @@ if SERVER then
 				ply:SetPos(res.HitPos)
 
 				local phys = ent:GetPhysicsObjectNum(10)
-				if phys:IsValid() then
+				if phys and phys:IsValid() then
 					phys:SetPos(res.HitPos + res.HitNormal * -6)
 					local ang = (-res.HitNormal):Angle()
 					ang:RotateAroundAxis(res.HitNormal, math.random()*360)
