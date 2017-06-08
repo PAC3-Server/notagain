@@ -181,3 +181,6 @@ function _G.requirex(name, ...)
 end
 
 notagain.Load()
+
+--Im adding this hook here, as some scripts are not loaded by notagain but still relies on it.
+hook.Run("NotagainPostLoad")
