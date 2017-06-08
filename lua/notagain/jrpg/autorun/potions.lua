@@ -316,6 +316,7 @@ do
 	end
 
 	function SWEP:Animation()
+		if not IsValid(self.Owner) then return end
 		local seq, time = self.Owner:LookupSequence("gesture_salute")
 		self.Owner:AddVCDSequenceToGestureSlot(GESTURE_SLOT_ATTACK_AND_RELOAD, seq, 0.3, true)
 		self.anim_time = RealTime() + time
