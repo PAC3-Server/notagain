@@ -19,6 +19,6 @@ if SERVER then
                 end
             end
             -- todo: add more commands?
-		end)
+		end,"developers")
 	end
 end
