@@ -9,4 +9,5 @@ before_install:
  # go to goluwa working dir
  - cd goluwa/goluwa-master/
 
-script: bash goluwa cli --gluacheck $TRAVIS_BUILD_DIR/
+script: 
+    bash goluwa cli --gluacheck $(git diff --name-only $TRAVIS_COMMIT_RANGE)
