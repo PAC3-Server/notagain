@@ -51,7 +51,7 @@ Font.Redefine = function(name,tbl)
 
     local oldtbl = all[name]
 
-    for field,value in pairs(tbl)
+    for field,value in pairs(tbl) do
         oldtbl[field] = value
     end
 
