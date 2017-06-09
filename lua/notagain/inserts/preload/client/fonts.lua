@@ -3,9 +3,11 @@ local Font = _G.Font or {}
 _G.Font = Font
 
 local all = {}
+local old = {}
 
-surface.CreateFont = function(name,table)
-    all[name] = table
+surface.CreateFont = function(name,tbl)
+    all[name] = tbl
+    old[name] = table.Copy(tbl)
     old_createfont(name,table)
 end
 
@@ -56,4 +58,11 @@ Font.Redefine = function(name,tbl)
     end
 
     return true
+end
+
+Font.ResetProperties = function(name)
+    if not old[name] then return false 
+
+    all[name] = old[name]
+    return true 
 end
