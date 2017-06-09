@@ -510,11 +510,11 @@ function battlecam.ShouldDrawLocalPlayer()
 end
 
 function battlecam.PreDrawHUD()
-	battlecam.player_visibility = util.PixelVisible(LocalPlayer():EyePos(), LocalPlayer():BoundingRadius()*2, battlecam.pixvis)
+	battlecam.player_visibility = util.PixelVisible(LocalPlayer():EyePos(), LocalPlayer():BoundingRadius()*3, battlecam.pixvis)
 
 	local ent = jtarget.GetEntity(LocalPlayer())
 	if ent:IsValid() then
-		battlecam.enemy_visibility = util.PixelVisible(ent:EyePos(), ent:BoundingRadius()*2, battlecam.pixvis2)
+		battlecam.enemy_visibility = util.PixelVisible(ent:EyePos(), ent:BoundingRadius()*6, battlecam.pixvis2)
 	end
 end
 
