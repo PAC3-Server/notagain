@@ -80,9 +80,11 @@ if CLIENT then
 			end
 
             timer.Simple(5,function()
-                hook.Remove("HUDPaintBackground", "darksouls_death")
-                hook.Remove("HUDShouldDraw", "darksouls_death")
-                death_music:FadeOut(2)
+                if ply == LocalPlayer() then
+                    hook.Remove("HUDPaintBackground", "darksouls_death")
+                    hook.Remove("HUDShouldDraw", "darksouls_death")
+                    death_music:FadeOut(2)
+                end
             end)
 		end)
 
