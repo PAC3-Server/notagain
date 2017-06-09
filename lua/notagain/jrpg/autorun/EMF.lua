@@ -2,11 +2,13 @@ AddCSLuaFile()
 
 if SERVER then
 	
-	EMF = EMF or {}
-	EMF.Ents = EMF.Ents or {}
-	EMF.Topology = EMF.Topology or {}
+	local EMF = {}
+	_G.EMF = EMF
 	
-	EMF.ActiveEnts   = EMF.ActiveEnts or {}
+	EMF.Ents = {}
+	EMF.Topology = {}
+	
+	EMF.ActiveEnts   = {}
 	EMF.MaxDistToRef = 1000 
 	EMF.MinDistToRef = 100
 	EMF.AmScale      = 0
