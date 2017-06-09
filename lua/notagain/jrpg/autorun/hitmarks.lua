@@ -248,7 +248,7 @@ if CLIENT then
 				local world_pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2))
 				local pos = world_pos:ToScreen()
 				local dist = world_pos:Distance(EyePos())
-				local scale = (ent:GetModelScale()*2 or 2)
+				local scale = (ent:GetModelScale() and ent:GetModelScale()*2 or 2)
 				local radius = ent:BoundingRadius() * 7
 				local max_distance = scale * radius
 				fraction = fraction * ((-(dist / max_distance)+1) ^ 2)
