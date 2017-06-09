@@ -78,6 +78,12 @@ if CLIENT then
 				end
 				bone = bone + FrameTime() * 10
 			end
+
+            timer.Simple(5,function()
+                hook.Remove("HUDPaintBackground", "darksouls_death")
+                hook.Remove("HUDShouldDraw", "darksouls_death")
+                death_music:FadeOut(2)
+            end)
 		end)
 
 		if ply == LocalPlayer() then
@@ -153,6 +159,6 @@ if SERVER then
 				net.Broadcast()
 			end
 		end)
-		
+
 	end)
 end
