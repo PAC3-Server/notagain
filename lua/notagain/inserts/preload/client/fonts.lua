@@ -61,7 +61,7 @@ Font.Redefine = function(name,tbl)
 end
 
 Font.ResetProperties = function(name)
-    if not old[name] then return false 
+    if not old[name] then return false end
 
     all[name] = old[name]
     return true 
