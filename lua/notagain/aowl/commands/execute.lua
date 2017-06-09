@@ -129,18 +129,25 @@ aowl.AddCommand({"retry", "rejoin"}, function(ply, line, target)
 end)
 
 
-aowl.AddCommand("god",function(player, line)
-	local newdmgmode = tonumber(line) or (player:GetInfoNum("cl_godmode", 0) == 1 and 3 or 1)
-	newdmgmode = math.floor(math.Clamp(newdmgmode, 1, 4))
-	player:SendLua([[
-		if not GetConVar("cl_godmode") then return end
-		LocalPlayer():ConCommand('cl_godmode '.."]]..newdmgmode..[[")
-		if (]]..newdmgmode..[[) == 1 then
-			chat.AddText("God mode enabled.")
-		elseif (]]..newdmgmode..[[) == 3 then
-			chat.AddText("God mode disabled.")
-		else
-			chat.AddText(string.format("Damage mode set to ".."%d.", (]]..newdmgmode..[[)))
-		end
-	]])
+aowl.AddCommand("god",function(ply, mode)
+	if not mode or mode == "help" or mode == "" then
+		ply:ChatPrint([[
+			0 = godmode off
+			1 = godmode on
+			2 = only allow damage from world (fall damage, map damage, etc)
+			3 = only allow damage from steam friends and world
+		]])
+	elseif mode == "0" or mode == "off" then
+		ply:ConCommand("cl_godmode 0")
+		ply:ChatPrint("godmode: on")
+	elseif mode == "1" or mode == "on" then
+		ply:ConCommand("cl_godmode 1")
+		ply:ChatPrint("godmode: off")
+	elseif mode == "2" or mode == "world" then
+		ply:ConCommand("cl_godmode 2")
+		ply:ChatPrint("godmode: only allow damage from world (fall damage, map damage, etc)")
+	elseif mode == "3" or mode == "world and friends" then
+		ply:ConCommand("cl_godmode 3")
+		ply:ChatPrint("godmode: only allow damage from steam friends and world (fall damage, map damage, etc)")
+	end
 end, "players", true)
