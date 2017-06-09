@@ -8,7 +8,7 @@ local old = {}
 surface.CreateFont = function(name,tbl)
     all[name] = tbl
     old[name] = table.Copy(tbl)
-    old_createfont(name,table)
+    old_createfont(name,tbl)
 end
 
 Font.GetAll = function()
