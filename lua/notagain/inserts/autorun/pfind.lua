@@ -37,13 +37,11 @@ end
 
 local showfunc = function(tab,func)
     if type(func) ~= "function" then
-        MsgC(Color(225,40,40),"Terrible idea!! (not a function)")
         return
     end
 
     local info = debug.getinfo(func)
     if info.what == "C" then
-        MsgC(Color(225,40,40),"Terrible idea!! (function is internal)")
         return
     end
 
@@ -54,11 +52,10 @@ local showfunc = function(tab,func)
         dir = "GAME"
     end
     if not dir then
-        MsgC(Color(225,40,40),"Terrible idea!! (can't be reaed)")
         return
     end
 
-    local lines = string.Split((file.Read(info.short_src, dir)), "\n")
+    local lines = string.Explode("\n",(file.Read(info.short_src, dir)))
     if info.lastlinedefined < info.linedefined + 30 then
         for i = info.linedefined,info.lastlinedefined do
             MsgC(Color(50, 186, 140),tab..lines[i].."\n")
