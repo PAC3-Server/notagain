@@ -237,6 +237,7 @@ if SERVER then
 
 		for _,file_name in ipairs((file.Find(path.."*","DATA"))) do
 			local tbl = util.JSONToTable(file.Read(path..file_name,"DATA"))
+			local trigger = ents.Create("area_trigger")
 			trigger.VecMin,trigger.VecMax = tbl.Points.MinWorldBound,tbl.Points.MaxWorldBound
 			trigger.AreaName = tbl.Name
 			trigger:Spawn()
