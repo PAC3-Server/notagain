@@ -48,28 +48,28 @@ end)
 
 hook.Add("MD_OnAreaEntered","MapDefineLogEntered",function(ent,area)
 	if MapDefine.Logs then
-		local a = (ent:GetName() or ent:GetClass()) or "[ent]???"
+		local a = (ent:IsPlayer() and ent:GetName() or ent:GetClass())
 		print("[MapDefine]: "..a.." entered "..area)
 	end
 end)
 
 hook.Add("MD_OnAreaLeft","MapDefineLogLeft",function(ent,area)
 	if MapDefine.Logs then
-		local a = (ent:GetName() or ent:GetClass()) or "[ent]???"
+		local a = (ent:IsPlayer() and ent:GetName() or ent:GetClass())
 		print("[MapDefine]: "..a.." left "..area)
 	end
 end)
 
 hook.Add("MD_OnOverWorldEntered","MapDefineLogOWEntered",function(ent)
 	if MapDefine.Logs then
-		local a = (ent:GetName() or ent:GetClass()) or "[ent]???"
+		local a = (ent:IsPlayer() and ent:GetName() or ent:GetClass())
 		print("[MapDefine]: "..a.." entered OverWorld")
 	end
 end)
 
 hook.Add("MD_OnOverWorldLeft","MapDefineLogOWLeft",function(ent)
 	if MapDefine.Logs then
-		local a = (ent:GetName() or ent:GetClass()) or "[ent]???"
+		local a = (ent:IsPlayer() and ent:GetName() or ent:GetClass())
 		print("[MapDefine]: "..a.." left OverWorld")
 	end
 end)
@@ -112,7 +112,7 @@ if SERVER then
 						hook.Run("MD_OnOverWorldLeft",ent)
 						net.Start("MapDefineOnOverWorldLeft")
 						net.WriteEntity(ent)
-						net.Broadcast() 
+						net.Broadcast()
 					end
 					hook.Run("MD_OnAreaEntered",ent,self.AreaName)
 					net.Start("MapDefineOnAreaEntered")
@@ -140,9 +140,9 @@ if SERVER then
 						hook.Run("MD_OnOverWorldEntered",ent)
 						net.Start("MapDefineOnOverWorldEntered")
 						net.WriteEntity(ent)
-						net.Broadcast() 
+						net.Broadcast()
 					else
-						ent.InOverWorld = false 
+						ent.InOverWorld = false
 					end
 				end
 			end
@@ -177,7 +177,7 @@ if SERVER then
 		MapDefine.Areas[name].Points  = points
 		MapDefine.Areas[name].Refs    = refs
 		MapDefine.Areas[name].Map     = game.GetMap()
-		MapDefine.Areas[name].Trigger = trigger 
+		MapDefine.Areas[name].Trigger = trigger
 
 		net.Start("MapDefineSyncAreas")
 		net.WriteTable(MapDefine.Areas)
@@ -187,12 +187,12 @@ if SERVER then
 
 	MapDefine.SaveArea = function(area)
 		if not MapDefine.IsExistingArea(area) then return end
-		
+
 		local tbl   = MapDefine.Areas[area]
 		tbl.Trigger = nil
 		tbl.Name    = area
 		local json  = util.TableToJSON( tbl )
-		
+
 		file.CreateDir( "mapsavedareas" )
 		file.CreateDir( "mapsavedareas/"..tbl.Map)
 		file.Write( "mapsavedareas/"..tbl.Map.."/"..area..".txt", json )
@@ -203,7 +203,7 @@ if SERVER then
 		file.Delete("mapsavedareas/"..map.."/"..area..".txt")
 		if map == game.GetMap() and MapDefine.IsExistingArea(area) then
 			MapDefine.Areas[area].Trigger:Remove()
-			MapDefine.Areas[area] = nil 
+			MapDefine.Areas[area] = nil
 			net.Start("MapDefineSyncAreas")
 			net.WriteTable(MapDefine.Areas)
 			net.Broadcast()
@@ -237,8 +237,6 @@ if SERVER then
 
 		for _,file_name in ipairs((file.Find(path.."*","DATA"))) do
 			local tbl = util.JSONToTable(file.Read(path..file_name,"DATA"))
-
-			local trigger = ents.Create("area_trigger")
 			trigger.VecMin,trigger.VecMax = tbl.Points.MinWorldBound,tbl.Points.MaxWorldBound
 			trigger.AreaName = tbl.Name
 			trigger:Spawn()
@@ -274,7 +272,7 @@ if SERVER then
 			trigger:Spawn()
 		end
 	end
-	
+
 	hook.Add("PreCleanupMap","MapDefineYOUREALLYAREGONNAFUCKITALL",function()
 		for _, ply in pairs(player.GetAll()) do
 			if IsValid(ply) then
@@ -285,7 +283,7 @@ if SERVER then
 			end
 		end
 	end)
-	
+
 	hook.Add("PlayerInitialSpawn","MapDefineAreasSync",MapDefine.ClientSync)
 	hook.Add("Initialize","MapDefineLoadAreas",MapDefine.LoadAreas)
 	hook.Add("PostCleanupMap","MapDefineDONOTDELETEMYTRIGGERSYOUBLYAD",MapDefine.ResetAreas)
@@ -295,7 +293,7 @@ end
 if CLIENT then
 
 	net.Receive("MapDefineSyncAreas",function()
-		local tbl = net.ReadTable() 
+		local tbl = net.ReadTable()
 		MapDefine.Areas = tbl
 	end)
 
