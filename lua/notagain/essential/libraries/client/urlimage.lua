@@ -269,7 +269,7 @@ setmetatable(sql,{__call=function(self,query,...)
 		end
 	end
 	query = query..';'
-	query = query:format(unpack(t))
+	query = query:format(unpack(t) or "")
 
 	local ret = sql.Query(query)
 
