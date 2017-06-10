@@ -261,7 +261,6 @@ end
 
 setmetatable(sql,{__call=function(self,query,...)
 	local t = {...}
-	if #t < 1 then return end
 	for k,v in next,t do
 		if isstring(v) then
 			t[k] = sql.SQLStr(v)
