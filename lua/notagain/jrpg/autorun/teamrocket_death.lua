@@ -64,6 +64,7 @@ if SERVER then
 	util.AddNetworkString("teamrocket")
 
 	local function team_rocket_death(victim, attacker, dir)
+		if not IsValid(victim) or not IsValid(attacker) then return end
 		local info = DamageInfo()
 		info:SetDamagePosition(victim:GetPos())
 		info:SetDamage(victim:Health())
