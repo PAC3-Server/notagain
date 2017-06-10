@@ -35,6 +35,39 @@ local matchents = function(search,tbl)
     return found
 end
 
+local showfunc = function(tab,func)
+    if type(func) ~= "function" then
+        MsgC(Color(225,40,40),"Terrible idea!! (not a function)")
+        return
+    end
+
+    local info = debug.getinfo(func)
+    if info.what == "C" then
+        MsgC(Color(225,40,40),"Terrible idea!! (function is internal)")
+        return
+    end
+
+    local dir
+    if file.Exists(info.short_src, "LUA") then
+        dir = "LUA"
+    elseif file.Exists(info.short_src, "GAME") then
+        dir = "GAME"
+    end
+    if not dir then
+        MsgC(Color(225,40,40),"Terrible idea!! (can't be reaed)")
+        return
+    end
+
+    local lines = string.Split((file.Read(info.short_src, dir)), "\n")
+    if info.lastlinedefined < info.linedefined + 30 then
+        for i = info.linedefined,info.lastlinedefined do
+            MsgC(Color(50, 186, 140),tab..lines[i].."\n")
+        end
+    else
+        MsgC(Color(50, 186, 140),tab..tostring(func).."[too long]\n")
+    end
+end
+
 local function reccolor(tbl,rank) -- hi caps
     local rank = rank  or 1
     local tab  = string.rep("\t",rank)
@@ -47,13 +80,52 @@ local function reccolor(tbl,rank) -- hi caps
             else
                 MsgC(Color(102, 217, 239),tab..tostring(k).." ∅\n")
             end
+        elseif type(v) == "function" then
+            MsgC(Color(102, 217, 239),tab..tostring(k)..": \n")
+            showfunc(tab,v)
         else
-             MsgC(Color(102, 217, 239),tab..tostring(k).." ⮞⮞ "..tostring(v).."\n")
+            MsgC(Color(102, 217, 239),tab..tostring(k).." ⮞⮞ "..tostring(v).."\n")
         end
     end
 end
 
-PFind = function(search,vars,funcs,tables,hooks,timers,entities,fonts)
+PFind = function(search,...)
+    local args     = { ... }
+    local vars     = false
+    local tables   = false
+    local funcs    = false
+    local hooks    = false
+    local timers   = false
+    local fonts    = false
+    local entities = false
+
+    for _,arg in pairs(args) do
+        local a = string.lower(arg)
+        if string.match(a,"var") then
+            vars = true
+        elseif string.match(a,"table") then
+            tables = true
+        elseif string.match(a,"func") then
+            funcs = true
+        elseif string.match(a,"hook") then
+            hooks = true
+        elseif string.match(a,"timer") then
+            timers = true
+        elseif string.match(a,"font") then
+            fonts = true
+        elseif string.match(a,"ent") then
+            entities = true
+        end
+    end
+
+    --[[local mode = 0
+
+    if string.match(search,"%[\".+\"%]") or string.match(search,"%[%'.+%'%]") then
+        mode = 1
+    elseif string.match(search,".+%..+") then
+        mode = 2
+    end]]--
+
     local search     = string.lower(search)
     local results    = {}
     results.Funcs    = {}
@@ -62,36 +134,32 @@ PFind = function(search,vars,funcs,tables,hooks,timers,entities,fonts)
     results.Hooks    = {}
     results.Timers   = {}
     results.Entities = {}
-
-    if CLIENT then
-        results.Fonts = {}
-        results.Fonts = Font.Find(search)
-    end
+    results.Fonts    = {}
 
     results.Funcs,results.Vars,results.Tables = find(search,_G)
     results.Entities = matchents(search,ents.GetAll())
     results.Hooks    = hook.Find(search)
     results.Timers   = timer.Find(search)
 
-    if vars     ~= nil and not vars     then results.Vars     = {} end
-    if funcs    ~= nil and not funcs    then results.Funcs    = {} end
-    if tables   ~= nil and not tables   then results.Tables   = {} end
-    if hooks    ~= nil and not hooks    then results.Hooks    = {} end
-    if timers   ~= nil and not timers   then results.Timers   = {} end
-    if entities ~= nil and not entities then results.Entities = {} end
-    if fonts    ~= nil and not fonts    then results.Fonts    = {} end
+    if CLIENT then
+        results.Fonts = Font.Find(search)
+    end
+
+    if not vars     then results.Vars     = {} end
+    if not funcs    then results.Funcs    = {} end
+    if not tables   then results.Tables   = {} end
+    if not hooks    then results.Hooks    = {} end
+    if not timers   then results.Timers   = {} end
+    if not entities then results.Entities = {} end
+    if not fonts    then results.Fonts    = {} end
 
     local cfunc   = table.Count(results.Funcs)
     local cvars   = table.Count(results.Vars)
     local ctables = table.Count(results.Tables)
     local chooks  = table.Count(results.Hooks)
     local ctimer  = table.Count(results.Timers)
-    local total   = cfunc + cvars + ctables + chooks + ctimer
-
-    if CLIENT then
-        local cfont = table.Count(results.Fonts)
-        total = total + cfont
-    end
+    local cfont = table.Count(results.Fonts)
+    local total   = cfunc + cvars + ctables + chooks + ctimer + cfont
 
     if total <= 120 then
         reccolor(results)
