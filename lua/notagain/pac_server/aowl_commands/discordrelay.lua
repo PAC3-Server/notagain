@@ -4,16 +4,19 @@ if SERVER then
             if com == "reload" then
                 discordrelay.reload()
             elseif com == "status" then
-                local modulec = table.Count(discordrelay.modules)
-                local extensionc = table.Count(discordrelay.extensions)
+                local modulesc = table.Count(discordrelay.modules)
                 local is_fetching = timer.Exists("DiscordRelayFetchMessages")
                 discordrelay.log("Status:","fetching messages:",is_fetching and "yes" or "no")
-                discordrelay.log("Status:",modulec,"modules and",extensionc,"extensions loaded.")
-            elseif com == "modules" or com == "extensions" then
+                discordrelay.log("Status:",modulesc,"modules loaded.")
+            elseif com == "modules" then
                 if arg == "list" then
                     local str = ""
-                    for name,_ in pairs(discordrelay[com]) arg
-                        str = str..name..", "
+                    local modules = discordrelay[com]
+                    local modulesc = table.Count(modules)
+                    local i = 0
+                    for name,_ in pairs(modules) arg
+                        i = i + 1
+                        str = str..name..(i==modulesc) and "" or " ,"
                     end
                     discordrelay.log(1,"[aowl]",com..":",str)
                 elseif arg == "remove" or arg == "delete" or arg == "disable" then
