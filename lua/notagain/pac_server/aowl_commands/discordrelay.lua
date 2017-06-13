@@ -6,8 +6,8 @@ if SERVER then
             elseif com == "status" then
                 local modulesc = table.Count(discordrelay.modules)
                 local is_fetching = timer.Exists("DiscordRelayFetchMessages")
-                discordrelay.log("Status:","fetching messages:",is_fetching and "yes" or "no")
-                discordrelay.log("Status:",modulesc,"modules loaded.")
+                discordrelay.log(1,"[aowl]","Status:","fetching messages:",is_fetching and "yes" or "no")
+                discordrelay.log(1,"[aowl]","Status:",modulesc,"modules loaded.")
             elseif com == "modules" then
                 if arg == "list" then
                     local str = ""
