@@ -26,6 +26,7 @@ if SERVER then
                 elseif arg == "reload" or arg == "init" then
                     if not mod then return false,"No Module/Extension specified!" end
                     if not discordrelay[com][mod] then return false,"Invalid Module/Extension" end
+                    discordrelay[com][mod].Remove()
                     discordrelay[com][mod].Init()
                 end
             end
