@@ -14,9 +14,9 @@ if SERVER then
                     local modules = discordrelay[com]
                     local modulesc = table.Count(modules)
                     local i = 0
-                    for name,_ in pairs(modules) arg
+                    for name,_ in pairs(modules) do
                         i = i + 1
-                        str = str..name..(i==modulesc) and "" or " ,"
+                        str = str..name..(i==modulesc and "" or ", ")
                     end
                     discordrelay.log(1,"[aowl]",com..":",str)
                 elseif arg == "remove" or arg == "delete" or arg == "disable" then
@@ -27,6 +27,7 @@ if SERVER then
                     if not mod then return false,"No Module/Extension specified!" end
                     if not discordrelay[com][mod] then return false,"Invalid Module/Extension" end
                     discordrelay[com][mod].Init()
+                end
             end
             -- todo: add more commands?
 		end,"developers")
