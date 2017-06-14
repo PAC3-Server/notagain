@@ -1,3 +1,4 @@
+do return end
 local Tag       = "GhostMode"
 local META      = FindMetaTable("Player")
 local NetKill   = "ON_KILL"
@@ -7,12 +8,12 @@ local Deads     = {}
 
 META.old_plyalive = META.old_plyalive or META.Alive
 META.Alive = function(self)
-    if IsValid(self) then 
-        if Deads[self:SteamID()] then 
-            return false 
-        else 
+    if IsValid(self) then
+        if Deads[self:SteamID()] then
+            return false
+        else
             return META.old_plyalive(self)
-        end  
+        end
     end
     return false
 end
@@ -23,13 +24,13 @@ concommand.Add("kill",function(ply)
 end)
 
 if SERVER then
-    
+
     util.AddNetworkString(NetKill)
     util.AddNetworkString(NetSilent)
     util.AddNetworkString(NetAlive)
-    
-    META.old_plykill = META.old_plykill or META.Kill 
-    META.old_plykillsilent = META.old_plykillsilent or META.KillSilent 
+
+    META.old_plykill = META.old_plykill or META.Kill
+    META.old_plykillsilent = META.old_plykillsilent or META.KillSilent
 
     local SetDead = function(ply,state)
         timer.Simple(0,function()
@@ -43,7 +44,7 @@ if SERVER then
                     ply:SetHealth(0)
                     ply:StripWeapons()
                 end
-            end  
+            end
         end)
     end
 
@@ -57,7 +58,7 @@ if SERVER then
         net.WriteEntity(self)
         net.Broadcast()
         gamemode.Call("PostPlayerDeath",self)
-    end  
+    end
 
     META.KillSilent = function(self)
         gamemode.Call("DoPlayerDeath",self,self,DamageInfo())
@@ -69,17 +70,17 @@ if SERVER then
         net.Broadcast()
         gamemode.Call("PostPlayerDeath",self)
     end
-    
+
     local DisallowDead = function(ply,...)
-        if IsValid(ply) and Deads[ply:SteamID()] then 
-            return false 
+        if IsValid(ply) and Deads[ply:SteamID()] then
+            return false
         end
     end
 
     hook.Add("ShouldCollide",Tag,function(e1,e2)
-        if IsValid(e1) and IsValid(e2) then 
-            if e1:IsPlayer() and Deads[e1:SteamID()] or e2:IsPlayer() and Deads[e2:SteamID()] then 
-                return false 
+        if IsValid(e1) and IsValid(e2) then
+            if e1:IsPlayer() and Deads[e1:SteamID()] or e2:IsPlayer() and Deads[e2:SteamID()] then
+                return false
             end
         end
         return true
@@ -87,17 +88,17 @@ if SERVER then
 
     hook.Add("EntityTakeDamage",Tag,function(ent,dmg)
         if IsValid(ent) and ent:IsPlayer() then
-            if dmg:GetDamage() >= ent:Health() then 
+            if dmg:GetDamage() >= ent:Health() then
                 gamemode.Call("PlayerDeath",ent,dmg:GetInflictor(),dmg:GetAttacker())
                 SetDead(ent,true)
                 net.Start(NetKill)
                 net.WriteEntity(ent)
                 net.Broadcast()
                 dmg:SetDamage(0)
-            elseif Deads[ent:SteamID()] then 
+            elseif Deads[ent:SteamID()] then
                 dmg:SetDamage(0)
-            end 
-        end  
+            end
+        end
     end)
 
     hook.Add("PlayerSpawn",Tag,function(ply)
@@ -115,7 +116,7 @@ if SERVER then
 
     hook.Add("Think",Tag,function()
         for _,ply in pairs(player.GetAll()) do
-            if not ply:old_plyalive() then 
+            if not ply:old_plyalive() then
                 local oldpos = ply:GetPos()
                 ply:Spawn()
                 ply:SetPos(oldpos)
@@ -124,20 +125,20 @@ if SERVER then
                 net.WriteEntity(ply)
                 net.Broadcast()
             end
-            if Deads[ply:SteamID()] then 
+            if Deads[ply:SteamID()] then
                 gamemode.Call("PlayerDeathThink",ply)
             end
         end
     end)
 
     hook.Add("KeyPress",Tag,function(ply,key)
-        if IsValid(ply) and Deads[ply:SteamID()] then 
-            if key == IN_ATTACK then 
+        if IsValid(ply) and Deads[ply:SteamID()] then
+            if key == IN_ATTACK then
                 ply:Spawn()
             end
         end
     end)
-    
+
     hook.Add("PlayerSpawnVehicle",Tag,DisallowDead)
     hook.Add("PlayerSpawnSWEP",Tag,DisallowDead)
     hook.Add("PlayerSpawnSENT",Tag,DisallowDead)
@@ -152,9 +153,9 @@ if SERVER then
     hook.Add("PlayerCanPickupItem",Tag,DisallowDead)
     hook.Add("PlayerUse",Tag,DisallowDead)
 
-end  
+end
 
-if CLIENT then 
+if CLIENT then
     local Settings = {
         [ "$pp_colour_addr" ]       = 0,
         [ "$pp_colour_addg" ]       = 0,
@@ -191,7 +192,7 @@ if CLIENT then
 		["$Additive"]    = 1,
 		["$VertexColor"] = 1,
 		["$VertexAlpha"] = 1,
-	})    
+	})
     local Friend = {
         strong = { r = 50, g = 200, b = 200},
         medium = { r = 75, g = 150, b = 255},
@@ -212,7 +213,7 @@ if CLIENT then
                 if state then
                     RunConsoleCommand("pp_bloom","1")
                     RunConsoleCommand("pp_bloom_multiply","5")
-                else 
+                else
                     RunConsoleCommand("pp_bloom",DBloom)
                     RunConsoleCommand("pp_bloom_multiply",DBloomMult)
                 end
@@ -236,12 +237,12 @@ if CLIENT then
     end)
 
     hook.Add("PostDrawTranslucentRenderables",Tag,function()
-        for _,v in pairs(Deads) do 
-            if IsValid(v) then   
-                local color 
-                if v:GetFriendStatus() == "friend" or v == LocalPlayer() then 
-                    color = Friend 
-                else 
+        for _,v in pairs(Deads) do
+            if IsValid(v) then
+                local color
+                if v:GetFriendStatus() == "friend" or v == LocalPlayer() then
+                    color = Friend
+                else
                     color = NotFriend
                 end
                 render.SetColorModulation(r, g, b)
@@ -305,7 +306,7 @@ if CLIENT then
         end
     end)
 
-    hook.Add("OnPlayerChat",Tag,function(ply,txt,team,dead)        
+    hook.Add("OnPlayerChat",Tag,function(ply,txt,team,dead)
         if dead then
             chat.AddText(Color(130, 162, 214),"[Ghost-"..ply:GetName().."]",Color(255,255,255),": "..txt)
             return true
