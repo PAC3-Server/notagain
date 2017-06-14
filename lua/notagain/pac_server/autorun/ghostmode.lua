@@ -150,8 +150,7 @@ if CLIENT then
         [ "$pp_colour_mulg" ]       = 0.2,
         [ "$pp_colour_mulb" ]       = 0.5,
     }
-    local DBloom     = GetConVar("pp_bloom"):GetString()
-    local DBloomMult = GetConVar("pp_bloom_multiply"):GetString()
+    local DBloom,DBloomMult
     local r,g,b      = 0,0.1,0
 	local GlareMat   = Material("sprites/light_ignorez")
 	local WarpMat    = Material("particle/warp2_warp")
@@ -301,6 +300,11 @@ if CLIENT then
         if not LocalPlayer():Alive() then
             DrawColorModify(Settings)
         end
+    end)
+
+    hook.Add("Initialize",Tag,function()
+        DBloom     = GetConVar("pp_bloom"):GetString()
+        DBloomMult = GetConVar("pp_bloom_multiply"):GetString()
     end)
 
 end
