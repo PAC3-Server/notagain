@@ -525,6 +525,20 @@ aowl.AddCommand("spawn", function(ply, line, target)
 	end
 end, "players")
 
+hook.Add("PlayerDeath","aowl_revive",function(ply)
+	if IsValid(ply) then
+		ply.PreDeathPos = ply:GetPos()
+		ply.PreDeathAngles = ply:GetAngles()
+	end
+end)
+
+hook.Add("PlayerSilentDeath","aowl_revive",function(ply)
+	if IsValid(ply) then
+		ply.PreDeathPos = ply:GetPos()
+		ply.PreDeathAngles = ply:GetAngles()
+	end
+end)
+
 aowl.AddCommand({"resurrect", "respawn", "revive"}, function(ply, line, target)
 	-- Admins not allowed either, this is added for gamemodes and stuff
 	local ok, reason = hook.Run("CanPlyRespawn", ply)
@@ -533,8 +547,9 @@ aowl.AddCommand({"resurrect", "respawn", "revive"}, function(ply, line, target)
 	end
 
 	local ent = ply:CheckUserGroupLevel("developers") and target and easylua.FindEntity(target) or ply
-	if ent:IsValid() and ent:IsPlayer() and not ent:Alive() then
-		local pos,ang = ent:GetPos(),ent:EyeAngles()
+	if ent:IsValid() and ent:IsPlayer() and not ent:Alive() and ent.PreDeathPos and ent.PreDeathAngles then
+		local pos = ent.PreDeathPos 
+		local ang = ent.PreDeathAngles
 		ent:Spawn()
 		ent:SetPos(pos) ent:SetEyeAngles(ang)
 	end
