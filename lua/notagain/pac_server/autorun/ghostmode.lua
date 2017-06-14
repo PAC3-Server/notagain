@@ -32,37 +32,35 @@ if SERVER then
     META.old_plykillsilent = META.old_plykillsilent or META.KillSilent 
 
     local SetDead = function(ply,state)
-        if IsValid(ply) then
-            ply:SetNoDraw(state)
-            ply:SetNoTarget(state)
-            ply:SetNotSolid(state)
-            Deads[ply:SteamID()] = state and ply or nil
-            if state then
-                ply:SetMoveType(MOVETYPE_NOCLIP)
-                ply:SetHealth(0)
-                ply:StripWeapons()
-            end
-        end  
+        timer.Simple(0,function()
+            if IsValid(ply) then
+                ply:SetNoDraw(state)
+                ply:SetNoTarget(state)
+                ply:SetNotSolid(state)
+                Deads[ply:SteamID()] = state and ply or nil
+                if state then
+                    ply:SetMoveType(MOVETYPE_NOCLIP)
+                    ply:SetHealth(0)
+                    ply:StripWeapons()
+                end
+            end  
+        end)
     end
 
     META.Kill = function(self)
         gamemode.Call("PlayerDeath",self,self,self)
-        timer.Simple(0,function()
-            SetDead(self,true)
-            net.Start(NetKill)
-            net.WriteEntity(self)
-            net.Broadcast()
-        end)
+        SetDead(self,true)
+        net.Start(NetKill)
+        net.WriteEntity(self)
+        net.Broadcast()
     end  
 
     META.KillSilent = function(self)
         gamemode.Call("PlayerSilentDeath",self)
-        timer.Simple(0,function()
-            SetDead(self,true)
-            net.Start(NetSilent)
-            net.WriteEntity(self)
-            net.Broadcast()
-        end)
+        SetDead(self,true)
+        net.Start(NetSilent)
+        net.WriteEntity(self)
+        net.Broadcast()
     end
     
     local DisallowDead = function(ply,...)
@@ -84,12 +82,10 @@ if SERVER then
         if IsValid(ent) and ent:IsPlayer() then
             if dmg:GetDamage() >= ent:Health() then 
                 gamemode.Call("PlayerDeath",ent,dmg:GetInflictor(),dmg:GetAttacker())
-                timer.Simple(0,function()
-                    SetDead(ent,true)
-                    net.Start(NetKill)
-                    net.WriteEntity(ent)
-                    net.Broadcast()
-                end)
+                SetDead(ent,true)
+                net.Start(NetKill)
+                net.WriteEntity(ent)
+                net.Broadcast()
                 dmg:SetDamage(0)
             elseif Deads[ent:SteamID()] then 
                 dmg:SetDamage(0)
@@ -112,12 +108,10 @@ if SERVER then
                 local oldpos = ply:GetPos()
                 ply:Spawn()
                 ply:SetPos(oldpos)
-                timer.Simple(0,function()
-                    SetDead(ply,true)
-                    net.Start(NetKill)
-                    net.WriteEntity(ply)
-                    net.Broadcast()
-                end)
+                SetDead(ply,true)
+                net.Start(NetKill)
+                net.WriteEntity(ply)
+                net.Broadcast()
             end
         end
     end)
@@ -313,6 +307,12 @@ if CLIENT then
     hook.Add("Initialize",Tag,function()
         DBloom     = GetConVar("pp_bloom"):GetString()
         DBloomMult = GetConVar("pp_bloom_multiply"):GetString()
+    end)
+
+    hook.Add("HUDShouldDraw",Tag,function(name)
+        if not LocalPlayer():Alive() and name == "CHudDamageIndicator" then
+            return false
+        end
     end)
 
 end
