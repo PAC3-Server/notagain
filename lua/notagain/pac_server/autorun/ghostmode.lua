@@ -313,7 +313,7 @@ if CLIENT then
     end)
 
     hook.Add("HUDShouldDraw",Tag,function(name)
-        if not LocalPlayer():Alive() and name == "CHudDamageIndicator" then
+        if IsValid(LocalPlayer()) and not LocalPlayer():Alive() and name == "CHudDamageIndicator" then
             return false
         end
     end)
