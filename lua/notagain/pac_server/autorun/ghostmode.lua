@@ -46,19 +46,23 @@ if SERVER then
     end
 
     META.Kill = function(self)
-        SetDead(self,true)
-        net.Start(NetKill)
-        net.WriteEntity(self)
-        net.Broadcast()
-        GAMEMODE:PlayerDeath(self,self,self)
+        gamemode.Call("PlayerDeath",self,self,self)
+        timer.Simple(0,function()
+            SetDead(self,true)
+            net.Start(NetKill)
+            net.WriteEntity(self)
+            net.Broadcast()
+        end)
     end  
 
     META.KillSilent = function(self)
-        SetDead(self,true)
-        net.Start(NetSilent)
-        net.WriteEntity(self)
-        net.Broadcast()
-        GAMEMODE:PlayerSilentDeath(self)
+        gamemode.Call("PlayerSilentDeath",self)
+        timer.Simple(0,function()
+            SetDead(self,true)
+            net.Start(NetSilent)
+            net.WriteEntity(self)
+            net.Broadcast()
+        end)
     end
     
     local DisallowDead = function(ply,...)
@@ -79,11 +83,13 @@ if SERVER then
     hook.Add("EntityTakeDamage",Tag,function(ent,dmg)
         if IsValid(ent) and ent:IsPlayer() then
             if dmg:GetDamage() >= ent:Health() then 
-                SetDead(ent,true)
-                net.Start(NetKill)
-                net.WriteEntity(ent)
-                net.Broadcast()
-                GAMEMODE:PlayerDeath(ent,dmg:GetInflictor(),dmg:GetAttacker())
+                gamemode.Call("PlayerDeath",ent,dmg:GetInflictor(),dmg:GetAttacker())
+                timer.Simple(0,function()
+                    SetDead(ent,true)
+                    net.Start(NetKill)
+                    net.WriteEntity(ent)
+                    net.Broadcast()
+                end)
                 dmg:SetDamage(0)
             elseif Deads[ent:SteamID()] then 
                 dmg:SetDamage(0)
@@ -106,10 +112,12 @@ if SERVER then
                 local oldpos = ply:GetPos()
                 ply:Spawn()
                 ply:SetPos(oldpos)
-                SetDead(ply,true)
-                net.Start(NetKill)
-                net.WriteEntity(ply)
-                net.Broadcast()
+                timer.Simple(0,function()
+                    SetDead(ply,true)
+                    net.Start(NetKill)
+                    net.WriteEntity(ply)
+                    net.Broadcast()
+                end)
             end
         end
     end)
