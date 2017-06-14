@@ -48,19 +48,26 @@ if SERVER then
     end
 
     META.Kill = function(self)
+        gamemode.Call("DoPlayerDeath",self,self,DamageInfo())
+        Deads[self:SteamID()] = self
         gamemode.Call("PlayerDeath",self,self,self)
+        gamemode.Call("PlayerDeathSound")
         SetDead(self,true)
         net.Start(NetKill)
         net.WriteEntity(self)
         net.Broadcast()
+        gamemode.Call("PostPlayerDeath",self)
     end  
 
     META.KillSilent = function(self)
+        gamemode.Call("DoPlayerDeath",self,self,DamageInfo())
+        Deads[self:SteamID()] = self
         gamemode.Call("PlayerSilentDeath",self)
         SetDead(self,true)
         net.Start(NetSilent)
         net.WriteEntity(self)
         net.Broadcast()
+        gamemode.Call("PostPlayerDeath",self)
     end
     
     local DisallowDead = function(ply,...)
@@ -98,6 +105,7 @@ if SERVER then
             SetDead(ply,false)
             timer.Simple(0,function()
                 gamemode.Call("PlayerLoadout",ply)
+                gamemode.Call("PlayerSetModel",ply)
             end)
             net.Start(NetAlive)
             net.WriteEntity(ply)
@@ -115,6 +123,9 @@ if SERVER then
                 net.Start(NetKill)
                 net.WriteEntity(ply)
                 net.Broadcast()
+            end
+            if Deads[ply:SteamID()] then 
+                gamemode.Call("PlayerDeathThink",ply)
             end
         end
     end)
