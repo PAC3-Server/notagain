@@ -96,6 +96,9 @@ if SERVER then
     hook.Add("PlayerSpawn",Tag,function(ply)
         if IsValid(ply) and Deads[ply:SteamID()] then
             SetDead(ply,false)
+            timer.Simple(0,function()
+                gamemode.Call("PlayerLoadout",ply)
+            end)
             net.Start(NetAlive)
             net.WriteEntity(ply)
             net.Broadcast()
