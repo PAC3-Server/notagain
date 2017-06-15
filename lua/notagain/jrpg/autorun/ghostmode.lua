@@ -1,10 +1,10 @@
-local Tag       = "GhostMode"
+local Tag = "GhostMode"
 
 if SERVER then
 	hook.Add("PlayerDeathThink", Tag, function(ply)
 		if not ply:GetNWBool("rpg") then return end
 
-		ply:SetMoveType(MOVETYPE_FLY)
+		ply:SetMoveType(MOVETYPE_WALK)
 		ply:SetVelocity(ply:GetVelocity() * -0.01) -- this is wrong and bad and might feel awful with high ping
 
 		if not ply:KeyDown(IN_ATTACK) then
