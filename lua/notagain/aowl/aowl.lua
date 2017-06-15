@@ -127,149 +127,23 @@ do -- commands
 		end
 	end
 
-	function aowl.AddCommand(cmd, callback, group, hidechat, ...)
+	if SERVER then
+		concommand.Add("aowl", aowl.ConsoleCommand)
+
+		hook.Add("PlayerSay", "aowl_say_cmd", aowl.SayCommand)
+	end
+
+	function aowl.AddCommand(cmd, callback, group, hidechat)
 		if istable(cmd) then
 			for k,v in pairs(cmd) do
 				aowl.AddCommand(v,callback,group,hidechat)
 			end
 			return
 		end
-
-		local prototype = ( not isbool(hidechat) ) and {hidechat, ...} or {...}
-
-		if next(prototype) then
-			for k,v in next, prototype do
-				prototype[k] = string.lower(v)
-			end
-		end
-
 		aowl.cmds = aowl.cmds or {}
-		aowl.cmds[cmd] = {callback = callback, group = group or "players", cmd = cmd, hidechat = hidechat, prototype = prototype}
+		aowl.cmds[cmd] = {callback = callback, group = group or "players", cmd = cmd, hidechat = hidechat }
 
 		hook.Run("AowlCommandAdded", cmd, callback, group, hidechat)
-	end
-
-	function aowl.SetPrototype(cmd, ...)
-		if istable(cmd) then
-			for k,v in pairs(cmd) do
-				aowl.SetPrototype(v,...)
-			end
-			return
-		end
-
-		aowl.cmds = aowl.cmds or {}
-		aowl.cmds[cmd] = aowl.cmds[cmd] or {}
-		aowl.cmds[cmd].prototype = {...}
-	end
-
-	aowl.prototype = {
-		["player"] = function()
-			local players = {"#this","#me","#all","#us","#them"}
-
-			for _,ply in next, player.GetAll() do table.insert( players, tostring(ply:Nick()) ) end
-			for _,ply in next, player.GetAll() do table.insert( players, tostring(ply:SteamID()) ) end
-
-			return players
-		end,
-		["location"] = function() 
-			local locations = {"#somewhere", "#rnode"}
-
-			for location,_ in next, aowl.GotoLocations do
-				table.insert(locations, tostring(location))
-			end
-
-			return locations
-		end,
-		["bool"] = function()
-			return {1, 0}
-		end,
-	}
-
-	do -- autocomplete
-		local function appendline(data, line)
-			for k,v in next, data do
-				data[k] = line..v
-			end
-
-			return data
-		end
-
-		local function gettype(key, line, current)
-			local func = aowl.prototype
-
-			local current = string.PatternSafe( string.lower( string.Trim(current) ) )
-
-			local data = {}
-			local results = {}
-
-			if not func[key] then
-				local args = string.Explode(" or ", key)
-
-				for _,v in next, args do
-					if func[v] then
-						local result = func[v]()
-						table.Add(results, result)
-					end
-				end
-
-				if current ~= "" then
-					for _,v in next, results do
-						if string.find(string.lower(v), current) then
-							table.insert(data, v)
-						end
-					end
-
-					return appendline(data, line)
-				else
-					return appendline(results, line)
-				end
-			else
-				results = func[key]()
-
-				if current ~= "" then
-					for _,v in next, results do
-						if string.find(string.lower(v), current) then
-							table.insert(data, v)
-						end
-					end
-
-					return appendline(data, line)
-				else
-					return appendline(results, line)
-				end
-			end
-		end
-
-		function aowl.AutoComplete(basecommand, args)
-			local args = string.Explode(" ", args)
-
-			table.RemoveByValue(args, "")
-
-			if #args > 1 then
-				local line = basecommand.." "..(table.concat(args, " ", 1, #args-1)).." "
-				local cmd = aowl.cmds[args[1]]
-				
-				if cmd and cmd.prototype then
-					local key = tostring(cmd.prototype[#args-1])
-
-					if key and key ~= "" and key ~= "nil" then
-						local info = gettype(key, line, args[#args])
-						return next(info) and info or {line.."<"..key..">"}
-					else
-						return
-					end
-				end
-			end
-		end
-	end
-
-	if SERVER then
-		concommand.Add("aowl", aowl.ConsoleCommand, aowl.AutoComplete)
-		concommand.Add("a", aowl.ConsoleCommand, aowl.AutoComplete)
-		hook.Add("PlayerSay", "aowl_say_cmd", aowl.SayCommand)
-	else
-		concommand.Add("aowl", function() end, aowl.AutoComplete)
-		concommand.Add("a", function() end, aowl.AutoComplete)
 	end
 
 	function aowl.TargetNotFound(target)
