@@ -4,10 +4,13 @@ if SERVER then
 	hook.Add("PlayerDeathThink", Tag, function(ply)
 		if not ply:GetNWBool("rpg") then return end
 
-		ply:SetMoveType(MOVETYPE_WALK)
+		ply:SetMoveType(MOVETYPE_FLY)
+		ply:SetNoDraw(true)
 		ply:SetVelocity(ply:GetVelocity() * -0.01) -- this is wrong and bad and might feel awful with high ping
 
-		if not ply:KeyDown(IN_ATTACK) then
+		if not ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_JUMP) then
+			ply:SetMoveType(MOVETYPE_WALK)
+			ply:SetNoDraw(false)
 			return false
 		end
 	end)
