@@ -7,7 +7,7 @@ do
 end
 
 if CLIENT then
-	local cl_afk_time = CreateConVar("cl_afk_time", "30", FCVAR_USERINFO)
+	local cl_afk_time = CreateConVar("cl_afk_time", "90", FCVAR_USERINFO)
 
 	local last_keys = {}
 	local last_mouse_x = 0
