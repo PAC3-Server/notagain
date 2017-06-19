@@ -8,7 +8,7 @@ MapDefine.IsExistingArea = function(area)
 	return MapDefine.Areas[area] and true or false
 end
 
-MapDefine.IsInArea = function(area,ent)
+MapDefine.IsInArea = function(ent,area)
 	if not IsValid(ent) or not MapDefine.IsExistingArea(area) then return false end
 
 	local area  = MapDefine.Areas[area]
@@ -28,16 +28,20 @@ MapDefine.IsInArea = function(area,ent)
 
 end
 
+FindMetaTable("Entity").IsInArea = MapDefine.IsInArea
+
 MapDefine.GetCurrentAreas = function(ent)
 	local areas = {}
 	for area,_ in pairs(MapDefine.Areas) do
 		local a = tostring(area)
-		if MapDefine.IsInArea(a,ent) then
+		if MapDefine.IsInArea(ent,a) then
 			areas[a] = a
 		end
 	end
 	return areas
 end
+
+FindMetaTable("Entity").GetCurrentAreas = MapDefine.GetCurrentAreas
 
 --logs--
 hook.Add("MD_OnAreaInit","MapDefineLogAreaInit",function(area)
