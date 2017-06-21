@@ -52,7 +52,7 @@ hook.Add("CalcView", tag, function(ply, basePos, baseAng, baseFov, nearZ, farZ)
 		local pitch = afkmera_pitch:GetFloat() or 0
 
 		local _, maxs = ply:GetModelBounds()
-		local plyPos = ply:Health() <= 0 and ply:GetRagdollEntity():GetPos() or ply:GetPos()
+		local plyPos = ply:GetPos()
 		local pos = plyPos + Vector(0, 0, maxs.z * height - (maxs.z / 3 * camHeight))
 		dist = Vector(maxs.z * 2 + dist, 0, 0)
 		local lookAway = Angle(pitch, RealTime() * (15 * rotationSpeed) % 360, 0)
