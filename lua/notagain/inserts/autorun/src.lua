@@ -12,7 +12,7 @@ function src(...)
     end
     if not dir then return end 
 
-    local lines = string.Split((file.Read(info.short_src, loc)), "\n")
+    local lines = string.Split((file.Read(info.short_src, dir)), "\n")
     MsgC(Color(220, 204, 82), "@"..tostring(info.short_src).." "..info.linedefined.." - "..info.lastlinedefined.."\n")
     for i=info.linedefined,info.lastlinedefined do
         MsgC(Color(244,167,66),lines[i].."\n")
