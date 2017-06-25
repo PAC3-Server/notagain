@@ -56,7 +56,7 @@ aowl.AddCommand("maps", function(ply, line)
 
 	ply:ChatPrint(("="):rep(msg:len()))
 	ply:ChatPrint(msg)
-end, "developers")
+end)
 
 aowl.AddCommand("resetall", function(player, line)
 	aowl.CountDown(line, "RESETING SERVER", function()
