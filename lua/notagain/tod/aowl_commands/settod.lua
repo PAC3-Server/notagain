@@ -14,4 +14,7 @@ aowl.AddCommand("settod", function(player, line, val)
 	timer.Simple(0.1, function()
 		tod.SetMode(tod.cvar:GetInt())
 	end)
+	for k,v in pairs(player.GetAll()) do
+		v:SendLua([[render.RedownloadAllLightmaps()]])
+	end
 end, "admin")
