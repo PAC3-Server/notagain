@@ -11,5 +11,6 @@ hook.Add("PlayerLoadout", "default_loadout", function(ply)
 	for _, name in ipairs(weps) do
 		ply:Give(name)
 	end
+	ply:SelectWeapon("none")
 	return true
 end)
