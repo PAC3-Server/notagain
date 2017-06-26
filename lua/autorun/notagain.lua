@@ -1,10 +1,10 @@
 AddCSLuaFile()
 
 local root_dir = "notagain"
-
 notagain = notagain or {}
 notagain.loaded_libraries = notagain.loaded_libraries or {}
 notagain.directories = notagain.directories or {}
+notagain.hasloaded = false
 
 do
 	local function load_path(path)
@@ -184,6 +184,7 @@ end
 hook.Run("NotagainPreLoad")
 
 notagain.Load()
+notagain.hasloaded = true
 
 --If external stuff need that notagain has fully loaded
 hook.Run("NotagainPostLoad")
