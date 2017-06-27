@@ -732,8 +732,8 @@ do -- groups
 		return self:GetNetworkedString("UserGroup"):lower()
 	end
 
-	team.SetUp(1, "players", Color(255, 70, 0, 255))
-	team.SetUp(2, "friends", Color(60, 127, 255, 255))
+	team.SetUp(1, "players", Color(97, 101, 117, 255))
+	team.SetUp(2, "friends", Color(96, 178, 138, 255))
 
 	--[[
 	team.SetUp(2, "developers", 	Color(147, 63,  147))
