@@ -12,7 +12,7 @@ local lastPong
 local pong = 0
 
 local crash_status
-local crash_time
+local crash_time = 0
 
 net.Receive("pingpong", function()
 	if pong < 5 then
