@@ -12,7 +12,7 @@ local lastPong
 local pong = 0
 
 local crash_status
-local crash_time = 0
+local crash_time
 
 net.Receive("pingpong", function()
 	if pong < 5 then
@@ -54,30 +54,31 @@ local function checkServer()
 	)
 end
 
-local delay = api_retry_delay
+local delay = RealTime() + api_retry_delay
+local times = 1
 local function CrashTick(is_crashing, length, api_response)
 	if is_crashing then
-		if not timer.Exists("CRASH_SteamAPIPing") then
-			crash_status = true
-			timer.Create("CRASH_SteamAPIPing", api_retry_delay, api_retry, function()
-				checkServer()
-			end)
-		end
+		crash_status = true
 		crash_time = math.Round(length)
+
+		if delay < RealTime() and times <= api_retry then
+			checkServer()
+
+			delay = RealTime() + api_retry_delay
+			times = times + 1
+		end
 	else
+		times = 1
 		crash_status = false
+
 		crash_time = 0
-
 		API_RESPONSE = 0 -- Idle, not waiting for a response.
-		timer.Destroy("CRASH_SteamAPIPing")
 	end
-
 	hookRun("CrashTick", is_crashing, length, api_response)
 end
 
 hookAdd("Tick", "pingpong", function() 
 	if not lastPong then return end
-
 	local timeout = RealTime() - lastPong
 
 	if timeout > 1.3 then
