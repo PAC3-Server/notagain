@@ -19,6 +19,12 @@ if SERVER then
 			ply:ConCommand("pac_wear_parts \"" .. file.."\"")
 		end
 	end)
+	
+	aowl.AddCommand("clear", function(ply,line,file)
+		if IsValid(ply) and file then
+			ply:ConCommand("pac_clear_parts")
+		end
+	end)
 
 	aowl.AddCommand("ignorepac",function(ply,line,cmd,target)
 		target = easylua.FindEntity(target)
