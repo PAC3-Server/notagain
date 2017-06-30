@@ -130,19 +130,28 @@ end)
 
 
 aowl.AddCommand("god",function(ply, mode)
-	if not mode or mode == "help" or mode == "" then
+	if mode == "help" then
 		ply:ChatPrint([[
 			0 = godmode off
 			1 = godmode on
 			2 = only allow damage from world (fall damage, map damage, etc)
 			3 = only allow damage from steam friends and world
 		]])
+	elseif not mode or mode == "" then
+		local num = ply:GetInfoNum("cl_godmode",0)
+		if num > 0 then
+			ply:ConCommand("cl_godmode 0")
+			ply:ChatPrint("godmode: off")
+		else
+			ply:ConCommand("cl_godmode 1")
+			ply:ChatPrint("godmode: on")
+		end
 	elseif mode == "0" or mode == "off" then
 		ply:ConCommand("cl_godmode 0")
-		ply:ChatPrint("godmode: on")
+		ply:ChatPrint("godmode: off")
 	elseif mode == "1" or mode == "on" then
 		ply:ConCommand("cl_godmode 1")
-		ply:ChatPrint("godmode: off")
+		ply:ChatPrint("godmode: on")
 	elseif mode == "2" or mode == "world" then
 		ply:ConCommand("cl_godmode 2")
 		ply:ChatPrint("godmode: only allow damage from world (fall damage, map damage, etc)")
@@ -151,3 +160,5 @@ aowl.AddCommand("god",function(ply, mode)
 		ply:ChatPrint("godmode: only allow damage from steam friends and world (fall damage, map damage, etc)")
 	end
 end, "players", true)
+
+aowl.AddCommand("ungod",function(ply) ply:ConCommand("cl_godmode 0") ply:ChatPrint("godmode: off") end,"players",true)
