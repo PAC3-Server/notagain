@@ -905,6 +905,15 @@ do
 	scripted_ents.Register(ENT, ENT.ClassName)
 end
 
+local function add(ENT, url)
+	hook.Add("pac_Initialized", ENT.ClassName, function()
+		http.Fetch(url, function(str)
+			pac.AddEntityClassListener(ENT.ClassName, pac.luadata.Decode(str), nil, 1000)
+		end)
+		hook.Remove("pac_Initialized", ENT.ClassName)
+	end)
+end
+
 do
 	local ENT = {}
 
@@ -913,9 +922,7 @@ do
 	ENT.Base = "npc_vj_thunderlion"
 
 	if CLIENT then
-		http.Fetch("https://gist.githubusercontent.com/sambarinooo/fabe4356b0ab88965cf87bb570e60ee5/raw/b8fdd8cb39c13099ff11fe05301ca40833964dc2/antlion%2520robot%2520outfit", function(str)
-			pac.AddEntityClassListener(ENT.ClassName, pac.luadata.Decode(str), nil, 1000)
-		end)
+		add(ENT, "https://gist.githubusercontent.com/sambarinooo/fabe4356b0ab88965cf87bb570e60ee5/raw/b8fdd8cb39c13099ff11fe05301ca40833964dc2/antlion%2520robot%2520outfit")
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -929,9 +936,7 @@ do
 	ENT.Base = "npc_vj_thunderlionguard"
 
 	if CLIENT then
-		http.Fetch("https://gist.githubusercontent.com/sambarinooo/93afdad8335e5bc0172b64b767eb1559/raw/e5fccc6349dcf934059d776082b681a4c2cd238b/antlionguard%2520robot%2520outfit", function(str)
-			pac.AddEntityClassListener(ENT.ClassName, pac.luadata.Decode(str), nil, 1000)
-		end)
+		add(ENT, "https://gist.githubusercontent.com/sambarinooo/93afdad8335e5bc0172b64b767eb1559/raw/e5fccc6349dcf934059d776082b681a4c2cd238b/antlionguard%2520robot%2520outfit")
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
