@@ -5,7 +5,7 @@ if SERVER then
 
     hook.Add("PlayerInitialSpawn",tag,function(ply)
         ply:SetNWInt("StartTimeSession",CurTime())
-        ply:SetNWInt("TotalTime",tonumber(sply:GetPData("TimeOnServer",0)))
+        ply:SetNWInt("TotalTime",tonumber(ply:GetPData("TimeOnServer",0)))
     end)
 
 
