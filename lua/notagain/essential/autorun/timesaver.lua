@@ -42,20 +42,20 @@ end
 
 if CLIENT then
 
-    META.GetTotalTime = function(self)
-        return self:GetNWInt("TotalTime",0) + CurTime()
+    GetTotalTime = function()
+        return LocalPlayer():GetNWInt("TotalTime",0) + CurTime()
     end
 
-    META.GetNiceTotalTime = function(self)
-        return string.FormattedTime(self:GetPlayerTime())
+    GetNiceTotalTime = function(self)
+        return string.FormattedTime(GetPlayerTime())
     end
 
-    META.GetSessionTime = function(self)
+    GetSessionTime = function()
         return CurTime()
     end
 
-    META.GetNiceSessionTime = function(self)
-        return string.FormattedTime(self:GetSessionTime())
+    GetNiceSessionTime = function()
+        return string.FormattedTime(GetSessionTime())
     end
 
 end
