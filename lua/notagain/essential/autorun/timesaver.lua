@@ -3,59 +3,29 @@ local META = FindMetaTable("Player")
 
 if SERVER then
 
-    META.RefreshTime = function(self)
-        if not self.StartTimeSession then
-            self.StartTimeSession = CurTime()
-        end
-        local data = self:GetPData("TimeOnServer",0)
-        local sessiontime = CurTime() - self.StartTimeSession
-        self:SetPData("TimeOnServer",data + sessiontime)
-        self:SetNWInt("TotalTime",tonumber(self:GetPData("TimeOnServer",0)))
-    end
-
-    META.GetTotalTime = function(self)
-        self:RefreshTime()
-        return tonumber(self:GetPData("TimeOnServer",0))
-    end
-
-    META.GetNiceTotalTime = function(self)
-        return string.FormattedTime(self:GetPlayerTime())
-    end
-
-    META.GetSessionTime = function(self)
-        return CurTime()-self:GetNWInt("StartTimeSession",0)
-    end
-
-    META.GetNiceSessionTime = function(self)
-        return string.FormattedTime(self:GetSessionTime())
-    end
-
     hook.Add("PlayerInitialSpawn",tag,function(ply)
-        ply:RefreshTime()
+        self:SetNWInt("StartTimeSession",CurTime())
+        self:SetNWInt("TotalTime",tonumber(self:GetPData("TimeOnServer",0)))
     end)
 
 
     hook.Add("PlayerDisconnected",tag,function(ply)
-        ply:RefreshTime()
+        self:SetPData("TimeOnServer",ply:GetTotalTime())
     end)
 end
 
-if CLIENT then
+META.GetTotalTime = function(self)
+    return self:GetNWInt("TotalTime",0) + self:GetSessionTime()
+end
 
-    GetTotalTime = function()
-        return LocalPlayer():GetNWInt("TotalTime",0) + CurTime()
-    end
+META.GetNiceTotalTime = function(self)
+    return string.FormattedTime(self:GetPlayerTime())
+end
 
-    GetNiceTotalTime = function(self)
-        return string.FormattedTime(GetPlayerTime())
-    end
+META.GetSessionTime = function(self)
+    return CurTime() - self:GetNWInt("StartTimeSession",0)
+end
 
-    GetSessionTime = function()
-        return CurTime()
-    end
-
-    GetNiceSessionTime = function()
-        return string.FormattedTime(GetSessionTime())
-    end
-
+META.GetNiceSessionTime = function(self)
+    return string.FormattedTime(self:GetSessionTime())
 end
