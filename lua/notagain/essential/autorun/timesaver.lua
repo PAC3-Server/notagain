@@ -4,13 +4,13 @@ local META = FindMetaTable("Player")
 if SERVER then
 
     hook.Add("PlayerInitialSpawn",tag,function(ply)
-        self:SetNWInt("StartTimeSession",CurTime())
-        self:SetNWInt("TotalTime",tonumber(self:GetPData("TimeOnServer",0)))
+        ply:SetNWInt("StartTimeSession",CurTime())
+        ply:SetNWInt("TotalTime",tonumber(sply:GetPData("TimeOnServer",0)))
     end)
 
 
     hook.Add("PlayerDisconnected",tag,function(ply)
-        self:SetPData("TimeOnServer",ply:GetTotalTime())
+        ply:SetPData("TimeOnServer",ply:GetTotalTime())
     end)
 end
 
