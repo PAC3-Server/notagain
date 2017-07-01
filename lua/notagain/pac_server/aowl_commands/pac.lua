@@ -7,26 +7,26 @@ if SERVER then
 	util.AddNetworkString(Tag1)
 	util.AddNetworkString(Tag2)
 	
-	aowl.AddCommand("fixpac", function(ply)
+	aowl.AddCommand({"fixpac"}, function(ply)
 		if IsValid(ply) and pace then
 			ply.pac_requested_outfits = false
 			pace.RequestOutfits(ply)
 		end
 	end)
 
-	aowl.AddCommand("wear", function(ply,line,file)
+	aowl.AddCommand({"wear"}, function(ply,line,file)
 		if IsValid(ply) and file then
 			ply:ConCommand("pac_wear_parts \"" .. file.."\"")
 		end
 	end)
 	
-	aowl.AddCommand("clear", function(ply,line,file)
+	aowl.AddCommand({"clear"}, function(ply,line,file)
 		if IsValid(ply) and file then
 			ply:ConCommand("pac_clear_parts")
 		end
 	end)
 
-	aowl.AddCommand("ignorepac",function(ply,line,cmd,target)
+	aowl.AddCommand({"ignorepac"},function(ply,line,target)
 		target = easylua.FindEntity(target)
 
 		if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
@@ -40,7 +40,7 @@ if SERVER then
 	end)
 
 
-	aowl.AddCommand("unignorepac",function(ply,line,target)
+	aowl.AddCommand({"unignorepac"},function(ply,line,target)
 		target = easylua.FindEntity(target)
 
 		if target and IsValid(target) and IsValid(ply) and target:IsPlayer() then
