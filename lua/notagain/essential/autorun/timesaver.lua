@@ -8,7 +8,7 @@ if SERVER then
             self.StartTimeSession = CurTime()
         end
         local data = self:GetPData("TimeOnServer",0)
-        local sessionstime = CurTime() - self.StartTimeSession
+        local sessiontime = CurTime() - self.StartTimeSession
         self:SetPData("TimeOnServer",data + sessiontime)
         self:SetNWInt("TotalTime",tonumber(self:GetPData("TimeOnServer",0)))
     end
