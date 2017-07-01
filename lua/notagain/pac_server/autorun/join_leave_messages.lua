@@ -27,6 +27,7 @@ if SERVER then
 		local name = data.name
 		local steamid = data.networkid
 		local reason = data.reason
+		MsgC(Color(255,0,0),"[Leave] ") print(name.." ("..steamid..") has left the server! ("..reason..")")
 	end)
 
 	hook.Add("Initialize",tag,function()
