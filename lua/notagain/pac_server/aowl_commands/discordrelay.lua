@@ -26,7 +26,7 @@ if SERVER then
                     if dmodule.Remove then
                         dmodule.Remove()
                     else
-                        discordrelay.log(2,"Aowl Remove Module:",dmodule,"has no remove function and might not be unloaded correctly!")+
+                        discordrelay.log(2,"Aowl Remove Module:",dmodule,"has no remove function and might not be unloaded correctly!")
                         discordrelay.modules[name] = nil
                     end
                 elseif arg == "reload" or arg == "init" then
