@@ -22,7 +22,13 @@ if SERVER then
                 elseif arg == "remove" or arg == "delete" or arg == "disable" then
                     if not mod then return false,"No Module/Extension specified!" end
                     if not discordrelay[com][mod] then return false,"Invalid Module/Extension" end
-                    discordrelay[com][mod].Remove()
+                    local dmodule = discordrelay[com][mod]
+                    if dmodule.Remove then
+                        dmodule.Remove()
+                    else
+                        discordrelay.log(2,"Aowl Remove Module:",dmodule,"has no remove function and might not be unloaded correctly!")+
+                        discordrelay.modules[name] = nil
+                    end
                 elseif arg == "reload" or arg == "init" then
                     if not mod then return false,"No Module/Extension specified!" end
                     if not discordrelay[com][mod] then return false,"Invalid Module/Extension" end
