@@ -3,7 +3,7 @@ local Tag1 = "aowlpacignore"
 local Tag2 = "aowlpacunignore"
 
 if SERVER then
-	
+	local easylua = requirex("easylua")
 	util.AddNetworkString(Tag1)
 	util.AddNetworkString(Tag2)
 	
@@ -21,7 +21,7 @@ if SERVER then
 	end)
 	
 	aowl.AddCommand({"clear"}, function(ply,line,file)
-		if IsValid(ply) and file then
+		if IsValid(ply) then
 			ply:ConCommand("pac_clear_parts")
 		end
 	end)
