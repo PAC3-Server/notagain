@@ -3,7 +3,6 @@ local Tag1 = "aowlpacignore"
 local Tag2 = "aowlpacunignore"
 
 if SERVER then
-	local easylua = requirex("easylua")
 	util.AddNetworkString(Tag1)
 	util.AddNetworkString(Tag2)
 	
@@ -27,30 +26,23 @@ if SERVER then
 	end)
 
 	aowl.AddCommand({"ignorepac"},function(ply,line,target)
-		target = easylua.FindEntity(target)
-
-		if target and IsValid(target) and Isvalid(ply) and target:IsPlayer() then
-
+		if not target then return end
+		local target = easylua.FindEntity(target)
+		if IsValid(target) and IsValid(ply) and target:IsPlayer() then
 			net.Start(Tag1)
 			net.WriteEntity(target)
 			net.Send(ply)
-
 		end
-
 	end)
-
-
+	
 	aowl.AddCommand({"unignorepac"},function(ply,line,target)
-		target = easylua.FindEntity(target)
-
-		if target and IsValid(target) and IsValid(ply) and target:IsPlayer() then
-
+		if not target then return end
+		local target = easylua.FindEntity(target)
+		if IsValid(target) and IsValid(ply) and target:IsPlayer() then
 			net.Start(Tag2)
 			net.WriteEntity(target)
 			net.Send(ply)
-
 		end
-
 	end)
 
 end
