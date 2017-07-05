@@ -1,7 +1,9 @@
 surface.CreateFont( "NoticeFont", {
-    font      = "arial",
-    size      = 18,
-    weight    = 600,
+    font      = "Roboto",
+    extended  = true,
+    size      = 17,
+    weight    = 500,
+    shadow    = true,
 } )
 
 local scrW, scrH = ScrW(), ScrH()
@@ -19,20 +21,28 @@ local PANEL = {
 
 	Paint = function ( self , w , h)
 
-		local Poly = {
-	        { x = 0,   					y = h }, --100/200
-	        { x = (25/ resolutionScale),y = 0 }, --100/100
+		local PolyOutter = {
+	        { x = (25/ resolutionScale),y = h }, --100/200
+	        { x = 0,                    y = 0 }, --100/100
 	        { x = w, 					y = 0 }, --200/100
 	        { x = w,                    y = h }, --200/200
 	    }
+        local PolyInner = {
+	        { x = (25/ resolutionScale),   	y = h }, --100/200
+	        { x = 5,                        y = 5 }, --100/100
+	        { x = w, 					    y = 5 }, --200/100
+	        { x = w,                        y = h }, --200/200
+	    }
 	    draw.NoTexture()
-		surface.SetDrawColor(0, 97, 155, 225)
-		surface.DrawPoly(Poly)
+		surface.SetDrawColor(0,0,0,175)
+		surface.DrawPoly(PolyOutter)
+        surface.SetDrawColor(43,43,43,200)
+		surface.DrawPoly(PolyInner)
 
 		if (self.start) then
 			local w2 = math.TimeFraction(self.start, self.endTime, CurTime()) * w
-			surface.SetDrawColor(255,255,255)
-			surface.DrawRect(w2, h-2, w - w2, 2)
+			surface.SetDrawColor(225,225,225)
+			surface.DrawRect(w2,h-4,w - w2,4)
 		end
 
 	end
@@ -41,65 +51,58 @@ local PANEL = {
 
 vgui.Register("DNotice", PANEL, "DLabel")
 
-notices = notices or {}
+local notices = {}
 
-function CoolNotify(message,delay)
-	local i = #notices+1
+local CoolNotify = function(message,delay)
 	local scrW = ScrW()
 	local notice = vgui.Create("DNotice")
-	
-	notice.id = i
+	notice.id = #notices + 1
 	table.insert(notices,notice.id,notice)
-	
 	notice:SetText(message)
 	notice:SetPos(ScrW(), ScrH() - (notice.id - 1) * (notice:GetTall() + 4 	) + 4)
 	notice:SizeToContentsX()
 	notice:SetWide(notice:GetWide() + 64)
 	notice.start = CurTime()
-	notice.endTime = CurTime()+delay
-	notice.OnRemove = function() 
-		table.remove(notices,notice.id)
-	end
+	notice.endTime = CurTime() + delay
 
-	local function OrganizeNotices()
-		for k, v in ipairs(notices) do
-			if IsValid(v) then
-				v:MoveTo(scrW - (v:GetWide()), ScrH() - 40 - ( k - notice.id ) * ( v:GetTall() + 12 ) - notice.id * ( v:GetTall() + 12 ), 0.15, (k / #notices) * 0.25, nil)
-			end
-		end
-	end
+    local OrganizeNotices = function()
+        for k, v in ipairs(notices) do
+            if IsValid(v) then
+                v:MoveTo(scrW - (v:GetWide()), ScrH() - 40 - ( k - notice.id ) * ( v:GetTall() + 12 ) - notice.id * ( v:GetTall() + 12 ), 0.15, (k / #notices) * 0.25, nil)
+            end
+        end
+    end
 
-	OrganizeNotices()
-	
-	local function RemoveNotices()
-		
-		for k,v in pairs(notices) do --Removing NULL panels the hard way
-			if not IsValid(v) then
-				v:Remove()
-				table.remove(notices,k)
-			end
-		end
-		
-		if IsValid(notice) then		
-			notice:MoveTo(ScrW(), notice.y, 0.15, 0.1, nil, function(tbl,pa) pa:Remove() end)
-			OrganizeNotices()
-		end
-		
-	end
-		
-	timer.Simple(delay,RemoveNotices)
+    OrganizeNotices()
+
+	notice.Think = function(self)
+        if CurTime() >= self.endTime then
+            table.remove(notices,self.id)
+            self:MoveTo(ScrW(), notice.y, 0.15, 0.1, nil, function() self:Remove() end)
+            OrganizeNotices()
+        end
+    end
 end
 
-function notification.AddLegacy(message,type,delay)
+notification.old_AddLegacy = notification.old_AddLegacy or notification.AddLegacy
+notification.old_AddProgress = notification.old_AddProgress or notification.AddProgress
+notification.old_Kill = notification.old_Kill or notification.Kill
+
+notification.AddLegacy = function(message,type,delay)
 	CoolNotify(message,delay)
 end
 
-function notification.AddProgress(id,message)
+notification.AddProgress = function(id,message)
 	CoolNotify(message,3)
 end
 
-function notification.Kill(id)
+notification.Kill = function(id)
 	if IsValid(notices[id]) then
-		notices[id]:Remove()
+		notices[id]:MoveTo(ScrW(),notices[id].y, 0.15, 0.1, nil, function() notices[id]:Remove() end)
+        table.remove(notices,id)
 	end
+end
+
+notification.GetActives = function()
+    return notices
 end
