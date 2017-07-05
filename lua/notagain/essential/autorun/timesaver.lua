@@ -19,7 +19,7 @@ META.GetTotalTime = function(self)
 end
 
 META.GetNiceTotalTime = function(self)
-    return string.FormattedTime(self:GetPlayerTime())
+    return string.FormattedTime(self:GetTotalTime())
 end
 
 META.GetSessionTime = function(self)
