@@ -33,10 +33,11 @@ local ALERT = {
 	end,
 }
 
-vgui.Register( "DAlert" , ALERT , "DLabel" )
+vgui.Register("DAlert",ALERT,"DLabel" )
 
+JAlert.ActiveAlert = NULL
 JAlert.DoAlert = function(message,time)
-
+    if not message or type(message) ~= "string" then return end
 	JAlert.RemoveAlert()
 
 	local alert = vgui.Create("DAlert")
@@ -58,7 +59,7 @@ JAlert.DoAlert = function(message,time)
     alert.Think = function(self)
 		if self.Removal <= CurTime() then
 			self:MoveTo(self.x,-self:GetTall(),0.35,0.3,nil,function() self:Remove() end)
-			JAlert.ActiveAlert = nil
+			JAlert.ActiveAlert = NULL
 		end
 	end
 
@@ -67,7 +68,7 @@ end
 JAlert.RemoveAlert = function()
 	if IsValid(JAlert.ActiveAlert) then
 		local temp = JAlert.ActiveAlert
-		JAlert.ActiveAlert = nil
+		JAlert.ActiveAlert = NULL
 		temp:MoveTo(temp.x ,-temp:GetTall(),0.35,0.3,nil,function() temp:Remove() end)
 	end
 end
