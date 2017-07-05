@@ -131,12 +131,7 @@ end)
 
 aowl.AddCommand("god",function(ply, mode)
 	if mode == "help" then
-		ply:ChatPrint([[
-			0 = godmode off
-			1 = godmode on
-			2 = only allow damage from world (fall damage, map damage, etc)
-			3 = only allow damage from steam friends and world
-		]])
+		ply:ChatPrint([[0 = godmode off\n1 = godmode on\n2 = only allow damage from world (fall damage, map damage, etc)\n3 = only allow damage from steam friends and world]])
 	elseif not mode or mode == "" then
 		local num = ply:GetInfoNum("cl_godmode",0)
 		if num > 0 then
