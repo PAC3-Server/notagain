@@ -241,12 +241,43 @@ local PLAYER_LINE = {
 				x = x + 20
 			end
 
-
-
 			prettytext.Draw("PING", x, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
 			prettytext.Draw(ping, x + 45, y, "sylfaen", size*0.9, 1, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
 			prettytext.Draw("ms", x + str1_w + str2_w + 10, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
 		end
+
+        do --time
+        	local bar_height = 12
+			local w = w
+			local x = x
+			local y = y + h - bar_height
+			local h = bar_height
+
+			local font = "gabriola"
+			local size = 34
+			local weight = 800
+			local blursize = 1
+
+			surface.SetDrawColor(0,0,0,100)
+			surface.DrawRect(x-40,y,w+80, h)
+
+            local formattedtime = player:GetNiceTotalTime() or {h = 0,m = 0,s = 0}
+            local time = formattedtime.s >= 3600 and formattedtime.h or formattedtime.m
+            local unit = formattedtime.s >= 3600 and "h" or "min"
+
+            local str1_w = prettytext.GetTextSize("TIME",font,size,weight,blursize)
+            local str2_w = prettytext.GetTextSize(time,"sylfaen", size*1.1, 1, blursize*5)
+
+            if dir > 0 then
+				x = x + w - str1_w - str2_w - 150 - 25
+			else
+				x = x + 150
+			end
+
+			prettytext.Draw("TIME", x, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
+			prettytext.Draw(time, x + 45, y, "sylfaen", size*0.9, 1, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
+			prettytext.Draw(unit, x + str1_w + str2_w + 10, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
+        end
 
 		do
 			if _G.avatar then
