@@ -21,6 +21,6 @@ if CLIENT then
 	net.Receive(Tag,function()
 		local message = net.ReadString()
 		local delay = tonumber(net.ReadString()) or nil
-		Alert(message,delay)
+		JAlert.DoAlert(message,delay)
 	end)
 end
