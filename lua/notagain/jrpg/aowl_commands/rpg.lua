@@ -34,9 +34,13 @@ end)
 aowl.AddCommand("level", function(ply, what)
 	local res = jlevel.LevelAttribute(ply, what)
 	if res == false then
-		return false, "no such stat"
+		ply:ChatPrint("Valid attributes to upgrade:")
+		for k,v in pairs(jattributes.types) do
+			ply:ChatPrint(k)
+		end	
+		return false,"no such stat"
 	elseif res == nil then
-		return false, 	"not enough attribute points"
+		return false,"not enough attribute points"
 	end
 
 	ply:ChatPrint(ply:GetNWInt("jlevel_attribute_points", 0) .. " attribute points left")
