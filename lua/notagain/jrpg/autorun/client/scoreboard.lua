@@ -262,8 +262,8 @@ local PLAYER_LINE = {
 			surface.DrawRect(x-40,y,w+80, h)
 
             local formattedtime = player:GetNiceTotalTime() or {h = 0,m = 0,s = 0}
-            local time = formattedtime.s >= 3600 and formattedtime.h or formattedtime.m
-            local unit = formattedtime.s >= 3600 and "h" or "min"
+            local time = formattedtime.h >= 1 and formattedtime.h or formattedtime.m
+            local unit = formattedtime.h >= 1 and "h" or "min"
 
             local str1_w = prettytext.GetTextSize("TIME",font,size,weight,blursize)
             local str2_w = prettytext.GetTextSize(time,"sylfaen", size*1.1, 1, blursize*5)
