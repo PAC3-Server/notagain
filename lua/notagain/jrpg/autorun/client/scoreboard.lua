@@ -196,7 +196,7 @@ local PLAYER_LINE = {
 		end
 
 		do -- name
-			local text = ent:Nick()
+			local text = ent:Nick().." \tLVL. "..(jlevel and jlevel.GetStats(ent).level or 0)
 			local font = "arial"
 			local size = 17
 			local weight = 800
@@ -238,7 +238,7 @@ local PLAYER_LINE = {
 			if dir > 0 then
 				x = x + w - str1_w - str2_w - 20 - 15
 			else
-				x = x + 20
+				x = x + 5
 			end
 
 			prettytext.Draw("PING", x, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
@@ -269,9 +269,9 @@ local PLAYER_LINE = {
             local str2_w = prettytext.GetTextSize(time,"sylfaen", size*1.1, 1, blursize*5)
 
             if dir > 0 then
-				x = x + w - str1_w - str2_w - 150 - 25
+				x = x + w - str1_w - str2_w - 200
 			else
-				x = x + 150
+				x = x + 175
 			end
 
 			prettytext.Draw("TIME", x, y + 2.5, font, size, weight, blursize, Color(255, 255, 255, 200), nil, 0, -0.5)
@@ -459,8 +459,8 @@ local SCORE_BOARD = {
 PLAYER_LINE = vgui.RegisterTable( PLAYER_LINE, "DPanel" )
 SCORE_BOARD = vgui.RegisterTable( SCORE_BOARD, "EditablePanel" )
 
-local ysc_convar = CreateClientConVar( "yscoreboad_show", "1", true, false )
-local hide_mouse = CreateClientConVar( "score_hide_mouse", "0", true, false )
+local rpg_enable = CreateClientConVar( "scoreboard_rpg_enable", "1", true, false )
+local rpg_hide_mouse = CreateClientConVar( "scoreboard_rpg_rpg_hide_mouse", "0", true, false )
 
 if IsValid(w_Scoreboard) then
 	w_Scoreboard:Remove()
@@ -469,7 +469,7 @@ end
 w_Scoreboard = nil
 
 local function YScoreboardShow()
-    if ysc_convar:GetInt() == 1 then
+    if rpg_enable:GetInt() == 1 then
 
         if ( not IsValid( w_Scoreboard ) ) then
             w_Scoreboard = vgui.CreateFromTable( SCORE_BOARD )
@@ -483,7 +483,7 @@ local function YScoreboardShow()
 
         w_Scoreboard:MakePopup()
         w_Scoreboard:SetKeyboardInputEnabled( false )
-        w_Scoreboard:SetMouseInputEnabled(hide_mouse:GetInt() == 0 and true or false)
+        w_Scoreboard:SetMouseInputEnabled(rpg_hide_mouse:GetInt() == 0 and true or false)
 
 		hook.Add("HUDDrawScoreBoard", "scoreboard", function()
 			if false then
@@ -540,7 +540,7 @@ local function YScoreboardShow()
 end
 
 local function YScoreboardHide()
-    if ysc_convar:GetInt() == 1 then
+    if rpg_enable:GetInt() == 1 then
         if ( IsValid( w_Scoreboard ) ) then
             w_Scoreboard:SetMouseInputEnabled( false )
             w_Scoreboard:Hide()
