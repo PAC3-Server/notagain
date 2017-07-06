@@ -19,6 +19,9 @@ function jfx.CreateMaterial(data)
 		if k == "Proxies" then
 			params[k] = v
 		else
+			if type(v) == "string" and v:StartWith("http") then
+				v = "error" -- loading texture here?
+			end
 			params["$" .. k] = v
 		end
 	end
