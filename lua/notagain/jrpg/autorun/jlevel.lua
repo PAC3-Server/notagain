@@ -62,6 +62,8 @@ if SERVER then
 			jattributes.SetAttribute(ply, stat, tonumber(ply:GetPData("jlevel_stat_" .. stat, 0)))
 		end
 	end
+	
+	hook.Add("PlayerInitialSpawn","jlevel",jlevel.LoadStats)
 
 	hook.Add("EntityTakeDamage", "jlevel", function(victim, dmginfo)
 		local attacker = dmginfo:GetAttacker()
