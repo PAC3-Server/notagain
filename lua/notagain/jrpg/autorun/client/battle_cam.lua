@@ -55,7 +55,7 @@ function battlecam.IsKeyDown(key)
 	elseif key == "attack" then
 		return input.IsButtonDown(KEY_XBUTTON_RTRIGGER) or input.IsButtonDown(KEY_XBUTTON_LTRIGGER)
 	elseif key == "shield" then
-		return input.IsButtonDown(KEY_XBUTTON_LTRIGGER)
+		return input.IsButtonDown(KEY_XBUTTON_LTRIGGER) or input.IsKeyDown(KEY_LALT) or LocalPlayer():KeyDown(IN_WALK)
 	end
 end
 
