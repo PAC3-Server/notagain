@@ -193,18 +193,22 @@ if CLIENT then
 	end
 
 	local last_byte
+	
+	hook.Add("RenderScene","todhack",function()
+		hook.Remove("RenderScene","todhack")
+		timer.Create("tod_update_lightmap", 0.5, 0, function()
+			local byte = tod.MultToLightEnv(tod.GetCycle())
 
-	function tod.UpdateLightmap()
-		local byte = tod.MultToLightEnv(tod.GetCycle())
-		if last_byte ~= byte then
-			render.RedownloadAllLightmaps(true)
-			last_byte = byte
-		end
-	end
-
-	timer.Create("tod_update_lightmap", 0.1, 0, function()
-		tod.UpdateLightmap()
+			if last_byte ~= byte then
+				-- this function is very slow
+				if not tod.light_environment_named then
+					render.RedownloadAllLightmaps(true)
+				end
+				last_byte = byte
+			end
+		end)
 	end)
+
 
 	do -- stars	and moon
 		tod.moon_ent = NULL
