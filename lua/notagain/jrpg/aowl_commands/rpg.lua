@@ -7,7 +7,11 @@ end
 
 local function set_rpg(ply, b, cheat)
 	ply:SetNWBool("rpg", b)
-
+	if b then
+		hook.Run("OnRPGEnabled",ply,cheat)
+	else
+		hook.Run("OnRPGDisabled",ply)
+	end
 	if ply:GetNWBool("rpg") then
 		jattributes.SetTable(ply, {mana = 75, stamina = 25, health = 100})
 		jlevel.LoadStats(ply)
