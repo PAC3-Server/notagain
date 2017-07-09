@@ -4,7 +4,7 @@ if SERVER then
 	hook.Add("PlayerDeathThink", Tag, function(ply)
 		if not ply:GetNWBool("rpg") then return end
 
-		ply:SetMoveType(MOVETYPE_FLY)
+		ply:SetMoveType(MOVETYPE_NOCLIP)
 		ply:SetNoDraw(true)
 		ply:SetVelocity(ply:GetVelocity() * -0.01) -- this is wrong and bad and might feel awful with high ping
 
@@ -66,12 +66,10 @@ if CLIENT then
 
 	hook.Add("CalcView", Tag, function(ply)
 		if ply:GetNWBool("rpg") and not ply:Alive() then
-			if ctp:IsEnabled() then
+			timer.Simple(0,function()
 				ctp:Disable()
-			end
-			if battlecam.IsEnabled() then
 				battlecam.Disable()
-			end
+			end)
 			return {
 				origin = ply:EyePos() + ply:GetAimVector() * -200,
 			}
