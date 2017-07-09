@@ -95,10 +95,14 @@ end
 
 local taskpac1 = "PC_TASKS_PAC_FIRST_TIME_OPENED"
 local tasklag  = "PC_TASKS_LAG"
+local taskownrisks = "PC_TASKS_OWN_RISKS"
+local taskosx = "PC_TASKS_OSX"
+local tasklinux = "PC_TASKS_LINUX"
 
 if SERVER then
     util.AddNetworkString(taskpac1)
     util.AddNetworkString(tasklag)
+    util.AddNetworkString(taskownrisks)
 
     PCTasks.Add("An important discovery","Open the Player Appearance Customizer editor for the first time")
     PCTasks.Add("What a PAC","Wear an outfit made with PAC")
@@ -112,6 +116,10 @@ if SERVER then
     PCTasks.Add("Slower than my old windows 2000","Experience huge server lag")
     PCTasks.Add("Distracted","Be AFK on the server")
     PCTasks.Add("A message from the stars","Communicate with the 'stars'")
+    PCTasks.Add("At your own risks","Run GMod on low battery power")
+    PCTasks.Add("Apple time","Run GMod on OSX")
+    PCTasks.Add("Hipster","Run GMod on Linux")
+    PCTasks.Add("Friendly neighbourhood","Play with 4 friends on the server")
 
     net.Receive(taskpac1,function(len,ply)
         PCTasks.Complete(ply,"An important discovery")
@@ -119,6 +127,18 @@ if SERVER then
 
     net.Receive(tasklag,function(len,ply)
         PCTasks.Complete(ply,"Slower than my old windows 2000")
+    end)
+
+    net.Receive(taskownrisks,function(len,ply)
+        PCTasks.Complete(ply,"At your own risks")
+    end)
+
+    net.Receive(taskosx,function(len,ply)
+        PCTasks.Complete(ply,"Apple time")
+    end)
+
+    net.Receive(tasklinux,function(len,ply)
+        PCTasks.Complete(ply,"Hipster")
     end)
 
     hook.Add("PrePACConfigApply","pc_task_pac_wore_first_time",function(ply)
@@ -171,6 +191,10 @@ if SERVER then
         end
     end)
 
+    hook.Add("PlayerInitialSpawn","pc_task_friendly_neighbourhood",function(ply)
+        f
+    end)
+
 end
 
 if CLIENT then
@@ -189,6 +213,28 @@ if CLIENT then
                 net.Start(tasklag)
                 net.SendToServer()
                 hook.Remove("Think","pc_task_lag")
+            end
+        end)
+    end
+
+    if not PCTasks.IsCompleted(LocalPlayer(),"At your own risks") then
+        timer.Create("pc_task_at_your_own_risks",60,0,function()
+            if system.BatteryPower() <= 20 then
+                net.Start(taskownrisks)
+                net.SendToServer()
+                timer.Remove("pc_task_at_your_own_risks")
+            end
+        end)
+    end
+
+    if not PCTasks.IsCompleted(LocalPlayer(),"Apple time") or not PCTasks.IsCompleted(LocalPlayer(),"Hipster") then
+        hook.Add("Initialize","pc_task_os",function()
+            if system.IsLinux() then
+                net.Start(tasklinux)
+                net.SendToServer()
+            elseif system.IsOSX() then
+                net.Start(taskosx)
+                net.SendToServer()
             end
         end)
     end
