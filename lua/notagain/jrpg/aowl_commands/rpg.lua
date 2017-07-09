@@ -52,7 +52,7 @@ aowl.AddCommand("element", function(ply, _, ...)
 	local args = {...}
 	if #args < 1 then
 		ply:ChatPrint("Valid types of magic:")
-		for k,v in pairs(jdmg.types)
+		for k,v in pairs(jdmg.types) do
 			ply:ChatPrint(k)
 		end
 	end
