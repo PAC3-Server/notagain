@@ -1,8 +1,6 @@
 local function loadout(ply)
-	ply:Give("potion_health")
-	ply:Give("potion_mana")
-	ply:Give("potion_stamina")
 	ply:Give("weapon_shield_scanner")
+	ply:Give("magic")
 end
 
 local function set_rpg(ply, b, cheat)
@@ -21,18 +19,18 @@ local function set_rpg(ply, b, cheat)
 
 		loadout(ply)
 		ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
-		ply:ChatPrint("rpg mode enabled")
+		ply:ChatPrint("RPG: Enabled")
 	else
 		jattributes.Disable(ply)
 		ply:SendLua([[if battlecam and battlecam.IsEnabled() then battlecam.Disable() end]])
-		ply:ChatPrint("rpg mode disabled")
+		ply:ChatPrint("RPG: Disabled")
 	end
 
 	ply.rpg_cheat = cheat
 end
 
 aowl.AddCommand("rpg", function(ply, _, cheat)
-	set_rpg(ply, not ply:GetNWBool("rpg"), cheat == "1")
+	set_rpg(ply, not ply:GetNWBool("rpg",false), cheat == "1")
 end)
 
 aowl.AddCommand("level", function(ply, what)
@@ -59,7 +57,7 @@ aowl.AddCommand("element", function(ply, _, ...)
 		end
 	end
 	if #args == 1 and jdmg.types[args[1]] then
-		wepstats.AddToWeapon(ply:GetActiveWeapon(), nil, nil, args[1])
+		wepstats.AddToWeapon(ply:GetActiveWeapon(),_,_,args[1])
 		hook.Run("OnRPGElementChange",ply,args[1])
 	else
 		local doit = true
@@ -70,10 +68,8 @@ aowl.AddCommand("element", function(ply, _, ...)
 			end
 		end
 		if doit then
-			wepstats.AddToWeapon(ply:GetActiveWeapon(),nil,nil,unpack(args))
+			wepstats.AddToWeapon(ply:GetActiveWeapon(),_,_,unpack(args))
 			hook.Run("OnRPGElementChange",ply,unpack(args))
-		else
-			return false,"stats are incorrect"
 		end
 	end
 end)
