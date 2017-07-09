@@ -1,70 +1,68 @@
-local tag = "Task"
-local Tasks = {}
-_G.Tasks = Tasks
-Tasks.Store = {}
+local tag = "PCTask"
+local PCTasks = {}
+_G.PCTasks = PCTasks
+PCTasks.Store = {}
 
-local taskfinish = "TASK_FINISH"
-local tasksend   = "TASK_SEND"
+local PCTasksFinish = "PC_TASK_FINISH"
+local PCTasksSend   = "PC_TASK_SEND"
 
-Tasks.Exists = function(name)
-    if Tasks.Store[name] then
+PCTasks.Exists = function(name)
+    if PCTasks.Store[name] then
         return true
     else
         return false
     end
 end
 
-Tasks.IsCompleted = function(ply,name)
+PCTasks.IsCompleted = function(ply,name)
     if not IsValid(ply) then return false end
-    return ply:GetNWBool("Task_"..name,false)
+    return ply:GetNWBool("PCTask_"..name,false)
 end
 
 if SERVER then
 
-    util.AddNetworkString(tasksend)
-    util.AddNetworkString(taskfinish)
+    util.AddNetworkString(PCTasksSend)
+    util.AddNetworkString(PCTasksFinish)
 
-    Tasks.InitPassed = false
-
-    Tasks.Send = function(ply)
-        net.Start(tasksend)
-        net.WriteTable(Tasks.Store)
+    PCTasks.Send = function(ply)
+        net.Start(PCTasksSend)
+        net.WriteTable(PCTasks.Store)
         net.Send(ply)
-        for name,_ in pairs(Tasks.Store) do
-            ply:SetNWBool("Task_"..name,ply:GetPData("Task_"..name,false))
+        for name,_ in pairs(PCTasks.Store) do
+            ply:SetNWBool("PCTask_"..name,ply:GetPData("PCTask_"..name,false))
         end
     end
 
-    Tasks.UpdateClients = function()
+    PCTasks.UpdateClients = function()
         for k,v in pairs(player.GetAll()) do
-            if v.Tasks_Init_Passed then
-                Tasks.Send(v)
+            if v.PCTasks_Init_Passed then
+                PCTasks.Send(v)
             end
         end
     end
 
-    Tasks.Add = function(name,desc)
-        if Tasks.Exists(name) then return end
+    PCTasks.Add = function(name,desc)
+        if PCTasks.Exists(name) then return end
         local desc = desc or name
-        Tasks.Store[name] = desc
-        Tasks.UpdateClients() --realtime task additions
+        PCTasks.Store[name] = desc
+        PCTasks.UpdateClients() --realtime task additions
     end
 
-    Tasks.Complete = function(ply,name)
-        if IsValid(ply) and Tasks.Exists(name) and not Tasks.IsCompleted(ply,name) then
-            ply:SetPData("Task_"..name,true)
-            ply:SetNWBool("Task_"..name,true)
-            net.Start(taskfinish)
+    PCTasks.Complete = function(ply,name)
+        if IsValid(ply) and PCTasks.Exists(name) and not PCTasks.IsCompleted(ply,name) then
+            ply:SetPData("PCTask_"..name,true)
+            ply:SetNWBool("PCTask_"..name,true)
+            net.Start(PCTasksFinish)
             net.WriteEntity(ply)
             net.WriteString(name)
             net.Broadcast()
-            hook.Run("OnTaskCompleted",ply,name)
+            hook.Run("OnPCTaskCompleted",ply,name)
         end
     end
 
     hook.Add("PlayerInitialSpawn",tag,function(ply)
-        Tasks.Send(ply)
-        ply.Tasks_Init_Passed = true
+        PCTasks.Send(ply)
+        ply.PCTasks_Init_Passed = true
     end)
 
 end
@@ -72,18 +70,18 @@ end
 
 if CLIENT then
 
-    net.Receive(tasksend,function()
+    net.Receive(PCTasksSend,function()
         local tbl = net.ReadTable()
-        Tasks.Store = tbl
+        PCTasks.Store = tbl
     end)
 
-    net.Receive(taskfinish,function()
+    net.Receive(PCTasksFinish,function()
         local ply = net.ReadEntity()
         local name = net.ReadString()
-        hook.Run("OnTaskCompleted",ply,name)
+        hook.Run("OnPCTaskCompleted",ply,name)
     end)
 
-    hook.Add("OnTaskCompleted",tag,function(ply,task)
+    hook.Add("OnPCTaskCompleted",tag,function(ply,task)
         if ply ~= LocalPlayer() then
             chat.AddText(ply,Color(200,200,200)," completed [",Color(244, 167, 66),task,Color(200,200,200),"]")
         else
@@ -93,25 +91,25 @@ if CLIENT then
 end
 
 ----------------------------------------------------------------------------
---[[PAC Tasks]]--
+--[[PAC PCTasks]]--
 
-local taskpac1 = "TASKS_PAC_FIRST_TIME_OPENED"
+local taskpac1 = "PC_TASKS_PAC_FIRST_TIME_OPENED"
 if SERVER then
     util.AddNetworkString(taskpac1)
 
-    Tasks.Add("Open PAC Editor","Open the Player Appearance Customizer editor for the first time")
+    PCTasks.Add("Open PAC Editor","Open the Player Appearance Customizer editor for the first time")
 
     net.Receive(taskpac1,function(len,ply)
-        Tasks.Complete(ply,"Open PAC Editor")
+        PCTasks.Complete(ply,"Open PAC Editor")
     end)
 end
 
 if CLIENT then
-    hook.Add("Think","task_pac_open_editor",function()
-        if Tasks.Exists("Open PAC Editor") and not Tasks.IsCompleted(LocalPlayer(),"Open PAC Editor") and pace and pace.IsActive() then
+    timer.Create("task_pac_open_editor",1,0,function()
+        if PCTasks.Exists("Open PAC Editor") and pace and pace.IsActive() then
             net.Start(taskpac1)
             net.SendToServer()
-            hook.Remove("Think","task_pac_open_editor")
+            timer.Remove("task_pac_open_editor")
         end
     end)
 end
