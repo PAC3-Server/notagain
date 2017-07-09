@@ -91,25 +91,105 @@ if CLIENT then
 end
 
 ----------------------------------------------------------------------------
---[[PAC PCTasks]]--
+--[[PCTasks]]--
 
 local taskpac1 = "PC_TASKS_PAC_FIRST_TIME_OPENED"
+local tasklag  = "PC_TASKS_LAG"
+
 if SERVER then
     util.AddNetworkString(taskpac1)
+    util.AddNetworkString(tasklag)
 
-    PCTasks.Add("Open PAC Editor","Open the Player Appearance Customizer editor for the first time")
+    PCTasks.Add("An important discovery","Open the Player Appearance Customizer editor for the first time")
+    PCTasks.Add("What a PAC","Wear an outfit made with PAC")
+    PCTasks.Add("Faster than light","Break the laws of physics")
+    PCTasks.Add("Bad example","Watch someone get throwed out of the server")
+    PCTasks.Add("Otherworld","Have a look from the otherworld")
+    PCTasks.Add("Better than RPGS","Activate the RPG mode")
+    PCTasks.Add("Infinite power","Cheat in RPG mode")
+    PCTasks.Add("Murderer","Be a murderer")
+    PCTasks.Add("First words","Communicate with the world")
+    PCTasks.Add("Slower than my old windows 2000","Experience huge server lag")
+    PCTasks.Add("Distracted","Be AFK on the server")
+    PCTasks.Add("A message from the stars","Communicate with the 'stars'")
 
     net.Receive(taskpac1,function(len,ply)
-        PCTasks.Complete(ply,"Open PAC Editor")
+        PCTasks.Complete(ply,"An important discovery")
     end)
+
+    net.Receive(tasklag,function(len,ply)
+        PCTasks.Complete(ply,"Slower than my old windows 2000")
+    end)
+
+    hook.Add("PrePACConfigApply","pc_task_pac_wore_first_time",function(ply)
+        PCTasks.Complete(ply,"What a PAC")
+    end)
+
+    hook.Add("Move","pc_task_faster_than_light",function(ply)
+        if ply:GetVelocity():Length() >= 2000 then
+            PCTasks.Complete(ply,"Faster than light")
+        end
+    end)
+
+    hook.Add("AowlTargetCommand","pc_task_notice_kickban",function(_,type,_,_)
+        if type == "kick" or type == "ban" then
+            for k,v in pairs(player.GetAll()) do
+                PCTasks.Complete(v,"Bad example")
+            end
+        end
+    end)
+
+    hook.Add("PlayerDeath","pc_task_otherworld",function(ply,_,ent)
+        if ply:GetNWBool("rpg",false) then
+            PCTasks.Complete(ply,"Otherworld")
+        end
+        if ent:IsPlayer() and ent ~= ply then
+            PCTasks.Complete(ent,"Murderer")
+        end
+    end)
+
+    hook.Add("OnRPGEnabled","pc_task_better_than_rpgs",function(ply,cheat)
+        PCTasks.Complete(ply,"Better than RPGS")
+        if cheat then
+            PCTasks.Complete(ply,"Infinite power")
+        end
+    end)
+
+    hook.Add("PlayerSay","pc_task_first_words",function(ply)
+        PCTasks.Complete(ply,"First words")
+    end)
+
+    hook.Add("OnPlayerAFK","pc_task_distracted",function(ply,state)
+        if not state then
+            PCTasks.Complete(ply,"Distracted")
+        end
+    end)
+
+    hook.Add("DiscordRelayMessage","pc_task_message_from_the_stars",function(input)
+        for k,v in pairs(player.GetAll()) do
+            PCTasks.Complete(v,"A message from the stars")
+        end
+    end)
+
 end
 
 if CLIENT then
-    timer.Create("task_pac_open_editor",1,0,function()
-        if PCTasks.Exists("Open PAC Editor") and pace and pace.IsActive() then
+
+    if not PCTasks.IsCompleted(LocalPlayer(),"An important discovery") then
+        hook.Add("PrePACEditorOpen","pc_task_pac_editor_first_time",function()
             net.Start(taskpac1)
             net.SendToServer()
-            timer.Remove("task_pac_open_editor")
-        end
-    end)
+            hook.Remove("PrePACEditorOpen","pc_task_pac_editor_first_time")
+        end)
+    end
+
+    if not PCTasks.IsCompleted(LocalPlayer(),"Slower than my old windows 2000") then
+        hook.Add("Think","pc_task_lag",function()
+            if 1/RealFrameTime() < 10 and system.HasFocus() then
+                net.Start(tasklag)
+                net.SendToServer()
+                hook.Remove("Think","pc_task_lag")
+            end
+        end)
+    end
 end
