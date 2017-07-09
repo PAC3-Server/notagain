@@ -202,7 +202,7 @@ if CLIENT then
 			if last_byte ~= byte then
 				-- this function is very slow
 				if not tod.light_environment_named then
-					render.RedownloadAllLightmaps()
+					render.RedownloadAllLightmaps(true)
 				end
 				last_byte = byte
 			end
