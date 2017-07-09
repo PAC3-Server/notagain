@@ -1,5 +1,6 @@
 resource.AddWorkshop("546392647") -- Media Player
 resource.AddWorkshop("879302614") -- cuustom server content
+resource.AddWorkshop("104482086") -- Precision Tool (Not on Server)
 
 -- wos custom animations
 resource.AddWorkshop("757604550")
