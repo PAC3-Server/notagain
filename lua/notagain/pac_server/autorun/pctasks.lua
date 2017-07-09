@@ -191,10 +191,6 @@ if SERVER then
         end
     end)
 
-    hook.Add("PlayerInitialSpawn","pc_task_friendly_neighbourhood",function(ply)
-        f
-    end)
-
 end
 
 if CLIENT then
