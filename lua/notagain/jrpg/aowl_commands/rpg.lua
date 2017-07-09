@@ -52,8 +52,29 @@ end)
 
 aowl.AddCommand("element", function(ply, _, ...)
 	local args = {...}
-	if #args == 1 then
+	if #args < 1 then
+		ply:ChatPrint("Valid types of magic:")
+		for k,v in pairs(jdmg.types)
+			ply:ChatPrint(k)
+		end
+	end
+	if #args == 1 and jdmg.types[args[1]] then
 		wepstats.AddToWeapon(ply:GetActiveWeapon(), nil, nil, args[1])
+		hook.Run("OnRPGElementChange",ply,args[1])
+	else
+		local doit = true
+		for k,v in pairs(args) do
+			if not jdmg.types[v] then 
+				doit = false
+				break
+			end
+		end
+		if doit then
+			wepstats.AddToWeapon(ply:GetActiveWeapon(),nil,nil,unpack(args))
+			hook.Run("OnRPGElementChange",ply,unpack(args))
+		else
+			return false,"stats are incorrect"
+		end
 	end
 end)
 
