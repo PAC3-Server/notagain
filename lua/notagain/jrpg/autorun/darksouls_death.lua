@@ -143,6 +143,7 @@ if SERVER then
 
 			if rag:IsValid() then
 				local phys = rag:GetPhysicsObject()
+				if not phys:IsValid() then return end
 				phys:SetVelocity(Vector(0,0,0))
 				for i = 1, rag:GetPhysicsObjectCount() - 1 do
 					local phys = rag:GetPhysicsObjectNum(i)
