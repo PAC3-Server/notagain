@@ -460,7 +460,7 @@ PLAYER_LINE = vgui.RegisterTable( PLAYER_LINE, "DPanel" )
 SCORE_BOARD = vgui.RegisterTable( SCORE_BOARD, "EditablePanel" )
 
 local rpg_enable = CreateClientConVar( "scoreboard_rpg_enable", "1", true, false )
-local rpg_hide_mouse = CreateClientConVar( "scoreboard_rpg_rpg_hide_mouse", "0", true, false )
+local rpg_hide_mouse = CreateClientConVar( "scoreboard_rpg_hide_mouse", "0", true, false )
 
 if IsValid(w_Scoreboard) then
 	w_Scoreboard:Remove()
