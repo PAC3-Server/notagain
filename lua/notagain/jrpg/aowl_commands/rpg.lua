@@ -39,7 +39,7 @@ aowl.AddCommand("level", function(ply, what)
 		ply:ChatPrint("Valid attributes to upgrade:")
 		for k,v in pairs(jattributes.types) do
 			ply:ChatPrint(k)
-		end	
+		end
 		return false,"no such stat"
 	elseif res == nil then
 		return false,"not enough attribute points"
@@ -49,27 +49,37 @@ aowl.AddCommand("level", function(ply, what)
 end)
 
 aowl.AddCommand("element", function(ply, _, ...)
-	local args = {...}
-	if #args < 1 then
-		ply:ChatPrint("Valid types of magic:")
-		for k,v in pairs(jdmg.types) do
-			ply:ChatPrint(k)
+	local elements = {...}
+
+	local ok = true
+
+	for k,v in pairs(elements) do
+		if not wepstats.registered[v] then
+			ok = false
+			break
 		end
 	end
-	if #args == 1 and jdmg.types[args[1]] then
-		wepstats.AddToWeapon(ply:GetActiveWeapon(),_,_,args[1])
-		hook.Run("OnRPGElementChange",ply,args[1])
-	else
-		local doit = true
-		for k,v in pairs(args) do
-			if not jdmg.types[v] then 
-				doit = false
-				break
+
+	if elements[1] == "all" then
+		elements = {}
+		ok = true
+		for k,v in pairs(wepstats.registered) do
+			if v.Elemental then
+				table.insert(elements, v.ClassName)
 			end
 		end
-		if doit then
-			wepstats.AddToWeapon(ply:GetActiveWeapon(),_,_,unpack(args))
-			hook.Run("OnRPGElementChange",ply,unpack(args))
+	end
+
+	if ok then
+		wepstats.AddToWeapon(ply:GetActiveWeapon(),nil,nil,unpack(elements))
+	else
+		ply:ChatPrint("valid:")
+		for k,v in pairs(wepstats.registered) do
+			local name = v.ClassName
+			if v.Elemental then
+				name = name .. " (elemental)"
+			end
+			ply:ChatPrint(name)
 		end
 	end
 end)
