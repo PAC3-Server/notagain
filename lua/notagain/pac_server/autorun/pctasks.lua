@@ -103,6 +103,8 @@ if SERVER then
     util.AddNetworkString(taskpac1)
     util.AddNetworkString(tasklag)
     util.AddNetworkString(taskownrisks)
+    util.AddNetworkString(tasklinux)
+    util.AddNetworkString(taskosx)
 
     PCTasks.Add("An important discovery","Open the Player Appearance Customizer editor for the first time")
     PCTasks.Add("What a PAC","Wear an outfit made with PAC")
@@ -194,6 +196,9 @@ if SERVER then
 end
 
 if CLIENT then
+    local system_BatteryPower = system.BatteryPower
+    local system_IsLinux      = system.IsLinux
+    local system_IsOSX        = system.IsOSX
 
     if not PCTasks.IsCompleted(LocalPlayer(),"An important discovery") then
         hook.Add("PrePACEditorOpen","pc_task_pac_editor_first_time",function()
@@ -215,7 +220,7 @@ if CLIENT then
 
     if not PCTasks.IsCompleted(LocalPlayer(),"At your own risks") then
         timer.Create("pc_task_at_your_own_risks",60,0,function()
-            if system.BatteryPower() <= 20 then
+            if system_BatteryPower() <= 20 then
                 net.Start(taskownrisks)
                 net.SendToServer()
                 timer.Remove("pc_task_at_your_own_risks")
@@ -225,10 +230,10 @@ if CLIENT then
 
     if not PCTasks.IsCompleted(LocalPlayer(),"Apple time") or not PCTasks.IsCompleted(LocalPlayer(),"Hipster") then
         hook.Add("Initialize","pc_task_os",function()
-            if system.IsLinux() then
+            if system_IsLinux() then
                 net.Start(tasklinux)
                 net.SendToServer()
-            elseif system.IsOSX() then
+            elseif system_IsOSX() then
                 net.Start(taskosx)
                 net.SendToServer()
             end
