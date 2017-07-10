@@ -69,8 +69,8 @@ if SERVER then
 		info:SetDamagePosition(victim:GetPos())
 		info:SetDamage(victim:Health())
 		info:SetDamageType(DMG_FALL)
-		info:SetAttacker(Entity(0))
-		info:SetInflictor(Entity(0))
+		info:SetAttacker(attacker)
+		info:SetInflictor(game.GetWorld())
 		info:SetDamageForce(Vector(0,0,0))
 		victim:TakeDamageInfo(info)
 
