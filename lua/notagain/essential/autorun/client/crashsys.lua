@@ -1,20 +1,73 @@
 if game.SinglePlayer() then return end
 
 local API_RESPONSE = 0 -- Idle, not waiting for a response.
-local api = string.format("https://api.steampowered.com/ISteamApps/GetServersAtAddress/v1/?addr=%s&format=json", tostring( game.GetIPAddress() ))
 
 local api_retry = 5
 local api_retry_delay = 12
 
-local RealTime = RealTime
-local hookAdd = hook.Add
-local hookRun = hook.Run
-
-local lastPong
+local lastPong = 0
 local pong = 0
 
 local crash_status
 local crash_time
+
+local delay = 0
+local times = 1
+
+local function CrashTick(is_crashing, length, api_response)
+	if is_crashing then
+		crash_status = true
+		crash_time = math.Round(length)
+
+		if delay < RealTime() and times <= api_retry then
+			API_RESPONSE = 1 -- Waiting for Response.
+
+			http.Fetch(string.format("https://api.steampowered.com/ISteamApps/GetServersAtAddress/v1/?addr=%s&format=json", tostring( game.GetIPAddress() )),
+				function( body, len, headers, code )
+					local data = util.JSONToTable(body)
+					if data and next(data) then
+						data = data["response"] and data["response"]["servers"]
+						if data and next(data) then
+							if data[1]["addr"] then
+								API_RESPONSE = 4 -- Server Is Up Again
+							end
+						else
+							API_RESPONSE = 2 -- Server Not Responding.
+						end
+					else
+						API_RESPONSE = 2 -- Server Not Responding.
+					end
+				end,
+				function( error )
+					API_RESPONSE = 3 -- No Internet Connection or API Down.
+				end
+			)
+
+			delay = RealTime() + api_retry_delay
+			times = times + 1
+		end
+	else
+		times = 1
+		crash_status = false
+
+		crash_time = 0
+		API_RESPONSE = 0 -- Idle, not waiting for a response.
+	end
+
+	hook.Run("CrashTick", is_crashing, length, api_response)
+end
+
+hook.Add("Tick", "crashsys", function()
+	if not lastPong then return end
+	local timeout = RealTime() - lastPong
+
+	if timeout > 1.3 then
+		CrashTick(true, timeout, API_RESPONSE)
+	else
+		CrashTick(false)
+	end
+end)
+
 
 net.Receive("crashsys", function()
 	if pong < 5 then
@@ -29,80 +82,25 @@ local function pong()
 		lastPong = RealTime()
 	end
 end
-hookAdd("Move", "crashsys", pong)
-hookAdd("VehicleMove", "crashsys", pong)
 
-local function checkServer()
-	API_RESPONSE = 1 -- Waiting for Response.
-	http.Fetch(api,
-		function( body, len, headers, code )
-			local data = util.JSONToTable(body)
-			if data and next(data) then
-				data = data["response"] and data["response"]["servers"]
-				if data and next(data) then
-					if data[1]["addr"] then
-						API_RESPONSE = 4 -- Server Is Up Again
-					end
-				else
-					API_RESPONSE = 2 -- Server Not Responding.
-				end
-			else
-				API_RESPONSE = 2 -- Server Not Responding.
-			end
-		end,
-		function( error )
-			API_RESPONSE = 3 -- No Internet Connection or API Down.
+hook.Add("Move", "crashsys", pong)
+hook.Add("VehicleMove", "crashsys", pong)
+
+do
+	local META = FindMetaTable("Player")
+
+	function META:IsTimingOut()
+		if self == LocalPlayer() then
+			return crash_status
 		end
-	)
-end
+	end
 
-local delay = RealTime() + api_retry_delay
-local times = 1
-local function CrashTick(is_crashing, length, api_response)
-	if is_crashing then
-		crash_status = true
-		crash_time = math.Round(length)
-
-		if delay < RealTime() and times <= api_retry then
-			checkServer()
-
-			delay = RealTime() + api_retry_delay
-			times = times + 1
+	function META:GetTimeoutSeconds()
+		if self == LocalPlayer() then
+			return crash_time
+		else
+			return 0
 		end
-	else
-		times = 1
-		crash_status = false
-
-		crash_time = 0
-		API_RESPONSE = 0 -- Idle, not waiting for a response.
-	end
-	hookRun("CrashTick", is_crashing, length, api_response)
-end
-
-hookAdd("Tick", "crashsys", function()
-	if not lastPong then return end
-	local timeout = RealTime() - lastPong
-
-	if timeout > 1.3 then
-		CrashTick(true, timeout, API_RESPONSE)
-	else
-		CrashTick(false)
-	end
-end)
-
-local META = FindMetaTable("Player")
-
-function META:IsTimingOut()
-	if self == LocalPlayer() then
-		return crash_status
-	end
-end
-
-function META:GetTimeoutSeconds()
-	if self == LocalPlayer() then
-		return crash_time
-	else
-		return 0
 	end
 end
 
@@ -111,7 +109,9 @@ do -- gui
 	local timeout_cvar = GetConVar("cl_timeout")
 
 	local function ShowMenu()
-		if IsValid(DermaPanel) then DermaPanel:Remove() end
+		if IsValid(DermaPanel) then
+			DermaPanel:Remove()
+		end
 
 		DermaPanel = vgui.Create( "DFrame" )
 		DermaPanel:SetSize( ScrW()/4, ScrH()/4 )
@@ -122,6 +122,7 @@ do -- gui
 
 		DermaPanel.OnClose = function()
 			hook.Remove("CrashTick", "crashsys")
+			print("?!")
 		end
 
 		local prog = vgui.Create( "DProgress", DermaPanel )
@@ -193,11 +194,15 @@ do -- gui
 				end
 
 				if length > timeout then
-					RunConsoleCommand( "retry" )
+				--	RunConsoleCommand( "retry" )
 				end
 			else
 				api_changed = 0
 				ShowMenu()
+			end
+		else
+			if IsValid(DermaPanel) then
+				DermaPanel:Remove()
 			end
 		end
 	end)
