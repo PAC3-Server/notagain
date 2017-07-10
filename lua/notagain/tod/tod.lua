@@ -193,7 +193,7 @@ if CLIENT then
 	end
 
 	local last_byte
-	
+
 	hook.Add("RenderScene","todhack",function()
 		hook.Remove("RenderScene","todhack")
 		timer.Create("tod_update_lightmap", 0.5, 0, function()
@@ -406,84 +406,7 @@ if CLIENT then
 	hook.Add("SetupSkyboxFog", "tod", SetupFog)
 
 	do -- sectors (to use with snow and such)
-		-- initialize points
-		local data = {}
-		local max = 32000
-		local grid_size = 768
-		local range = max / grid_size
-
-		local pos
-
-		for x = -range, range do
-			x = x * grid_size
-			for y = -range, range do
-				y = y * grid_size
-				for z = -range, range do
-					z = z * grid_size
-
-					pos = Vector(x,y,z)
-					local conents = util.PointContents(pos)
-
-					if conents == CONTENTS_EMPTY or conents == CONTENTS_TESTFOGVOLUME then
-						local up = util.QuickTrace(pos, vector_up * max * 2)
-						up.HitTexture = up.HitTexture:lower()
-						if up.HitTexture == "tools/toolsskybox" or up.HitTexture == "**empty**" then
-							table.insert(data, pos)
-						end
-					end
-				end
-			end
-		end
-
-		-- show or hide points
-		local function fastlen(point)
-			return point.x * point.x + point.y * point.y + point.z * point.z
-		end
-
-		local draw_these = {}
-
-		local iterations = math.min(math.ceil(#data/(1/0.1)), #data)
-		local lastkey = 1
-		local lastpos = nil
-		local len = 3000 ^ 2
-		local movelen = 100 ^ 2
-
-		local eyepos = Vector()
-		hook.Add("RenderScene", "tod_eyepos", function(pos, ang)
-			eyepos = pos + LocalPlayer():GetVelocity()
-		end)
-
-		local function sector_think()
-			if lastpos == nil or fastlen(lastpos - eyepos) > movelen then
-				local c = #data
-				local r = math.min(iterations, c)
-				local completed = false
-
-				for i = 1, r do
-					local key = lastkey + 1
-					if key > c then
-						completed = true
-						lastkey = 1
-						break
-					end
-
-					local point = data[key]
-					local dc = fastlen(point - eyepos) < len
-
-					if dc and draw_these[key] == nil then
-						draw_these[key] = point
-					elseif not dc and draw_these[key] ~= nil then
-						draw_these[key] = nil
-					end
-
-					lastkey = key
-				end
-
-				if completed then
-					lastpos = eyepos
-				end
-			end
-		end
+		local draw_these
 
 		function tod.GetOutsideSectors()
 			return draw_these
@@ -494,6 +417,87 @@ if CLIENT then
 		function tod.EnableSectorThink(b)
 			if last ~= b then
 				if b then
+					if not draw_these then
+						draw_these = {}
+
+						-- initialize points
+						local data = {}
+						local max = 32000
+						local grid_size = 768
+						local range = max / grid_size
+
+						local pos
+
+						for x = -range, range do
+							x = x * grid_size
+							for y = -range, range do
+								y = y * grid_size
+								for z = -range, range do
+									z = z * grid_size
+
+									pos = Vector(x,y,z)
+									local conents = util.PointContents(pos)
+
+									if conents == CONTENTS_EMPTY or conents == CONTENTS_TESTFOGVOLUME then
+										local up = util.QuickTrace(pos, vector_up * max * 2)
+										up.HitTexture = up.HitTexture:lower()
+										if up.HitTexture == "tools/toolsskybox" or up.HitTexture == "**empty**" then
+											table.insert(data, pos)
+										end
+									end
+								end
+							end
+						end
+
+						-- show or hide points
+						local function fastlen(point)
+							return point.x * point.x + point.y * point.y + point.z * point.z
+						end
+
+						local iterations = math.min(math.ceil(#data/(1/0.1)), #data)
+						local lastkey = 1
+						local lastpos = nil
+						local len = 3000 ^ 2
+						local movelen = 100 ^ 2
+
+						local eyepos = Vector()
+						hook.Add("RenderScene", "tod_eyepos", function(pos, ang)
+							eyepos = pos + LocalPlayer():GetVelocity()
+						end)
+
+						local function sector_think()
+							if lastpos == nil or fastlen(lastpos - eyepos) > movelen then
+								local c = #data
+								local r = math.min(iterations, c)
+								local completed = false
+
+								for i = 1, r do
+									local key = lastkey + 1
+									if key > c then
+										completed = true
+										lastkey = 1
+										break
+									end
+
+									local point = data[key]
+									local dc = fastlen(point - eyepos) < len
+
+									if dc and draw_these[key] == nil then
+										draw_these[key] = point
+									elseif not dc and draw_these[key] ~= nil then
+										draw_these[key] = nil
+									end
+
+									lastkey = key
+								end
+
+								if completed then
+									lastpos = eyepos
+								end
+							end
+						end
+					end
+
 					timer.Create("tod_sector_think", 0.25, 0, sector_think)
 				else
 					timer.Remove("tod_sector_think")
