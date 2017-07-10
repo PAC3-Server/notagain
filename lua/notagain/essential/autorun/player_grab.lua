@@ -36,7 +36,6 @@ hook.Add("PhysgunPickup", tag, function(ply, ent)
 		canphysgun = ply:IsAdmin()
 	end
 
-	canphysgun = canphysgun or ent:IsBot()
 	canphysgun = canphysgun or ( ent.IsBanned and ent:IsBanned())
 
 	if not canphysgun then return end
