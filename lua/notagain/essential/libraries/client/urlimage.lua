@@ -261,6 +261,7 @@ end
 
 setmetatable(sql,{__call=function(self,query,...)
 	local t = {...}
+
 	for k,v in next,t do
 		if isstring(v) then
 			t[k] = sql.SQLStr(v)
@@ -268,8 +269,17 @@ setmetatable(sql,{__call=function(self,query,...)
 			v=tostring(v)
 		end
 	end
+
 	query = query..';'
-	query = query:format(unpack(t))
+
+	if not pcall(function()
+		query = query:format(unpack(t))
+	end) then
+		PrintTable(t)
+		print(...)
+		print(self, query)
+		error("!")
+	end
 
 	local ret = sql.Query(query)
 
