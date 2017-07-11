@@ -24,8 +24,7 @@ aowl.AddCommand("setnextmap", function(ply, line, map)
 	end
 end, "developers")
 
-aowl.AddCommand("maprand", function(player, line, map, time)
-	time = tonumber(time) or 10
+aowl.AddCommand("maprand=string_trim,number[10]", function(player, line, map, time)
 	local maps = file.Find("maps/*.bsp", "GAME")
 	local candidates = {}
 
@@ -41,7 +40,7 @@ aowl.AddCommand("maprand", function(player, line, map, time)
 
 	local map = table.Random(candidates)
 
-	aowl.CountDown(tonumber(time), "CHANGING MAP TO " .. map, function()
+	aowl.CountDown(time, "CHANGING MAP TO " .. map, function()
 		game.ConsoleCommand("changelevel " .. map .. "\n")
 	end)
 end, "developers")
@@ -65,61 +64,51 @@ aowl.AddCommand("resetall", function(player, line)
 	end)
 end, "developers")
 
-aowl.AddCommand({"clearserver", "cleanupserver", "serverclear", "cleanserver", "resetmap"}, function(player, line,time)
-	if(tonumber(time) or not time) then
-		aowl.CountDown(tonumber(time) or 5, "CLEANING UP SERVER", function()
-			game.CleanUpMap()
-		end)
-	end
+aowl.AddCommand("clearserver|cleanupserver|serverclear|cleanserver|resetmap=number[5]", function(player, line, time)
+	aowl.CountDown(time, "CLEANING UP SERVER", function()
+		game.CleanUpMap()
+	end)
 end,"developers")
 
-aowl.AddCommand("cleanup", function(player, line,target)
-	if target=="disconnected"  or target=="#disconnected"  then
+aowl.AddCommand("cleanup=player|string", function(ply, line, ent)
+	if ent == "disconnected" or ent == "#disconnected" then
 		prop_owner.ResonanceCascade()
 		return
 	end
 
-	local targetent = easylua.FindEntity(target)
-
-	if not player:IsAdmin() then
-		if targetent == player then
+	if not ply:IsAdmin() then
+		if ent == ply then
 			if cleanup and cleanup.CC_Cleanup then
-				cleanup.CC_Cleanup(player, "gmod_cleanup", {})
+				cleanup.CC_Cleanup(ply, "gmod_cleanup", {})
 			end
-			hook.Run("AowlTargetCommand", player, "cleanup", player)
+			hook.Run("AowlTargetCommand", ply, "cleanup", ply)
 			return
 		end
 
 		return false, "You cannot cleanup anyone but yourself!"
 	end
 
-	if targetent:IsPlayer() then
+	if ent:IsPlayer() then
 		if cleanup and cleanup.CC_Cleanup then
-			cleanup.CC_Cleanup(targetent, "gmod_cleanup", {})
+			cleanup.CC_Cleanup(ent, "gmod_cleanup", {})
 		end
-		hook.Run("AowlTargetCommand", player, "cleanup", targetent)
+		hook.Run("AowlTargetCommand", ply, "cleanup", ent)
 		return
 	end
 
 	if not line or line == "" then
-		aowl.CallCommand(player, "cleanupserver", "", {})
+		aowl.Execute(ply, "cleanupserver")
 		return
 	end
-
-	return false, aowl.TargetNotFound(target)
 end)
 
-aowl.AddCommand("restart", function(player, line, seconds, reason)
-	local time = math.max(tonumber(seconds) or 20, 1)
-
-	aowl.CountDown(time, "RESTARTING SERVER" .. (reason and reason ~= "" and Format(" (%s)", reason) or ""), function()
+aowl.AddCommand("restart=number[20],string_trim[no reason]", function(player, line, seconds, reason)
+	aowl.CountDown(seconds, "RESTARTING SERVER " .. reason, function()
 		game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 	end)
 end, "developers")
 
-aowl.AddCommand("reboot", function(player, line, target)
-	local time = math.max(tonumber(line) or 20, 1)
-
+aowl.AddCommand("reboot=number[20]", function(player, line, time)
 	aowl.CountDown(time, "SERVER IS REBOOTING", function()
 		BroadcastLua("LocalPlayer():ConCommand(\"disconnect; snd_restart; retry\")")
 

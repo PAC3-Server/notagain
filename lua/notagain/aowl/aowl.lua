@@ -6,261 +6,711 @@ local easylua = requirex("easylua")
 local aowl = {}
 _G.aowl = aowl
 
-local USERSFILE = "aowl/users.txt"
+do
 
-timer.Simple(1, function() hook.Run("AowlInitialized") end)
-CreateConVar("aowl_hide_ranks", "1", FCVAR_REPLICATED)
+	local function compare(a, b)
 
-aowl.Prefix			= "[!|/|%.]" -- a pattern
-aowl.StringPattern	= "[\"|']" -- another pattern
-aowl.ArgSepPattern	= "[,]" -- would you imagine that yet another one
-aowl.EscapePattern	= "[\\]" -- holy shit another one! holy shit again they are all teh same length! Unintentional! I promise!!1
-team.SetUp(1, "default", Color(68, 112, 146))
+		if a == b then return true end
+		if a:find(b, nil, true) then return true end
+		if a:lower() == b:lower() then return true end
+		if a:lower():find(b:lower(), nil, true) then return true end
 
-function aowlMsg(cmd, line)
-	if hook.Run("AowlMessage", cmd, line) ~= false then
-		MsgC(Color(51,255,204), "[aowl]"..(cmd and ' '..tostring(cmd) or "")..' ')
-		MsgN(line)
+		return false
 	end
-end
 
-function player.GetDevelopers()
-	local developers = {}
-	for id, ply in pairs(player.GetAll()) do
-		if ply:IsAdmin() and not ply:IsBot() then
-			table.insert(developers, ply)
-		end
+	local function comparenick(a, b)
+		local MatchTransliteration = GLib and GLib.UTF8 and GLib.UTF8.MatchTransliteration
+		if not MatchTransliteration then return compare (a, b) end
+
+		if a == b then return true end
+		if a:lower() == b:lower() then return true end
+		if MatchTransliteration(a, b) then return true end
+
+		return false
 	end
-	return developers
-end
 
-
-do -- goto locations --
-	aowl.GotoLocations = aowl.GotoLocations or {}
-
-	aowl.GotoLocations["spawn"] = function(p) p:Spawn() end
-	aowl.GotoLocations["respawn"] = aowl.GotoLocations["spawn"]
-end
-
-do -- commands
-	function aowl.CallCommand(ply, cmd, line, args)
-		if ply.IsBanned and ply:IsBanned() and not ply:IsAdmin() then return end
-
-		local steamid
-
-		if type(ply) == "string" and ply:find("STEAM_") then
-			steamid = ply
+	local function compareentity(ent, str)
+		if ent.GetName and compare(ent:GetName(), str) then
+			return true
 		end
 
-		local ok, msg = pcall(function()
-			cmd = aowl.cmds[cmd]
-			if cmd and (steamid and aowl.CheckUserGroupFromSteamID(steamid, cmd.group) or (not ply:IsValid() or ply:CheckUserGroupLevel(cmd.group))) then
+		if ent:GetModel() and compare(ent:GetModel(), str) then
+			return true
+		end
 
-				if steamid then ply = NULL end
+		return false
+	end
 
-				local tstart = SysTime()
-				local allowed, reason = hook.Call("AowlCommand", GAMEMODE, cmd, ply, line, unpack(args))
+	local function vec3(str, ctor)
+		local num = str:Split(" ")
+		local ok = true
 
-				if allowed ~= false then
-					easylua.Start(ply)
-					local isok
-					isok, allowed, reason = xpcall(cmd.callback,debug.traceback,ply, line, unpack(args))
-					local tstop = SysTime()
-					easylua.End()
-					local d  = tstop-tstart
+		if #num == 3 then
+			for i, v in ipairs(num) do
+				num[i] = tonumber(v)
 
-					if d<0 or d>0.2 then
-						Msg"[Aowl] "print(ply,"command",cmd.cmd,"took",math.Round(d*1000) .. ' ms')
-					end
-
-					if not isok then
-						ErrorNoHalt("Aowl cmd "..tostring(cmd and cmd.cmd).." failed:\n    "..tostring(allowed)..'\n')
-						reason = "INTERNAL ERROR"
-						allowed = false
-					end
-				end
-
-				if ply:IsValid() then
-					if reason then
-						aowl.Message(ply, reason, allowed==false and 'error' or 'generic')
-					end
-
-					if allowed==false then
-						ply:EmitSound("buttons/button8.wav", 100, 120)
-					end
+				if not num[i] then
+					ok = false
+					break
 				end
 			end
-		end)
+
+			return ctor(unpack(num))
+		end
+
 		if not ok then
-			ErrorNoHalt(msg)
-			return msg
-		end
-	end
-
-	function aowl.ConsoleCommand(ply, _, args, line)
-		if aowl.cmds[args[1]] then
-			local cmd = args[1]
-			table.remove(args, 1)
-			_G.COMMAND = true
-				aowl.CallCommand(ply, cmd, table.concat(args, " "), args)
-			_G.COMMAND = nil
-		end
-	end
-
-	function aowl.SayCommand(ply, txt)
-		if string.find(string.sub(txt, 1, 1), aowl.Prefix) then
-			local cmd = string.match(txt, aowl.Prefix .. "(.-) ") or
-						string.match(txt, aowl.Prefix .. "(.+)") or ""
-			local line = string.match(txt, aowl.Prefix .. ".- (.+)")
-
-			cmd = string.lower(cmd)
-
-			-- execute command
-			local aowlcmd = aowl.cmds[cmd]
-			if aowlcmd then
-				_G.CHAT = true
-					aowl.CallCommand(ply, cmd, line, line and aowl.ParseArgs(line) or {})
-				_G.CHAT = nil
-
-				if aowlcmd.hidechat then return "" end
+			local test = str:match("(b())")
+			if test then
+				return vec3(test:sub(2, -2), ctor)
 			end
 		end
 	end
 
-	function aowl.AddCommand(cmd, callback, group, hidechat, ...)
-		if istable(cmd) then
-			for k,v in pairs(cmd) do
-				aowl.AddCommand(v,callback,group,hidechat)
-			end
-			return
+	local function trace_me(me)
+		if IsEntity(me) and me:IsPlayer() and me:IsValid() then
+			return util.QuickTrace(me:EyePos(), me:GetAimVector() * 10000, {me, me:GetVehicle()})
 		end
-
-		local prototype = ( not isbool(hidechat) ) and {hidechat, ...} or {...}
-
-		if next(prototype) then
-			for k,v in next, prototype do
-				prototype[k] = string.lower(v)
-			end
-		end
-
-		aowl.cmds = aowl.cmds or {}
-		aowl.cmds[cmd] = {callback = callback, group = group or "players", cmd = cmd, hidechat = hidechat, prototype = prototype}
-
-		hook.Run("AowlCommandAdded", cmd, callback, group, hidechat)
 	end
 
-	function aowl.SetPrototype(cmd, ...)
-		if istable(cmd) then
-			for k,v in pairs(cmd) do
-				aowl.SetPrototype(v,...)
-			end
-			return
-		end
-
-		aowl.cmds = aowl.cmds or {}
-		aowl.cmds[cmd] = aowl.cmds[cmd] or {}
-		aowl.cmds[cmd].prototype = {...}
+	local function no_filter()
+		return true
 	end
 
-	aowl.prototype = {
-		["player"] = function()
-			local players = {"#this","#me"}
+	local function find_entity(str, me, filter)
+		filter = filter or no_filter
 
-			for _,ply in next, player.GetAll() do table.insert( players, tostring(ply:Nick()) ) end
-			for _,ply in next, player.GetAll() do table.insert( players, tostring(ply:SteamID()) ) end
+		if str == "#this" or str == "this" then
+			local trace = trace_me(me)
+			if trace and trace.Entity:IsValid() and filter(trace.Entity) then
+				return trace.Entity
+			end
+		end
 
-			return players
+		for key, ent in pairs(ents.GetAll()) do
+			if compareentity(ent, str) and filter(ent) then
+				return ent
+			end
+		end
+
+		if str:sub(1,1) == "_" and tonumber(str:sub(2)) then
+			str = str:sub(2)
+		end
+
+		if tonumber(str) then
+			local ent = Entity(tonumber(str))
+			if ent:IsValid() and not ent:IsPlayer() and filter(ent) then
+				return ent
+			end
+		end
+
+		do -- class
+			local _str, idx = str:match("(.-)(%d+)$")
+			if idx then
+				idx = tonumber(idx)
+				str = _str
+			else
+				idx = (me and me.aowl_entity_iterator) or 0
+			end
+
+			local found = {}
+
+			for key, ent in pairs(ents.GetAll()) do
+				if compare(ent:GetClass(), str) and filter(ent) then
+					table.insert(found, ent)
+				end
+			end
+
+			local ent = found[math.Clamp(idx%#found, 1, #found)]
+
+			if ent then
+				me.aowl_entity_iterator = (me.aowl_entity_iterator or 0) + 1
+
+				return ent
+			end
+		end
+	end
+
+	local function find_player(str, me, filter)
+		filter = filter or no_filter
+
+		do
+			local ply = player.GetByUniqueID(str)
+
+			if ply and ply:IsPlayer() and filter(ply) then
+				return ply
+			end
+		end
+
+		-- steam id
+		if str:find("STEAM", nil, true) then
+			for key, _ply in ipairs(player.GetAll()) do
+				if _ply:SteamID() == str and filter(me) then
+					return _ply
+				end
+			end
+		end
+
+		-- ip
+		if SERVER then
+			if str:find("%d+%.%d+%.%d+%.%d+") then
+				for key, _ply in pairs(player.GetAll()) do
+					if _ply:IPAddress():find(str) and filter(me) then
+						return _ply
+					end
+				end
+			end
+		end
+
+		-- search exact
+		for _,ply in pairs(player.GetAll()) do
+			if ply:Nick() == str and filter(ply) then
+				return ply
+			end
+		end
+
+		-- Search bots so we target those first
+		for _, ply in pairs(player.GetBots()) do
+			if comparenick(ply:Nick(), str) and filter(ply) then
+				return ply
+			end
+		end
+
+		-- search from beginning of nick
+		for _,ply in pairs(player.GetHumans()) do
+			if ply:Nick():lower():find(str, 1, true) == 1 and filter(ply) then
+				return ply
+			end
+		end
+
+		-- Search normally and search with colorcode stripped
+		for _, ply in pairs(player.GetAll()) do
+			if comparenick(ply:Nick(), str) and filter(ply) then
+				return ply
+			end
+
+			if comparenick(ply:Nick():gsub("%^%d+", ""), str) and filter(ply) then
+				return ply
+			end
+		end
+
+		if str == "#randply" or str == "randply" then
+			for _, ply in RandomPairs(player.GetAll()) do
+				if filter(ply) then
+					return ply
+				end
+			end
+		end
+
+		if str == "#this" or str == "this" then
+			local trace = trace_me(me)
+
+			if trace and trace.Entity:IsPlayer() and filter(trace.Entity) then
+				return trace.Entity
+			end
+		end
+
+		-- add #him / #her?
+
+		if str == "#me" or str == "me" then
+			if IsEntity(me) and me:IsPlayer() and me:IsValid() and filter(me) then
+				return me
+			end
+		end
+	end
+
+	local META = {}
+
+	function META:__index(key)
+		return function(_, ...)
+			local args = {}
+
+			for _, ent in ipairs(self) do
+				if type(ent[key]) == "function" or ent[key] == "table" and type(ent[key].__call) == "function" and getmetatable(ent[key]) then
+					table.insert(args, {ent = ent, args = (ent[key](ent, ...))})
+				else
+					ErrorNoHalt("attempt to call field '" .. key .. "' on ".. tostring(ent) .." a " .. type(ent[key]) .. " value\n")
+				end
+			end
+
+			return args
+		end
+	end
+
+	function META:__newindex(key, value)
+		for _, ent in ipairs(self) do
+			ent[key] = value
+		end
+	end
+
+	function wrap_entities(tbl, filter)
+		local out = {}
+		for i, v in ipairs(tbl) do
+			if not filter or filter(v) then
+				table.insert(out, v)
+			end
+		end
+		return setmetatable(out, META)
+	end
+
+	aowl.ArgumentTypes = {
+		["nil"] = function(str) return str end,
+		self = function(str, me) return me end,
+		vector = function(str, me)
+			return vec3(str, Vector)
 		end,
-		["location"] = function() 
-			local locations = {"#somewhere", "#rnode"}
-
-			for location,_ in next, aowl.GotoLocations do
-				table.insert(locations, tostring(location))
+		angle = function(str, me)
+			return vec3(str, Angle)
+		end,
+		location = function(str, me)
+			if str == "spawn" then
+				return table.Random(ents.FindByClass("info_player_start")):GetPos()
 			end
 
-			return locations
+			local pos = aowl.StringToType("vector", str, me)
+
+			if pos then
+				return pos
+			end
+
+			-- player also searches for entity but we want to prioritize players
+			local ent = aowl.StringToType("player", str, me) or aowl.StringToType("entity", str, me)
+
+			if ent then
+				return ent:GetPos()
+			end
 		end,
-		["bool"] = function()
-			return {1, 0}
+		entity = function(str, me)
+			local ent = find_entity(str, me) or find_player(str, me)
+
+			if ent then
+				return ent
+			end
+		end,
+		player = function(str, me)
+			local ent = find_player(str, me) or find_entity(str, me)
+
+			if ent then
+				return ent
+			end
+		end,
+		player_alter = function(str, me)
+			local ent = find_player(str, me, function(ent) return me:CanAlter(ent) end)
+
+			if ent then
+				return ent
+			end
+		end,
+		entity_alter = function(str, me)
+			local ent = find_entity(str, me, function(ent) return me:CanAlter(ent) end) or find_player(str, me, function(ent) return me:CanAlter(ent) end)
+
+			if ent then
+				return ent
+			end
+		end,
+		entities = function(str, me, alter)
+			alter = alter or no_filter
+
+			if str == "everything" then
+				return wrap_entities(ents.GetAll(), function(v) return true end)
+			end
+
+			if str == "props" then
+				return wrap_entities(ents.GetAll(), function(v) return v:GetClass() == "prop_physics" end)
+			end
+
+			if str == "these" then
+				local trace = trace_me(me)
+				if trace and trace.Entity:IsValid() then
+					return wrap_entities(ents.GetAll(), constraint.GetAllConstrainedEntities(trace.Entity))
+				end
+			end
+
+			local ent = find_entity(str, me, alter)
+
+			if ent then
+				return wrap_entities({ent})
+			end
+		end,
+		players = function(str, me, alter)
+			alter = alter or no_filter
+
+			if str == "us" then
+				return wrap_entities(player.GetAll(), function(v) return v:GetPos():Distance(me:GetPos()) < 512 end)
+			end
+
+			if str == "everyone else" then
+				return wrap_entities(player.GetAll(), function(v) return v ~= me end)
+			end
+
+			if str == "everyone" or str == "all" then
+				return wrap_entities(player.GetAll())
+			end
+
+			if str == "friends" then
+				return wrap_entities(player.GetAll(), function(v) return me:IsFriend(v) end)
+			end
+
+			local ent = find_player(str, me, alter)
+
+			if ent then
+				return wrap_entities({ent})
+			end
+		end,
+		players_alter = function(str, me)
+			return aowl.StringToType("players", str, me, function(ent) return me:CanAlter(ent) end)
+		end,
+		entities_alter = function(str, me)
+			return aowl.StringToType("entities", str, me, function(ent) return me:CanAlter(ent) end)
+		end,
+		boolean = function(arg)
+			arg = arg:lower()
+
+			if arg == "1" or arg == "true" or arg == "on" or arg == "yes" or arg == "y" then
+				return true
+			end
+
+			if arg == "0" or arg == "false" or arg == "off" or arg == "no" or arg == "n" then
+				return false
+			end
+
+			return false
+		end,
+		number = function(arg)
+			return tonumber(arg)
+		end,
+		string = function(arg)
+			if #arg > 0 then
+				return arg
+			end
+		end,
+		string_trim = function(arg)
+			arg = arg:Trim()
+			if #arg > 0 then
+				return arg
+			end
 		end,
 	}
 
-	do -- autocomplete
-		local function appendline(data, line)
-			for k,v in next, data do
-				data[k] = line..v
+	function aowl.StringToType(type, ...)
+		return aowl.ArgumentTypes[type](...)
+	end
+end
+
+local function log(cmd, line)
+	MsgC(Color(51,255,204), "[aowl]"..(cmd and ' '..tostring(cmd) or "")..' ')
+	MsgN(line)
+end
+
+aowlMsg = log -- AOWL LEGACY
+
+do -- commands
+	local function utf8_totable(str)
+		local tbl = {}
+		local i = 1
+
+		for tbl_i = 1, #str do
+			local byte = str:byte(i)
+
+			if not byte then break end
+
+			local length = 1
+
+			if byte >= 128 then
+				if byte >= 240 then
+					length = 4
+				elseif byte >= 224 then
+					length = 3
+				elseif byte >= 192 then
+					length = 2
+				end
 			end
 
-			return data
+			tbl[tbl_i] = str:sub(i, i + length - 1)
+
+			i = i + length
 		end
 
-		local function gettype(key, line, current)
-			local func = aowl.prototype
+		return tbl
+	end
 
-			local current = string.PatternSafe( string.lower( string.Trim(current) ) )
+	local function levenshtein(a, b)
+		local distance = {}
 
-			local data = {}
-			local results = {}
-			local args = {}
+		for i = 0, #a do
+		  distance[i] = {}
+		  distance[i][0] = i
+		end
 
-			if not func[key] then
-				args = string.Explode(" or ", key)
+		for i = 0, #b do
+		  distance[0][i] = i
+		end
 
-				for _,v in next, args do
-					if func[v] then
-						local result = func[v]()
-						table.Add(results, result)
-					end
-				end
-			else
-				results = func[key]()
-			end
+		local str1 = utf8_totable(a)
+		local str2 = utf8_totable(b)
 
-			if current ~= "" then
-				for _,v in next, results do
-					if string.find(string.lower(v), current) then
-						table.insert(data, v)
-					end
-				end
-
-				return appendline(data, line)
-			else
-				return appendline(results, line)
+		for i = 1, #a do
+			for j = 1, #b do
+				distance[i][j] = math.min(
+					distance[i-1][j] + 1,
+					distance[i][j-1] + 1,
+					distance[i-1][j-1] + (str1[i-1] == str2[j-1] and 0 or 1)
+				)
 			end
 		end
 
-		function aowl.AutoComplete(basecommand, args)
-			local args = string.Explode(" ", args)
+		return distance[#a][#b]
+	end
 
-			table.RemoveByValue(args, "")
+	aowl.commands = aowl.commands or {}
 
-			if #args > 1 then
-				local line = basecommand.." "..(table.concat(args, " ", 1, #args-1)).." "
-				local cmd = aowl.cmds[args[1]]
-				
-				if cmd and cmd.prototype then
-					local key = tostring(cmd.prototype[#args-1])
+	local capture_symbols = {
+		["\""] = "\"",
+		["'"] = "'",
+		["("] = ")",
+		["["] = "]",
+		["`"] = "`",
+		["´"] = "´",
+	}
 
-					if key and key ~= "" and key ~= "nil" then
-						local info = gettype(key, line, args[#args])
-						return next(info) and info or {line.."<"..key..">"}
+	local function parse_args(arg_line)
+		if not arg_line or arg_line:Trim() == "" then return {} end
+
+		local args = {}
+		local capture = {}
+		local escape  = false
+
+		local in_capture = false
+
+		for _, char in ipairs(utf8_totable(arg_line)) do
+			if escape then
+				table.insert(capture, char)
+				escape = false
+			else
+				if in_capture then
+					if char == in_capture then
+						in_capture = false
+					end
+
+					table.insert(capture, char)
+				else
+					if char == "," then
+						table.insert(args, table.concat(capture, ""):Trim())
+						table.Empty(capture)
 					else
-						return
+						table.insert(capture, char)
+
+						if capture_symbols[char] then
+							in_capture = capture_symbols[char]
+						end
+
+						if char == "\\" then
+							escape = true
+						end
 					end
 				end
 			end
+		end
+
+		table.insert(args, table.concat(capture, ""):Trim())
+
+		return args
+	end
+
+	local start_symbols = {
+		"%!",
+		"%.",
+		"%/",
+		"",
+	}
+
+	local function parse_line(line)
+		for _, v in ipairs(start_symbols) do
+			local start, rest = line:match("^(" .. v .. ")(.+)")
+			if start then
+				local cmd, rest_ = rest:match("^(%S+)%s+(.+)$")
+				if not cmd then
+					return v, rest:Trim()
+				else
+					return v, cmd, rest_
+				end
+			end
+		end
+	end
+
+	function aowl.AddCommand(command, callback, group)
+
+		-- AOWL LEGACY
+		if type(command) == "table" then
+			command = table.concat(command, "|")
+		end
+
+		local aliases = command
+		local argtypes
+		local defaults
+
+		if command:find("=") then
+			aliases, argtypes =  command:match("(.+)=(.+)")
+			if not aliases then
+				aliases = command
+			end
+		end
+
+		aliases = aliases:Split("|")
+
+		if argtypes then
+			argtypes = argtypes:Split(",")
+
+			for i, v in ipairs(argtypes) do
+				if v:find("[", nil, true) then
+					local temp, default = v:match("(.+)(%b[])")
+					defaults = defaults or {}
+					defaults[i] = aowl.StringToType(temp, default:sub(2, -2))
+					v = temp
+				end
+				if v:find("|", nil, true) then
+					argtypes[i] = v:Split("|")
+				else
+					argtypes[i] = {v}
+				end
+			end
+		end
+
+		aowl.commands[aliases[1]] = {
+			aliases = aliases,
+			argtypes = argtypes,
+			callback = callback,
+			group = group,
+			defaults = defaults
+		}
+		--PrintTable(aowl.commands[aliases[1]])
+	end
+
+	function aowl.FindCommand(str)
+		local found = {}
+
+		for _, command in pairs(aowl.commands) do
+			for _, alias in ipairs(command.aliases) do
+				if str:lower() == alias:lower() then
+					return command
+				end
+				table.insert(found, {distance = levenshtein(str, alias), alias = alias, command = command})
+			end
+		end
+
+		table.sort(found, function(a, b) return a.distance < b.distance end)
+
+		return nil, "could not find command " .. str .. ". did you mean " .. found[1].alias .. "?"
+	end
+
+	function aowl.RunString(ply, str)
+		local symbol, cmd, arg_line = parse_line(str)
+
+		local args = parse_args(arg_line)
+		local command = assert(aowl.FindCommand(cmd))
+
+		if command.group then
+			local ok = false
+			local name
+
+			if type(ply) == "string" then
+				ok = aowl.CheckUserGroupFromSteamID(ply, command.group)
+				name = ply
+			elseif type(ply) == "Player" then
+				ok = ply:CheckUserGroupLevel(command.group)
+				name = ply:Nick() .. " ( " .. ply:SteamID() .. " )"
+			elseif not ply:IsValid() then
+				ok = true -- console
+				name = "SERVER CONSOLE"
+			end
+
+			if not ok then
+				error(name .. " is not allowed to execute " .. cmd .. " because group is " .. command.group)
+			end
+		end
+
+		if command.argtypes then
+			for i, arg in ipairs(args) do
+				if command.argtypes[i] then
+					for _, arg_type in ipairs(command.argtypes[i]) do
+						if not aowl.ArgumentTypes[arg_type] then
+							log(cmd .. ": no type information found for \"" .. arg_type .. "\"")
+						end
+					end
+				end
+			end
+
+			for i, arg_types in ipairs(command.argtypes) do
+				if command.defaults and args[i] == nil and command.defaults[i] then
+					args[i] = command.defaults[i]
+				end
+
+				if args[i] ~= nil or not table.HasValue(arg_types, "nil") then
+					local val
+
+					for _, arg_type in ipairs(arg_types) do
+						local test = aowl.ArgumentTypes[arg_type](args[i] or "", ply)
+
+						if test ~= nil then
+							val = test
+							break
+						end
+					end
+
+					if val == nil then
+						error("unable to convert argument >>|" .. args[i] .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", "))
+					end
+
+					args[i] = val
+				end
+			end
+		end
+
+		return command.callback(ply, arg_line, unpack(args))
+	end
+
+	function aowl.Execute(ply, str)
+		easylua.Start(ply)
+		local a, b, c = pcall(aowl.RunString, ply, str)
+		easylua.End(ply)
+
+		if a == false then
+			return false, b
+		end
+
+		if b == false then
+			return false, c or "unknown reason"
+		end
+
+		return true
+	end
+
+	function aowl.SayCommand(ply, txt)
+		if txt:find("^%p") then
+			local ok, reason = aowl.Execute(ply, txt)
+
+			if not ok then
+				timer.Simple(0, function()
+					if ply:IsValid() then
+						ply:ChatPrint("aowl: " .. reason)
+					end
+				end)
+			end
+		end
+	end
+
+	function aowl.ConsoleCommand(ply, cmd, args, line)
+		local ok, reason = aowl.Execute(ply, line)
+
+		if not a then
+			log(b)
 		end
 	end
 
 	if SERVER then
 		concommand.Add("a", aowl.ConsoleCommand)
 		concommand.Add("aowl", aowl.ConsoleCommand)
-		concommand.Add("_aowl", aowl.ConsoleCommand)
 
 		hook.Add("PlayerSay", "aowl_say_cmd", aowl.SayCommand)
-	else
-		concommand.Add("aowl", function(_, _, args) RunConsoleCommand("_aowl", unpack(args)) end, aowl.AutoComplete)
-		concommand.Add("a", function(_, _, args) RunConsoleCommand("_aowl", unpack(args)) end, aowl.AutoComplete)
 	end
 
 	function aowl.TargetNotFound(target)
@@ -268,49 +718,7 @@ do -- commands
 	end
 end
 
-
-do -- util
-	function aowl.ParseArgs(str)
-		local ret={}
-		local InString=false
-		local strchar=""
-		local chr=""
-		local escaped=false
-		for i=1,#str do
-			local char=str[i]
-			if(escaped) then chr=chr..char escaped=false continue end
-			if(char:find(aowl.StringPattern) and not InString and not escaped) then
-				InString=true
-				strchar=char
-			elseif(char:find(aowl.EscapePattern)) then
-				escaped=true
-				continue
-			elseif(InString and char==strchar) then
-				table.insert(ret,chr:Trim())
-				chr=""
-				InString=false
-			elseif(char:find(aowl.ArgSepPattern) and not InString) then
-				if(chr~="") then
-				    table.insert(ret,chr)
-				    chr=""
-				end
-			else
-					chr=chr..char
-				end
-		end
-		if(chr:Trim():len()~=0) then table.insert(ret,chr) end
-
-		return ret
-	end
-
-	function aowl.AvatarForSteamID(steamid, callback)
-		local commid = util.SteamIDTo64(steamid)
-		http.Fetch("http://steamcommunity.com/profiles/" .. commid .. "?xml=1", function(content, size)
-			local ret = content:match("<avatarIcon><!%[CDATA%[(.-)%]%]></avatarIcon>")
-			callback(ret)
-		end)
-	end
-
+do -- message
 	local NOTIFY = {
 		GENERIC	= 0,
 		ERROR	= 1,
@@ -319,7 +727,6 @@ do -- util
 		CLEANUP	= 4,
 	}
 	function aowl.Message(ply, msg, type, duration)
-		ply = ply or all
 		duration = duration or 5
 		ply:SendLua(string.format(
 			"local s=%q notification.AddLegacy(s,%u,%s) MsgN(s)",
@@ -343,7 +750,6 @@ do -- util
 	end, "developers")
 end
 
-
 do -- countdown
 	if SERVER then
 		aowl.AddCommand({"abort", "stop"}, function(player, line)
@@ -365,13 +771,13 @@ do -- countdown
 					umsg.Short(-1)
 				umsg.End()
 				if callback then
-					aowlMsg("countdown", "'"..tostring(msg).."' finished, calling "..tostring(callback))
+					log("countdown", "'"..tostring(msg).."' finished, calling "..tostring(callback))
 					callback()
 				else
 					if seconds<1 then
-						aowlMsg("countdown", "aborted")
+						log("countdown", "aborted")
 					else
-						aowlMsg("countdown", "'"..tostring(msg).."' finished. Initated without callback by "..tostring(source))
+						log("countdown", "'"..tostring(msg).."' finished. Initated without callback by "..tostring(source))
 					end
 				end
 			end
@@ -387,7 +793,7 @@ do -- countdown
 					umsg.String(msg)
 				umsg.End()
 				local date = os.prettydate and os.prettydate(seconds) or seconds.." seconds"
-				aowlMsg("countdown", "'"..msg.."' in "..date )
+				log("countdown", "'"..msg.."' in "..date )
 			else
 				timer.Remove "__countdown__"
 				timer.Remove "__countbetween__"
@@ -399,7 +805,6 @@ do -- countdown
 	end
 
 	if CLIENT then
-		local L = L or function(a) return a end
 		local CONFIG = {}
 
 		CONFIG.TargetTime 	= 0
@@ -533,6 +938,9 @@ do -- countdown
 end
 
 do -- groups
+	local USERSFILE = "aowl/users.txt"
+
+	CreateConVar("aowl_hide_ranks", "1", FCVAR_REPLICATED)
 
 	do -- team setup
 		function team.GetIDByName(name)
@@ -690,8 +1098,12 @@ do -- groups
 			return true
 		end
 
-		if not b:IsPlayer() and b.CPPIGetOwner and b:CPPIGetOwner() then
-			return a:CanAlter(b:CPPIGetOwner())
+		if not b:IsPlayer() then
+			if b.CPPIGetOwner and b:CPPIGetOwner() then
+				return a:CanAlter(b:CPPIGetOwner())
+			end
+
+			return true -- no prop protection means you can alter anything
 		end
 
 		if a:IsAdmin() and b:IsAdmin() then
@@ -795,7 +1207,7 @@ do -- groups
 				file.CreateDir("aowl")
 				luadata.WriteFile(USERSFILE, users)
 
-				aowlMsg("rank", string.format("Changing %s (%s) usergroup to %s",self:Nick(), self:SteamID(), name))
+				log("rank", string.format("Changing %s (%s) usergroup to %s",self:Nick(), self:SteamID(), name))
 			end
 		end
 
@@ -892,5 +1304,7 @@ for _, addon_dir in pairs(notagain.directories) do
 		include(path .. file_name)
 	end
 end
+
+timer.Simple(0, function() hook.Run("AowlInitialized") end)
 
 return aowl
