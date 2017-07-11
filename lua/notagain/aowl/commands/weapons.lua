@@ -69,7 +69,7 @@ do -- give weapon
 	end, "developers")
 end
 
-aowl.AddCommand("giveammo=nunmber[500],string|nil",function(ply, line, ammo, ammotype)
+aowl.AddCommand("giveammo=number[500],string|nil",function(ply, line, ammo, ammotype)
 	if not ply:Alive() or not IsValid(ply:GetActiveWeapon()) then return end
 
 	local wep = ply:GetActiveWeapon()
