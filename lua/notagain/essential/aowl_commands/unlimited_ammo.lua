@@ -1,5 +1,3 @@
-aowl.AddCommand("infammo", function(ply, b)
-	b = tobool(b)
-
+aowl.AddCommand("infammo=boolean", function(ply, b)
 	ply.infammo = b
 end)

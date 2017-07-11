@@ -29,11 +29,11 @@ local function set_rpg(ply, b, cheat)
 	ply.rpg_cheat = cheat
 end
 
-aowl.AddCommand("rpg", function(ply, _, cheat)
-	set_rpg(ply, not ply:GetNWBool("rpg",false), cheat == "1")
+aowl.AddCommand("rpg=boolean", function(ply, _, cheat)
+	set_rpg(ply, not ply:GetNWBool("rpg",false), cheat)
 end)
 
-aowl.AddCommand("level", function(ply, what)
+aowl.AddCommand("level=string", function(ply, what)
 	local res = jlevel.LevelAttribute(ply, what)
 	if res == false then
 		ply:ChatPrint("Valid attributes to upgrade:")

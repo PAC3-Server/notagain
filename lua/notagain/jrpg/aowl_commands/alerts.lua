@@ -1,26 +1,20 @@
 AddCSLuaFile()
 
-local Tag="jalert"
-
 if SERVER then
-	util.AddNetworkString(Tag)
-	
-	aowl.AddCommand({"alert", "jalert", "psa"}, function( player , line , message , delay)
-		if message then
-			net.Start(Tag)
+	util.AddNetworkString("jalert")
+
+	aowl.AddCommand("alert|jalert|psa=string,number[0]", function(ply, line, message, delay)
+		net.Start("jalert")
 			net.WriteString(message)
-			if delay then
-				net.WriteString(delay)
-			end
-			net.Broadcast()
-		end
-	end, "developers",true)
+			net.WriteDouble(delay)
+		net.Broadcast()
+	end, "developers")
 end
 
 if CLIENT then
-	net.Receive(Tag,function()
+	net.Receive("jalert",function()
 		local message = net.ReadString()
-		local delay = tonumber(net.ReadString()) or nil
-		JAlert.DoAlert(message,delay)
+		local delay = net.ReadDouble()
+		JAlert.DoAlert(message, delay)
 	end)
 end

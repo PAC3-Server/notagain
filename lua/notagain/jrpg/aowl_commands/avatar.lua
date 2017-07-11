@@ -1,16 +1,8 @@
-aowl.AddCommand("avatar", function(ply, _, url,cx,cy,s)
-	if not url then
+aowl.AddCommand("avatar=string,number[0],number[0],number[1]", function(ply, _, url,cx,cy,s)
+	if url == "reset" then
 		avatar.SetPlayer(ply)
 		return
 	end
 
-	if not cx then
-		return false, "usage: !avatar url, center_x, center_y, scale"
-	end
-
-	cx = tonumber(cx) or 0
-	cy = tonumber(cy) or 0
-	s = tonumber(s) or 1
-
-	avatar.SetPlayer(ply, url,cx,cy,s)
+	avatar.SetPlayer(ply, url, cx, cy, s)
 end)
