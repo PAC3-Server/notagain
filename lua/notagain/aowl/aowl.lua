@@ -542,7 +542,6 @@ do -- commands
 	end
 
 	function aowl.AddCommand(command, callback, group)
-
 		-- AOWL LEGACY
 		if type(command) == "table" then
 			command = table.concat(command, "|")
@@ -565,16 +564,21 @@ do -- commands
 			argtypes = argtypes:Split(",")
 
 			for i, v in ipairs(argtypes) do
-				if v:find("[", nil, true) then
-					local temp, default = v:match("(.+)(%b[])")
-					defaults = defaults or {}
-					defaults[i] = aowl.StringToType(temp, default:sub(2, -2))
-					v = temp
-				end
 				if v:find("|", nil, true) then
 					argtypes[i] = v:Split("|")
 				else
 					argtypes[i] = {v}
+				end
+			end
+
+			for i, types in ipairs(argtypes) do
+				for i2, arg in ipairs(types) do
+					if arg:find("[", nil, true) then
+						local temp, default = arg:match("(.+)(%b[])")
+						defaults = defaults or {}
+						defaults[i] = aowl.StringToType(temp, default:sub(2, -2))
+						types[i2] = temp
+					end
 				end
 			end
 		end
@@ -621,7 +625,8 @@ do -- commands
 		local command, cmd, arg_line, args = assert(aowl.ParseString(str))
 
 		if command.group then
-			if CLIENT and command.group == "localplayer" and ply ~= LocalPlayer() then return end
+			if command.group == "localplayer" and (not CLIENT or ply ~= LocalPlayer()) then return end
+			if command.group == "clients" and SERVER then return end
 
 			local ok = false
 			local name
@@ -670,7 +675,7 @@ do -- commands
 						end
 					end
 
-					if val == nil then
+					if val == nil and args[i] then
 						error("unable to convert argument >>|" .. args[i] .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", "))
 					end
 
