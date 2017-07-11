@@ -602,11 +602,19 @@ do -- commands
 		return nil, "could not find command " .. str .. ". did you mean " .. found[1].alias .. "?"
 	end
 
-	function aowl.RunString(ply, str)
+	function aowl.ParseString(str)
 		local symbol, cmd, arg_line = parse_line(str)
 
 		local args = parse_args(arg_line)
-		local command = assert(aowl.FindCommand(cmd))
+		local command, err = aowl.FindCommand(cmd)
+
+		if not command then return command, err end
+
+		return command, cmd, arg_line, args
+	end
+
+	function aowl.RunString(ply, str)
+		local command, cmd, arg_line, args = assert(aowl.ParseString(str))
 
 		if command.group then
 			local ok = false
