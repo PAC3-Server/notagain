@@ -747,6 +747,11 @@ do -- commands
 		local ok, reason = aowl.Execute(ply, txt)
 
 		if not ok then
+
+			if CLIENT and reason:find("could not find command") then
+				return
+			end
+
 			timer.Simple(0, function()
 				if ply:IsValid() then
 					ply:ChatPrint("aowl: " .. reason)
