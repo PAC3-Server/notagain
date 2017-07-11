@@ -278,7 +278,7 @@ setmetatable(sql,{__call=function(self,query,...)
 		PrintTable(t)
 		print(...)
 		print(self, query)
-		error("!")
+		error("!?")
 	end
 
 	local ret = sql.Query(query)
