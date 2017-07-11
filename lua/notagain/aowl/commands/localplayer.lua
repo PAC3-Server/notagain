@@ -13,6 +13,10 @@ aowl.AddCommand("fakedie=string[],string[],boolean", function(ply, line, killer,
 	GAMEMODE:AddDeathNotice(killer, killer_team, icon, victim, victim_team)
 end, "clientside")
 
+aowl.AddCommand("fullupdate|update",function(ply, line)
+	ply:ConCommand("record 1;stop")
+end, "localplayer")
+
 aowl.AddCommand("ctp|thirdperson|view|3p", function(ply, line)
 	if ply ~= LocalPlayer() then return end
 

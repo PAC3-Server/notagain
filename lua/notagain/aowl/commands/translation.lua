@@ -111,19 +111,19 @@ if SERVER then
 		["yoruba"] = "yo",
 		["zulu"] = "zu",
 	}
-	
+
 	function ConvertLang( str )
 		str = string.lower( str )
-		
+
 		if str == "auto" then
 			return ""
 		end
-	
+
 		for k, v in pairs( LangCode ) do
 			if v == str then
 				return str
 			end
-		
+
 			if string.StartWith( k, str ) then
 				return v
 			end
@@ -141,10 +141,10 @@ if SERVER then
 			target = to,
 			q = sentence
 		},
-		
+
 		function( res )
 			local tab = util.JSONToTable(res)
-			
+
 			if tab.data then
 				callback(tab.data.translations[1].translatedText)
 				return
@@ -156,7 +156,7 @@ if SERVER then
 		end
 		)
 	end
-	
+
 	function detectlang( query, callback )
 	  http.Post(API_DETECT_URL,
 		{
@@ -178,19 +178,19 @@ if SERVER then
 
 	util.AddNetworkString( "s2c_translate" )
 
-	aowl.AddCommand( {"tr", "translate"}, function( player, line, from, to, sentence )
+	aowl.AddCommand("tr|translate=string,string,string_rest", function( player, line, from, to, sentence )
 		translate( sentence, from, to, function( data )
 			if data then
 				net.Start( "s2c_translate" )
-				net.WriteString( data ) 
+				net.WriteString( data )
 				net.Broadcast()
 			else
 				aowl.Message( player, "Translation error", "error" )
 			end
 		end )
 	end)
-	
-	
+
+
 	// Chat
 	util.AddNetworkString( "s2c_reqtranschat" )
 	util.AddNetworkString( "c2s_reqtranschat" )
@@ -198,7 +198,7 @@ if SERVER then
 	aowl.AddCommand( {"trchat"}, function( pl, line, target )
 		if target then
 			local lang = ConvertLang( target )
-			
+
 			if lang then
 				pl:SetNWString( "trchat", lang )
 			end
@@ -206,12 +206,12 @@ if SERVER then
 			pl:SetNWString( "trchat", "" )
 		end
 	end)
-	
+
 	net.Receive( "c2s_reqtranschat", function( len, pl )
 		local p = net.ReadEntity()
 		local t = net.ReadString()
 		local lang = pl:GetNWString( "trchat" )
-		
+
 		translate( t, "auto", lang, function( q )
 			if q then
 				net.Start( "s2c_reqtranschat" )
@@ -224,7 +224,7 @@ if SERVER then
 else
 	net.Receive( "s2c_translate", function()
 		local data = net.ReadString()
-		
+
 		chat.AddText(
 		Color(1, 64, 202), "T",
 		Color(221, 24, 18), "r",
@@ -238,23 +238,23 @@ else
 		color_white, ": ",
 		data)
 	end )
-	
+
 	// chat
 	hook.Add( "OnPlayerChat", "translation_chat", function( pl, t )
 		local targetLang = LocalPlayer():GetNWString( "trchat" )
-		
+
 		if targetLang != "" and !string.StartWith( t, "!" ) and pl != LocalPlayer() then
 			net.Start( "c2s_reqtranschat" )
 			net.WriteEntity( pl )
-			net.WriteString( t ) 
+			net.WriteString( t )
 			net.SendToServer()
 		end
 	end )
-	
+
 	net.Receive( "s2c_reqtranschat", function()
 		local p = net.ReadEntity()
 		local t = net.ReadString()
-		
+
 		chat.AddText(
 		Color(192, 127, 255), "[Translate] ",
 		Color(192, 127, 255), p:Nick(),

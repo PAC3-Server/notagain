@@ -402,6 +402,7 @@ do
 				return arg
 			end
 		end,
+		string_rest = function(arg) return arg end,
 	}
 
 	function aowl.StringToType(type, ...)
@@ -507,7 +508,7 @@ do -- commands
 					table.insert(capture, char)
 				else
 					if char == "," then
-						table.insert(args, table.concat(capture, ""):Trim())
+						table.insert(args, table.concat(capture, ""))
 						table.Empty(capture)
 					else
 						table.insert(capture, char)
@@ -524,7 +525,7 @@ do -- commands
 			end
 		end
 
-		table.insert(args, table.concat(capture, ""):Trim())
+		table.insert(args, table.concat(capture, ""))
 
 		return args
 	end
@@ -584,17 +585,22 @@ do -- commands
 				for i2, arg in ipairs(types) do
 					if arg:find("[", nil, true) then
 						local temp, default = arg:match("(.+)(%b[])")
-						defaults = defaults or {}
-						default = default:sub(2, -2)
 
-						-- special case
-						if temp == "string" then
-							defaults[i] = default
+						if aowl.ArgumentTypes[temp] then
+							defaults = defaults or {}
+							default = default:sub(2, -2)
+
+							-- special case
+							if temp == "string" then
+								defaults[i] = default
+							else
+								defaults[i] = aowl.StringToType(temp, default)
+							end
+
+							types[i2] = temp
 						else
-							defaults[i] = aowl.StringToType(temp, default)
+							log(aliases[1] .. ": no type information found for \"" .. temp .. "\"")
 						end
-
-						types[i2] = temp
 					end
 				end
 			end
@@ -697,11 +703,15 @@ do -- commands
 					local val
 
 					for _, arg_type in ipairs(arg_types) do
-						local test = aowl.ArgumentTypes[arg_type](args[i] or "", ply)
+						if arg_type == "string_rest" then
+							val = table.concat({select(i, unpack(args))}, ","):Trim()
+						else
+							local test = aowl.ArgumentTypes[arg_type](args[i] or "", ply)
 
-						if test ~= nil then
-							val = test
-							break
+							if test ~= nil then
+								val = test
+								break
+							end
 						end
 					end
 
@@ -804,34 +814,32 @@ do -- message
 	}
 	function aowl.Message(ply, msg, type, duration)
 		duration = duration or 5
-		ply:SendLua(string.format(
+
+		local lua = string.format(
 			"local s=%q notification.AddLegacy(s,%u,%s) MsgN(s)",
 			"aowl: " .. msg,
 			NOTIFY[(type and type:upper())] or NOTIFY.GENERIC,
 			duration
-		))
+		)
+
+		if type(ply) ~= "table" then ply = {ply} end
+
+		for _, ply in ipairs(ply) do
+			ply:SendLua(lua)
+			ply:EmitSound("buttons/button15.wav")
+		end
 	end
 
-	aowl.AddCommand("message", function(_,_, msg, duration, type)
-		if not msg then
-			return false, "no message"
-		end
-
-		type = type or "generic"
-		duration = duration or 15
-
+	aowl.AddCommand("message=string,number[15],string[generic]", function(ply, line, msg, duration, type)
 		aowl.Message(nil, msg, "generic", duration)
-		all:EmitSound("buttons/button15.wav")
-
 	end, "developers")
 end
 
 do -- countdown
 	if SERVER then
-		aowl.AddCommand({"abort", "stop"}, function(player, line)
+		aowl.AddCommand("abort|stop", function(player, line)
 			aowl.AbortCountDown()
 		end, "developers")
-
 
 		local function Shake()
 			for k,v in pairs(player.GetAll()) do
@@ -1344,27 +1352,21 @@ do -- groups
 			end
 		end)
 
-		aowl.AddCommand("rank", function(player, line, target, rank)
-			local ent = easylua.FindEntity(target)
-
-			if ent:IsPlayer() and rank then
-				rank = rank:lower():Trim()
-				ent:SetUserGroup(rank, true) -- rank == "players") -- shouldn't it force-save no matter what?
-				hook.Run("AowlTargetCommand", player, "rank", ent, rank)
-			end
+		aowl.AddCommand("rank=player,string_trim", function(player, line, ent, rank)
+			rank = rank:lower()
+			ent:SetUserGroup(rank, true) -- rank == "players") -- shouldn't it force-save no matter what?
+			hook.Run("AowlTargetCommand", player, "rank", ent, rank)
 		end, "owners")
 
-		aowl.AddCommand("hiderank",function(pl,line, yesno)
-			local administrate=util.tobool(yesno)
+		aowl.AddCommand("hiderank=boolean", function(pl, line, administrate)
 			if administrate then
-				pl.hideadmins=nil
+				pl.hideadmins = nil
 			elseif pl:IsAdmin() then
-				pl.hideadmins=true
+				pl.hideadmins = true
 			end
-		end)
+		end, "developers")
 
-		aowl.AddCommand("sudo", function(ply, _, b)
-			b = util.tobool(b)
+		aowl.AddCommand("sudo=boolean", function(ply, line, b)
 			ply.aowl_sudo = b
 		end, "developers")
 	end
