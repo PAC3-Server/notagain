@@ -628,6 +628,10 @@ do -- commands
 			if command.group == "localplayer" and (not CLIENT or ply ~= LocalPlayer()) then return end
 			if command.group == "clientside" and SERVER then return end
 
+			if CLIENT then
+				return
+			end
+
 			local ok = false
 			local name
 
