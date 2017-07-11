@@ -1,18 +1,10 @@
-local easylua = requirex("easylua")
+aowl.AddCommand("owner=entity", function(ply, line, ent)
+	ply:ChatPrint(tostring(ent) .. " owned by " .. tostring(ent:CPPIGetOwner() or "no one"))
+end)
 
-aowl.AddCommand("owner", function (ply, line, target)
-	if not banni then return false,"no info" end
+aowl.AddCommand("weldlag=number[5]",function(pl, line, minresult)
+	local t = {}
 
-	local id = easylua.FindEntity(target)
-	if not IsValid(id) then return false,"not found" end
-
-	ply:ChatPrint(tostring(id)..' owned by '..tostring(id:CPPIGetOwner() or "no one"))
-
-end, "players", true)
-
-aowl.AddCommand("weldlag",function(pl,line,minresult)
-	if minresult == 0 then return false,"minimum result cant be zero" end
-	local t={}
 	for k,v in pairs(ents.GetAll()) do
 		local count=v:GetPhysicsObjectCount()
 		if count==0 or count>1 then continue end
@@ -52,66 +44,45 @@ aowl.AddCommand("weldlag",function(pl,line,minresult)
 			end
 		end
 
-		if count>(tonumber(minresult) or 5) then
+		if count > minresult then
 			pl:PrintMessage(3,"Found lagging contraption with "..lagc..'/'..count.." lagging ents (Owner: "..tostring(owner)..")")
 		end
 	end
 end)
 
-aowl.AddCommand( "invisible", function( ply, _, target, on )
-	if target then
-		if target:Trim() == "true" or target:Trim() == "false" then
-			on = target:Trim()
-			target = ply
-		else
-			target = easylua.FindEntity( target )
-			if not target then
-				return false, "Target not found!"
-			end
-			if on then on = on:Trim() end
-		end
-
-		if on == "true" then
-			on = true
-		elseif on == "false" then
-			on = false
-		else
-			on = not target._aowl_invisible
-		end
-	else
-		target = ply
-		on = not ply._aowl_invisible
+aowl.AddCommand("invisible=player|self,boolean|nil", function(ply, _, target, on)
+	if on == nil then
+		on = not target._aowl_invisible
 	end
 
 	target._aowl_invisible = on
+
 	target:SetNoDraw( on )
 	target:SetNotSolid( on )
+
 	pac.TogglePartDrawing( target, not on )
 
-	target:ChatPrint( ( "You are now %svisible." ):format(
-		on and "in" or ""
-	) )
+	target:ChatPrint(("You are now %svisible."):format(on and "in" or ""))
+
 	if target ~= ply then
-		ply:ChatPrint( ( "%s is now %svisible." ):format(
-			target:Nick(), on and "in" or ""
-		) )
+		ply:ChatPrint(("%s is now %svisible."):format(target:Nick(), on and "in" or ""))
 	end
 end, "developers" )
 
-aowl.AddCommand({"penetrating", "pen"}, function(ply,line)
+aowl.AddCommand("penetrating|pen=boolean", function(ply, _, stop)
 	for k,ent in pairs(ents.GetAll()) do
 		for i=0,ent:GetPhysicsObjectCount()-1 do
 			local pobj = ent:GetPhysicsObjectNum(i)
 			if pobj and pobj:IsPenetrating() then
 				Msg"[Aowl] "print("Penetrating object: ",ent,"Owner: ",ent:CPPIGetOwner())
-				if line and line:find"stop" then
+				if stop then
 					pobj:EnableMotion(false)
 				end
 				continue
 			end
 		end
 	end
-end,"developers")
+end, "developers")
 
 do
 	local function sleepall()
@@ -127,7 +98,7 @@ do
 	aowl.AddCommand("sleep",function()
 		sleepall()
 		timer.Simple(0,sleepall)
-	end,"developers")
+	end, "developers")
 end
 
 do

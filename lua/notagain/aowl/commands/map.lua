@@ -1,27 +1,24 @@
-local easylua = requirex("easylua")
-
-aowl.AddCommand("map", function(ply, line, map, time)
-	if map and file.Exists("maps/"..map..".bsp", "GAME") then
-		time = tonumber(time) or 10
-		aowl.CountDown(time, "CHANGING MAP TO " .. map, function()
-			game.ConsoleCommand("changelevel " .. map .. "\n")
-		end)
-	else
+aowl.AddCommand("map|changelevel|level=string,number[10]", function(ply, line, map, time)
+	if not file.Exists("maps/" .. map .. ".bsp", "GAME") then
 		return false, "map not found"
 	end
+
+	aowl.CountDown(time, "CHANGING MAP TO " .. map, function()
+		game.ConsoleCommand("changelevel " .. map .. "\n")
+	end)
 end, "developers")
 
-aowl.AddCommand("nextmap", function(ply, line, map)
+aowl.AddCommand("nextmap", function(ply, line)
 	ply:ChatPrint("The next map is "..game.NextMap())
-end, "players", true)
+end, "players")
 
-aowl.AddCommand("setnextmap", function(ply, line, map)
-	if map and file.Exists("maps/"..map..".bsp", "GAME") then
-		game.SetNextMap(map)
-		ply:ChatPrint("The next map is now "..game.NextMap())
-	else
+aowl.AddCommand("setnextmap=string", function(ply, line, map)
+	if not file.Exists("maps/" .. map .. ".bsp", "GAME") then
 		return false, "map not found"
 	end
+
+	game.SetNextMap(map)
+	ply:ChatPrint("The next map is now "..game.NextMap())
 end, "developers")
 
 aowl.AddCommand("maprand=string_trim,number[10]", function(player, line, map, time)
@@ -45,22 +42,29 @@ aowl.AddCommand("maprand=string_trim,number[10]", function(player, line, map, ti
 	end)
 end, "developers")
 
-aowl.AddCommand("maps", function(ply, line)
-	local files = file.Find("maps/" .. (line or ""):gsub("[^%w_]", "") .. "*.bsp", "MOD")
-	for _, fn in pairs( files ) do
-		ply:ChatPrint(fn:match("(.+)%.bsp"))
+aowl.AddCommand("maps", function(ply, line, pattern)
+	local files = file.Find("maps/*.bsp", "MOD")
+
+	for _, name in pairs( files ) do
+		name = name:match("(.+)%.bsp")
+		if not pattern or name:find(pattern) then
+			ply:ChatPrint(name)
+		end
 	end
 
-	local msg="Total maps found: "..#files
+	local msg = "Total maps found: " .. #files
 
 	ply:ChatPrint(("="):rep(msg:len()))
 	ply:ChatPrint(msg)
 end)
 
-aowl.AddCommand("resetall", function(player, line)
-	aowl.CountDown(line, "RESETING SERVER", function()
+aowl.AddCommand("resetall=number[10]", function(ply, line, time)
+	aowl.CountDown(time, "RESETING SERVER", function()
 		game.CleanUpMap()
-		for k, v in ipairs(_G.player.GetAll()) do v:Spawn() end
+
+		for k, v in ipairs(player.GetAll()) do
+			v:Spawn()
+		end
 	end)
 end, "developers")
 
@@ -121,4 +125,10 @@ end, "developers")
 
 aowl.AddCommand("uptime",function()
 	PrintMessage(3,"Server uptime: "..string.NiceTime(SysTime())..' | Map uptime: '..string.NiceTime(CurTime()))
+end)
+
+aowl.AddCommand("decals|cleardecals", function(ply, line)
+	if IsValid(ply) then
+		ply:ConCommand("r_cleardecals")
+	end
 end)

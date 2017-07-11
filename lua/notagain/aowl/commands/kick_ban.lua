@@ -1,5 +1,3 @@
-local easylua = requirex("easylua")
-
 aowl.AddCommand("kick=player,string[bye]", function(ply, line, ent, reason)
 	-- clean them up at least this well...
 	if cleanup and cleanup.CC_Cleanup then
@@ -75,11 +73,7 @@ aowl.AddCommand("unban=string", function(ply, line, id)
 	game.ConsoleCommand("writeid\n")
 end, "developers")
 
-aowl.AddCommand("exit=player,string[no reason]", function(ply, line, ent, reason)
-	if not ply:IsAdmin() and ply ~= ent then
-		return false, "Since you are not an admin, you can only !exit yourself!"
-	end
-
+aowl.AddCommand("exit=player_alter,string[no reason]", function(ply, line, ent, reason)
 	hook.Run("AowlTargetCommand", ply, "exit", ent, reason)
 
 	ent:SendLua([[RunConsoleCommand("gamemenucommand","quitnoconfirm")]])
@@ -89,5 +83,4 @@ aowl.AddCommand("exit=player,string[no reason]", function(ply, line, ent, reason
 			ent:Kick("Exit: " .. reason)
 		end
 	end)
-
-end, "players")
+end)
