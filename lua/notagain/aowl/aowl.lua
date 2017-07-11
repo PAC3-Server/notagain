@@ -77,6 +77,8 @@ do
 	end
 
 	local function find_entity(str, me, filter)
+		if str == "" then return end
+
 		filter = filter or no_filter
 
 		if str == "#this" or str == "this" then
@@ -131,6 +133,8 @@ do
 	end
 
 	local function find_player(str, me, filter)
+		if str == "" then return end
+
 		filter = filter or no_filter
 
 		do
