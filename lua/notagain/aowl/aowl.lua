@@ -576,7 +576,15 @@ do -- commands
 					if arg:find("[", nil, true) then
 						local temp, default = arg:match("(.+)(%b[])")
 						defaults = defaults or {}
-						defaults[i] = aowl.StringToType(temp, default:sub(2, -2))
+						default = default:sub(2, -2)
+
+						-- special case
+						if temp == "string" then
+							defaults[i] = default
+						else
+							defaults[i] = aowl.StringToType(temp, default)
+						end
+
 						types[i2] = temp
 					end
 				end
@@ -625,25 +633,34 @@ do -- commands
 		local command, cmd, arg_line, args = assert(aowl.ParseString(str))
 
 		if command.group then
-			if command.group == "localplayer" and (not CLIENT or ply ~= LocalPlayer()) then return end
-			if command.group == "clientside" and SERVER then return end
-
-			if CLIENT then
-				return
-			end
-
 			local ok = false
 			local name
 
-			if type(ply) == "string" then
-				ok = aowl.CheckUserGroupFromSteamID(ply, command.group)
-				name = ply
-			elseif type(ply) == "Player" then
-				ok = ply:CheckUserGroupLevel(command.group)
-				name = ply:Nick() .. " ( " .. ply:SteamID() .. " )"
-			elseif not ply:IsValid() then
-				ok = true -- console
-				name = "SERVER CONSOLE"
+			if command.group == "localplayer" then
+				if CLIENT and ply == LocalPlayer() then
+					ok = true
+				else
+					return true
+				end
+			elseif command.group == "clientside" then
+				if CLIENT then
+					ok = true
+				else
+					return true
+				end
+			end
+
+			if SERVER then
+				if type(ply) == "string" then
+					ok = aowl.CheckUserGroupFromSteamID(ply, command.group)
+					name = ply
+				elseif type(ply) == "Player" then
+					ok = ply:CheckUserGroupLevel(command.group)
+					name = ply:Nick() .. " ( " .. ply:SteamID() .. " )"
+				elseif not ply:IsValid() then
+					ok = true -- console
+					name = "SERVER CONSOLE"
+				end
 			end
 
 			if not ok then
@@ -679,11 +696,15 @@ do -- commands
 						end
 					end
 
-					if val == nil and args[i] then
-						error("unable to convert argument >>|" .. args[i] .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", "))
-					end
+					if val == nil and command.defaults and args[i] then
 
-					args[i] = val
+					else
+						if val == nil and args[i] then
+							error("unable to convert argument >>|" .. args[i] .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", "))
+						end
+
+						args[i] = val
+					end
 				end
 			end
 		end
@@ -716,7 +737,6 @@ do -- commands
 			if #symbol > 0 then
 				if txt:sub(1, 1):find(symbol) then
 					ok = true
-					print(txt, symbol)
 					break
 				end
 			end
