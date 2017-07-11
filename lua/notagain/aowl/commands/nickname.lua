@@ -61,22 +61,25 @@ do
 	end)
 end
 
-aowl.AddCommand({"name","nick","setnick","setname","nickname"}, function(player, line)
-	if line then
-		line=line:Trim()
-		if(line=="") or line:gsub(" ","")=="" then
-			line = nil
-		end
-		if line and #line>40 then
-			if not line.ulen or line:ulen()>40 then
-				return false,"my god what are you doing"
+if SERVER then
+
+	aowl.AddCommand("name|nick|setnick|setname|nickname", function(player, line)
+		if line then
+			line=line:Trim()
+			if(line=="") or line:gsub(" ","")=="" then
+				line = nil
+			end
+			if line and #line>40 then
+				if not line.ulen or line:ulen()>40 then
+					return false,"my god what are you doing"
+				end
 			end
 		end
-	end
-	timer.Create("setnick"..player:UserID(),1,1,function()
-		if IsValid(player) then
-			player:SetNick(line)
-		end
-	end)
-end, "players", true)
+		timer.Create("setnick"..player:UserID(),1,1,function()
+			if IsValid(player) then
+				player:SetNick(line)
+			end
+		end)
+	end, "players")
 
+end
