@@ -621,6 +621,8 @@ do -- commands
 		local command, cmd, arg_line, args = assert(aowl.ParseString(str))
 
 		if command.group then
+			if CLIENT and command.group == "localplayer" and ply ~= LocalPlayer() then return end
+
 			local ok = false
 			local name
 
@@ -737,7 +739,11 @@ do -- commands
 		concommand.Add("a", aowl.ConsoleCommand)
 		concommand.Add("aowl", aowl.ConsoleCommand)
 
-		hook.Add("PlayerSay", "aowl_say_cmd", aowl.SayCommand)
+		hook.Add("PlayerSay", "aowl", aowl.SayCommand)
+	end
+
+	if CLIENT then
+		hook.Add("OnPlayerChat", "aowl", aowl.SayCommand)
 	end
 
 	function aowl.TargetNotFound(target)

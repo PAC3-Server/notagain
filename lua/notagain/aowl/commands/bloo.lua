@@ -1,23 +1,18 @@
 AddCSLuaFile()
-local easylua = requirex("easylua")
-local Tag="bluescreen"
+
+local Tag = "bluescreen"
 
 if SERVER then
 	util.AddNetworkString(Tag)
-	
-	aowl.AddCommand({"bloo","crash"}, function( player , line , target )
-		local ply = easylua.FindEntity(target)
-		if target and ply:IsPlayer() then
-			net.Start(Tag)
-			net.Send(ply)
-		end
-	end,"developers",true)
+
+	aowl.AddCommand("bloo|crash=player", function(ply, line, target)
+		net.Start(Tag)
+		net.Send(target)
+	end, "developers")
 end
 
 if CLIENT then
-
 	net.Receive(Tag,function()
-		
 		local hide = {
 			CHudHealth = true,
 			CHudBattery = true,
@@ -67,7 +62,7 @@ if CLIENT then
 			surface.SetDrawColor(17,115,170)
 			surface.DrawRect(0,0,ScrW(),ScrH())
 			surface.SetTextColor(Color(255,255,255))
-			
+
 			surface.SetFont("bluscreenfont70")
 			local x1,y1 = surface.GetTextSize(":(")
 			surface.SetTextPos(	ScrW()/4.5 - x1/2,ScrH()/2 - y1/2)
@@ -75,7 +70,7 @@ if CLIENT then
 
 			surface.SetFont("bluscreenfont40")
 			local x2,y2 = surface.GetTextSize("Your PC ran into a problem that it couldn't")
-			y2 =  y1/2 + y2 
+			y2 =  y1/2 + y2
 			surface.SetTextPos(	ScrW()/3 - x2/2,ScrH()/2 + y2)
 			surface.DrawText("Your PC ran into a problem that it couldn't")
 
@@ -85,7 +80,7 @@ if CLIENT then
 			surface.SetTextPos(	ScrW()/3 - x2/2,ScrH()/2 + y3)
 			surface.DrawText("handle, and now it needs to restart.")
 
-			
+
 			surface.SetFont("bluscreenfont20")
 			local x4,y4 = surface.GetTextSize("You can search for the error online: HAL_INITIALIZATION_FAILED")
 			y4 =  y3 + 40 + y4
@@ -97,7 +92,5 @@ if CLIENT then
 		RunConsoleCommand("volume","0")
 
 		timer.Simple(1,function() while true do end end)
-	
 	end)
-
 end

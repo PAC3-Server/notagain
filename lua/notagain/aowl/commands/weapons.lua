@@ -1,13 +1,4 @@
-local easylua = requirex("easylua")
-
 aowl.AddCommand("drop",function(ply)
-
-	-- Admins not allowed either, this is added for gamemodes and stuff
-
-	local ok = hook.Run("CanDropWeapon", ply)
-	if (ok == false) then
-		return false
-	end
 	if GAMEMODE.DropWeapon then
 		GAMEMODE:DropWeapon(ply)
 	else
@@ -15,7 +6,7 @@ aowl.AddCommand("drop",function(ply)
 			ply:DropWeapon(ply:GetActiveWeapon())
 		end
 	end
-end, "players", true)
+end)
 
 do -- give weapon
 	local prefixes = {
@@ -43,24 +34,24 @@ do -- give weapon
 		weapon_physgun = true
 	}
 
-	aowl.AddCommand("give", function(ply, line, target, weapon, ammo1, ammo2)
-		local ent = easylua.FindEntity(target)
-		if not ent:IsPlayer() then return false, aowl.TargetNotFound(target) end
-		if not isstring(weapon) or weapon == "#wep" then
+	aowl.AddCommand("give=player,nil|string[wep],number[0],number[0]", function(ply, line, ent, class, ammo1, ammo2)
+		if class == "wep" then
 			local wep = ply:GetActiveWeapon()
-			if IsValid(wep) then
-				weapon = wep:GetClass()
-			else
-				return false,"Invalid weapon"
+
+			if not IsValid(wep) then
+				return false, "invalid weapon"
 			end
+
+			class = wep:GetClass()
 		end
-		ammo1 = tonumber(ammo1) or 0
-		ammo2 = tonumber(ammo2) or 0
-		for _,prefix in ipairs(prefixes) do
+
+		for _, prefix in ipairs(prefixes) do
 			local class = prefix .. weapon
+
 			if weapons.GetStored(class) == nil and not weapons_engine[class] then continue end
 			if ent:HasWeapon(class) then ent:StripWeapon(class) end
 			local wep = ent:Give(class)
+
 			if IsValid(wep) then
 				wep.Owner = wep.Owner or ent
 				ent:SelectWeapon(class)
@@ -73,19 +64,19 @@ do -- give weapon
 				return
 			end
 		end
-		return false, "Couldn't find " .. weapon
+
+		return false, "couldn't find " .. weapon
 	end, "developers")
 end
 
-aowl.AddCommand("giveammo",function(ply, line,ammo,ammotype)
-	if !ply:Alive() and !IsValid(ply:GetActiveWeapon()) then return end
-	local amt = tonumber(ammo) or 500
+aowl.AddCommand("giveammo=nunmber[500],string|nil",function(ply, line, ammo, ammotype)
+	if not ply:Alive() or not IsValid(ply:GetActiveWeapon()) then return end
+
 	local wep = ply:GetActiveWeapon()
-	if not ammotype or ammotype:len() <= 0 then
-		if wep.GetPrimaryAmmoType and wep:GetPrimaryAmmoType() != none then
-			ply:GiveAmmo(amt,wep:GetPrimaryAmmoType())
-		end
-	else
-		ply:GiveAmmo(amt,ammotype)
+
+	if ammotype then
+		ply:GiveAmmo(ammo, ammotype)
+	elseif wep.GetPrimaryAmmoType and wep:GetPrimaryAmmoType() ~= "none" then
+		ply:GiveAmmo(ammo, wep:GetPrimaryAmmoType())
 	end
-end, "players")
+end)

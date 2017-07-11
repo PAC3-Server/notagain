@@ -1,8 +1,7 @@
 AddCSLuaFile()
 
-local easylua = requirex("easylua")
-
 local Tag="keyspew"
+
 if SERVER then
 	util.AddNetworkString(Tag)
 end
@@ -73,7 +72,6 @@ net.Receive(Tag,function(len,pl)
 		pl._requesting_keybinding = false
 
 		GotReply(pl,a,b,what)
-
 	else
 		if a==FIND_BIND then
 			FindBind(b)
@@ -85,29 +83,25 @@ net.Receive(Tag,function(len,pl)
 	end
 end)
 
-aowl.AddCommand("findkey",function(pl,line,target,binding)
-	target = easylua.FindEntity(target)
-	if target:IsPlayer() then
+if SERVER then
+	aowl.AddCommand("findkey=player,string",function(pl,line,target,binding)
 		if target._requesting_keybinding then return end
+
 		target._requesting_keybinding = binding
+
 		net.Start(Tag)
 			net.WriteBit(FIND_BIND)
 			net.WriteString(binding)
 		net.Send(target)
-		return
-	end
-	return false,"noon"
-end)
-aowl.AddCommand("showkey",function(pl,line,target,binding)
-	target = easylua.FindEntity(target)
-	if target:IsPlayer() then
+	end)
+	aowl.AddCommand("showkey=player,string",function(pl, line, target, binding)
 		if target._requesting_keybinding then return end
+
 		target._requesting_keybinding = binding
+
 		net.Start(Tag)
 			net.WriteBit(SHOW_KEY)
 			net.WriteString(binding)
 		net.Send(target)
-		return
-	end
-	return false,"noon"
-end)
+	end)
+end
