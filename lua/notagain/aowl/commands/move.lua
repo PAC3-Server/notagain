@@ -1,21 +1,21 @@
 local easylua = requirex("easylua")
 
-local t = {start=nil,endpos=nil,mask=MASK_PLAYERSOLID,filter=nil}
+local t = {
+	mask = MASK_PLAYERSOLID,
+}
+
 local function IsStuck(ply)
 
 	t.start = ply:GetPos()
 	t.endpos = t.start
 	t.filter = ply
 
-	return util.TraceEntity(t,ply).StartSolid
-
+	return util.TraceEntity(t, ply).StartSolid
 end
 
 local function LookAt(ply, pos)
 	if isentity(pos) and IsValid(pos) then
-		if pos:IsPlayer() or pos:IsNPC() then
-			pos = pos:EyePos()
-		end
+		pos = pos:EyePos()
 	end
 
 	ply:SetEyeAngles( (pos - ply:EyePos()):Angle() )
@@ -23,27 +23,40 @@ end
 
 -- helper
 local function SendPlayer( from, to )
-	if not to:IsInWorld() then
-		return false
+	if from:IsPlayer() then
+		if not from:Alive() then
+			from:Spawn()
+		end
+
+		if not from:InVehicle() then
+			from:ExitVehicle()
+		end
 	end
 
+	local pos
+	local ang
 	local times=16
 
-	local anginc=360/times
+	if IsEntity(to) then
 
+		if not to:IsInWorld() then
+			return false
+		end
 
-	local ang=to:GetVelocity():Length2DSqr()<1 and (to:IsPlayer() and to:GetAimVector() or to:GetForward()) or -to:GetVelocity()
-	ang.z=0
-	ang:Normalize()
-	ang=ang:Angle()
+		local anginc=360/times
 
-	local pos=to:GetPos()
-	local frompos=from:GetPos()
+		ang=to:GetVelocity():Length2DSqr()<1 and (to:IsPlayer() and to:GetAimVector() or to:GetForward()) or -to:GetVelocity()
+		ang.z=0
+		ang:Normalize()
+		ang=ang:Angle()
 
-
-	if from:IsPlayer() and from:InVehicle() then
-		from:ExitVehicle()
+		pos = to:GetPos()
+	else
+		pos = to
+		ang = Angle(0,0,0)
 	end
+
+	local frompos = from:GetPos()
 
 	local origy=ang.y
 
@@ -54,120 +67,36 @@ local function SendPlayer( from, to )
 		if not IsStuck(from) then return true end
 	end
 
-
-
-	from:SetPos(frompos)
 	return false
-
 end
 
-local function Goto(ply,line,target)
-	local current_map = game.GetMap()
-
-	-- check if it's a server-change semi-location
-
-	for k,v in pairs(aowl.GotoLocations) do
-		if istable(v) then
-			if isstring(v.server) then
-				local loc, map = k:match("(.*)@(.*)")
-				if line == k or (line and map and loc:lower():Trim():find(line,1,true) and string.find(current_map, map,1,true)==1) then
-					ply:Cexec("connect " .. v.server:gsub("[^%w.:]",""))
-					return
-				end
-			end
-		end
-	end
-
-	-- proceed with real goto
-
-	local ok, reason = hook.Run("CanPlyGoto", ply)
-	if ok == false then
-		return false, reason or ""
-	end
-
-	if not ply:Alive() then ply:Spawn() end
-	if not line then return end
-	local x,y,z = line:match("(%-?%d+%.*%d*)[,%s]%s-(%-?%d+%.*%d*)[,%s]%s-(%-?%d+%.*%d*)")
-
-	if x and y and z and ply:CheckUserGroupLevel("moderators") then
-		ply:SetPos(Vector(tonumber(x),tonumber(y),tonumber(z)))
-		return
-	end
-
-	for k,v in pairs(aowl.GotoLocations) do
-		local loc, map = k:match("(.*)@(.*)")
-		if target == k or (target and map and loc:lower():Trim():find(target,1,true) and string.find(current_map, map,1,true)==1) then
-			if isvector(v) then
-				if ply:InVehicle() then
-					ply:ExitVehicle()
-				end
-				ply:SetPos(v)
-				return
-			elseif isfunction(v) then
-				-- let's do this in either case
-				if ply:InVehicle() then
-					ply:ExitVehicle()
-				end
-
-				return v(ply)
-			end
-		end
-	end
-
-	local ent = easylua.FindEntity(target)
-
-	if target=="#somewhere" or  target=="#rnode" then
-		local vec_16_16 = Vector(16,16,0)
-		local ng = game.GetMapNodegraph and game.GetMapNodegraph() or Nodegraph()
-		for k,v in RandomPairs(ng and ng:GetNodes() or {}) do
-			pos = v.pos
-			if pos and v.type==2 and util.IsInWorld(pos) and util.IsInWorld(pos+vec_16_16) and util.IsInWorld(pos-vec_16_16) then
-				ent = ents.Create'info_target'
-					ent:Spawn()
-					ent:Activate()
-					SafeRemoveEntityDelayed(ent,1)
-					ent:SetPos(v.pos)
-				break
-			end
-		end
-	end
-
-	if not ent:IsValid() then
-		return false, aowl.TargetNotFound(target)
-	end
-
-	if ent:GetParent():IsValid() and ent:GetParent():IsPlayer() then
-		ent=ent:GetParent()
-	end
-
-	if ent == ply then
-		return false, aowl.TargetNotFound(target)
-	end
-
-	local dir = ent:GetAngles(); dir.p = 0; dir.r = 0; dir = (dir:Forward() * -100)
-
-	if ent:GetPos():DistToSqr(ply:GetPos()) < 256*256 and (not ply.IsStuck or not ply:IsStuck()) then
-		LookAt(ply, ent)
-		return
-	end
+aowl.AddCommand("goto|warp|go=entity|location", function(ply, line, ent)
+	ply.aowl_tpprevious = ply:GetPos()
 
 	local oldpos = ply:GetPos() + Vector(0,0,32)
-	sound.Play("npc/dog/dog_footstep"..math.random(1,4)..".wav",oldpos)
 
-	local idk, reason = SendPlayer(ply, ent)
-	if idk == "HOOK" then
-		return false, reason
-	end
+	if IsEntity(ent) then
+		local dir = ent:GetAngles()
+		dir.p = 0
+		dir.r = 0
+		dir = dir:Forward() * -100
 
-	if not SendPlayer(ply,ent) then
-		if ply:InVehicle() then
-			ply:ExitVehicle()
+		if ent:GetPos():DistToSqr(ply:GetPos()) < 256*256 and (not ply.IsStuck or not ply:IsStuck()) then
+			LookAt(ply, ent)
+			return
 		end
-		ply:SetPos(ent:GetPos() + dir)
-		ply:DropToFloor()
+
+		local ok = SendPlayer(ply, ent)
+
+		if not ok then
+			ply:SetPos(ent:GetPos() + dir)
+			ply:DropToFloor()
+		end
+	else
+		ply:SetPos(ent)
 	end
 
-	-- aowlMsg("goto", tostring(ply) .." -> ".. tostring(ent))
+	sound.Play("npc/dog/dog_footstep"..math.random(1,4)..".wav",oldpos)
 
 	if ply.UnStuck then
 		timer.Create(tostring(pl)..'unstuck',1,1,function()
@@ -177,37 +106,16 @@ local function Goto(ply,line,target)
 		end)
 	end
 
-	ply:SetEyeAngles((ent:EyePos() - ply:EyePos()):Angle())
+	LookAt(ply, ent)
+
 	ply:EmitSound("buttons/button15.wav")
-	--ply:EmitSound("npc/dog/dog_footstep_run"..math.random(1,8)..".wav")
 	ply:SetVelocity(-ply:GetVelocity())
 
 	hook.Run("AowlTargetCommand", ply, "goto", ent)
+end)
 
-
-end
-
-
-local function aowl_goto(ply, line, target)
-	if ply.IsBanned and ply:IsBanned() then return false, "access denied" end
-	ply.aowl_tpprevious = ply:GetPos()
-
-	return Goto(ply,line,target)
-end
-aowl.AddCommand({"goto","warp","go"}, aowl_goto, "players")
-
-
-aowl.AddCommand("tp", function(pl,line,target,...)
-	if target and #target>1 and (HnS and HnS.Ingame and not HnS.InGame(pl)) then
-		return aowl_goto(pl,line,target,...)
-	end
-
-	local ok, reason = hook.Run("CanPlyTeleport", pl)
-	if ok == false then
-		return false, reason or "Something is preventing teleporting"
-	end
-
-	local start = pl:GetPos()+Vector(0,0,1)
+aowl.AddCommand("tp", function(pl)
+	local start = pl:GetPos() + Vector(0,0,1)
 	local pltrdat = util.GetPlayerTrace( pl )
 	pltrdat.mask = bit.bor(CONTENTS_PLAYERCLIP,MASK_PLAYERSOLID_BRUSHONLY,MASK_SHOT_HULL)
 	local pltr = util.TraceLine( pltrdat )
@@ -267,73 +175,21 @@ aowl.AddCommand("tp", function(pl,line,target,...)
 
 	pl:SetPos(tr.HitPos)
 	pl:EmitSound"ui/freeze_cam.wav"
-end, "players")
-
-
-aowl.AddCommand("send", function(ply, line, whos, where)
-	if whos == "#us" then
-		local players = {}
-		for k, ent in pairs( ents.FindInSphere( ply:GetPos(), 256 ) ) do
-			if ent:IsPlayer() and ent ~= ply then
-				local pos, ang = WorldToLocal( ent:GetPos(), ent:GetAngles(), ply:GetPos(), ply:GetAngles() )
-				table.insert( players, {
-					ply = ent,
-					pos = pos,
-					ang = ang
-				} )
-
-			end
-		end
-		ply.aowl_tpprevious = ply:GetPos()
-
-
-		-- can we actually go?
-		local ok, reason = Goto( ply, "", where:Trim() )
-		if ok == false then
-			return false, reason
-		end
-		local sent = tostring( ply )
-		-- now send everyone else
-		for k, ent in pairs( players ) do
-			ent.ply.aowl_tpprevious = ent.ply:GetPos()
-
-			local pos, ang = LocalToWorld( ent.pos, ent.ang, ply:GetPos(), ply:GetAngles() )
-
-			-- not using Goto function because it doesn't support vectors for normal players
-
-			sent = sent .. " + " .. tostring( ent.ply )
-			ent.ply:SetPos( pos )
-			ent.ply:SetAngles( ang )
-		end
-
-		aowlMsg( "send", sent .. " -> " .. where:Trim() )
-		return true
-	end
-
-	local who = easylua.FindEntity(whos)
-
-	if who:IsPlayer() then
-		who.aowl_tpprevious = who:GetPos()
-
-
-		return Goto(who,"",where:Trim())
-	end
-
-	return false, aowl.TargetNotFound(whos)
-
-end,"developers")
-
-aowl.AddCommand("togglegoto", function(ply, line) -- This doesn't do what it says. Lol.
-	local nogoto = not ply.ToggleGoto_NoGoto
-	ply.ToggleGoto_NoGoto = nogoto
-	ply:ChatPrint(nogoto and "Disabled goto (friends will still be able to teleport to you.)" or "Enabled goto.")
 end)
 
-aowl.AddCommand("gotoid", function(ply, line, target)
-	if not target or string.Trim(target)=='' then return false end
+
+aowl.AddCommand("send=players_alter,location", function(ply, line, players, where)
+	for k, ent in pairs( players ) do
+		ent.aowl_tpprevious = ent:GetPos()
+		ent:SetPos( where )
+	end
+end)
+
+aowl.AddCommand("gotoid=string_trim", function(ply, line, target)
 	local function loading(s)
 		ply:SendLua(string.format("local l=notification l.Kill'aowl_gotoid'l.AddProgress('aowl_gotoid',%q)",s))
 	end
+
 	local function kill(s,typ)
 		if not IsValid(ply) then return false end
 		ply:SendLua[[notification.Kill'aowl_gotoid']]
@@ -405,152 +261,91 @@ aowl.AddCommand("gotoid", function(ply, line, target)
 	end
 end)
 
-aowl.AddCommand("back", function(ply, line, target)
-	local ent = ply:CheckUserGroupLevel("developers") and target and easylua.FindEntity(target) or ply
-
-	if not IsValid(ent) then
-		return false, "Invalid player"
-	end
+aowl.AddCommand("back=entity_alter|self", function(ply, line, ent)
 	if not ent.aowl_tpprevious or not type( ent.aowl_tpprevious ) == "Vector" then
 		return false, "Nowhere to send you"
 	end
 
-	local ok, reason = hook.Run("CanPlyGoBack", ply)
-	if ok == false then
-		return false, reason or "Can't go back"
-	end
 	local prev = ent.aowl_tpprevious
+
 	ent.aowl_tpprevious = ent:GetPos()
 	ent:SetPos( prev )
+
 	hook.Run("AowlTargetCommand", ply, "back", ent)
-end, "players")
+end)
 
-aowl.AddCommand("bring", function(ply, line, target, yes)
-
-	local ent = easylua.FindEntity(target)
-
-	if ent:IsValid() and ent ~= ply then
-		if ply:CheckUserGroupLevel("developers") or (ply.IsBanned and ply:IsBanned()) or ply.CanAlter and ply:CanAlter(ent) then
-
-			if ent:IsPlayer() and not ent:Alive() then ent:Spawn() end
-			if ent:IsPlayer() and ent:InVehicle() then
-				ent:ExitVehicle()
-			end
-
-			ent.aowl_tpprevious = ent:GetPos()
-
-			local pos = ply:GetEyeTrace().HitPos + (ent:IsVehicle() and Vector(0, 0, ent:BoundingRadius()) or Vector(0, 0, 0))
-
-			ent:SetPos(pos)
-
-			local ang = (ply:EyePos() - ent:EyePos()):Angle()
-
-			if ent:IsPlayer() then
-				ang.r=0
-				ent:SetEyeAngles(ang)
-			elseif ent:IsNPC() then
-				ang.r=0
-				ang.p=0
-				ent:SetAngles(ang)
-			else
-				ent:SetAngles(ang)
-			end
-
-			aowlMsg("bring", tostring(ply) .." <- ".. tostring(ent))
+aowl.AddCommand("bring=entity_alter", function(ply, line, ent)
+	if ent:IsPlayer() then
+		if not ent:Alive() then
+			ent:Spawn()
 		end
 
-		return
-	end
-
-	if CrossLua and yes then
-		local sane = target:gsub(".", function(a) return "\\" .. a:byte() end )
-		local ME = ply:UniqueID()
-
-		CrossLua([[return easylua.FindEntity("]] .. sane .. [["):IsPlayer()]], function(ok)
-			if not ok then
-				-- oh nope
-			elseif ply:CheckUserGroupLevel("developers") then
-				CrossLua([=[local ply = easylua.FindEntity("]=] .. sane .. [=[")
-					ply:ChatPrint[[Teleporting Thee upon player's request]]
-					timer.Simple(3, function()
-						ply:SendLua([[LocalPlayer():ConCommand("connect ]=] .. GetConVarString"ip" .. ":" .. GetConVarString"hostport" .. [=[")]])
-					end)
-
-					return ply:UniqueID()
-				]=], function(uid)
-					hook.Add("PlayerInitialSpawn", "crossserverbring_"..uid, function(p)
-						if p:UniqueID() == uid then
-							ply:ConCommand("aowl goto " .. ME)
-
-							hook.Remove("PlayerInitialSpawn", "crossserverbring_"..uid)
-						end
-					end)
-
-					timer.Simple(180, function()
-						hook.Remove("PlayerInitialSpawn", "crossserverbring_"..uid)
-					end)
-				end)
-
-				-- oh found
-			end
-		end)
-
-		return false, aowl.TargetNotFound(target) .. ", looking on another servers"
-	elseif CrossLua and not yes then
-		return false, aowl.TargetNotFound(target) .. ", try CrossServer Bring?? !bring <name>,yes"
-	else
-		return false, aowl.TargetNotFound(target)
-	end
-end, "players")
-
-aowl.AddCommand("spawn", function(ply, line, target)
-	local ent = ply:CheckUserGroupLevel("developers") and target and easylua.FindEntity(target) or ply
-	if not ent:IsValid() then return false,'not found' end
-
-	if ent == ply then
-		local ok, reason = hook.Run("CanPlyTeleport", ply)
-		if ok == false then
-			return false, reason or "Respawning blocked, try !kill"
+		if not ent:InVehicle() then
+			ent:ExitVehicle()
 		end
 	end
 
 	ent.aowl_tpprevious = ent:GetPos()
 
-	if not timer.Exists(ent:EntIndex()..'respawn') then
-		ent:PrintMessage( HUD_PRINTCENTER,"Respawning...")
-		timer.Create(ent:EntIndex()..'respawn',1.8,1,function()
-			if not ent:IsValid() then return end
-			ent:Spawn()
-		end)
-	end
-end, "players")
+	local pos = ply:GetEyeTrace().HitPos + (ent:IsVehicle() and Vector(0, 0, ent:BoundingRadius()) or Vector(0, 0, 0))
 
-hook.Add("PlayerDeath","aowl_revive",function(ply)
-	if IsValid(ply) then
-		ply.PreDeathPos = ply:GetPos()
-		ply.PreDeathAngles = ply:GetAngles()
+	ent:SetPos(pos)
+
+	local ang = (ply:EyePos() - ent:EyePos()):Angle()
+
+	if ent:IsPlayer() then
+		ang.r=0
+		ent:SetEyeAngles(ang)
+	elseif ent:IsNPC() then
+		ang.r=0
+		ang.p=0
+		ent:SetAngles(ang)
+	else
+		ent:SetAngles(ang)
 	end
+
+	aowlMsg("bring", tostring(ply) .." <- ".. tostring(ent))
 end)
 
-hook.Add("PlayerSilentDeath","aowl_revive",function(ply)
-	if IsValid(ply) then
-		ply.PreDeathPos = ply:GetPos()
-		ply.PreDeathAngles = ply:GetAngles()
-	end
-end)
+aowl.AddCommand("spawn=players|player_alter|self", function(ply, line, ent)
+	if type(ent) ~= "table" then ent = {ent} end
 
-aowl.AddCommand({"resurrect", "respawn", "revive"}, function(ply, line, target)
-	-- Admins not allowed either, this is added for gamemodes and stuff
-	local ok, reason = hook.Run("CanPlyRespawn", ply)
-	if (ok == false) then
-		return false, reason and tostring(reason) or "Revive is disallowed"
-	end
-
-	local ent = ply:CheckUserGroupLevel("developers") and target and easylua.FindEntity(target) or ply
-	if ent:IsValid() and ent:IsPlayer() and not ent:Alive() and ent.PreDeathPos and ent.PreDeathAngles then
-		local pos = ent.PreDeathPos 
-		local ang = ent.PreDeathAngles
+	for _, ent in ipairs(ent) do
 		ent:Spawn()
-		ent:SetPos(pos) ent:SetEyeAngles(ang)
+		ent.aowl_tpprevious = ent:GetPos()
 	end
-end, "players", true)
+end)
+
+do
+	hook.Add("PlayerDeath", "aowl_revive", function(ply)
+		if IsValid(ply) then
+			ply.aowl_predeathpos = ply:GetPos()
+			ply.aowl_predeathangles = ply:GetAngles()
+		end
+	end)
+
+	hook.Add("PlayerSilentDeath", "aowl_revive", function(ply)
+		if IsValid(ply) then
+			ply.aowl_predeathpos = ply:GetPos()
+			ply.aowl_predeathangles = ply:GetAngles()
+		end
+	end)
+
+	aowl.AddCommand("resurrect|respawn|revive=players_alter|self", function(ply, line, ent)
+		if type(ent) ~= "table" and ent:Alive() then
+			return false, "already alive"
+		end
+
+		for _, ent in ipairs(ent) do
+			ent:Spawn()
+
+			if ent.aowl_predeathpos then
+				ent:SetPos(pos)
+			end
+
+			if ent.aowl_predeathangles then
+				ent:SetEyeAngles(ang)
+			end
+		end
+	end)
+end

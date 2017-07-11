@@ -517,7 +517,7 @@ if SERVER then
 		if luadev.Verbose() then
 			luadev.Print(script)
 			luadev.Print("\n\n")
-			luadev.Print("#" .. #t .. "lines")
+			luadev.Print("#" .. #script:Split("\n") .. "lines")
 			luadev.Print("#" .. #script .. "bytes")
 		end
 		if targets then for k,v in pairs(targets) do luadev.Print(v) end end

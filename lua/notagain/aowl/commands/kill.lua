@@ -35,11 +35,11 @@ if CLIENT then
 end
 
 if SERVER then
-	aowl.AddCommand({"suicide", "die", "kill", "wrist"},function(ply, line, vel, angvel)
-
+	aowl.AddCommand("suicide|die|kill|wrist=number|nil,number|nil", function(ply, line, vel, angvel)
 		local ok = hook.Run("CanPlayerSuicide", ply)
-		if (ok == false) then
-			return
+
+		if ok == false then
+			return, "CanPlayerSuicide returns false"
 		end
 
 		if ply.last_rip and CurTime() - ply.last_rip < 0.05 then
@@ -47,9 +47,6 @@ if SERVER then
 		end
 
 		ply.last_rip = CurTime()
-
-		vel = tonumber(vel)
-		angvel = tonumber(angvel)
 
 		ply:Kill()
 

@@ -122,7 +122,6 @@ do -- gui
 
 		DermaPanel.OnClose = function()
 			hook.Remove("CrashTick", "crashsys")
-			print("?!")
 		end
 
 		local prog = vgui.Create( "DProgress", DermaPanel )
