@@ -39,7 +39,7 @@ if SERVER then
 		local ok = hook.Run("CanPlayerSuicide", ply)
 
 		if ok == false then
-			return, "CanPlayerSuicide returns false"
+			return false, "CanPlayerSuicide returns false"
 		end
 
 		if ply.last_rip and CurTime() - ply.last_rip < 0.05 then
