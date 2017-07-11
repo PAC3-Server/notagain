@@ -274,7 +274,7 @@ aowl.AddCommand("back=entity_alter|self", function(ply, line, ent)
 	hook.Run("AowlTargetCommand", ply, "back", ent)
 end)
 
-aowl.AddCommand("bring=entity_alter", function(ply, line, ent)
+aowl.AddCommand("bring=player_alter|entity_alter", function(ply, line, ent)
 	if ent:IsPlayer() then
 		if not ent:Alive() then
 			ent:Spawn()
@@ -318,17 +318,13 @@ end)
 
 do
 	hook.Add("PlayerDeath", "aowl_revive", function(ply)
-		if IsValid(ply) then
-			ply.aowl_predeathpos = ply:GetPos()
-			ply.aowl_predeathangles = ply:GetAngles()
-		end
+		ply.aowl_predeathpos = ply:GetPos()
+		ply.aowl_predeathangles = ply:GetAngles()
 	end)
 
 	hook.Add("PlayerSilentDeath", "aowl_revive", function(ply)
-		if IsValid(ply) then
-			ply.aowl_predeathpos = ply:GetPos()
-			ply.aowl_predeathangles = ply:GetAngles()
-		end
+		ply.aowl_predeathpos = ply:GetPos()
+		ply.aowl_predeathangles = ply:GetAngles()
 	end)
 
 	aowl.AddCommand("resurrect|respawn|revive=players_alter|self", function(ply, line, ent)
@@ -336,15 +332,17 @@ do
 			return false, "already alive"
 		end
 
+		ent = not istable(ent) and {ent}
+
 		for _, ent in ipairs(ent) do
 			ent:Spawn()
 
 			if ent.aowl_predeathpos then
-				ent:SetPos(pos)
+				ent:SetPos(ent.aowl_predeathpos)
 			end
 
 			if ent.aowl_predeathangles then
-				ent:SetEyeAngles(ang)
+				ent:SetEyeAngles(ent.aowl_predeathangles)
 			end
 		end
 	end)
