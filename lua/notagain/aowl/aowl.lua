@@ -693,17 +693,30 @@ do -- commands
 	end
 
 	function aowl.SayCommand(ply, txt)
-		local start_symbol = txt:match("^(%p)")
-		if start_symbol and table.HasValue(start_symbols, "%" .. start_symbol) then
-			local ok, reason = aowl.Execute(ply, txt)
+		if #txt == 1 then return end
 
-			if not ok then
-				timer.Simple(0, function()
-					if ply:IsValid() then
-						ply:ChatPrint("aowl: " .. reason)
-					end
-				end)
+		local ok = false
+
+		for _, symbol in ipairs(start_symbols) do
+			if #symbol > 0 then
+				if txt:sub(1, 1):find(symbol) then
+					ok = true
+					print(txt, symbol)
+					break
+				end
 			end
+		end
+
+		if not ok then return end
+
+		local ok, reason = aowl.Execute(ply, txt)
+
+		if not ok then
+			timer.Simple(0, function()
+				if ply:IsValid() then
+					ply:ChatPrint("aowl: " .. reason)
+				end
+			end)
 		end
 	end
 
