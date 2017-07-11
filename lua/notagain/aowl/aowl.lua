@@ -693,7 +693,8 @@ do -- commands
 	end
 
 	function aowl.SayCommand(ply, txt)
-		if txt:find("^%p") then
+		local start_symbol = txt:match("^(%p)")
+		if start_symbol and table.HasValue(start_symbols, "%" .. start_symbol) then
 			local ok, reason = aowl.Execute(ply, txt)
 
 			if not ok then
@@ -707,7 +708,8 @@ do -- commands
 	end
 
 	function aowl.ConsoleCommand(ply, cmd, args, line)
-		local ok, reason = aowl.Execute(ply, line)
+		local cmd = table.remove(args, 1)
+		local ok, reason = aowl.Execute(ply, cmd .. " " .. table.concat(args, ","))
 
 		if not a then
 			log(b)
