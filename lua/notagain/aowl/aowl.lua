@@ -304,6 +304,15 @@ do
 				return ent
 			end
 		end,
+		player_admin = function(str, me)
+			if not me:IsAdmin() then return end
+
+			local ent = find_player(str, me)
+
+			if ent then
+				return ent
+			end
+		end,
 		entity_alter = function(str, me)
 			local ent = find_entity(str, me, function(ent) return me:CanAlter(ent) end) or find_player(str, me, function(ent) return me:CanAlter(ent) end)
 
