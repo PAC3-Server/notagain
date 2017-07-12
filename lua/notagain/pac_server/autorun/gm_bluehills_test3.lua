@@ -41,7 +41,7 @@ if CLIENT then
 	end
 end
 
-scripted_ent.Register(ENT, ENT.ClassName)
+scripted_ents.Register(ENT, ENT.ClassName)
 
 if SERVER then
 	hook.Add("InitPostEntity", "SpawnTheaterScreen", function()
