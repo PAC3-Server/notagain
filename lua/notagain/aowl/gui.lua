@@ -32,9 +32,9 @@ if SERVER then
     end)
 
     local SendCmdsToClient = function(ply)
-        if not IsValid(ply) then return end
+        if not IsValid(ply) or not _G.aowl then return end
         local tbl = {}
-        for k,v in pairs(aowl.commands) do
+        for k,v in pairs(_G.aowl.commands) do
             if ply:CheckUserGroupLevel(v.group or "players") then
                 tbl[k] = {
                     aliases = v.aliases,
