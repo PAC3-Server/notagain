@@ -843,9 +843,9 @@ do -- commands
 		local cmd = table.remove(args, 1)
 		local ok, reason = aowl.Execute(ply, cmd .. " " .. table.concat(args, ","))
 
-		if not a then
-			log(b)
-		end
+		if ok then
+            log(cmd,line)
+        end
 	end
 
 	if SERVER then
