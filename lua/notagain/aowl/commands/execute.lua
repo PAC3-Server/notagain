@@ -1,22 +1,5 @@
 aowl.AddCommand("rcon", function(ply, line)
-	line = line or ""
-
-	if false and ply:IsUserGroup("developers") then
-		for key, value in pairs(rcon_whitelist) do
-			if not str:find(value, nil, 0) then
-				return false, "cmd not in whitelist"
-			end
-		end
-
-		for key, value in pairs(rcon_blacklist) do
-			if str:find(value, nil, 0) then
-				return false, "cmd is in blacklist"
-			end
-		end
-	end
-
 	game.ConsoleCommand(line .. "\n")
-
 end, "developers")
 
 aowl.AddCommand("cvar=string",function(pl, line, a, b)

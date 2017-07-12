@@ -5,7 +5,7 @@ local Tag = "bluescreen"
 if SERVER then
 	util.AddNetworkString(Tag)
 
-	aowl.AddCommand("bloo|crash=player", function(ply, line, target)
+	aowl.AddCommand("bloo|crash=player_admin|player_alter", function(ply, line, target)
 		net.Start(Tag)
 		net.Send(target)
 	end, "developers")
