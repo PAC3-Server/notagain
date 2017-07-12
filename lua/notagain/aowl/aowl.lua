@@ -612,7 +612,8 @@ do -- commands
 			group = group,
 			defaults = defaults
 		}
-		--PrintTable(aowl.commands[aliases[1]])
+
+		hook.Run("AowlCommandAdded", aowl.commands[aliases[1]])
 	end
 
 	function aowl.FindCommand(str)
@@ -632,19 +633,70 @@ do -- commands
 		return nil, "could not find command " .. str .. ". did you mean " .. found[1].alias .. "?"
 	end
 
+	function aowl.GetHelpText(alias)
+		local command, msg = aowl.FindCommand(alias)
+		if not command then return false, msg end
+
+		local params = {}
+
+		for i = 1, math.huge do
+			local key = debug.getlocal(command.callback, i)
+			if key then
+				table.insert(params, key)
+			else
+				break
+			end
+		end
+
+		local str = "!" .. alias .. " "
+
+		if #params == 2 then
+			str = str .. params[2]
+		else
+			for i = 3, #params do
+				local arg_name = params[i]
+				local types = command.argtypes[i-2]
+				local default = command.defaults and command.defaults[i-2]
+
+				str = str .. arg_name .. ""
+
+				if types then
+					str = str .. "<"
+					for _, type in pairs(types) do
+						str = str .. type
+						if _ ~= #types then
+							str = str .. " or "
+						end
+					end
+					str = str .. ">"
+				end
+
+				if default then
+					str = str .. " = " .. tostring(default)
+				end
+
+				if i ~= #params then
+					str = str .. ", "
+				end
+			end
+		end
+
+		return "usage example: \n" .. str
+	end
+
 	function aowl.ParseString(str)
-		local symbol, cmd, arg_line = parse_line(str)
+		local symbol, alias, arg_line = parse_line(str)
 
 		local args = parse_args(arg_line)
-		local command, err = aowl.FindCommand(cmd)
+		local command, err = aowl.FindCommand(alias)
 
 		if not command then return command, err end
 
-		return command, cmd, arg_line, args
+		return command, alias, arg_line, args
 	end
 
 	function aowl.RunString(ply, str)
-		local command, cmd, arg_line, args = assert(aowl.ParseString(str))
+		local command, alias, arg_line, args = assert(aowl.ParseString(str))
 
 		if command.group then
 			local ok = false
@@ -678,7 +730,7 @@ do -- commands
 			end
 
 			if not ok then
-				error(name .. " is not allowed to execute " .. cmd .. " because group is " .. command.group)
+				error(name .. " is not allowed to execute " .. alias .. " because group is " .. command.group)
 			end
 		end
 
@@ -687,7 +739,7 @@ do -- commands
 				if command.argtypes[i] then
 					for _, arg_type in ipairs(command.argtypes[i]) do
 						if not aowl.ArgumentTypes[arg_type] then
-							log(cmd .. ": no type information found for \"" .. arg_type .. "\"")
+							log(alias .. ": no type information found for \"" .. arg_type .. "\"")
 						end
 					end
 				end
@@ -717,8 +769,10 @@ do -- commands
 					if val == nil and command.defaults and args[i] then
 
 					else
-						if val == nil and args[i] then
-							error("unable to convert argument >>|" .. args[i] .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", "))
+						if val == nil then
+							local err = "unable to convert argument >>|" .. (args[i] or "") .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", ") .. "\n"
+							err = err .. aowl.GetHelpText(alias) .. "\n"
+							error(err)
 						end
 
 						args[i] = val
@@ -727,7 +781,7 @@ do -- commands
 			end
 		end
 
-		local ret, reason = hook.Run("AowlCommand", command, cmd, ply, arg_line, unpack(args))
+		local ret, reason = hook.Run("AowlCommand", command, alias, ply, arg_line, unpack(args))
 
 		if ret == false then return ret, reason or "no reason" end
 
@@ -805,54 +859,7 @@ do -- commands
 	end
 
 	aowl.AddCommand("help|usage=string", function(ply, line, cmd)
-		local command, msg = aowl.FindCommand(cmd)
-		if not command then return false, msg end
-
-		local params = {}
-
-		for i = 1, math.huge do
-			local key = debug.getlocal(command.callback, i)
-			if key then
-				table.insert(params, key)
-			else
-				break
-			end
-		end
-
-		local str = "!" .. cmd .. " "
-
-		if #params == 2 then
-			str = str .. params[2]
-		else
-			for i = 3, #params do
-				local arg_name = params[i]
-				local types = command.argtypes[i-2]
-				local default = command.defaults and command.defaults[i-2]
-
-				str = str .. arg_name .. ""
-
-				if types then
-					str = str .. "<"
-					for _, type in pairs(types) do
-						str = str .. type
-						if _ ~= #types then
-							str = str .. " or "
-						end
-					end
-					str = str .. ">"
-				end
-
-				if default then
-					str = str .. " = " .. tostring(default)
-				end
-
-				if i ~= #params then
-					str = str .. ", "
-				end
-			end
-		end
-
-		ply:ChatPrint(str)
+		ply:ChatPrint(aowl.GetHelpText(cmd))
 	end)
 end
 
