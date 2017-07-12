@@ -1,9 +1,15 @@
-require("stringtable")
+pcall(require, "stringtable")
 
-GetAllStringTables = stringtable.GetNames
-StringTable = stringtable.Find
+if not _G.stringtable then
+	MsgC(Color(255, 127, 127), debug.getinfo(1).source .. " could not find stringtable binary module!\n")
+	return false
+end
+
+local stringtable = _G.stringtable or {}
+_G.stringtable = nil
 
 local stringtable_Get = stringtable.Get
+
 function stringtable.Get(id)
 	if isstring(id) then
 		return stringtable.Find(id)
@@ -13,6 +19,7 @@ function stringtable.Get(id)
 end
 
 local META = FindMetaTable("stringtable")
+
 if META ~= nil then
 	META.Count = META.GetNumStrings
 	META.GetTableStrings = META.GetStrings

@@ -33,7 +33,10 @@ local function compareentity(ent, str)
 	return false
 end
 
-local TagPrintOnServer = "elpos"
+if SERVER then
+	util.AddNetworkString("easylua_printonserver")
+end
+
 if CLIENT then
 	function easylua.PrintOnServer(...)
 		local args = {...}
@@ -42,15 +45,13 @@ if CLIENT then
 		for key, value in pairs(args) do
 			table.insert(new, luadata and luadata.ToString(value) or tostring(value))
 		end
-		net.Start(TagPrintOnServer)
+		net.Start("easylua_printonserver")
 			local str = table.concat(new," ")
 			local max = 256
 			net.WriteString(str:sub(1,max))
 			net.WriteBool(#str>max)
 		net.SendToServer()
 	end
-else
-	util.AddNetworkString(TagPrintOnServer)
 end
 
 function easylua.Print(...)
@@ -85,7 +86,7 @@ if SERVER then
 	end
 	concommand.Add("easylua_print", easylua.CMDPrint)
 
-	net.Receive(TagPrintOnServer,function(len,ply)
+	net.Receive("easylua_printonserver",function(len,ply)
 		local str = net.ReadString()
 		str=str:sub(1,512)
 		local more = net.ReadBool()
@@ -308,8 +309,9 @@ function easylua.CopyToClipboard(var, ply)
 		if SERVER then
 			local str = string.format("SetClipboardText(%q)", str)
 			if #str > 255 then
-				if luadev and luadev.RunOnClient then
-					luadev.RunOnClient(str, ply)
+				local luadev = requirex("luadev")
+				if luadev then
+					luadev.RunOnClient(str, ply, "easylua.CopyToClipboard")
 				else
 					error("Text too long to send and luadev not found",1)
 				end
@@ -371,11 +373,11 @@ function easylua.Start(ply)
 			for key, value in pairs(args) do
 			    table.insert(new, luadata and luadata.ToString(value) or tostring(value))
 			end
-			local str = table.concat(new," ")		
+			local str = table.concat(new," ")
 			if CLIENT then
 				RunConsoleCommand("say", str)
 			elseif SERVER then
-				game.ConsoleCommand("say "..str.."\n")	
+				game.ConsoleCommand("say "..str.."\n")
 			end
 		end
 
@@ -499,62 +501,6 @@ function easylua.RunLua(ply, code, env_name)
 
 	return data
 end
-
--- legacy luadev compatibility
-
-local	STAGE_PREPROCESS=1
-local	STAGE_COMPILED=2
-local	STAGE_POST=3
-
-local insession = false
-hook.Add("LuaDevProcess","easylua",function(stage,script,info,extra,func)
-	if stage==STAGE_PREPROCESS then
-
-		if insession then
-			insession=false
-			easylua.End()
-		end
-
-		if not istable(extra) or not IsValid(extra.ply) or not script or extra.easylua==false then
-			return
-		end
-
-		insession = true
-		easylua.Start(extra.ply)
-
-		local t={}
-		for key, value in pairs(easylua.vars or {}) do
-			t[#t+1]=key
-		end
-		if #t>0 then
-			script=' local '..table.concat(t,", ")..' = '..table.concat(t,", ")..' ; '..script
-		end
-
-		--ErrorNoHalt(script)
-		return script
-
-	elseif stage==STAGE_COMPILED then
-
-		if not istable(extra) or not IsValid(extra.ply) or not isfunction(func) or extra.easylua==false then
-			if insession then
-				insession=false
-				easylua.End()
-			end
-			return
-		end
-
-		if insession then
-			local env = getfenv(func)
-			if not env or env==_G then
-				setfenv(func, easylua.EnvMeta)
-			end
-		end
-
-	elseif stage == STAGE_POST and insession then
-		insession=false
-		easylua.End()
-	end
-end)
 
 function easylua.StartWeapon(classname)
 	_G.SWEP = {

@@ -1,46 +1,47 @@
  if game.GetMap() ~= "gm_bluehills_test3" then return end
 
-local easylua = requirex("easylua")
+local ENT = {}
+ENT.ClassName = "bluehill_theater_screen"
+ENT.PrintName = "Theater Screen"
 
-easylua.StartEntity("bluehill_theater_screen")
-	ENT.PrintName = "Bluehill Theater Screen"
+ENT.Type = "anim"
 
-	ENT.Type = "anim"
+ENT.Base = "mediaplayer_base"
 
-	ENT.Base = "mediaplayer_base"
+ENT.RenderGroup = RENDERGROUP_OPAQUE
 
-	ENT.RenderGroup = RENDERGROUP_OPAQUE
+ENT.PlayerConfig = {
+	offset	= Vector(0,-.2,0),
+	angle	= Angle(0,180,90),
+	width = 704,
+	height = 352
+}
 
-	ENT.PlayerConfig = {
-		offset	= Vector(0,-.2,0),
-		angle	= Angle(0,180,90),
-		width = 704,
-		height = 352
-	}
+function ENT:Initialize()
+	if SERVER then
+		self:InstallMediaPlayer( "entity" )
 
-	function ENT:Initialize()
-		if SERVER then
-			self:InstallMediaPlayer( "entity" )
+		local mp = self:GetMediaPlayer()
 
-			local mp = self:GetMediaPlayer()
-
-			function mp:UpdateListeners()
-				local listeners = {}
-				for k, v in pairs( ents.FindInBox( Vector( 343, 1191, 436 ), Vector( 1216, 91, -63 ) ) ) do
-					if v:IsPlayer() then
-						table.insert(listeners, v)
-					end
+		function mp:UpdateListeners()
+			local listeners = {}
+			for k, v in pairs( ents.FindInBox( Vector( 343, 1191, 436 ), Vector( 1216, 91, -63 ) ) ) do
+				if v:IsPlayer() then
+					table.insert(listeners, v)
 				end
-				self:SetListeners(listeners)
 			end
+			self:SetListeners(listeners)
 		end
 	end
+end
 
-	if CLIENT then
-		function ENT:Draw()
-		end
+if CLIENT then
+	function ENT:Draw()
+
 	end
-easylua.EndEntity()
+end
+
+scripted_ent.Register(ENT, ENT.ClassName)
 
 if SERVER then
 	hook.Add("InitPostEntity", "SpawnTheaterScreen", function()

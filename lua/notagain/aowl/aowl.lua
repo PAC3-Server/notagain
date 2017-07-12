@@ -1,7 +1,6 @@
 AddCSLuaFile()
 
 local luadata = requirex("luadata")
-local easylua = requirex("easylua")
 
 local aowl = {}
 _G.aowl = aowl
@@ -732,9 +731,7 @@ do -- commands
 	end
 
 	function aowl.Execute(ply, str)
-		easylua.Start(ply)
 		local a, b, c = pcall(aowl.RunString, ply, str)
-		easylua.End(ply)
 
 		if a == false then
 			return false, b

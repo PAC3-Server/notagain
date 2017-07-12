@@ -1,27 +1,25 @@
-local easylua = requirex("easylua")
-
 if not MediaPlayer then return end
 
-aowl.AddCommand("sub", function(ply, line, target)
-	local ent = easylua.FindEntity(target)
-	if ent and ent.GetMediaPlayer and ent:GetMediaPlayer() then
-		local mp = ent:GetMediaPlayer()
-		if mp:HasListener(ply) then
-			ply:ChatPrint("You are already subscribed to this Mediaplayer!")
-		else
-			mp:AddListener(ply)
-		end
-	else
-		ply:ChatPrint("Sure that is a valid mediaplayer")
+aowl.AddCommand("sub=entity", function(ply, line, ent)
+	if not ent.GetMediaPlayer or not ent:GetMediaPlayer() then
+		return false, "not a valid mediaplayer"
 	end
 
+	local mp = ent:GetMediaPlayer()
+
+	if mp:HasListener(ply) then
+		ply:ChatPrint("You are already subscribed to this Mediaplayer!")
+	else
+		mp:AddListener(ply)
+	end
 end)
 
-aowl.AddCommand("unsub", function(ply, line, target)
+aowl.AddCommand("unsub=entity", function(ply, line, ent)
+	if ent then
+		if not ent.GetMediaPlayer or not ent:GetMediaPlayer() then
+			return false, "not a valid mediaplayer"
+		end
 
-	local ent = easylua.FindEntity(target)
-
-	if ent and ent.GetMediaPlayer and ent:GetMediaPlayer() then
 		local mp = ent:GetMediaPlayer()
 		if mp.HasListener and mp:HasListener(ply) then
 			mp:RemoveListener(ply)
