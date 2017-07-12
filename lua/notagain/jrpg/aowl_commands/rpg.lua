@@ -53,6 +53,10 @@ aowl.AddCommand("element", function(ply, _, ...)
 
 	local ok = true
 
+	if not elements[1] then
+		ok = false
+	end
+
 	for k,v in pairs(elements) do
 		if not wepstats.registered[v] then
 			ok = false
