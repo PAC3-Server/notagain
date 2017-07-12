@@ -288,7 +288,7 @@ function easylua.CreateEntity(class, callback)
 	return this
 end
 
-function easylua.GetNPCList = function()
+function easylua.GetNPCList()
 	local tbl = {}
 	for k,v in pairs(scripted_ents.GetList()) do
 		if string.match(k,".*npc.*") then
