@@ -770,7 +770,7 @@ do -- commands
 
 					else
 						if val == nil then
-							local err = "unable to convert argument >>|" .. (args[i] or "") .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", ") .. "\n"
+							local err = "unable to convert argument " .. (debug.getlocal(command.callback, i+2) or i) .. " >>|" .. (args[i] or "") .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", ") .. "\n"
 							err = err .. aowl.GetHelpText(alias) .. "\n"
 							error(err)
 						end
