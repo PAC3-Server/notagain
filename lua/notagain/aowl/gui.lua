@@ -213,6 +213,8 @@ if CLIENT then
 		end
 
 		frame:MakePopup()
+
+		aowlgui.UpdateCmdList()
     end
 
     function aowlgui.Close()
