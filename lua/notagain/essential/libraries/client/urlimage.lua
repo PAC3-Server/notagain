@@ -260,25 +260,32 @@ function sql.LastRowID()
 end
 
 setmetatable(sql,{__call=function(self,query,...)
-	local t = {...}
+	local t = {}
 
-	for k,v in next,t do
+	for i = 1, select("#", ...) do
+		local v = select(i, ...)
+
 		if isstring(v) then
-			t[k] = sql.SQLStr(v)
-		elseif isbool(v) then
-			v=tostring(v)
+			v = sql.SQLStr(v)
 		end
+
+		t[i] = tostring(v)
 	end
 
 	query = query..';'
 
-	if not pcall(function()
-		query = query:format(unpack(t))
-	end) then
+	if t[1] then
 		PrintTable(t)
-		print(...)
-		print(self, query)
-		error("!?")
+		query = query:gsub("%%s", "___OK___")
+		print(1, query)
+		query = query:gsub("%%", "___TEMP___")
+		print(2, query)
+		query = query:gsub("___OK___", "%%s")
+		print(3, query)
+		query = query:format(unpack(t))
+		print(4, query)
+		query = query:gsub("___TEMP___", "%%")
+		print(5, query)
 	end
 
 	local ret = sql.Query(query)
