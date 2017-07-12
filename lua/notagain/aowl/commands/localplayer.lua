@@ -42,8 +42,6 @@ aowl.AddCommand("fullupdate|update",function(ply, line)
 end, "localplayer")
 
 aowl.AddCommand("ctp|thirdperson|view|3p", function(ply, line)
-	if ply ~= LocalPlayer() then return end
-
 	if ctp.Enabled then
 		ctp.Disable()
 	else
@@ -57,7 +55,7 @@ aowl.AddCommand("g|search", function(ply, line)
 end, "localplayer")
 
 aowl.AddCommand("cmd|console", function(ply, line)
-	LocalPlayer():ConCommand(line)
+	ply:ConCommand(line)
 end, "localplayer")
 
 aowl.AddCommand("decals|cleardecals", function(ply, line)
@@ -68,8 +66,6 @@ do -- ignore players
 	local ref = 0
 
 	aowl.AddCommand("ignore|undraw=player",function(ply, line, ent)
-		if ply ~= LocalPlayer() then return end
-
 		ent.ignore_draw = true
 
 		if pac and pace then
@@ -94,8 +90,6 @@ do -- ignore players
 	end, "localplayer")
 
 	aowl.AddCommand("unignore|draw=player",function(ply, line, ent)
-		if ply ~= LocalPlayer() then return end
-
 		if ent.ignore_draw then
 			ent.ignore_draw = nil
 
