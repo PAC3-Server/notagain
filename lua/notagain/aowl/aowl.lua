@@ -802,6 +802,57 @@ do -- commands
 	function aowl.TargetNotFound(target)
 		return string.format("could not find: %q", target or "<no target>")
 	end
+
+	aowl.AddCommand("help|usage=string", function(ply, line, cmd)
+		local command, msg = aowl.FindCommand(cmd)
+		if not command then return false, msg end
+
+		local params = {}
+
+		for i = 1, math.huge do
+			local key = debug.getlocal(command.callback, i)
+			if key then
+				table.insert(params, key)
+			else
+				break
+			end
+		end
+
+		local str = "!" .. cmd .. " "
+
+		if #params == 2 then
+			str = str .. params[2]
+		else
+			for i = 3, #params do
+				local arg_name = params[i]
+				local types = command.argtypes[i-2]
+				local default = command.defaults and command.defaults[i-2]
+
+				str = str .. arg_name .. ""
+
+				if types then
+					str = str .. "<"
+					for _, type in pairs(types) do
+						str = str .. type
+						if _ ~= #types then
+							str = str .. " or "
+						end
+					end
+					str = str .. ">"
+				end
+
+				if default then
+					str = str .. " = " .. tostring(default)
+				end
+
+				if i ~= #params then
+					str = str .. ", "
+				end
+			end
+		end
+
+		ply:ChatPrint(str)
+	end)
 end
 
 do -- message
