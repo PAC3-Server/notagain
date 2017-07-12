@@ -30,29 +30,31 @@ function cracer()
 
 		local function inject(tbl, name, one_level)
 			for key, val in pairs(tbl) do
-				if type(val) == "function" then
-					if not done[val] and getinfo(val).what == "C" and not tostring(val):find("function: builtin", 0, true) then
-						local name = name .. "." ..  key
-						if name:find("^_G.", 0, true) then
-							name = name:sub(4)
-						end
-						local t = {count = 0, total_time = 0, name = name}
-						calls[name] = t
-						tbl[key] = function(...)
-							t.count = t.count + 1
+				if type(key) == "string" then
+					if type(val) == "function" then
+						if not done[val] and getinfo(val).what == "C" and not tostring(val):find("function: builtin", 0, true) then
+							local name = name .. "." ..  key
+							if name:find("^_G.", 0, true) then
+								name = name:sub(4)
+							end
+							local t = {count = 0, total_time = 0, name = name}
+							calls[name] = t
+							tbl[key] = function(...)
+								t.count = t.count + 1
 
-							TIME()
-							local count, ret = pack(val(...))
-							local diff = TIME()
-							t.total_time = t.total_time + diff
+								TIME()
+								local count, ret = pack(val(...))
+								local diff = TIME()
+								t.total_time = t.total_time + diff
 
-							return unpack(ret, 1, count)
+								return unpack(ret, 1, count)
+							end
 						end
-					end
-				elseif not one_level and type(val) == "table" and not done[val] then
-					done[val] = true
-					if not tonumber(key) then
-						inject(val, name .. "." .. key)
+					elseif not one_level and type(val) == "table" and not done[val] then
+						done[val] = true
+						if not tonumber(key) then
+							inject(val, name .. "." .. key)
+						end
 					end
 				end
 			end
