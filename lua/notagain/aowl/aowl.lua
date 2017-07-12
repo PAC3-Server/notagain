@@ -828,7 +828,12 @@ do -- commands
 
 			timer.Simple(0, function()
 				if ply:IsValid() then
-					ply:ChatPrint("aowl: " .. reason)
+					local msg = "aowl: " .. reason
+					if CLIENT and ply ~= LocalPlayer() then
+						MsgN(msg)
+					else
+						ply:ChatPrint(msg)
+					end
 				end
 			end)
 		end
@@ -859,7 +864,7 @@ do -- commands
 	end
 
 	aowl.AddCommand("help|usage=string", function(ply, line, cmd)
-		ply:ChatPrint(aowl.GetHelpText(cmd))
+		ply:ChatPrint(assert(aowl.GetHelpText(cmd)))
 	end)
 end
 
