@@ -1,4 +1,4 @@
-local tag = "PCTask"
+local tag = "PCTasks"
 local PCTasks = {}
 _G.PCTasks = PCTasks
 PCTasks.Store = {}
@@ -41,10 +41,13 @@ if SERVER then
         end
     end
 
-    PCTasks.Add = function(name,desc)
+    PCTasks.Add = function(name,desc,xp)
         if PCTasks.Exists(name) then return end
         local desc = desc or name
-        PCTasks.Store[name] = desc
+        local xp = xp or 1000
+        PCTasks.Store[name] = {}
+        PCTasks.Store[name].desc = desc
+        PCTasks.Store[name].XP = xp
         PCTasks.UpdateClients() --realtime task additions
     end
 
@@ -57,6 +60,9 @@ if SERVER then
             net.WriteString(name)
             net.Broadcast()
             hook.Run("OnPCTaskCompleted",ply,name)
+            if jlevel then
+                jlevel.GiveXP(ply,PCTasks.Store[name].XP)
+            end
         end
     end
 
@@ -103,25 +109,25 @@ if SERVER then
     util.AddNetworkString(taskpac1)
     util.AddNetworkString(tasklag)
     util.AddNetworkString(taskownrisks)
-    util.AddNetworkString(tasklinux)
     util.AddNetworkString(taskosx)
+    util.AddNetworkString(tasklinux)
 
-    PCTasks.Add("An important discovery","Open the Player Appearance Customizer editor for the first time")
-    PCTasks.Add("What a PAC","Wear an outfit made with PAC")
-    PCTasks.Add("Faster than light","Break the laws of physics")
-    PCTasks.Add("Bad example","Watch someone get throwed out of the server")
-    PCTasks.Add("Otherworld","Have a look from the otherworld")
-    PCTasks.Add("Better than RPGS","Activate the RPG mode")
-    PCTasks.Add("Infinite power","Cheat in RPG mode")
-    PCTasks.Add("Murderer","Be a murderer")
-    PCTasks.Add("First words","Communicate with the world")
-    PCTasks.Add("Slower than my old windows 2000","Experience huge server lag")
-    PCTasks.Add("Distracted","Be AFK on the server")
-    PCTasks.Add("A message from the stars","Communicate with the 'stars'")
-    PCTasks.Add("At your own risks","Run GMod on low battery power")
-    PCTasks.Add("Apple time","Run GMod on OSX")
-    PCTasks.Add("Hipster","Run GMod on Linux")
-    PCTasks.Add("Friendly neighbourhood","Play with 4 friends on the server")
+    PCTasks.Add("An important discovery","Open the Player Appearance Customizer editor for the first time",150)
+    PCTasks.Add("What a PAC","Wear an outfit made with PAC",200)
+    PCTasks.Add("Faster than light","Break the laws of physics",500)
+    PCTasks.Add("Bad example","Watch someone get throwed out of the server",3000)
+    PCTasks.Add("Otherworld","Have a look from the otherworld",1000)
+    PCTasks.Add("Better than RPGS","Activate the RPG mode",500)
+    PCTasks.Add("Infinite power","Cheat in RPG mode",1000)
+    PCTasks.Add("Murderer","Be a murderer",120)
+    PCTasks.Add("First words","Communicate with the world",50)
+    PCTasks.Add("Slower than my old windows 2000","Experience huge server lag",300)
+    PCTasks.Add("Distracted","Be AFK on the server",100)
+    PCTasks.Add("A message from the stars","Communicate with the 'stars'",300)
+    PCTasks.Add("At your own risks","Run GMod on low battery power",5000)
+    PCTasks.Add("Apple time","Run GMod on OSX",1000)
+    PCTasks.Add("Hipster","Run GMod on Linux",1000)
+    PCTasks.Add("Friendly neighbourhood","Play with 4 friends on the server",1200)
 
     net.Receive(taskpac1,function(len,ply)
         PCTasks.Complete(ply,"An important discovery")
@@ -153,7 +159,7 @@ if SERVER then
         end
     end)
 
-    hook.Add("AowlTargetCommand","pc_task_notice_kickban",function(_,type,_,_)
+    hook.Add("AowlCommand","pc_task_notice_kickban",function(_,type,_,_)
         if type == "kick" or type == "ban" then
             for k,v in pairs(player.GetAll()) do
                 PCTasks.Complete(v,"Bad example")
