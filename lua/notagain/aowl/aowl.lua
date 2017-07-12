@@ -727,6 +727,10 @@ do -- commands
 			end
 		end
 
+		local ret, reason = hook.Run("AowlCommand", command, cmd, ply, arg_line, unpack(args))
+
+		if ret == false then return ret, reason or "no reason" end
+
 		return command.callback(ply, arg_line, unpack(args))
 	end
 
