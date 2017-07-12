@@ -59,6 +59,8 @@ end
 
 hook.Add("Tick", "crashsys", function()
 	if not lastPong then return end
+	if not LocalPlayer():IsValid() then return end -- disconnected or connecting
+
 	local timeout = RealTime() - lastPong
 
 	if timeout > 1.3 then

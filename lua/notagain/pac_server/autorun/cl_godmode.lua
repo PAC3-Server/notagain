@@ -5,8 +5,9 @@ if CLIENT then
 
 	timer.Create("cl_godmode", 0.1, 0, function()
 		local ply = LocalPlayer()
-		if not ply:IsValid() then return end
-		victim = ply:GetEyeTrace().Entity -- todo: fatter trace?
+		if ply:IsValid() and ply:GetEyeTrace() then
+			victim = ply:GetEyeTrace().Entity -- todo: fatter trace?
+		end
 	end)
 
 	local last_play = 0

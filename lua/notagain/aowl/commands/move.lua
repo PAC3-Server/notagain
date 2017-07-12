@@ -1,5 +1,3 @@
-local easylua = requirex("easylua")
-
 local t = {
 	mask = MASK_PLAYERSOLID,
 }

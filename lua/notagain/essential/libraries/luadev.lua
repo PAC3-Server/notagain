@@ -1,5 +1,3 @@
-local easylua = requirex("easylua")
-
 local luadev = {}
 local Tag="luadev"
 
@@ -31,15 +29,16 @@ do -- enums
 	luadev.STAGE_COMPILED=2
 	luadev.STAGE_POST=3
 	luadev.STAGE_PREPROCESSING=4
+	luadev.STAGE_PRE=5
 end
 
 do -- helpers
-	function luadev.MakeExtras(pl,extrat)
+	function luadev.MakeExtras(pl,tbl)
+		tbl = tbl or {}
 		if pl and isentity(pl) and pl:IsPlayer() then
-			extrat = extrat or {}
-			extrat.ply = pl
+			tbl.ply = pl
 		end
-		return extrat
+		return tbl
 	end
 
 	function luadev.TransmitHook(stage,...)
@@ -118,9 +117,6 @@ do -- helpers
 				end
 			end
 		end
-		if not cl and easylua and easylua.FindEntity then
-			cl = easylua.FindEntity(plyid)
-		end
 		return IsValid(cl) and cl or nil
 	end
 end
@@ -155,20 +151,13 @@ function luadev.ReadCompressed()
 end
 
 -- Compiler / runner
-local function ValidCode(src,who)
-	local ret = CompileString(src,who or "",false)
+function luadev.ValidScript(src, chunkname)
+	local ret = CompileString(src, chunkname or "",false)
 	if type(ret)=='string' then
 		return nil,ret
 	end
 	return ret or true
 end
-luadev.ValidScript=ValidCode
-luadev.ValidCode=ValidCode
-
-function luadev.ProcessHook(stage,...)
-	return hook.Run("LuaDevProcess",stage,...)
-end
-local LuaDevProcess=luadev.ProcessHook
 
 local mt= {
 	__tostring=function(self) return self[1] end,
@@ -181,47 +170,55 @@ local mt= {
 }
 local strobj=setmetatable({""},mt)
 
-function luadev.Run(script,info,extra)
-	--compat
-	if CLIENT and not extra and info and istable(info) then
-		return luadev.RunOnSelf(script,"COMPAT",{ply=info.ply})
+function luadev.Run(script, chunkname, extra)
+	chunkname = chunkname or "??ANONYMOUS??"
+	extra = extra or {}
+	extra.args = extra.args or {}
+
+	do -- luadev.STAGE_PREPROCESS
+		local ret, new_chunkname = hook.Run("LuaDevProcess",luadev.STAGE_PREPROCESS,script,chunkname,extra)
+
+		if ret == false then
+			return
+		end
+
+		if ret ~=nil and ret~=true then
+			script = ret
+		end
+
+		if new_chunkname then
+			chunkname = new_chunkname
+		end
 	end
 
-	info = info or "??ANONYMOUS??"
-	if not isstring(info) then
-		debug.Trace()
-		ErrorNoHalt("LuaDev Warning: info type mismatch: "..type(info)..': '..tostring(info))
-	end
+	do -- luadev.STAGE_PREPROCESSING
+		rawset(strobj,1,script)
+		hook.Run("LuaDevProcess",luadev.STAGE_PREPROCESSING,script,chunkname,extra)
+		script = rawget(strobj,1)
 
-	-- luadev.STAGE_PREPROCESS
-	local ret,newinfo = LuaDevProcess(luadev.STAGE_PREPROCESS,script,info,extra,nil)
-
-		if ret == false then return end
-		if ret ~=nil and ret~=true then script = ret end
-
-		if newinfo then info = newinfo end
-
-	-- luadev.STAGE_PREPROCESSING
-	rawset(strobj,1,script)
-	ret = LuaDevProcess(luadev.STAGE_PREPROCESSING,strobj,info,extra,nil)
-	script = rawget(strobj,1)
-
-	if not script then
-		return false,"no script"
+		if not script then
+			return false,"no script"
+		end
 	end
 
 	-- Compiling
+	local func = CompileString(script, chunkname, false)
 
-	local func = CompileString(script,tostring(info),false)
-	if not func or isstring( func )  then  luadev.compileerr = func or true  func = false end
+	if not func or isstring( func )  then
+		luadev.compileerr = func or true
+		func = false
+	end
 
-	ret = LuaDevProcess(luadev.STAGE_COMPILED,script,info,extra,func)
+	do -- luadev.STAGE_COMPILED
+		local ret = hook.Run("LuaDevProcess",luadev.STAGE_COMPILED,script,chunkname,extra,func)
+
 		-- replace function
 		if ret == false then return end
-		if ret ~=nil and isfunction(ret) then
+		if ret ~= nil and isfunction(ret) then
 			func = ret
 			luadev.compileerr = false
 		end
+	end
 
 	if not func then
 		if luadev.compileerr then
@@ -230,13 +227,9 @@ function luadev.Run(script,info,extra)
 	end
 
 	luadev.lastextra = extra
-	luadev.lastinfo = info
+	luadev.lastinfo = chunkname
 	luadev.lastscript = script
 	luadev.lastfunc = func
-
-	local args = extra and extra.args and (istable(extra.args) and extra.args or {extra.args})
-	if not args then args=nil end
-
 
 	-- luadev.Run the stuff
 	-- because garry's runstring has social engineer sexploits and such
@@ -263,15 +256,18 @@ function luadev.Run(script,info,extra)
 		ErrorNoHalt('[ERROR] '..tracestr   )--   ..'\n')
 	end
 
+	hook.Run("LuaDevProcess",luadev.STAGE_PRE,script,chunkname,extra,func)
+
 	local LUADEV_EXECUTE_FUNCTION=xpcall
-	local returnvals = {LUADEV_EXECUTE_FUNCTION(func,LUADEV_TRACEBACK,args and unpack(args) or nil)}
-	local ok = returnvals[1] table.remove(returnvals,1)
+	local returnvals = {LUADEV_EXECUTE_FUNCTION(func, LUADEV_TRACEBACK, unpack(extra.args))}
+	local ok = returnvals[1]
+	table.remove(returnvals, 1)
 
 	-- luadev.STAGE_POST
-	ret = LuaDevProcess(luadev.STAGE_POST,script,info,extra,func,args,ok,returnvals)
+	hook.Run("LuaDevProcess",luadev.STAGE_POST,script,chunkname,extra,func,args,ok,returnvals)
 
 	if not ok then
-		return false,errormessage
+		return false, errormessage
 	end
 
 	return ok,returnvals
@@ -396,12 +392,10 @@ if SERVER then
 		end
 	end
 
-	function luadev.RunOnClients(script,who,extra)
-		if not who and extra and isentity(extra) then extra = {ply=extra} end
-
+	function luadev.RunOnClients(script,chunkname,extra)
 		local data={
 			--src=script,
-			info=who,
+			chunkname=chunkname,
 			extra=extra,
 		}
 
@@ -416,35 +410,9 @@ if SERVER then
 		return true
 	end
 
-	local function ClearTargets(targets)
-		local i=1
-		local target=targets[i]
-		while target do
-			if not IsValid(target) then
-				table.remove(targets,i)
-				i=i-1
-			end
-			i=i+1
-			target=targets[i]
-		end
-	end
-
-
-	function luadev.RunOnClient(script,targets,who,extra)
-		-- compat
-			if not targets and isentity(who) then
-				targets=who
-				who = nil
-			end
-
-			if extra and isentity(extra) and who==nil then
-				extra={ply=extra}
-				who="COMPAT"
-			end
-
+	function luadev.RunOnClient(script,targets,chunkname,extra)
 		local data={
-			--src=script,
-			info=who,
+			chunkname=chunkname,
 			extra=extra,
 		}
 
@@ -452,14 +420,20 @@ if SERVER then
 			targets = {targets}
 		end
 
-		ClearTargets(targets)
+		for i = #targets, 1, -1 do
+			if not IsValid(targets[i]) then
+				table.remove(targets, i)
+			end
+		end
 
-		if table.Count(targets)==0 then return nil,"no players" end
+		if table.Count(targets) == 0 then
+			return nil,"no players"
+		end
 
 		net.Start(Tag)
 			luadev.WriteCompressed(script)
 			net.WriteTable(data)
-			if net.BytesWritten()==65536 then
+			if net.BytesWritten() == 65536 then
 				return nil,"too big"
 			end
 		net.Send(targets)
@@ -467,17 +441,12 @@ if SERVER then
 		return #targets, targets
 	end
 
-	function luadev.RunOnServer(script,who,extra)
-		if not who and extra and isentity(extra) then extra = {ply=extra} end
-
-		return luadev.Run(script,tostring(who),extra)
+	function luadev.RunOnServer(script, chunkname, extra)
+		return luadev.Run(script, chunkname, extra)
 	end
 
-	function luadev.RunOnSelf(script,who,extra)
-		if not isstring(who) then who = nil end
-		if not who and extra and isentity(extra) then extra = {ply=extra} end
-
-		return luadev.RunOnServer(script,who,extra)
+	function luadev.RunOnSelf(script, chunkname, extra)
+		return luadev.RunOnServer(script, chunkname, extra)
 	end
 
 
@@ -520,54 +489,55 @@ if SERVER then
 			luadev.Print("#" .. #script:Split("\n") .. "lines")
 			luadev.Print("#" .. #script .. "bytes")
 		end
-		if targets then for k,v in pairs(targets) do luadev.Print(v) end end
+		if targets then
+			for _, v in pairs(targets) do
+				luadev.Print(v)
+			end
+		end
 	end
 
 	function luadev._ReceivedData(_, ply)
 
-		local script = luadev.ReadCompressed() -- luadev.WriteCompressed(data)
-		local decoded=net.ReadTable()
-		decoded.src=script
+		local script = luadev.ReadCompressed()
+		local decoded = net.ReadTable()
 
+		decoded.chunkname = decoded.chunkname or "no chunkname"
 
-		local target=decoded.dst
-		local info = decoded.info
-		local target_ply=decoded.dst_ply
-		local extra=decoded.extra or {}
-		if not istable(extra) then
-			return luadev.RejectCommand (ply,"bad extra table")
-		end
-		extra.ply=ply
+		local extra = decoded.extra or {}
+		extra.sender = extra.sender or ply
 
-		if not luadev.CanLuaDev  (ply,script,nil,target,target_ply,extra) then
-			return luadev.RejectCommand (ply)
+		if not luadev.CanLuaDev(ply,script,nil,target,decoded.dst_ply,extra) then
+			return luadev.RejectCommand(ply)
 		end
 
-	--	if luadev.TransmitHook(data)~=nil then return end
-
-		local identifier = luadev.GetPlayerIdentifier(ply,info)
+		local identifier = luadev.GetPlayerIdentifier(ply, decoded.chunkname)
 		local where
-		local ok,err
-		if 		target==luadev.TO_SERVER  then ok,err=luadev.RunOnServer (script,				identifier,extra) where = "server"
-		elseif  target==luadev.TO_CLIENT  then	ok,err=luadev.RunOnClient (script,target_ply,	identifier,extra) where = "client"
-		elseif  target==luadev.TO_CLIENTS then	ok,err=luadev.RunOnClients(script,				identifier,extra) where = "clients"
-		elseif  target==luadev.TO_SHARED  then	ok,err=luadev.RunOnShared (script,				identifier,extra) where = "shared"
-		else  	luadev.S2C(ply,"Unknown target")
+		local ok, err
+
+		if decoded.dst == luadev.TO_SERVER then
+			ok, err = luadev.RunOnServer(script, identifier, extra)
+			where = "server"
+		elseif decoded.dst == luadev.TO_CLIENT then
+			ok, err = luadev.RunOnClient(script, decoded.dst_ply, identifier, extra)
+			where = "client"
+		elseif decoded.dst==luadev.TO_CLIENTS then
+			ok, err = luadev.RunOnClients(script, identifier, extra)
+			where = "clients"
+		elseif decoded.dst==luadev.TO_SHARED then
+			ok, err = luadev.RunOnShared(script, identifier, extra)
+			where = "shared"
+		else
+			luadev.S2C(ply,"Unknown target")
 		end
 
-		log_script(script, ply, where, identifier, target_ply)
+		log_script(script, ply, where, identifier, decoded.dst_ply)
 
 		-- no callback system yet
 		if not ok then
 			ErrorNoHalt(tostring(err)..'\n')
 		end
-
 	end
 	net.Receive(Tag, function(...) luadev._ReceivedData(...) end)
-end
-
-local function CMD(who)
-	return CLIENT and "CMD" or who or "CMD"
 end
 
 function luadev.RepeatLastCommand()
@@ -583,27 +553,31 @@ function luadev.GetLastRunPath()
 end
 
 function luadev.AddCommands()
-	luadev.COMMAND('run_sv',function(ply,_,script,who)
-		who = CMD(who)
-		luadev.RunOnServer(script,who,luadev.MakeExtras(ply))
+	local function CMD(chunkname)
+		return CLIENT and "CMD" or chunkname or "CMD"
+	end
+
+	luadev.COMMAND('run_sv',function(ply,_,script,chunkname)
+		chunkname = CMD(chunkname)
+		luadev.RunOnServer(script,chunkname,luadev.MakeExtras(ply))
 	end,true)
 
-	luadev.COMMAND('run_sh',function(ply,_,script,who)
-		who = CMD(who)
-		luadev.RunOnShared(script,who,luadev.MakeExtras(ply))
+	luadev.COMMAND('run_sh',function(ply,_,script,chunkname)
+		chunkname = CMD(chunkname)
+		luadev.RunOnShared(script,chunkname,luadev.MakeExtras(ply))
 	end,true)
 
-	luadev.COMMAND('run_clients',function(ply,_,script,who)
-		who = CMD(who)
-		luadev.RunOnClients(script,who,luadev.MakeExtras(ply))
+	luadev.COMMAND('run_clients',function(ply,_,script,chunkname)
+		chunkname = CMD(chunkname)
+		luadev.RunOnClients(script,chunkname,luadev.MakeExtras(ply))
 	end,true)
 
-	luadev.COMMAND('run_self',function(ply,_,script,who)
-		who = CMD(who)
-		luadev.RunOnSelf(script,who,luadev.MakeExtras(ply))
+	luadev.COMMAND('run_self',function(ply,_,script,chunkname)
+		chunkname = CMD(chunkname)
+		luadev.RunOnSelf(script,chunkname,luadev.MakeExtras(ply))
 	end,true)
 
-	luadev.COMMAND('run_client',function(ply,tbl,script,who)
+	luadev.COMMAND('run_client',function(ply,tbl,script,chunkname)
 
 		if not tbl[1] or not tbl[2] then luadev.Print("Syntax: lua_run_client (steamid/userid/uniqueid/part of name) script") return end
 
@@ -628,10 +602,10 @@ function luadev.AddCommands()
 
 		script = script:Trim()
 
-		luadev.RunOnClient(script,cl,CMD(who),luadev.MakeExtras(ply))
+		luadev.RunOnClient(script,cl,CMD(chunkname),luadev.MakeExtras(ply))
 	end)
 
-	luadev.COMMAND('send_cl',function(ply,tbl,_,who)
+	luadev.COMMAND('send_cl',function(ply,tbl,_,chunkname)
 
 		if not tbl[1] or not tbl[2] then luadev.Print("Syntax: lua_send_cl (steamid/userid/uniqueid/part of name) \"path\"") return end
 
@@ -649,9 +623,9 @@ function luadev.AddCommands()
 
 		local content = Path and luadev.GiveFileContent(Path,searchpath)
 		if not content then luadev.Print("Could not read the file\n") return end
-		who = who or CMD(who)
+		chunkname = chunkname or CMD(chunkname)
 
-		luadev.RunOnClient(content,cl,who,luadev.MakeExtras(ply))
+		luadev.RunOnClient(content,cl,chunkname,luadev.MakeExtras(ply))
 	end)
 
 	local function handle(ply, c, func)
@@ -661,14 +635,14 @@ function luadev.AddCommands()
 		local content = Path and luadev.GiveFileContent(Path,searchpath)
 		if not content then luadev.Print("Could not read the file\n") return end
 
-		local who=string.GetFileFromFilename(Path)
-		who = who or CMD(who)
+		local chunkname=string.GetFileFromFilename(Path)
+		chunkname = chunkname or CMD(chunkname)
 
 		if content then
 			luadev.last_run = {func = handle, args = {ply, c, func}, path = Path, searchpath = searchpath}
 		end
 
-		func(content, who, luadev.MakeExtras(ply))
+		func(content, chunkname, luadev.MakeExtras(ply))
 	end
 
 	luadev.COMMAND('send_sv',function(ply,c)
@@ -694,28 +668,14 @@ if CLIENT then
 	net.Receive(Tag,function(...) luadev._ReceivedData(...) end)
 
 	function luadev._ReceivedData()
-
 		local script = luadev.ReadCompressed()
 		local decoded=net.ReadTable()
 
-		local info=decoded.info
-		local extra=decoded.extra
-
-		local ok,ret = luadev.Run(script,tostring(info),extra)
+		local ok,ret = luadev.Run(script, decoded.chunkname, decoded.extra)
 
 		if not ok then
 			ErrorNoHalt(tostring(ret)..'\n')
 		end
-
-		--[[ -- Not done
-		if extra.retid then
-			net.Start(net_retdata)
-				net.WriteUInt(extra.retid,32)
-				net.WriteBool(ok)
-				net.WriteTable(ret)
-			net.SendToServer()
-		end --]]
-
 	end
 
 	function luadev.CheckStore(src)
@@ -736,95 +696,64 @@ if CLIENT then
 
 		net.Start(Tag)
 			luadev.WriteCompressed(data.src or "")
-
-			-- clear extra data
-			data.src = nil
-			if data.extra then
-				data.extra.ply = nil
-				if table.Count(data.extra)==0 then data.extra=nil end
-			end
-
 			net.WriteTable(data)
 			if net.BytesWritten()==65536 then
 				luadev.Print("Unable to send lua code (too big)\n")
 				return nil,"Unable to send lua code (too big)"
 			end
-
 		net.SendToServer()
 		return true
 	end
 
 
-	function luadev.RunOnClients(script,who,extra)
-
-		if not who and extra and isentity(extra) then extra = {ply=extra} end
-
+	function luadev.RunOnClients(script,chunkname,extra)
 		local data={
 			src=script,
 			dst=luadev.TO_CLIENTS,
-			info=who,
+			chunkname=chunkname,
 			extra=extra,
 		}
-
 		return luadev.ToServer(data)
 
 	end
 
 
-	function luadev.RunOnSelf(script,who,extra)
-		if not isstring(who) then who = nil end
-		if not who and extra and isentity(extra) then extra = {ply=extra} end
-		--if luadev_selftoself:GetBool() then
-		--	luadev.Run
-		--end
-		return luadev.RunOnClient(script,LocalPlayer(),who,extra)
+	function luadev.RunOnSelf(script,chunkname,extra)
+		return luadev.RunOnClient(script,LocalPlayer(),chunkname,extra)
 	end
 
-	function luadev.RunOnClient(script,targets,who,extra)
-		-- compat
-			if not targets and isentity(who) then
-				targets=who
-				who = nil
-			end
-
-			if extra and isentity(extra) and who==nil then extra={ply=extra} end
-
-		if (not istable(targets) and not IsValid(targets))
-		or (istable(targets) and table.Count(targets)==0)
-		then error"Invalid player(s)" end
+	function luadev.RunOnClient(script,targets,chunkname,extra)
+		if (not istable(targets) and not IsValid(targets)) or (istable(targets) and table.Count(targets)==0) then
+			error"Invalid player(s)"
+		end
 
 		local data={
 			src=script,
 			dst=luadev.TO_CLIENT,
 			dst_ply=targets,
-			info=who,
+			chunkname=chunkname,
 			extra=extra,
 		}
-
 		return luadev.ToServer(data)
 	end
 
-	function luadev.RunOnServer(script,who,extra)
-		if not who and extra and isentity(extra) then extra = {ply=extra} end
-
+	function luadev.RunOnServer(script,chunkname,extra)
 		local data={
 			src=script,
 			dst=luadev.TO_SERVER,
 			--dst_ply=pl
-			info=who,
+			chunkname=chunkname,
 			extra=extra,
 		}
 		return luadev.ToServer(data)
 	end
 
-	function luadev.RunOnShared(script,who,extra)
-		if not who and extra and isentity(extra) then extra = {ply=extra} end
-
+	function luadev.RunOnShared(script,chunkname,extra)
 		local data={
 			src=script,
 			dst=luadev.TO_SHARED,
 			--dst_ply=pl
-			info=who,
+			chunkname=chunkname,
 			extra=extra,
 		}
 

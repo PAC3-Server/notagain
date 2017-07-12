@@ -593,7 +593,8 @@ if CLIENT then
 
 	timer.Create("hitmark", 0.25, 0, function()
 		local ply = LocalPlayer()
-		if not ply:IsValid() then return end
+		if not ply:IsValid() or not ply:GetEyeTrace() then return end
+
 		local data = ply:GetEyeTrace()
 		local ent = data.Entity
 		if ent:IsNPC() or ent:IsPlayer() then

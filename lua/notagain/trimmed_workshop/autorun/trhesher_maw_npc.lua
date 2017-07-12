@@ -1,3 +1,5 @@
+if not file.Exists("autorun/vj_base_autorun.lua","LUA") then return end
+
 do
 	local ENT = {}
 	ENT.ClassName = "npc_vj_mass_thresher"
@@ -10,7 +12,7 @@ do
 	ENT.Purpose 		= "Spawn it and let it maul you."
 	ENT.Instructions 	= "Click on it to spawn it."
 	ENT.Category		= "Mass Effect 3"
-	
+
 	if (CLIENT) then
 	local Name = "Thresher Maw"
 	local LangName = "npc_vj_m3_thresher"
@@ -49,7 +51,7 @@ do
 		ENT.HasSoundTrack = false -- Does the SNPC have a sound track?
 		ENT.MeleeAttackDistance = 1000
 		ENT.MeleeAttackAnimationFaceEnemy = false -- Should it face the enemy while playing the melee attack animation?
-		
+
 			-- ====== Flinching Code ====== --
 		ENT.CanFlinch = 2 -- 0 = Don't flinch | 1 = Flinch at any damage | 2 = Flinch only from certain damages
 		ENT.FlinchDamageTypes = {DMG_BLAST} -- If it uses damage-based flinching, which types of damages should it flinch from?
@@ -58,7 +60,7 @@ do
 		ENT.FlinchAnimation_UseSchedule = false -- false = SCHED_ | true = ACT_
 		ENT.AnimTbl_Flinch = {ACT_BIG_FLINCH} -- If it uses normal based animation, use this
 		ENT.HitGroupFlinching_DefaultWhenNotHit = true -- If it uses hitgroup flinching, should it do the regular flinch if it doesn't hit any of the specified hitgroups?
-		
+
 		ENT.AnimTbl_RangeAttack = {"Atk_2"} -- Range Attack Animations
 		ENT.RangeDistance = 3100
 		ENT.RangeAttackEntityToSpawn = "obj_tm_spit" -- The entity that is spawned when range attacking
@@ -69,7 +71,7 @@ do
 		ENT.NextAnyAttackTime_Range = 1 -- How much time until it can use a attack again? | Counted in Seconds
 		ENT.RangeAttackExtraTimers = {1.35, 1.4, 1.45, 1.5} -- Extra range attack timers | it will run the projectile code after the given amount of seconds
 		ENT.TimeUntilRangeAttackProjectileRelease = 1.3 -- How much time until the projectile code is ran?
-		
+
 			-- ====== Sound File Paths ====== --
 		-- Leave blank if you don't want any sounds to play
 		ENT.SoundTbl_Pain = {
@@ -99,7 +101,7 @@ do
 			self:VJ_ACT_PLAYACTIVITY(ACT_COVER,true,2.5,false)
 			timer.Simple(0.4,function() if self:IsValid() then self:EmitSound("tm/ss_maw_alert"..math.random(1,2)..".mp3", 100, 100, 1) end end)
 		end
-		
+
 		function ENT:MultipleMeleeAttacks()
 		local EnemyDistance = self:VJ_GetNearestPointToEntityDistance(self:GetEnemy(),self:GetPos():Distance(self:GetEnemy():GetPos()))
 			if EnemyDistance > 0 && EnemyDistance < 1000 then
@@ -150,7 +152,7 @@ do
 			*** Copyright (c) 2012-2016 by DrVrej, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/	
+		-----------------------------------------------*/
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -166,7 +168,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Information		= "Projectiles for my addons"
 	ENT.Category		= "Projectiles"
-	
+
 	if (CLIENT) then
 		local Name = "Spit"
 		local LangName = "obj_tm_spit"
@@ -217,7 +219,7 @@ do
 			*** Copyright (c) 2012-2016 by Mayhem, All rights reserved. ***
 			No parts of this code or any of its contents may be reproduced, copied, modified or adapted,
 			without the prior written consent of the author, unless otherwise indicated for stand-alone materials.
-		-----------------------------------------------*/	
+		-----------------------------------------------*/
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)

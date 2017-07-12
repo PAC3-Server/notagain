@@ -1,5 +1,25 @@
 AddCSLuaFile()
 
+do -- mute
+	aowl.AddCommand("mute|block=player",function(ply,line,target)
+		local ent = net.ReadEntity()
+		ent:SetMuted(true)
+		ent.aowl_muted = true
+	end, "localplayer")
+
+	aowl.AddCommand("unmute|unblock=player",function(ply,line,target)
+		local ent = net.ReadEntity()
+		ent:SetMuted(false)
+		ent.aowl_muted = nil
+	end, "localplayer")
+
+	hook.Add("OnPlayerChat","aowl_mute",function(ply)
+		if ply.aowl_muted then
+			return true
+		end
+	end)
+end
+
 aowl.AddCommand("fakedie=string[],string[],boolean", function(ply, line, killer, icon, swap)
 	local victim = ply:Name()
 	local killer_team = -1

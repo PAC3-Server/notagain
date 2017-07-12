@@ -1,3 +1,5 @@
+if not file.Exists("autorun/vj_base_autorun.lua","LUA") then return end
+
 do
 
 	local ENT = {}

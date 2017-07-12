@@ -1,3 +1,5 @@
+if not file.Exists("autorun/vj_base_autorun.lua","LUA") then return end
+
 local function AddConVar(cName,cValue,cFlags)
 	if !ConVarExists(cName) then
 		local cFlags = cFlags or {FCVAR_NONE}

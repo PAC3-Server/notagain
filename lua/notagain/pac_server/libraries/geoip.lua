@@ -1,4 +1,11 @@
-require("geoip")
+pcall(require, "geoip")
+
+if not _G.GeoIP then
+	MsgC(Color(255, 127, 127), debug.getinfo(1).source .. " could not find the GeoIP binary module!\n")
+end
+
+local GeoIP = _G.GeoIP or {}
+_G.GeoIP = nil
 
 local GeoIP_get = GeoIP.Get
 
@@ -14,7 +21,15 @@ function GeoIP.Get(input)
         return
     end
 
-    local gip = GeoIP_get(input) -- default action
+    local gip
+
+	if GeoIP_get then
+		gip = GeoIP_get(input) -- default action
+	else
+		gip = {}
+		MsgC(Color(255, 127, 127), debug.getinfo(2).source .. " could not find the GeoIP binary module!\n")
+	end
+
     return {
         longitude = gip.longitude or 0,
         latitude = gip.latitude or 0,
