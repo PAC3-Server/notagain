@@ -11,15 +11,15 @@ if CLIENT then
 end
 
 if SERVER then
-    aowl.AddCommand("setsolid|solid|notsolid",function(ply, line)
+    aowl.AddCommand("setsolid|solid|notsolid", function(ply, line)
         if ply:GetInfoNum("cl_solid_mode",1) == 1 then
 			ply:ConCommand("cl_solid_mode 0")
 			ply:SetCustomCollisionCheck(true)
-			ply:PrintMessage(HUD_PRINTTALK,"You no longer collide with anything!")
+			ply:ChatPrint("You no longer collide with anything!")
 		else
 			ply:ConCommand("cl_solid_mode 1")
 			ply:SetCustomCollisionCheck(false)
-			ply:PrintMessage(HUD_PRINTTALK,"You are now solid!")
+			ply:ChatPrint("You are now solid!")
 		end
     end)
 end

@@ -33,7 +33,7 @@ aowl.AddCommand("bot=string_trim[create],string[]",function(ply, line, what, nam
 	end
 end, "developers")
 
-aowl.AddCommand("nextbot=string_trim[nextbot]",function(pl, line, name)
+aowl.AddCommand("nextbot=string_trim[mingebag]",function(ply, line, name)
 	aowl.Execute(me, "bring _" .. player.CreateNextBot(name):EntIndex())
 end, "developers")
 
