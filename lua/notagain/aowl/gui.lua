@@ -1,3 +1,5 @@
+AddCSLuaFile()
+
 local netstring = "AOWL_GUI_LOGS"
 local netsendcmds = "AOWL_GUI_SEND_CMDS"
 local netrequestsync = "AOWL_GUI_REQUEST_SYNC"
