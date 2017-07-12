@@ -31,12 +31,6 @@ if SERVER then
         net.Send(tbl)
     end)
 
-    aowl.AddCommand("menu|aowl|aowlgui=nil",function(ply)
-        if IsValid(ply) then
-            ply:ConCommand("aowlgui")
-        end
-    end,"players")
-
     local SendCmdsToClient = function(ply)
         if not IsValid(ply) then return end
         local tbl = {}
@@ -54,6 +48,14 @@ if SERVER then
     end
 
     hook.Add("PlayerInitialSpawn",tag,SendCmdsToClient)
+
+    hook.Add("AowlInitialized",tag,function()
+        aowl.AddCommand("menu|aowl|aowlgui=nil",function(ply)
+            if IsValid(ply) then
+                ply:ConCommand("aowlgui")
+            end
+        end)
+    end)
 
     net.Receive(netrequestsync,function(len,ply)
         SendCmdsToClient(ply)
