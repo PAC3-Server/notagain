@@ -1449,4 +1449,6 @@ end
 
 timer.Simple(0, function() hook.Run("AowlInitialized") end)
 
+include("notagain/aowl/gui.lua")
+
 return aowl
