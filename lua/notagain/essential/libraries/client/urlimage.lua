@@ -275,17 +275,7 @@ setmetatable(sql,{__call=function(self,query,...)
 	query = query..';'
 
 	if t[1] then
-		PrintTable(t)
-		query = query:gsub("%%s", "___OK___")
-		print(1, query)
-		query = query:gsub("%%", "___TEMP___")
-		print(2, query)
-		query = query:gsub("___OK___", "%%s")
-		print(3, query)
 		query = query:format(unpack(t))
-		print(4, query)
-		query = query:gsub("___TEMP___", "%%")
-		print(5, query)
 	end
 
 	local ret = sql.Query(query)
