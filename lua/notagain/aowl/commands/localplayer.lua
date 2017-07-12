@@ -33,6 +33,10 @@ aowl.AddCommand("fakedie=string[],string[],boolean", function(ply, line, killer,
 	GAMEMODE:AddDeathNotice(killer, killer_team, icon, victim, victim_team)
 end, "clientside")
 
+aowl.AddCommand("volume|vol=number",function(ply, line, vol)
+	ply:ConCommand("volume " .. tostring(vol))
+end, "localplayer")
+
 aowl.AddCommand("fullupdate|update",function(ply, line)
 	ply:ConCommand("record 1;stop")
 end, "localplayer")
