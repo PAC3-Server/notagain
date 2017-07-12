@@ -224,19 +224,25 @@ if CLIENT then
         end
     end
 
+    aowlgui.GetClientCmds = function()
+        for k,v in pairs(_G.aowl.commands) do
+            aowlgui.Commands[k] = {
+                aliases = v.aliases,
+                argtypes = v.argtypes,
+            }
+        end
+    end
+
     net.Receive(netsendcmds,function()
         local tbl = net.ReadTable()
         aowlgui.Commands = tbl
         if _G.aowl then
-            for k,v in pairs(_G.aowl.commands) do
-                aowlgui.Commands[k] = {
-                    aliases = v.aliases,
-                    argtypes = v.argtypes,
-                }
-            end
+            aowlgui.GetClientCmds()
         end
         aowlgui.UpdateCmdList()
     end)
+
+    hook.Add("AowlInitialized",tag,aowlgui.GetClientCmds)
 
     local setup = frame:Add("DScrollPanel")
     setup:Dock(FILL)
