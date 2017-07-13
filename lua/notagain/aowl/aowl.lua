@@ -842,10 +842,6 @@ do -- commands
 	function aowl.ConsoleCommand(ply, cmd, args, line)
 		local cmd = table.remove(args, 1)
 		local ok, reason = aowl.Execute(ply, cmd .. " " .. table.concat(args, ","))
-
-		if ok then
-            log(cmd,line)
-        end
 	end
 
 	if SERVER then
