@@ -2,7 +2,11 @@ do
 	local META = FindMetaTable("Player")
 
 	function META:IsAFK()
-		return self:GetNWBool("is_afk")
+		return self:GetNWFloat("afk") > 0
+	end
+
+	function META:GetAFKTime()
+		return CurTime() - self:GetNWFloat("afk")
 	end
 end
 
@@ -56,13 +60,13 @@ if CLIENT then
 		if time - last_moved > cl_afk_time:GetFloat() then
 			if not is_afk then
 				hook.Run("OnPlayerAFK", LocalPlayer(), true)
-				net.Start("on_afk") net.WriteBool(true) net.SendToServer()
+				net.Start("on_afk") net.WriteFloat(CurTime()) net.SendToServer()
 				is_afk = true
 			end
 		else
 			if is_afk then
 				hook.Run("OnPlayerAFK", LocalPlayer(), false)
-				net.Start("on_afk") net.WriteBool(false) net.SendToServer()
+				net.Start("on_afk") net.WriteFloat(-1) net.SendToServer()
 				is_afk = false
 			end
 		end
@@ -71,10 +75,31 @@ end
 
 if SERVER then
 	util.AddNetworkString("on_afk")
+	util.AddNetworkString("cl_on_afk")
 
 	net.Receive("on_afk", function(_, ply)
-		local bool = net.ReadBool()
-		hook.Run("OnPlayerAFK", ply, bool)
-		ply:SetNWBool("is_afk", bool)
+		local time = net.ReadFloat()
+
+		if time > 0 then
+			hook.Run("OnPlayerAFK", ply, true, ply:GetAFKTime())
+		else
+			hook.Run("OnPlayerAFK", ply, false, ply:GetAFKTime())
+		end
+
+		net.Start("cl_on_afk")
+			net.WriteEntity(ply)
+			net.WriteFloat(ply:GetAFKTime())
+		net.Broadcast()
+
+		ply:SetNWFloat("afk", time)
+	end)
+end
+
+if CLIENT then
+	net.Receive("cl_on_afk", function()
+		local ply = net.ReadEntity()
+		local time = net.ReadFloat()
+
+		hook.Run("OnPlayerAFK", ply, time > 0, time)
 	end)
 end

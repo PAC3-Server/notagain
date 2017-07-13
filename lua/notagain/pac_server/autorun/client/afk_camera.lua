@@ -1,4 +1,3 @@
-local tag = "AFKmera"
 local afkmera_enable = CreateConVar("cl_afkmera_enable", "1", { FCVAR_ARCHIVE }, "Should AFKmera be active or not?")
 local afkmera_anim_enable = CreateConVar("cl_afkmera_anim_enable", "1", { FCVAR_ARCHIVE }, "Should we change the playermodel's animation while AFK or not?")
 local afkmera_transition_speed = CreateConVar("cl_afkmera_transition_speed", "0.66", { FCVAR_ARCHIVE }, "The time it takes to go from player eyes to AFKmera and vice versa.")
@@ -23,7 +22,7 @@ local noAFKEntities = {
 	gmod_playx_repeater = true,
 	gmod_playx_proximity = true,
 }
-hook.Add("CalcView", tag, function(ply, basePos, baseAng, baseFov, nearZ, farZ)
+hook.Add("CalcView", "afk_camera", function(ply, basePos, baseAng, baseFov, nearZ, farZ)
 	if not afkmera_enable:GetBool() or spawned > CurTime() or not (pace and pace.Editor:IsValid()) then return end
 
 	local IsAFK = false
@@ -85,7 +84,7 @@ hook.Add("CalcView", tag, function(ply, basePos, baseAng, baseFov, nearZ, farZ)
 	end
 end)
 
-hook.Add("CalcMainActivity", tag, function(ply)
+hook.Add("CalcMainActivity", "afk_camera", function(ply)
 	if not afkmera_enable:GetBool() or not afkmera_anim_enable:GetBool() then return end
 
 	local IsAFK = false

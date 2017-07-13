@@ -54,6 +54,27 @@ if CLIENT then
 	end
 end
 
+function easylua.GetFunctionSource(...)
+    if type(...) ~= "function" then return end
+
+    local info = debug.getinfo(...)
+    if info.what == "C" then return end
+
+    local dir
+    if file.Exists(info.short_src, "LUA") then
+        dir = "LUA"
+    elseif file.Exists(info.short_src, "GAME") then
+        dir = "GAME"
+    end
+    if not dir then return end
+
+    local lines = string.Split((file.Read(info.short_src, dir)), "\n")
+    MsgC(Color(220, 204, 82), "@"..tostring(info.short_src).." "..info.linedefined.." - "..info.lastlinedefined.."\n")
+    for i=info.linedefined,info.lastlinedefined do
+        MsgC(Color(244,167,66),lines[i].."\n")
+    end
+end
+
 function easylua.Print(...)
 	if CLIENT then
 		easylua.PrintOnServer(...)
@@ -372,6 +393,7 @@ function easylua.Start(ply)
 		vars.trace = trace
 		vars.length = trace.StartPos:Distance(trace.HitPos)
 
+		vars.src = easylua.GetFunctionSource
 		vars.copy = easylua.CopyToClipboard
 		vars.create = easylua.CreateEntity
 		vars.prints = easylua.PrintOnServer
