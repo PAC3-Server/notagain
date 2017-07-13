@@ -1,4 +1,3 @@
-local tag = "PCTasks"
 local PCTasks = {}
 _G.PCTasks = PCTasks
 PCTasks.Store = {}
@@ -66,7 +65,7 @@ if SERVER then
         end
     end
 
-    hook.Add("PlayerInitialSpawn",tag,function(ply)
+    hook.Add("PlayerInitialSpawn","pctasks",function(ply)
         PCTasks.Send(ply)
         ply.PCTasks_Init_Passed = true
     end)
@@ -87,7 +86,7 @@ if CLIENT then
         hook.Run("OnPCTaskCompleted",ply,name)
     end)
 
-    hook.Add("OnPCTaskCompleted",tag,function(ply,task)
+    hook.Add("OnPCTaskCompleted","pctasks",function(ply,task)
         if ply ~= LocalPlayer() then
             chat.AddText(ply,Color(200,200,200)," completed [",Color(244, 167, 66),task,Color(200,200,200),"]")
         else
