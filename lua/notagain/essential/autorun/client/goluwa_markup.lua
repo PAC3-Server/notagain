@@ -185,6 +185,8 @@ end
 
 local math = table.Copy(math)
 
+math.clamp = math.Clamp
+
 function math.randomf(a, b)
 	return math.Rand(a, b)
 end
@@ -253,6 +255,7 @@ do
 	end
 
 	function render2d.SetAlphaMultiplier(m)
+		render2d.alpha_multiplier = m
 		surface.SetAlphaMultiplier(m)
 	end
 
@@ -419,7 +422,14 @@ function fonts.CreateFont(options)
 end
 
 function fonts.FindFont(name)
-	return {name = name}
+	return {
+		font = name,
+		size = 16,
+		weight = 600,
+		blur_size = 2,
+		background_color = Color(25,50,100,255),
+		blur_overdraw = 10,
+	}
 end
 
 local gfx = {}
@@ -436,6 +446,43 @@ function gfx.DrawLine(a,b,c,d)
 	surface.DrawLine(a,b,c,d)
 end
 
+do
+	local prettytext = requirex("pretty_text")
+
+	local FONT = {}
+
+	function gfx.SetFont(font)
+		FONT = font
+	end
+
+	render2d.alpha_multiplier = 1
+
+	function gfx.DrawText(str, x,y,w,h)
+		cam.PushModelMatrix(render2d.GetMatrix())
+		local r,g,b,a = render2d.GetColor()
+
+		prettytext.DrawText({
+			text = str,
+			x = x,
+			y = y,
+			font = FONT.font,
+			size = FONT.size,
+			weight = FONT.weight,
+			blur_size = FONT.blur_size,
+			foreground_color = Color(r*255,g*255,b*255,a*255*render2d.alpha_multiplier),
+			background_color = FONT.background_color,
+			blur_overdraw = FONT.blur_overdraw,
+			shadow_x = FONT.shadow_x or FONT.shadow,
+			shadow_y = FONT.shadow_y,
+		})
+		cam.PopModelMatrix()
+	end
+
+	function gfx.GetTextSize(str)
+		return prettytext.GetTextSize(str, FONT.font, FONT.size, FONT.weight, FONT.blur_size)
+	end
+end
+--[[
 function gfx.SetFont(font)
 	if isstring(font) then
 		surface.SetFont(font)
@@ -455,6 +502,7 @@ function gfx.GetTextSize(str)
 	local x,y = surface.GetTextSize(str)
 	return x or 0,y or 0
 end
+]]
 
 local prototype = {}
 
