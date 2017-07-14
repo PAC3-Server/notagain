@@ -14,6 +14,17 @@ local crash_time
 local delay = 0
 local times = 1
 
+-- Delay Function
+local function delaycall(time, callback)
+	local wait = RealTime() + time
+	hook.Add("Tick", "crashsys_delay", function()
+		if RealTime() > wait then
+			callback()
+			hook.Remove("Tick", "crashsys_delay")
+		end
+	end)
+end
+
 local function CrashTick(is_crashing, length, api_response)
 	if is_crashing then
 		crash_status = true
@@ -108,7 +119,7 @@ end
 
 do -- gui
 	local DermaPanel
-	local timeout_cvar = GetConVar("cl_timeout")
+	local menu_closed = false
 
 	local function ShowMenu()
 		if IsValid(DermaPanel) then
@@ -123,7 +134,7 @@ do -- gui
 		DermaPanel:MakePopup()
 
 		DermaPanel.OnClose = function()
-			hook.Remove("CrashTick", "crashsys")
+			menu_closed = true
 		end
 
 		local prog = vgui.Create( "DProgress", DermaPanel )
@@ -133,11 +144,31 @@ do -- gui
 		DermaPanel.prog = prog
 
 		local logs = vgui.Create( "DListView", DermaPanel )
+
+		logs.Head = logs:AddColumn( "Status" )
+		function logs.Head.DoClick() end
+
 		logs:SetMultiSelect( false )
-		logs:AddColumn( "Status" )
 		logs:Dock(FILL)
 
-		logs:AddLine( "YOU HAVE TIMEDOUT! - Reconnecting in "..timeout_cvar:GetInt().." seconds!" )
+		logs:AddLine( "YOU HAVE TIMED OUT! - Reconnecting in 2 minutes!" )
+
+		logs.OldAddLine = logs.OldAddLine or logs.AddLine
+		function logs:AddLine(...)
+			local vbar = self.VBar
+			local line = self:OldAddLine(...)
+
+			self:ClearSelection()
+			self:SelectItem(line)
+
+			delaycall(0.01, function()
+				if IsValid(vbar) then
+					vbar:SetScroll(vbar.CanvasSize)
+				end
+			end)
+
+			return line
+		end
 
 		DermaPanel.logs = logs
 
@@ -173,14 +204,62 @@ do -- gui
 
 	local api_changed = 0
 
+	local canned_messages = {
+		[1] = {
+			"Guh... what? Impossible!?",
+			"Suffer like G did?",
+			"Playtime has ended...",
+			"The password is Wild Rose.",
+			"Blaming Staff...",
+			"Attempting to multiply by zero...",
+			"It was you wasn't it?",
+			"Recovering recoverables...",
+			"Chasing tail...",
+			"Filling out crash reports...",
+			"404 no server found...",
+			"Feeding the chocobos...",
+			"Sleeping on the job?",
+			"Taming the dragons...",
+		},
+		[2] = {
+			"Sure is taking a while...",
+			"So how's your day been?",
+			"Spam pinging the admins...",
+			"Atleast the weather's nice...",
+			"What have you done?",
+			"Don't blame the operator.",
+			"Looking for a way out...",
+			"Reinstalling Garry's Mod",
+			"Looks like it's your (un)lucky day.",
+			"Yup we're still timing out.",
+			"Blaming the devs...",
+			"Using escape rope...",
+			"Pushing on daisies...",
+			"Increase dramatical power!!!!"
+		},
+		[3] = {
+			"Fear not! Our word is our bond! We shall return!",
+			"You should double check to see if the server is up again.",
+			"Taking way longer then expected... blame devs.",
+			"Retrying soon...",
+			"Checking your watch...",
+			"Don't worry we'll retry soon...",
+			"The end draws near..."
+		}
+	}
+
+	local last_per = 0 -- So we don't spam.
 	hook.Add("CrashTick", "crashsys", function(is_crashing, length, api_response)
 		if is_crashing then
 			if IsValid(DermaPanel) then
 				local prog = DermaPanel.prog
 				local logs = DermaPanel.logs
-				local timeout = math.max(timeout_cvar:GetInt(), 10)
 
-				prog:SetFraction( length/timeout )
+				local timeout = 120
+				local fraction = length/timeout
+				local per = math.floor(fraction*100)
+
+				prog:SetFraction( fraction )
 
 				if api_changed ~= api_response then
 					if api_response == 2 then
@@ -194,14 +273,35 @@ do -- gui
 					api_changed = api_response
 				end
 
-				if length > timeout then
-				--	RunConsoleCommand( "retry" )
+				if per%3 == 0 and per ~= last_per then
+					last_per = per
+
+					local key = per < 60 and 1 or per < 65 and 2 or per >= 80 and 3
+					local msg = canned_messages[key]
+
+					if msg then
+						DermaPanel:SetTitle( msg[math.random(1,#msg)] )
+					end
+
+					if per == 96 then
+						logs:AddLine( "Attempting to auto-reconnect in 3 seconds!" )
+					end
 				end
-			else
+
+				if fraction >= 1 then
+					DermaPanel:Close()
+					delaycall(0.01, function()
+						RunConsoleCommand("retry")
+					end)
+				end
+			elseif not menu_closed then
 				api_changed = 0
 				ShowMenu()
 			end
 		else
+			last_per = 0
+			api_changed = 0
+			menu_closed = false
 			if IsValid(DermaPanel) then
 				DermaPanel:Remove()
 			end
