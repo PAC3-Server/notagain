@@ -598,8 +598,9 @@ function META:AddTable(tbl, tags)
 	end
 end
 
-function META:BeginLifeTime(time)
-	table.insert(self.chunks, {type = "start_fade", val = system.GetElapsedTime() + time})
+function META:BeginLifeTime(time, fade_time)
+	fade_time = fade_time or 2
+	table.insert(self.chunks, {type = "start_fade", val = system.GetElapsedTime() + time + fade_time, fade_time = fade_time, time = time})
 end
 
 function META:EndLifeTime()
@@ -3331,7 +3332,15 @@ do -- drawing
 						start_remove
 					then
 						if chunk.type == "start_fade" then
-							chunk.alpha = math.min(math.max(chunk.val - system.GetElapsedTime(), 0), 1) ^ 5
+
+							local time = chunk.val - system.GetElapsedTime()
+
+							if time <= chunk.fade_time then
+								chunk.alpha = math.clamp(time / chunk.fade_time, 0, 1)
+							else
+								chunk.alpha = 1
+							end
+
 							render2d.SetAlphaMultiplier(chunk.alpha)
 
 							if chunk.alpha <= 0 then
