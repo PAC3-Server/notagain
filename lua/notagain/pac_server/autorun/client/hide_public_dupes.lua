@@ -14,5 +14,5 @@ hook.Add("InitPostEntity","hide_public_dupes",function()
 
       return tabs
   end
-  LocalPlayer():ConCommand("spawnmenu_reload")
+  timer.Simple(0.1,function() RunConsoleCommand("spawnmenu_reload") end)
 end)
