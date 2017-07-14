@@ -1,3 +1,9 @@
+local META = FindMetaTable("Vector")
+
+function META:Unpack()
+	return self.x, self.y, self.z
+end
+
 local function llog(str, ...)
 	MsgN(string.format(str, ...))
 end
@@ -27,13 +33,11 @@ local function loadstring(str, env)
 end
 
 local function typex(val)
-	local t = type(val)
-
-	if t == "table" and t.r and t.g and t.b and t.a then
+	if IsColor(val) then
 		return "color"
 	end
 
-	return t
+	return type(val)
 end
 
 local table = table.Copy(table)
@@ -67,10 +71,27 @@ function render.CreateTextureFromPath(path)
 	end
 
 	local tex = {}
-	tex.mat = Material(path)
+
+	if path:StartWith("http") then
+		local urlimage = requirex("urlimage")
+		tex.mat = urlimage.URLMaterial(path)
+		tex.urlimage = true
+	else
+		tex.mat = Material(path)
+	end
 	tex.IsValid = function()return true end
 	tex.IsLoading = function() return false end
-	tex.GetSize = function() return Vector(tex.mat:Width(), tex.mat:Height()) end
+	tex.GetSize = function()
+		if tex.urlimage then
+			local w, h = tex.mat()
+			if w then
+				return Vector(w, h)
+			end
+
+			return Vector(16, 16)
+		end
+		return Vector(tex.mat:Width(), tex.mat:Height())
+	end
 	return tex
 end
 
@@ -209,7 +230,16 @@ do
 		local TEX
 		function render2d.SetTexture(tex)
 			if tex then
-				surface.SetMaterial(tex.mat)
+				if tex.urlimage then
+					local w,h, mat = tex.mat()
+					if mat then
+						surface.SetMaterial(mat)
+					else
+						draw.NoTexture()
+					end
+				else
+					surface.SetMaterial(tex.mat)
+				end
 			else
 				draw.NoTexture()
 			end
@@ -252,8 +282,8 @@ do
 			current_matrix:Translate(Vector(x,y,0))
 		end
 
-		function render2d.Scale(s)
-			current_matrix:Scale(Vector(1,1,1)*s)
+		function render2d.Scale(w, h)
+			current_matrix:Scale(Vector(w,h,1))
 		end
 
 		function render2d.Rotate(rot)
@@ -407,7 +437,11 @@ function gfx.DrawLine(a,b,c,d)
 end
 
 function gfx.SetFont(font)
-	surface.SetFont(font.name)
+	if isstring(font) then
+		surface.SetFont(font)
+	else
+		surface.SetFont(font.name)
+	end
 end
 
 function gfx.DrawText(str, x,y,w,h)
