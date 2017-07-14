@@ -64,11 +64,10 @@ if CLIENT then
 
     aowlgui.Commands = {}
 
-	function aowlgui.Open()
-        local swidth,sheight = ScrW(),ScrH()
+    function aowlgui.Init()
+		local swidth,sheight = ScrW(),ScrH()
 
 		local frame = vgui.Create("DFrame")
-		aowlgui.GUI = frame
 
 		frame:SetSize(700,500)
 		frame:SetPos(swidth/2-frame:GetWide()/2,sheight/2-frame:GetTall()/2)
@@ -77,18 +76,18 @@ if CLIENT then
 		frame:SetSizable(true)
 		frame:SetTitle("")
 		frame.Paint = function(self,w,h)
-			surface.SetDrawColor(220,220,220)
-			surface.DrawRect(0,0,w,h)
-			surface.SetDrawColor(255,255,255)
-			surface.DrawOutlinedRect(0,0,w,h)
-			surface.DrawLine(0,25,w,25)
-			surface.SetDrawColor(175,175,175)
-			surface.DrawRect(1,1,w-2,24)
-			surface.SetTextColor(255,255,255)
-			surface.SetFont("DermaDefaultBold")
-			local x,y = surface.GetTextSize("AOWL Menu")
-			surface.SetTextPos(w/2-x/2,25/2-y/2)
-			surface.DrawText("AOWL Menu")
+		    surface.SetDrawColor(220,220,220)
+		    surface.DrawRect(0,0,w,h)
+		    surface.SetDrawColor(255,255,255)
+		    surface.DrawOutlinedRect(0,0,w,h)
+		    surface.DrawLine(0,25,w,25)
+		    surface.SetDrawColor(175,175,175)
+		    surface.DrawRect(1,1,w-2,24)
+		    surface.SetTextColor(255,255,255)
+		    surface.SetFont("DermaDefaultBold")
+		    local x,y = surface.GetTextSize("AOWL Menu")
+		    surface.SetTextPos(w/2-x/2,25/2-y/2)
+		    surface.DrawText("AOWL Menu")
 		end
 
 		frame.btnMaxim:Hide()
@@ -96,8 +95,8 @@ if CLIENT then
 
 		frame.btnClose.DoClick = aowlgui.Close
 		frame.btnClose.PaintOver = function(self,w,h)
-			surface.SetDrawColor(255,255,255)
-			surface.DrawOutlinedRect(0,3,w-2,h-13)
+		    surface.SetDrawColor(255,255,255)
+		    surface.DrawOutlinedRect(0,3,w-2,h-13)
 		end
 
 		local list = frame:Add("DListView")
@@ -108,15 +107,15 @@ if CLIENT then
 		list:SetMultiSelect(false)
 		list:AddColumn("Commands")
 		list.PaintOver = function(self,w,h)
-			surface.SetDrawColor(200,200,200)
-			surface.DrawRect(0,0,w,15)
-			surface.SetDrawColor(255,255,255)
-			surface.DrawOutlinedRect(0,0,w,h)
-			surface.DrawLine(0,15,w,15)
-			surface.SetTextColor(80,80,80)
-			local x,y = surface.GetTextSize("Commands")
-			surface.SetTextPos(w/2-x/2,15/2-y/2)
-			surface.DrawText("Commands")
+		    surface.SetDrawColor(200,200,200)
+		    surface.DrawRect(0,0,w,15)
+		    surface.SetDrawColor(255,255,255)
+		    surface.DrawOutlinedRect(0,0,w,h)
+		    surface.DrawLine(0,15,w,15)
+		    surface.SetTextColor(80,80,80)
+		    local x,y = surface.GetTextSize("Commands")
+		    surface.SetTextPos(w/2-x/2,15/2-y/2)
+		    surface.DrawText("Commands")
 		end
 
 		local log = frame:Add("RichText")
@@ -125,10 +124,10 @@ if CLIENT then
 		log:DockMargin(5,5,5,5)
 		log:SetTall(frame:GetTall()/6)
 		log.Paint = function(self,w,h)
-			surface.SetDrawColor(0,0,0)
-			surface.DrawRect(0,0,w,h)
-			surface.SetDrawColor(255,255,255)
-			surface.DrawOutlinedRect(0,0,w,h)
+		    surface.SetDrawColor(0,0,0)
+		    surface.DrawRect(0,0,w,h)
+		    surface.SetDrawColor(255,255,255)
+		    surface.DrawOutlinedRect(0,0,w,h)
 		end
 
 		local setup = frame:Add("DScrollPanel")
@@ -136,13 +135,13 @@ if CLIENT then
 		setup:Dock(FILL)
 		setup:DockMargin(5,5,5,5)
 		setup.Paint = function(self,w,h)
-			surface.SetDrawColor(240,240,240)
-			surface.DrawRect(0,0,w,h)
-			surface.SetDrawColor(200,200,200)
-			surface.DrawRect(0,0,w,50)
-			surface.SetDrawColor(255,255,255)
-			surface.DrawOutlinedRect(0,0,w,h)
-			surface.DrawLine(0,50,w,50)
+		    surface.SetDrawColor(240,240,240)
+		    surface.DrawRect(0,0,w,h)
+		    surface.SetDrawColor(200,200,200)
+		    surface.DrawRect(0,0,w,50)
+		    surface.SetDrawColor(255,255,255)
+		    surface.DrawOutlinedRect(0,0,w,h)
+		    surface.DrawLine(0,50,w,50)
 		end
 
 		local lsearch = setup:Add("DLabel")
@@ -156,7 +155,7 @@ if CLIENT then
 		search:SetSize(150,20)
 		search:SetPos(5,lsearch:GetTall())
 		search.OnKeyCodeTyped = function(self,code)
-			aowlgui.UpdateCmdList(self:GetText())
+		    aowlgui.UpdateCmdList(self:GetText())
 		end
 
 		local error = setup:Add("DLabel")
@@ -178,54 +177,58 @@ if CLIENT then
 		updatecmds:SetText("Update Commands")
 		updatecmds:SetTextColor(Color(80,80,80))
 
-		-- clientside security?
-		local next_request = 0
-		updatecmds.DoClick = function()
-			if CurTime() >= next_request then
-				aowlgui.Commands = {}
-				net.Start(netrequestsync)
-				net.SendToServer()
-				next_request = CurTime() + 30
-			end
-		end
+		updatecmds.DoClick = aowlgui.UpdateCommands()
 
 		updatecmds.Paint = function(self,w,h)
-			local col1 = Color(220,220,220)
-			local col2 = Color(255,255,255)
-			if self:IsHovered() then
-				col1 = Color(220,255,220)
-				col2 = Color(0,255,0)
-			end
-			surface.SetDrawColor(col1)
-			surface.DrawRect(0,0,w,h)
-			surface.SetDrawColor(col2)
-			surface.DrawOutlinedRect(0,0,w,h)
+		    local col1 = Color(220,220,220)
+		    local col2 = Color(255,255,255)
+		    if self:IsHovered() then
+			col1 = Color(220,255,220)
+			col2 = Color(0,255,0)
+		    end
+		    surface.SetDrawColor(col1)
+		    surface.DrawRect(0,0,w,h)
+		    surface.SetDrawColor(col2)
+		    surface.DrawOutlinedRect(0,0,w,h)
 		end
 
 		list.OnRowSelected = function(self,index,panel)
-			local cmd = panel:GetColumnText(1)
-			aowlgui.UpdateAliases(cmd)
-			if not aowlgui.Commands[cmd].desc then
-				error:Show()
-			else
-				error:Hide()
-			end
+		    local cmd = panel:GetColumnText(1)
+		    aowlgui.UpdateAliases(cmd)
+		    if not aowlgui.Commands[cmd].desc then
+			error:Show()
+		    else
+			error:Hide()
+		    end
 		end
 
 		frame:MakePopup()
+		frame:Hide()
+		aowlgui.GUI = frame
+    	end
 
-		aowlgui.UpdateCmdList()
-    end
-
-    function aowlgui.Close()
-        if IsValid(aowlgui.GUI) then
-			aowlgui.GUI:Remove()
+	function aowlgui.Open()
+		if IsValid(aowlgui.GUI) then
+		    aowlgui.GUI:Show()
+		else
+		    aowlgui.Init()
+		    aowlgui.GUI:Show()
 		end
-    end
+		aowlgui.UpdateCommands()
+	end
 
-    function aowlgui.IsOpened()
-        return IsValid(aowlgui.GUI)
-    end
+	function aowlgui.UpdateCommands()
+		net.Start(netrequestsync)
+		net.SendToServer()
+	end
+
+	function aowlgui.Close()
+		aowlgui.GUI:Hide()
+	end
+
+	function aowlgui.IsOpened()
+		return IsValid(aowlgui.GUI) and aowlgui.GUI:IsVisible()
+	end
 
 	local GetProperName = function(self)
 		if not IsValid(self) then return nil end
@@ -262,60 +265,59 @@ if CLIENT then
 		log:AppendText("\n")
 	end
 
-    function aowlgui.UpdateCmdList(search)
+	function aowlgui.UpdateCmdList(search)
 		if not aowlgui.IsOpened() then return end
-
 		local list = aowlgui.GUI.list
-        list:Clear()
-        if not search then
-            for k,v in pairs(aowlgui.Commands) do
-                list:AddLine(k)
-            end
-        else
-            local search = string.PatternSafe(search)
-            for k,v in pairs(aowlgui.Commands) do
-                if string.match(k,search) then
-                    list:AddLine(k)
-                end
-            end
-        end
-    end
+		list:Clear()
+		if not search then
+		    for k,v in pairs(aowlgui.Commands) do
+			list:AddLine(k)
+		    end
+		else
+		    local search = string.PatternSafe(search)
+		    for k,v in pairs(aowlgui.Commands) do
+			if string.match(k,search) then
+			    list:AddLine(k)
+			end
+		    end
+		end
+	end
 
 	local last_labels_aliases = {}
-    function aowlgui.UpdateAliases(cmd)
+    	function aowlgui.UpdateAliases(cmd)
 		if not aowlgui.IsOpened() then return end
 
-        for k,v in pairs(last_labels_aliases) do
-            v:Remove()
-        end
-        local aliases = aowlgui.GetAliases(cmd)
-        local i = 1
-        for k,v in pairs(aliases) do
-            if v ~= cmd then
-                local lbl = aowlgui.GUI.setup:Add("DLabel")
-                lbl:SetText("⮞ "..v)
-                lbl:SetTextColor(Color(30,30,30))
-                lbl:SetPos(95+aowlgui.GUI.lsearch:GetWide(),-10+(10*i))
-                lbl:SetSize(150,20)
-                table.insert(last_labels_aliases,lbl)
-                i = i + 1
-            end
-        end
-    end
+		for k,v in pairs(last_labels_aliases) do
+		    v:Remove()
+		end
+		local aliases = aowlgui.GetAliases(cmd)
+		local i = 1
+		for k,v in pairs(aliases) do
+		    if v ~= cmd then
+			local lbl = aowlgui.GUI.setup:Add("DLabel")
+			lbl:SetText("⮞ "..v)
+			lbl:SetTextColor(Color(30,30,30))
+			lbl:SetPos(95+aowlgui.GUI.lsearch:GetWide(),-10+(10*i))
+			lbl:SetSize(150,20)
+			table.insert(last_labels_aliases,lbl)
+			i = i + 1
+		    end
+		end
+	end
 
-    function aowlgui.GetClientCmds()
-        for k,v in pairs(_G.aowl.commands) do
-            aowlgui.Commands[k] = {
-                aliases = v.aliases,
-                argtypes = v.argtypes,
-            }
-        end
-    end
+	function aowlgui.GetClientCmds()
+		for k,v in pairs(_G.aowl.commands) do
+		    aowlgui.Commands[k] = {
+			aliases = v.aliases,
+			argtypes = v.argtypes,
+		    }
+		end
+	end
 
 	function aowlgui.GetAliases(cmd)
-        if not aowlgui.Commands[cmd] then return end
-        return aowlgui.Commands[cmd].aliases
-    end
+        	if not aowlgui.Commands[cmd] then return end
+        	return aowlgui.Commands[cmd].aliases
+    	end
 
 	net.Receive(netstring,function()
 		local ply = net.ReadEntity()
@@ -331,13 +333,13 @@ if CLIENT then
 		aowlgui.UpdateCmdList()
 	end)
 
-	hook.Add("AowlInitialized",tag,aowlgui.GetClientCmds)
+	hook.Add("AowlInitialized",tag,aowlgui.Init)
 
 	concommand.Add("aowlgui",function()
-        if aowlgui.IsOpened() then
-            aowlgui.Close()
-        else
-            aowlgui.Open()
-        end
-    end)
+		if aowlgui.IsOpened() then
+		    aowlgui.Close()
+		else
+		    aowlgui.Open()
+		end
+	end)
 end
