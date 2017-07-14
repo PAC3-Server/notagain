@@ -1,5 +1,5 @@
 chathud = chathud or {}
-chathud.life_time = 5
+
 chathud.panel = chathud.panel or NULL
 
 chathud.default_font = {
@@ -95,6 +95,7 @@ function chathud.Initialize()
 
 	chathud.markup = markup
 
+
 	for _, v in pairs(file.Find("materials/icon16/*", "GAME")) do
 		if v:EndsWith(".png") then
 			chathud.emote_shortucts[v:gsub("(%.png)$","")] = "<texture=materials/icon16/" .. v .. ",16>"
@@ -141,7 +142,7 @@ function chathud.AddText(...)
 
 			for pattern, font in pairs(chathud.font_modifiers) do
 				if v:find(pattern, nil, true) then
-					table.insert(args, {type = "font", val = font})
+					table.insert(args, #args-1, font)
 				end
 			end
 
@@ -169,10 +170,9 @@ chathud_old_AddText = chathud_old_AddText or chat.AddText
 
 function chat.AddText(...)
     chathud.AddText(...)
-    --chathud_old_AddText(...)
+    chathud_old_AddText(...)
 end
 
 if LocalPlayer():IsValid() then
 	chathud.Initialize()
-	chat.AddText([[Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam convallis accumsan vestibulum. Nulla condimentum sapien a magna aliquam, ut iaculis ante molestie. In scelerisque metus in enim iaculis, ut pellentesque neque ullamcorper. Aliquam erat volutpat. Pellentesque sollicitudin venenatis eros sit amet efficitur. Donec lobortis porttitor purus quis porta. Praesent nulla nibh, faucibus quis accumsan at, scelerisque id mi. Mauris et lectus augue.]])
 end
