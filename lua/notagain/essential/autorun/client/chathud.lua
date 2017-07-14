@@ -176,3 +176,15 @@ end
 if LocalPlayer():IsValid() then
 	chathud.Initialize()
 end
+
+ hook.Add("HUDShouldDraw","chathud",function( name )
+ 	if name == "CHudChat" then
+		return false
+	end
+end
+ 
+hook.Add("ChatText","chathud", function(index,name,text,type)
+	if type == "none" then
+		chathud.AddText(type)
+	end
+end
