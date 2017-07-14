@@ -77,15 +77,13 @@ if SERVER then
 
 	net.Receive("on_afk", function(_, ply)
 		local time = net.ReadFloat()
+		local bool = (time > 0)
 
-		if time > 0 then
-			hook.Run("OnPlayerAFK", ply, true, ply:GetAFKTime())
-		else
-			hook.Run("OnPlayerAFK", ply, false, ply:GetAFKTime())
-		end
+		hook.Run("OnPlayerAFK", ply, bool, ply:GetAFKTime())
 
 		net.Start("cl_on_afk")
 		net.WriteEntity(ply)
+		net.WriteBool(bool)
 		net.WriteFloat(ply:GetAFKTime())
 		net.Broadcast()
 
@@ -96,8 +94,9 @@ end
 if CLIENT then
 	net.Receive("cl_on_afk", function()
 		local ply = net.ReadEntity()
+		local bool = net.ReadBool()
 		local time = net.ReadFloat()
 
-		hook.Run("OnPlayerAFK", ply, time > 0, time)
+		hook.Run("OnPlayerAFK", ply, bool, time)
 	end)
 end
