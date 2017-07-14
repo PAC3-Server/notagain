@@ -2,7 +2,7 @@ local surface = surface
 local draw = draw
 local Color = Color
 
-local SKIN = {}
+SKIN = {}
 
 SKIN.PrintName 		= "Just Cause 2 Multiplayer Skin"
 SKIN.Author 		= "Edited for Garry's Mod by Thomas (STEAM_0:0:19375877)"
