@@ -59,13 +59,11 @@ if CLIENT then
 
 		if time - last_moved > cl_afk_time:GetFloat() then
 			if not is_afk then
-				hook.Run("OnPlayerAFK", LocalPlayer(), true)
 				net.Start("on_afk") net.WriteFloat(CurTime()) net.SendToServer()
 				is_afk = true
 			end
 		else
 			if is_afk then
-				hook.Run("OnPlayerAFK", LocalPlayer(), false)
 				net.Start("on_afk") net.WriteFloat(-1) net.SendToServer()
 				is_afk = false
 			end
@@ -87,8 +85,8 @@ if SERVER then
 		end
 
 		net.Start("cl_on_afk")
-			net.WriteEntity(ply)
-			net.WriteFloat(ply:GetAFKTime())
+		net.WriteEntity(ply)
+		net.WriteFloat(ply:GetAFKTime())
 		net.Broadcast()
 
 		ply:SetNWFloat("afk", time)
