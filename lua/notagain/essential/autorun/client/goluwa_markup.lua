@@ -14,13 +14,21 @@ local function Vec2(x, y)
 	return Vector(x, y, 0)
 end
 
+local color_unpack = function(s) return s.r, s.g, s.b, s.a end
+
+local function Color(r,g,b,a)
+	local c = _G.Color(r,g,b,a)
+	c.Unpack = color_unpack
+	return c
+end
+
 local function ColorBytes(r,g,b,a)
 	return Color(r/255, g/255, b/255, a/255)
 end
 
 local function ColorHSV(h,s,v)
 	local self = HSVToColor(h*360,s,v)
-	self.Unpack = function(s) return s.r, s.g, s.b, s.a end
+	self.Unpack = color_unpack
 	return self
 end
 
@@ -165,6 +173,21 @@ end
 local string = table.Copy(string)
 string.split = string.Split
 
+function string.getchartype(char)
+
+	if char:find("%p") and char ~= "_" then
+		return "punctation"
+	elseif char:find("%s") then
+		return "space"
+	elseif char:find("%d") then
+		return "digit"
+	elseif char:find("%a") or char == "_" then
+		return "letters"
+	end
+
+	return "unknown"
+end
+
 function string.haswhitespace(str)
 	for i = 1, #str do
 		local b = str:byte(i)
@@ -186,6 +209,7 @@ end
 local math = table.Copy(math)
 
 math.clamp = math.Clamp
+math.round = math.Round
 
 function math.randomf(a, b)
 	return math.Rand(a, b)
@@ -260,52 +284,50 @@ do
 	end
 
 	do
-		local current_matrix = Matrix()
-
+		local matrix_stack_i = 1
 		local matrix_stack = {}
-		local i = 1
 
-		function render2d.GetMatrix()
-			return current_matrix
-		end
+		render2d.world_matrix = Matrix()
 
-		function render2d.PushMatrix(x,y)
-			matrix_stack[i] = current_matrix
+		function render2d.PushMatrix(x,y, w,h, a, dont_multiply)
+			local old = matrix_stack[matrix_stack_i]
+			matrix_stack[matrix_stack_i] = render2d.world_matrix
 
-			current_matrix = Matrix() * current_matrix
-
-			i = i + 1
-
-			if x and y then
-				render2d.Translate(x,y)
+			if dont_multiply then
+				render2d.world_matrix = Matrix()
+			else
+				render2d.world_matrix = Matrix()
+				if old then render2d.world_matrix:Set(old) end
 			end
-		end
 
-		function render2d.Translate(x, y)
-			current_matrix:Translate(Vector(x,y,0))
-		end
+			matrix_stack_i = matrix_stack_i + 1
 
-		function render2d.Scale(w, h)
-			current_matrix:Scale(Vector(w,h,1))
-		end
-
-		function render2d.Rotate(rot)
-			current_matrix:Rotate(Angle(0,math.deg(rot),0))
+			if x and y then render2d.Translate(x, y) end
+			if w and h then render2d.Scale(w, h) end
+			if a then render2d.Rotate(a) end
 		end
 
 		function render2d.PopMatrix()
-			i = i - 1
+			matrix_stack_i = matrix_stack_i - 1
 
-			if i < 1 then
-				error("stack underflow", 2)
-			end
+			render2d.world_matrix = matrix_stack[matrix_stack_i]
+		end
 
-			current_matrix = matrix_stack[i]
+		function render2d.Translate(x, y)
+			render2d.world_matrix:Translate(Vector(x,y,0))
+		end
+
+		function render2d.Scale(w, h)
+			render2d.world_matrix:Scale(Vector(w,h,1))
+		end
+
+		function render2d.Rotate(ang)
+			render2d.world_matrix:Rotate(Angle(0,math.deg(ang),0))
 		end
 	end
 
 	function render2d.DrawRect(x,y,w,h)
-		cam.PushModelMatrix(render2d.GetMatrix())
+		cam.PushModelMatrix(render2d.world_matrix)
 		surface.DrawTexturedRect(x,y,w,h)
 		cam.PopModelMatrix()
 	end
@@ -458,7 +480,7 @@ do
 	render2d.alpha_multiplier = 1
 
 	function gfx.DrawText(str, x,y,w,h)
-		cam.PushModelMatrix(render2d.GetMatrix())
+		cam.PushModelMatrix(render2d.world_matrix)
 		local r,g,b,a = render2d.GetColor()
 
 		prettytext.DrawText({
@@ -542,6 +564,7 @@ function prototype.CreateTemplate()
 	end
 
 	function META:Register()
+		META.render2d = render2d
 		function _G.GoluwaMarkup(str)
 			return gfx.CreateMarkup(str)
 		end
@@ -1387,8 +1410,6 @@ do -- tags matrix
 			render2d.Translate(center_x, center_y)
 				render2d.Rotate(math.rad(deg))
 			render2d.Translate(-center_x, -center_y)
-
-
 		end,
 
 		post_draw = function()

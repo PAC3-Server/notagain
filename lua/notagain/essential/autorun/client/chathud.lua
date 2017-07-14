@@ -8,7 +8,7 @@ chathud.default_font = {
 	weight = 600,
 	blur_size = 2,
 	background_color = Color(25,50,100,255),
-	blur_overdraw = 10,
+	blur_overdraw = 2,
 }
 
 chathud.font_modifiers = {
@@ -57,39 +57,48 @@ function chathud.Initialize()
 
 	local markup = GoluwaMarkup()
 
+	--markup:SetEditable(true)
+
 	chathud.panel = vgui.Create("Panel")
 
 	chathud.panel:SetPos(25,ScrH() - 370)
 	chathud.panel:SetSize(527,315)
+	chathud.panel:SetMouseInputEnabled(true)
 
-	chathud.panel.Paint = function(_, w, h)
+	chathud.panel.PaintX = function(_, w, h)
 		markup:SetMaxWidth(w)
 		markup:Update()
+
 		markup:Draw()
 	end
 
-	do -- mouse input
-		local translate_mouse = {}
-		for k,v in pairs(_G) do
-			if isstring(k) and isnumber(v) and k:StartWith("MOUSE_") then
-				translate_mouse[v] = k:lower():sub(7)
-			end
+	hook.Add("HUDPaint", "chathud", function()
+		if chathud.panel:IsVisible() then
+			markup.render2d.PushMatrix(chathud.panel:GetPos())
+			chathud.panel:PaintX(chathud.panel:GetSize())
+			markup.render2d.PopMatrix()
 		end
+	end)
 
-		local mouse_x = 0
-		local mouse_y = 0
+	do -- mouse input
+		local translate_mouse = {
+			[MOUSE_LEFT] = "button_1",
+		}
 
 		chathud.panel.OnMousePressed = function(_, code)
+			local mouse_x, mouse_y = chathud.panel:ScreenToLocal(gui.MousePos())
 			markup:OnMouseInput(translate_mouse[code], true, mouse_x, mouse_y)
+			chathud.panel:MouseCapture(true)
 		end
 
 		chathud.panel.OnMouseReleased = function(_, code)
+			local mouse_x, mouse_y = chathud.panel:ScreenToLocal(gui.MousePos())
 			markup:OnMouseInput(translate_mouse[code], false, mouse_x, mouse_y)
+			chathud.panel:MouseCapture(false)
 		end
 
 		chathud.panel.OnCursorMoved = function(_, x, y)
-			mouse_x = x
-			mouse_y = y
+			markup:SetMousePosition(Vector(x, y, 0))
 		end
 	end
 
@@ -173,17 +182,13 @@ function chat.AddText(...)
     chathud_old_AddText(...)
 end
 
-if LocalPlayer():IsValid() then
-	chathud.Initialize()
-end
-
- hook.Add("HUDShouldDraw","chathud",function( name )
+hook.Add("HUDShouldDraw", "chathud", function(name)
  	if name == "CHudChat" then
 		return false
 	end
 end)
- 
-hook.Add("ChatText","chathud", function(index,name,text,type)
+
+hook.Add("ChatText", "chathud", function(index, name, text, type)
 	if type == "none" then
 		chathud.AddText(type)
 	end
