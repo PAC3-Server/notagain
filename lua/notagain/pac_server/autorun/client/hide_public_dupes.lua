@@ -1,4 +1,4 @@
-hook.Add("Initialize","hide_public_dupes",function()
+hook.Add("InitPostEntity","hide_public_dupes",function()
   creation_tab_old = creation_tab_old or spawnmenu.GetCreationTabs
 
   spawnmenu.GetCreationTabs = function()
