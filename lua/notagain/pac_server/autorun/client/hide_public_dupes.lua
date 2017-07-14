@@ -1,21 +1,29 @@
-hook.Add("InitPostEntity","hide_public_dupes",function()
-  creation_tab_old = creation_tab_old or spawnmenu.GetCreationTabs
+local TabsModified = false
 
-  spawnmenu.GetCreationTabs = function()
-      local HideTabs ={
-        ["#spawnmenu.category.dupes"] = true,
-        ["#spawnmenu.category.saves"] = true,
-        ["VJ Base"] = true,
-      }
+local GetCreationTabs = spawnmenu.GetCreationTabs
 
-      local tabs = {}
-      for k, v in next, creation_tab_old() do
-          if not HideTabs[k] then
-              tabs[k] = v
-          end
-      end
+local TabsToRemove = {
+  ["#spawnmenu.category.saves"] = 1,
+	["#spawnmenu.category.dupes"] = 1,
+  ["VJ Base"] = 1,
+	-- ["#spawnmenu.category.entities"] = 1,
+	-- ["#spawnmenu.category.npcs"] = 1,
+	-- ["#spawnmenu.category.postprocess"] = 1,
+	-- ["#spawnmenu.category.vehicles"] = 1,
+	-- ["#spawnmenu.category.weapons"] = 1,
+	-- ["#spawnmenu.content_tab"] = 1,
+}
 
-      return tabs
-  end
-  timer.Simple(0.1,function() RunConsoleCommand("spawnmenu_reload") end)
-end)
+local function DestroySpawnTabs()
+	for k,_ in next, GetCreationTabs() do
+		if TabsToRemove[k] == 1 then
+			GetCreationTabs()[k] = nil
+		end
+	end
+	if not TabsModified then
+		LocalPlayer():ConCommand('spawnmenu_reload')
+		TabsModified = true
+	end
+end
+
+hook.Add("PopulatePropMenu", "RemoveSpawnmenuTabs", DestroySpawnTabs)
