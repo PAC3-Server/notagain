@@ -62,7 +62,7 @@ end
 
 if CLIENT then
 
-    aowlgui.Commands = {}
+    aowlgui.Commands = aowlgui.Commands or {}
 
 	function aowlgui.Open()
         local swidth,sheight = ScrW(),ScrH()
