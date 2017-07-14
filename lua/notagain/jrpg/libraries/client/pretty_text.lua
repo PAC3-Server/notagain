@@ -3,8 +3,8 @@ local fonts = {}
 local linux_offset = system.IsLinux() and 1 or 0
 
 local function create_fonts(font, size, weight, blursize)
-	local main = "pretty_text_" .. size .. "_" .. weight .. "_" .. blursize
-	local blur = "pretty_text_blur_" .. size  .. "_" .. weight .. "_" .. blursize
+	local main = "pretty_text_" .. font .. "_" .. size .. "_" .. weight .. "_" .. blursize
+	local blur = "pretty_text_blur_" .. font .. "_" .. size  .. "_" .. weight .. "_" .. blursize
 
 	surface.CreateFont(main, {
 		font = font,
