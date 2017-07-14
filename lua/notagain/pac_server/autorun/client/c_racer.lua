@@ -127,7 +127,9 @@ function cracer()
 			surface.SetFont("cracer")
 			surface.SetTextColor(255, 255, 255, 255)
 			local _, h = surface.GetTextSize("|")
-			for i,v in ipairs(stats) do
+			for i = 1, 50 do
+				local v = stats[i]
+				if not v then break end
 				surface.SetTextPos(5, 5 + (i * h))
 				surface.DrawText(v.name .. " = " .. math.Round(v.total_time/1000, 4))
 			end
