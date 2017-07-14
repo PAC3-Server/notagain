@@ -1,5 +1,5 @@
 chathud = chathud or {}
-chathud.life_time = 5
+chathud.life_time = 16
 chathud.panel = chathud.panel or NULL
 
 chathud.font_modifiers = {
@@ -45,6 +45,9 @@ function chathud.Initialize()
 		markup:SetMaxWidth(w)
 		markup:Update()
 		markup:Draw()
+		for i=1,5 do -- idk maybe better would be cool if i could change font and color
+			markup:Draw()
+		end
 	end
 
 	do -- mouse input
