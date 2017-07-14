@@ -75,23 +75,35 @@ function chathud.Initialize()
 	chathud.markup = markup
 
 	surface.CreateFont("chathud_default", {
-		font = "Roboto-Bold",
-		size = 16,
+		font      = "DermaDefault",
+		extended  = true,
+		size 	  = 17,
+		weight    = 600,
+		shadow    = true,
 	})
 
 	surface.CreateFont("chathud_default_large", {
-		font = "Roboto-Bold",
-		size = 20,
+		font  	  = "DermaDefault",
+		extended  = true,
+		size 	  = 21,
+		weight    = 600,
+		shadow    = true,
 	})
 
 	surface.CreateFont("chathud_default_larger", {
-		font = "Roboto-Bold",
-		size = 30,
+		font 	  = "DermaDefault",
+		extended  = true,
+		size 	  = 31,
+		weight    = 600,
+		shadow    = true,
 	})
 
 	surface.CreateFont("chathud_default_small", {
-		font = "Roboto-Bold",
-		size = 8,
+		font 	 = "DermaDefault",
+		extended = true,
+		size 	 = 9,
+		weight 	 = 600,
+		shadow   = true,
 	})
 
 	for _, v in pairs(file.Find("materials/icon16/*", "GAME")) do
@@ -170,9 +182,20 @@ chathud_old_AddText = chathud_old_AddText or chat.AddText
 
 function chat.AddText(...)
     chathud.AddText(...)
-    --chathud_old_AddText(...)
+    chathud_old_AddText(...)
 end
 
 if LocalPlayer():IsValid() then
 	chathud.Initialize()
 end
+
+hook.Add("HUDShouldDraw","chathud",function( name )
+	if name == "CHudChat" then
+		return false
+	end
+end)
+hook.Add("ChatText",tag, function(index,name,text,type)
+	if type == "none" then
+		chathud.AddText(text)
+	end
+end)
