@@ -2,11 +2,32 @@ chathud = chathud or {}
 chathud.life_time = 5
 chathud.panel = chathud.panel or NULL
 
-chathud.font_modifiers = {
-	["...."] = {type = "font", val = "chathud_default_small"},
-	["!!!!"] = {type = "font", val = "chathud_default_large"},
-	["!!!!!11"] = {type = "font", val = "chathud_default_larger"},
+chathud.default_font = {
+	font = "arial.ttf",
+	size = 16,
+	weight = 600,
+	blur_size = 2,
+	background_color = Color(25,50,100,255),
+	blur_overdraw = 10,
 }
+
+chathud.font_modifiers = {
+	["...."] = {
+		size = 8,
+	},
+	["!!!!"] = {
+		size = 30,
+	},
+	["!!!!!11"] = {
+		size = 30,
+	},
+}
+
+for _, font in pairs(chathud.font_modifiers) do
+	for k,v in pairs(chathud.default_font) do
+		font[k] = font[k] or v
+	end
+end
 
 chathud.emote_shortucts = chathud.emote_shortucts or {
 	smug = "<texture=masks/smug>",
@@ -74,26 +95,6 @@ function chathud.Initialize()
 
 	chathud.markup = markup
 
-	surface.CreateFont("chathud_default", {
-		font = "Roboto-Bold",
-		size = 16,
-	})
-
-	surface.CreateFont("chathud_default_large", {
-		font = "Roboto-Bold",
-		size = 20,
-	})
-
-	surface.CreateFont("chathud_default_larger", {
-		font = "Roboto-Bold",
-		size = 30,
-	})
-
-	surface.CreateFont("chathud_default_small", {
-		font = "Roboto-Bold",
-		size = 8,
-	})
-
 	for _, v in pairs(file.Find("materials/icon16/*", "GAME")) do
 		if v:EndsWith(".png") then
 			chathud.emote_shortucts[v:gsub("(%.png)$","")] = "<texture=materials/icon16/" .. v .. ",16>"
@@ -140,7 +141,7 @@ function chathud.AddText(...)
 
 			for pattern, font in pairs(chathud.font_modifiers) do
 				if v:find(pattern, nil, true) then
-					table.insert(args, #args-1, font)
+					table.insert(args, {type = "font", val = font})
 				end
 			end
 
@@ -173,4 +174,5 @@ end
 
 if LocalPlayer():IsValid() then
 	chathud.Initialize()
+	chat.AddText([[Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam convallis accumsan vestibulum. Nulla condimentum sapien a magna aliquam, ut iaculis ante molestie. In scelerisque metus in enim iaculis, ut pellentesque neque ullamcorper. Aliquam erat volutpat. Pellentesque sollicitudin venenatis eros sit amet efficitur. Donec lobortis porttitor purus quis porta. Praesent nulla nibh, faucibus quis accumsan at, scelerisque id mi. Mauris et lectus augue.]])
 end
