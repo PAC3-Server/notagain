@@ -152,14 +152,12 @@ function chathud.AddText(...)
 		end
 	end
 
-	markup:BeginLifeTime(chathud.life_time)
-		-- this will make everything added here get removed after said life time
-		markup:AddFont("chathud_default") -- also reset the font just in case
+	markup:BeginLifeTime(16, 2)
+		markup:AddFont(chathud.default_font)
 		markup:AddTable(args, true)
 		markup:AddTagStopper()
 		markup:AddString("\n")
 	markup:EndLifeTime()
-
 
 	for k,v in pairs(chathud.tags) do
 		markup.tags[k] = v
