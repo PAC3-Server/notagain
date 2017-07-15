@@ -14,16 +14,12 @@ local function Vec2(x, y)
 	return Vector(x, y, 0)
 end
 
-local color_unpack = function(s) return s.r/255, s.g/255, s.b/255, s.a/255 end
+local color_unpack = function(s) return s.r, s.g, s.b, s.a end
 
 local function Color(r,g,b,a)
 	local c = _G.Color(r,g,b,a)
 	c.Unpack = color_unpack
 	return c
-end
-
-local function ColorBytes(r,g,b,a)
-	return Color(r/255, g/255, b/255, a/255)
 end
 
 local function ColorHSV(h,s,v)
@@ -1001,7 +997,8 @@ do -- tags
 		end,
 
 		post_draw_chunks = function(markup, self, chunk)
-			gfx.DrawLine(chunk.x, chunk.top, chunk.right, chunk.top)
+			local y_offset = markup.HeightSpacing + 1
+			gfx.DrawLine(chunk.x - 2, chunk.top - y_offset, chunk.right + 2, chunk.top - y_offset)
 		end,
 	}
 	META.tags.console =
@@ -1025,8 +1022,8 @@ do -- tags
 		end,
 
 		post_draw_chunks = function(markup, self, chunk)
-
-			gfx.DrawLine(chunk.x, chunk.top, chunk.right, chunk.top)
+			local y_offset = markup.HeightSpacing + 1
+			gfx.DrawLine(chunk.x - 2, chunk.top - y_offset, chunk.right + 2, chunk.top - y_offset)
 		end,
 	}
 
@@ -1045,9 +1042,10 @@ do -- tags
 		arguments = {},
 		post_draw_chunks = function(markup, self, chunk)
 			render2d.PushColor(1, 0, 0, 1)
-			-- todo: LOL
+			local y_offset = markup.HeightSpacing + 1
+
 			for x = chunk.x, chunk.right do
-				gfx.DrawLine(x, chunk.top + math.sin(x), x + 1, chunk.top + math.sin(x))
+				gfx.DrawLine(x, chunk.top + math.sin(x) - y_offset, x + 1, chunk.top + math.sin(x) - y_offset)
 			end
 
 			render2d.PopColor()
@@ -1197,7 +1195,7 @@ do -- tags
 		end,
 
 		pre_draw = function(markup, self, x,y, gravity_y, gravity_x, vx, vy, drag, rand_mult)
-			local delta = system.GetFrameTime() * 5
+			local delta = system.GetFrameTime() * 2
 
 			local part = self.part
 
@@ -1252,7 +1250,6 @@ do -- tags
 
 			render2d.Translate(part.pos.x, part.pos.y)
 
-
 			render2d.Translate(center_x, center_y)
 				render2d.Rotate(math.deg(math.atan2(part.vel.y, part.vel.x)))
 			render2d.Translate(-center_x, -center_y)
@@ -1296,24 +1293,6 @@ do -- tags
 			if not self.mat or not self.mat:IsValid() then return end
 			render2d.SetTexture(self.mat)
 			render2d.DrawRect(x, y, self.mat:GetSize().x or size, self.mat:GetSize().y or size)
-		end,
-	}
-
-	META.tags.silkicon =
-	{
-		arguments = {"world", {default = 1}},
-
-		init = function(markup, self, path)
-			self.mat = render.CreateTextureFromPath("textures/silkicons/" .. path .. ".png")
-		end,
-
-		get_size = function(markup, self, path, size_mult)
-			return 16, 16
-		end,
-
-		pre_draw = function(markup, self, x,y, path)
-			render2d.SetTexture(self.mat)
-			render2d.DrawRect(x, y, self.w, self.h)
 		end,
 	}
 end
@@ -2207,10 +2186,15 @@ do -- invalidate
 					local start_found = 1
 					local stops = {}
 
+					local tag_chunk = chunk
+
 					for i = i+1, #chunks do
 						local chunk = chunks[i]
 
 						if chunk then
+
+							chunk.tag_chunks = chunk.tag_chunks or {}
+							chunk.tag_chunks[tag_chunk] = tag_chunk
 
 							if not last_y then last_y = chunk.y end
 
@@ -3264,20 +3248,19 @@ do -- input
 
 		local chunk = self:CaretFromPixels(x, y).char.chunk
 
-		if chunk.type == "string" and chunk.chunks_inbetween then
-			chunk = chunk.chunks_inbetween[1]
-		end
-
-		if
-			chunk.type == "custom" and
-			self:CallTagFunction(chunk, "mouse", button, press, x, y) == false
-		then
-			return
+		if chunk.type == "custom" then
+			if self:CallTagFunction(chunk, "mouse", button, press, x, y) == false then
+				return
+			end
+		elseif chunk.tag_chunks then
+			for chunk in pairs(chunk.tag_chunks) do
+				if self:CallTagFunction(chunk, "mouse", button, press, x, y) == false then
+					return
+				end
+			end
 		end
 
 		if button == "button_1" then
-
-
 			if press then
 				if self.last_click and self.last_click > system.GetElapsedTime() then
 					self.times_clicked = (self.times_clicked or 1) + 1
