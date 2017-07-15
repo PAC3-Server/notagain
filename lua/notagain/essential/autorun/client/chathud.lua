@@ -193,3 +193,7 @@ hook.Add("ChatText", "chathud", function(index, name, text, type)
 		chathud.AddText(type)
 	end
 end)
+
+if LocalPlayer():IsValid() then
+	chathud.Initialize()
+end
