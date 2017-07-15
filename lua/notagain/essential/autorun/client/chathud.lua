@@ -3,12 +3,12 @@ chathud = chathud or {}
 chathud.panel = chathud.panel or NULL
 
 chathud.default_font = {
-	font = "arial.ttf",
-	size = 16,
+	font = "Roboto-Black.ttf",
+	size = 18,
 	weight = 600,
-	blur_size = 2,
-	background_color = Color(25,50,100,255),
-	blur_overdraw = 2,
+	blur_size = 3,
+	background_color = Color(0,0,0,255),--Color(25,50,100,255),
+	blur_overdraw = 3,
 }
 
 chathud.font_modifiers = {
@@ -65,18 +65,21 @@ function chathud.Initialize()
 	chathud.panel:SetSize(527,315)
 	chathud.panel:SetMouseInputEnabled(true)
 
-	chathud.panel.PaintX = function(_, w, h)
-		markup:SetMaxWidth(w)
+	chathud.panel.Think = function(self)
+		markup:SetMaxWidth(self:GetWide())
 		markup:Update()
-
+	end
+	chathud.panel.PaintX = function(_, w, h)
 		markup:Draw()
 	end
 
 	hook.Add("HUDPaint", "chathud", function()
 		if chathud.panel:IsVisible() then
+			surface.DisableClipping(true)
 			markup.render2d.PushMatrix(chathud.panel:GetPos())
 			chathud.panel:PaintX(chathud.panel:GetSize())
 			markup.render2d.PopMatrix()
+			surface.DisableClipping(false)
 		end
 	end)
 
