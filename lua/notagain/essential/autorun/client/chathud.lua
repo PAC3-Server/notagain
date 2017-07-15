@@ -190,7 +190,7 @@ end)
 
 hook.Add("ChatText", "chathud", function(index, name, text, type)
 	if type == "none" then
-		chathud.AddText(type)
+		chathud.AddText(text)
 	end
 end)
 
