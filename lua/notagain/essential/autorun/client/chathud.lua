@@ -157,6 +157,9 @@ function chathud.AddText(...)
 					table.insert(args, {type = "font", val = font})
 				end
 			end
+			
+			-- discord emotes
+			v = v:gsub("<:[%w_]+:([%d]+)>", "<texture=https://cdn.discordapp.com/emojis/%1.png>")
 
 			table.insert(args, v)
 		elseif t == "table" and IsColor(v) then
