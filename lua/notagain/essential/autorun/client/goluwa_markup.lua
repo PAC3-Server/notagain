@@ -14,7 +14,7 @@ local function Vec2(x, y)
 	return Vector(x, y, 0)
 end
 
-local color_unpack = function(s) return s.r, s.g, s.b, s.a end
+local color_unpack = function(s) return s.r/255, s.g/255, s.b/255, s.a/255 end
 
 local function Color(r,g,b,a)
 	local c = _G.Color(r,g,b,a)
@@ -241,8 +241,8 @@ do
 			B = b
 			A = a or 1
 
-			surface.SetDrawColor(R*255,G*255,B*255,A*255)
-			surface.SetTextColor(R*255,G*255,B*255,A*255)
+			--surface.SetDrawColor(R*255,G*255,B*255,A*255)
+			--surface.SetTextColor(R*255,G*255,B*255,A*255)
 		end
 
 		function render2d.GetColor()
@@ -280,7 +280,7 @@ do
 
 	function render2d.SetAlphaMultiplier(m)
 		render2d.alpha_multiplier = m
-		surface.SetAlphaMultiplier(m)
+		--surface.SetAlphaMultiplier(m)
 	end
 
 	do
@@ -328,6 +328,8 @@ do
 
 	function render2d.DrawRect(x,y,w,h)
 		cam.PushModelMatrix(render2d.world_matrix)
+		local r,g,b,a = render2d.GetColor()
+		surface.SetDrawColor(r*255,g*255,b*255,(a*255)*render2d.alpha_multiplier)
 		surface.DrawTexturedRect(x,y,w,h)
 		cam.PopModelMatrix()
 	end
@@ -1081,8 +1083,22 @@ do -- tags
 		arguments = {0, 1, 1},
 
 		pre_draw = function(markup, self, x,y, h, s, v)
-			local r,g,b = ColorHSV(h,s,v):Unpack()
-			render2d.SetColor(r, g, b, 1)
+			local c = ColorHSV(h,s,v)
+			local r,g,b = c:Unpack()
+			render2d.PushColor(r, g, b, 1)
+
+			for i = self.i+1, math.huge do
+				local chunk = markup.chunks[i]
+				if not chunk or (chunk.type == "custom" and chunk.val.type == "hsv") then break end
+
+				if chunk.color then
+					chunk.color = c
+				end
+			end
+		end,
+
+		post_draw = function()
+			render2d.PopColor()
 		end,
 	}
 
@@ -1091,7 +1107,21 @@ do -- tags
 		arguments = {1, 1, 1, 1},
 
 		pre_draw = function(markup, self, x,y, r,g,b,a)
-			render2d.SetColor(r, g, b, a)
+			local c = Color(r,g,b,a)
+			render2d.PushColor(r, g, b, 1)
+
+			for i = self.i+1, math.huge do
+				local chunk = markup.chunks[i]
+				if not chunk or (chunk.type == "custom" and chunk.val.type == "hsv") then break end
+
+				if chunk.color then
+					chunk.color = c
+				end
+			end
+		end,
+
+		post_draw = function()
+			render2d.PopColor()
 		end,
 	}
 
