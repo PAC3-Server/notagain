@@ -466,8 +466,12 @@ function gfx.GetDefaultFont()
 	return {name = "DermaDefault"}
 end
 
-function gfx.DrawLine(a,b,c,d)
-	surface.DrawLine(a,b,c,d)
+function gfx.DrawLine(x1,y1,x2,y2)
+	cam.PushModelMatrix(render2d.world_matrix)
+	local r,g,b,a = render2d.GetColor()
+	surface.SetDrawColor(r*255,g*255,b*255,(a*255)*render2d.alpha_multiplier)
+	surface.DrawLine(x1,y1,x2,y2)
+	cam.PopModelMatrix()
 end
 
 do
@@ -1043,7 +1047,7 @@ do -- tags
 			render2d.PushColor(1, 0, 0, 1)
 			-- todo: LOL
 			for x = chunk.x, chunk.right do
-				gfx.DrawLine(x, chunk.top + math.sin(x), x+1, chunk.top +math.sin(x))
+				gfx.DrawLine(x, chunk.top + math.sin(x), x + 1, chunk.top + math.sin(x))
 			end
 
 			render2d.PopColor()
@@ -2076,7 +2080,7 @@ do -- invalidate
 
 				chunk.chars[i] = {
 					x = x,
-					y = chunk.y,
+					y = y,
 					w = char_width,
 					h = char_height,
 					right = x + char_width,
@@ -2390,7 +2394,7 @@ do -- invalidate
 			end
 
 			chunk.right = chunk.x + chunk.w
-			chunk.top = chunk.y
+			chunk.top = chunk.y + chunk.h
 		end
 
 		-- add the last line since there's probably not a newline at the very end
