@@ -19,7 +19,7 @@ chathud.font_modifiers = {
 		size = 30,
 	},
 	["!!!!!11"] = {
-		size = 30,
+		size = 40,
 	},
 }
 
@@ -151,7 +151,7 @@ function chathud.AddText(...)
 
 			for pattern, font in pairs(chathud.font_modifiers) do
 				if v:find(pattern, nil, true) then
-					table.insert(args, #args-1, font)
+					table.insert(args, {type = "font", val = font})
 				end
 			end
 
