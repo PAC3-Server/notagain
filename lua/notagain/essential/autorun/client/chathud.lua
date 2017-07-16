@@ -29,7 +29,7 @@ for _, font in pairs(chathud.font_modifiers) do
 	end
 end
 
-chathud.emote_shortucts = chathud.emote_shortucts or {
+chathud.emote_shortcuts = chathud.emote_shortcuts or {
 	smug = "<texture=masks/smug>",
 	downs = "<texture=masks/downs>",
 	saddowns = "<texture=masks/saddowns>",
@@ -50,7 +50,7 @@ function chathud.Initialize()
 	http.Fetch("http://cdn.steam.tools/data/emote.json", function(data)
 		local i = 0
 		for name in data:gmatch('"name": ":(.-):"') do
-			chathud.emote_shortucts[name] = "<texture=http://cdn.steamcommunity.com/economy/emoticon/" .. name .. ">"
+			chathud.emote_shortcuts[name] = "<texture=http://cdn.steamcommunity.com/economy/emoticon/" .. name .. ">"
 			i = i + 1
 		end
 	end)
@@ -110,7 +110,7 @@ function chathud.Initialize()
 
 	for _, v in pairs(file.Find("materials/icon16/*", "GAME")) do
 		if v:EndsWith(".png") then
-			chathud.emote_shortucts[v:gsub("(%.png)$","")] = "<texture=materials/icon16/" .. v .. ",16>"
+			chathud.emote_shortcuts[v:gsub("(%.png)$","")] = "<texture=materials/icon16/" .. v .. ",16>"
 		end
 	end
 end
@@ -138,14 +138,17 @@ function chathud.AddText(...)
 				markup:TagPanic()
 			end
 
+			-- discord emotes
+			v = v:gsub("<:[%w_]+:([%d]+)>", "<texture=https://cdn.discordapp.com/emojis/%1.png>")
+
 			v = v:gsub("<remember=(.-)>(.-)</remember>", function(key, val)
-				chathud.emote_shortucts[key] = val
+				chathud.emote_shortcuts[key] = val
 			end)
 
 			v = v:gsub("(:[%a%d]-:)", function(str)
 				str = str:sub(2, -2)
-				if chathud.emote_shortucts[str] then
-					return chathud.emote_shortucts[str]
+				if chathud.emote_shortcuts[str] then
+					return chathud.emote_shortcuts[str]
 				end
 			end)
 
