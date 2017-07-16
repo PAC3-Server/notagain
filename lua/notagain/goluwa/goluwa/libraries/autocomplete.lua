@@ -81,7 +81,11 @@ function autocomplete.Search(str, id)
 	return found
 end
 
-function autocomplete.DrawFound(x, y, found, max, offset)
+function autocomplete.DrawFound(id, x, y, found, max, offset)
+	if not env[id] then
+		env[id] = {found_autocomplete = {}, scroll = 0}
+	end
+
 	offset = offset or 1
 	max = max or 100
 
@@ -89,7 +93,7 @@ function autocomplete.DrawFound(x, y, found, max, offset)
 	render2d.SetColor(1,1,1,1)
 
 	render2d.PushMatrix(x, y)
-		for i = offset-1, max do
+		for i = offset+1, max do
 			local v = found[i]
 
 			if not v then break end
@@ -98,7 +102,7 @@ function autocomplete.DrawFound(x, y, found, max, offset)
 			local alpha = (-(i / max) + 1) ^ 5
 
 			render2d.SetAlphaMultiplier(alpha)
-			gfx.DrawText(i .. ". " ..  v, 5, (i-offset+1) * h)
+			gfx.DrawText(((env[id].scroll + i - 2)%#found%max + 1) .. ". " ..  v, 5, (i-offset - 1) * h)
 		end
 
 		render2d.SetAlphaMultiplier(1)
@@ -113,7 +117,7 @@ function autocomplete.Query(id, str, scroll, list)
 	scroll = scroll or 0
 
 	if not env[id] then
-		env[id] = {found_autocomplete = {}}
+		env[id] = {found_autocomplete = {}, scroll = 0}
 	end
 
 	if scroll == 0 then
@@ -122,6 +126,7 @@ function autocomplete.Query(id, str, scroll, list)
 			env[id].tab_autocomplete = nil
 			env[id].pause_autocomplete = false
 			env[id].last_str = nil
+			env[id].scroll = 0
 		end
 	else
 		autocomplete.ScrollFound(env[id].tab_autocomplete or env[id].found_autocomplete, scroll)
@@ -148,6 +153,7 @@ function autocomplete.Query(id, str, scroll, list)
 			end
 
 			env[id].last_str = str
+			env[id].scroll = env[id].scroll + scroll
 		end
 	end
 
