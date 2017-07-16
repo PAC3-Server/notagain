@@ -1,14 +1,22 @@
 local env = {}
-debug.Trace()
-print(env , "AGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAIN")
-if SERVER then -- wip
-	AddCSLuaFile()
 
-	AddCSLuaFile("goluwa/libraries/autocomplete.lua")
-	AddCSLuaFile("goluwa/libraries/expression.lua")
-	AddCSLuaFile("goluwa/libraries/graphics/gfx/markup.lua")
-	AddCSLuaFile("goluwa/libraries/audio/chatsounds/chatsounds.lua")
-	AddCSLuaFile("goluwa/libraries/audio/chatsounds/list_parsing.lua")
+if SERVER then -- wip
+
+	local function add(dir)
+		local files, directories = file.Find(dir .. "/*", "LUA")
+
+		for _, file_name in ipairs(files) do
+			print(dir .. "/" .. file_name, "!!!!!")
+			AddCSLuaFile(dir .. "/" .. file_name)
+		end
+
+		for _, d in ipairs(directories) do
+			add(dir .. "/" .. d)
+		end
+	end
+
+	AddCSLuaFile()
+	add("notagain/goluwa/goluwa")
 
 	return env
 end
@@ -810,27 +818,7 @@ do
 	env.window = window
 end
 
-do
-	local utf8 = table.Copy(utf8)
-
-	function utf8.totable(str)
-		local out = {}
-		for _, code in utf8.codes(str) do
-			table.insert(out, utf8.char(code))
-		end
-		return out
-	end
-
-	function utf8.length(str)
-		return utf8.len(str)
-	end
-
-	function utf8.sub(str, a, b)
-		return string.sub(str, a, b) -- WIP
-	end
-
-	env.utf8 = utf8
-end
+env.utf8 = env.runfile("goluwa/libraries/utf8.lua")
 
 do
 	local string = env.string
