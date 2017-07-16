@@ -95,11 +95,10 @@ function autocomplete.DrawFound(x, y, found, max, offset)
 			if not v then break end
 
 			local _, h = gfx.GetTextSize(v)
-			local alpha = (-(i / max) + 1) ^ 15
+			local alpha = (-(i / max) + 1) ^ 5
 
 			render2d.SetAlphaMultiplier(alpha)
-			gfx.SetTextPosition(5, (i-offset+1) * h)
-			gfx.DrawText(i .. ". " ..  v)
+			gfx.DrawText(i .. ". " ..  v, 5, (i-offset+1) * h)
 		end
 
 		render2d.SetAlphaMultiplier(1)

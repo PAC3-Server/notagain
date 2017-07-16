@@ -1,5 +1,6 @@
 local env = {}
-
+debug.Trace()
+print(env , "AGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAINAGAIN")
 if SERVER then -- wip
 	AddCSLuaFile()
 
@@ -561,6 +562,22 @@ do -- table
 	table.clear = _G.table.Empty
 	table.merge = _G.table.Merge
 	table.copy = _G.table.Copy
+
+	function table.scroll(tbl, offset)
+		if offset == 0 then return end
+
+		if offset > 0 then
+			for _ = 1, offset do
+				local val = table.remove(tbl, 1)
+				table.insert(tbl, val)
+			end
+		else
+			for _ = 1, math.abs(offset) do
+				local val = table.remove(tbl)
+				table.insert(tbl, 1, val)
+			end
+		end
+	end
 
 	function table.fixindices(tbl)
 		local temp = {}
@@ -1406,7 +1423,7 @@ do
 		local FONT = {}
 
 		function gfx.SetFont(font)
-			FONT = font
+			FONT = font or gfx.GetDefaultFont()
 		end
 
 		env.render2d.alpha_multiplier = 1

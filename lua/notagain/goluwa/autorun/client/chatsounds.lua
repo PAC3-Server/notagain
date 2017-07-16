@@ -1,5 +1,42 @@
 local goluwa = requirex("goluwa")
 
+local autocomplete = goluwa.autocomplete
+local chatsounds = goluwa.chatsounds
+
+do
+	local found_autocomplete
+
+	local function query(str, scroll)
+		found_autocomplete = autocomplete.Query("chatsounds", str, scroll)
+	end
+
+	hook.Add("OnChatTab", "chatsounds_autocomplete", function(str)
+		query(str, (input.IsKeyDown(KEY_LSHIFT) or input.IsKeyDown(KEY_RSHIFT) or input.IsKeyDown(KEY_LCONTROL)) and -1 or 1)
+
+		if found_autocomplete[1] then
+			return found_autocomplete[1]
+		end
+	end)
+
+	hook.Add("ChatTextChanged", "chatsounds_autocomplete", function(str)
+		query(str, 0)
+	end)
+
+	hook.Add("StartChat", "chatsounds_autocomplete", function()
+		hook.Add("PostRenderVGUI", "chatsounds_autocomplete", function()
+			if found_autocomplete and #found_autocomplete > 0 then
+				local x, y = chat.GetChatBoxPos()
+				local w, h = chat.GetChatBoxSize()
+				autocomplete.DrawFound(x, y + h, found_autocomplete, nil, 2)
+			end
+		end)
+	end)
+
+	hook.Add("FinishChat", "chatsounds_autocomplete", function()
+		hook.Remove("PostRenderVGUI", "chatsounds_autocomplete")
+	end)
+end
+
 local init = false
 hook.Add("OnPlayerChat", "chatsounds", function(ply, str)
 	if not init then
@@ -42,23 +79,24 @@ hook.Add("OnPlayerChat", "chatsounds", function(ply, str)
 					timer.Create("chatsounds_download_list_" .. info.depot, 1, 50, function()
 						if found_tree and found_list then
 							print("loading chatsounds data for " .. info.title)
-							goluwa.chatsounds.LoadData(tostring(info.depot))
+							chatsounds.LoadData(tostring(info.depot))
 							timer.Destroy("chatsounds_download_list_" .. info.depot)
 						end
 					end)
 				else
 					print("loading chatsounds data for " .. info.title)
-					goluwa.chatsounds.LoadData(tostring(info.depot))
+					chatsounds.LoadData(tostring(info.depot))
 				end
 			end
 		end
 
-		goluwa.chatsounds.Initialize()
-		goluwa.chatsounds.BuildFromGithub("https://api.github.com/repos/Metastruct/garrysmod-chatsounds/git/trees/master?recursive=1")
+		chatsounds.Initialize()
+		chatsounds.BuildFromGithub("https://api.github.com/repos/Metastruct/garrysmod-chatsounds/git/trees/master?recursive=1")
 
 		init = true
 	end
 
 	goluwa.audio.player_object = ply
-	goluwa.chatsounds.Say(str, math.Round(CurTime()))
+	chatsounds.Say(str, math.Round(CurTime()))
 end)
+
