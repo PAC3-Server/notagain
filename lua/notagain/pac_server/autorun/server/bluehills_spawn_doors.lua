@@ -6,7 +6,7 @@ hook.Add("InitPostEntity","gm_bluehills_fuck_door_sounds",function()
         2393,
     }
 
-    for k,v in pairs(tofuckoff) door1
+    for k,v in pairs(tofuckoff) do
         local ent = ents.GetMapCreatedEntity(v)
         ent:SetSaveValue("startclosesound","")
         ent:SetSaveValue("noise1","")
