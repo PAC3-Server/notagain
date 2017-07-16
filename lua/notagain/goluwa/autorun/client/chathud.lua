@@ -141,7 +141,7 @@ function chathud.AddText(...)
 			end
 
 			-- discord emotes
-			v = v:gsub("<:[%w_]+:([%d]+)>", "<texture=https://cdn.discordapp.com/emojis/%1.png>")
+			v = v:gsub("<:[%w_]+:([%d]+)>", "<texture=https://cdn.discordapp.com/emojis/%1.png,16,16>")
 
 			v = v:gsub("<remember=(.-)>(.-)</remember>", function(key, val)
 				chathud.emote_shortcuts[key] = val
