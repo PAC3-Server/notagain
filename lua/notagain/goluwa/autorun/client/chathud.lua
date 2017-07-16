@@ -1,3 +1,5 @@
+local goluwa = requirex("goluwa")
+
 chathud = chathud or {}
 
 chathud.panel = chathud.panel or NULL
@@ -55,7 +57,7 @@ function chathud.Initialize()
 		end
 	end)
 
-	local markup = GoluwaMarkup()
+	local markup = goluwa.gfx.CreateMarkup()
 
 	--markup:SetEditable(true)
 
@@ -76,9 +78,9 @@ function chathud.Initialize()
 	hook.Add("HUDPaint", "chathud", function()
 		if chathud.panel:IsVisible() then
 			surface.DisableClipping(true)
-			markup.render2d.PushMatrix(chathud.panel:GetPos())
+			goluwa.render2d.PushMatrix(chathud.panel:GetPos())
 			chathud.panel:PaintX(chathud.panel:GetSize())
-			markup.render2d.PopMatrix()
+			goluwa.render2d.PopMatrix()
 			surface.DisableClipping(false)
 		end
 	end)
