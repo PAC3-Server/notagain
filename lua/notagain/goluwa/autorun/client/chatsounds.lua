@@ -5,12 +5,19 @@ local chatsounds = goluwa.chatsounds
 
 do
 	local found_autocomplete
+	local random_mode = false
 
 	local function query(str, scroll)
 		found_autocomplete = autocomplete.Query("chatsounds", str, scroll)
 	end
 
 	hook.Add("OnChatTab", "chatsounds_autocomplete", function(str)
+		if str == "random" or random_mode then
+			random_mode = true
+			query("", 0)
+			return found_autocomplete[1]
+		end
+
 		query(str, (input.IsKeyDown(KEY_LSHIFT) or input.IsKeyDown(KEY_RSHIFT) or input.IsKeyDown(KEY_LCONTROL)) and -1 or 1)
 
 		if found_autocomplete[1] then
@@ -19,6 +26,7 @@ do
 	end)
 
 	hook.Add("ChatTextChanged", "chatsounds_autocomplete", function(str)
+		random_mode = false
 		query(str, 0)
 	end)
 
@@ -27,7 +35,7 @@ do
 			if found_autocomplete and #found_autocomplete > 0 then
 				local x, y = chat.GetChatBoxPos()
 				local w, h = chat.GetChatBoxSize()
-				autocomplete.DrawFound(x, y + h, found_autocomplete, nil, 2)
+				autocomplete.DrawFound("chatsounds", x, y + h, found_autocomplete)
 			end
 		end)
 	end)

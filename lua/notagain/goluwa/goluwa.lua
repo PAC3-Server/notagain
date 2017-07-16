@@ -45,8 +45,8 @@ function env.runfile(path, ...)
 		local info = debug.getinfo(2)
 		if info and info.source then
 			local dir = info.source:match("^.+lua/(notagain/goluwa/.+)")
-			dir = dir:match("(.+/)")
 			if dir then
+				dir = dir:match("(.+/)")
 				if file.Exists(dir .. path, "LUA") then
 					local func = CompileFile(dir .. path)
 					if isfunction(func) then
@@ -62,6 +62,10 @@ function env.runfile(path, ...)
 			end
 		end
 	end
+end
+
+function env.desire()
+
 end
 
 do -- lua env
@@ -472,6 +476,11 @@ do -- lua env
 	end
 end
 
+env.runfile("goluwa/libraries/extensions/string.lua")
+env.runfile("goluwa/libraries/extensions/table.lua")
+env.runfile("goluwa/libraries/extensions/math.lua")
+env.utf8 = env.runfile("goluwa/libraries/utf8.lua")
+
 local http = table.Copy(http)
 local sound = table.Copy(sound)
 
@@ -561,50 +570,6 @@ function env.typex(val)
 	end
 
 	return type(val)
-end
-
-do -- table
-	local table = env.table
-
-	table.random = _G.table.Random
-	table.clear = _G.table.Empty
-	table.merge = _G.table.Merge
-	table.copy = _G.table.Copy
-
-	function table.scroll(tbl, offset)
-		if offset == 0 then return end
-
-		if offset > 0 then
-			for _ = 1, offset do
-				local val = table.remove(tbl, 1)
-				table.insert(tbl, val)
-			end
-		else
-			for _ = 1, math.abs(offset) do
-				local val = table.remove(tbl)
-				table.insert(tbl, 1, val)
-			end
-		end
-	end
-
-	function table.fixindices(tbl)
-		local temp = {}
-
-		for k, v in pairs(tbl) do
-			table.insert(temp, {v = v, k = tonumber(k) or 0})
-			tbl[k] = nil
-		end
-
-		table.sort(temp, function(a, b) return a.k < b.k end)
-
-		for k, v in ipairs(temp) do
-			tbl[k] = v.v
-		end
-
-		return temp
-	end
-
-	env.table = table
 end
 
 do
@@ -816,60 +781,6 @@ do
 	end
 
 	env.window = window
-end
-
-env.utf8 = env.runfile("goluwa/libraries/utf8.lua")
-
-do
-	local string = env.string
-	string.split = _G.string.Split
-
-	function string.getchartype(char)
-
-		if char:find("%p") and char ~= "_" then
-			return "punctation"
-		elseif char:find("%s") then
-			return "space"
-		elseif char:find("%d") then
-			return "digit"
-		elseif char:find("%a") or char == "_" then
-			return "letters"
-		end
-
-		return "unknown"
-	end
-
-	function string.haswhitespace(str)
-		for i = 1, #str do
-			local b = str:byte(i)
-			if b == 32 or (b >= 9 and b <= 12) then
-				return true
-			end
-		end
-	end
-
-	function string.iswhitespace(char)
-		return
-			char == "\32" or
-			char == "\9" or
-			char == "\10" or
-			char == "\11" or
-			char == "\12"
-	end
-
-	env.string = string
-end
-
-do
-	local math = env.math
-
-	math.clamp = _G.math.Clamp
-	math.round = _G.math.Round
-
-	function math.randomf(a, b)
-		return math.Rand(a, b)
-	end
-	env.math = math
 end
 
 do
