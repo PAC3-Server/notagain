@@ -160,9 +160,11 @@ function notagain.Autorun()
 			end
 		end
 
-		local path = addon_dir .. "/" .. addon_name .. ".lua"
-		if file.Exists(path, "LUA") then
-			notagain.loaded_libraries[addon_name] = include(path)
+		if not notagain.loaded_libraries[addon_name] then
+			local path = addon_dir .. "/" .. addon_name .. ".lua"
+			if file.Exists(path, "LUA") then
+				notagain.loaded_libraries[addon_name] = include(path)
+			end
 		end
 	end
 
