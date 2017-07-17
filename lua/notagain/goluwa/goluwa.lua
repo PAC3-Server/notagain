@@ -734,6 +734,8 @@ do
 							end
 
 							snd:SetPos(ply:EyePos(), ply:GetAimVector())
+										
+							snd:SetVolume(system.HasFocus() and 1 or 0)	
 						end)
 					end
 				end)
