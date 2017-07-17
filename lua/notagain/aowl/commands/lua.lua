@@ -11,31 +11,31 @@ end
 
 aowl.AddCommand("l", function(ply, script)
 	return run(luadev.RunOnServer, script, ply, "l")
-end)
+end, "developers")
 
 aowl.AddCommand("ls", function(ply, script)
 	return run(luadev.RunOnShared, script, ply, "l")
-end)
+end, "developers")
 
 aowl.AddCommand("lc", function(ply, script)
 	return run(luadev.RunOnClients, script, ply, "lc")
-end)
+end, "developers")
 
 aowl.AddCommand("print", function(ply, script)
 	return run(luadev.RunOnServer, "print(" .. script .. ")", ply, "print")
-end)
+end, "developers")
 
 aowl.AddCommand("table", function(ply, script)
 	return run(luadev.RunOnServer, "PrintTable(" .. script .. ")", ply, "table")
-end)
+end, "developers")
 
 aowl.AddCommand("keys", function(ply, script)
 	return run(luadev.RunOnServer, "for k, v in pairs(" .. script .. ") do print(k) end", ply, "keys")
-end)
+end, "developers")
 
 aowl.AddCommand("printc", function(ply, script)
 	return run(luadev.RunOnClients, "requirex('easylua').PrintOnServer(" .. script .. ")", ply, "printc")
-end)
+end, "developers")
 
 -- specific client
 aowl.AddCommand("lsc=player_admin|player_alter,string_rest", function(ply, _, ent, script)
@@ -46,7 +46,7 @@ aowl.AddCommand("lsc=player_admin|player_alter,string_rest", function(ply, _, en
 	local valid, err = luadev.ValidScript(script, "lsc")
 	if not valid then return false, err end
 	return luadev.RunOnClient(script, ent, luadev.GetPlayerIdentifier(ply, "cmd:lsc"), {sender = ply})
-end)
+end, "developers")
 
 do -- self
 	aowl.AddCommand("lm", function(ply, script)
@@ -81,7 +81,7 @@ do -- self and server
 		if not ok then return ok, err end
 		ok, err = aowl.Execute(ply, "printm " .. script)
 		if not ok then return ok, err end
-	end)
+	end, "developers")
 
 	aowl.AddCommand("lb", function(ply, script)
 		local ok, err
@@ -89,5 +89,5 @@ do -- self and server
 		if not ok then return ok, err end
 		ok, err = aowl.Execute(ply, "lm " .. script)
 		if not ok then return ok, err end
-	end)
+	end, "developers")
 end

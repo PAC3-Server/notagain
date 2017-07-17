@@ -3,6 +3,39 @@ local goluwa = requirex("goluwa")
 local autocomplete = goluwa.autocomplete
 local chatsounds = goluwa.chatsounds
 
+local hooks = {}
+local function hookAdd(event, id, callback)
+	hooks[event] = hooks[event] or {}
+	hooks[event][id] = callback
+	hook.Add(event, id, callback)
+end
+
+local function unhook()
+	for event, data in next, hooks do
+		for id, callback in next, data do
+			hook.Remove(event, id)
+		end
+	end
+end
+
+local function rehook()
+	for event, data in next, hooks do
+		for id, callback in next, data do
+			hook.Add(event, id, callback)
+		end
+	end
+end
+
+local chatsounds_enabled = CreateClientConVar("chatsounds_enabled", "1", true, false, "Disable chatsounds")
+
+cvars.AddChangeCallback("chatsounds_enabled", function(convar_name, value_old, value_new)
+	if value_new ~= '0' then
+		rehook()
+	else
+		unhook()
+	end
+end)
+
 do
 	local found_autocomplete
 	local random_mode = false
@@ -11,7 +44,7 @@ do
 		found_autocomplete = autocomplete.Query("chatsounds", str, scroll)
 	end
 
-	hook.Add("OnChatTab", "chatsounds_autocomplete", function(str)
+	hookAdd("OnChatTab", "chatsounds_autocomplete", function(str)
 		if str == "random" or random_mode then
 			random_mode = true
 			query("", 0)
@@ -25,13 +58,13 @@ do
 		end
 	end)
 
-	hook.Add("ChatTextChanged", "chatsounds_autocomplete", function(str)
+	hookAdd("ChatTextChanged", "chatsounds_autocomplete", function(str)
 		random_mode = false
 		query(str, 0)
 	end)
 
-	hook.Add("StartChat", "chatsounds_autocomplete", function()
-		hook.Add("PostRenderVGUI", "chatsounds_autocomplete", function()
+	hookAdd("StartChat", "chatsounds_autocomplete", function()
+		hookAdd("PostRenderVGUI", "chatsounds_autocomplete", function()
 			if found_autocomplete and #found_autocomplete > 0 then
 				local x, y = chat.GetChatBoxPos()
 				local w, h = chat.GetChatBoxSize()
@@ -40,13 +73,13 @@ do
 		end)
 	end)
 
-	hook.Add("FinishChat", "chatsounds_autocomplete", function()
+	hookAdd("FinishChat", "chatsounds_autocomplete", function()
 		hook.Remove("PostRenderVGUI", "chatsounds_autocomplete")
 	end)
 end
 
 local init = false
-hook.Add("OnPlayerChat", "chatsounds", function(ply, str)
+hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 	if not init then
 		for i, info in ipairs(engine.GetGames()) do
 			if info.mounted then
@@ -108,3 +141,8 @@ hook.Add("OnPlayerChat", "chatsounds", function(ply, str)
 	chatsounds.Say(str, math.Round(CurTime()))
 end)
 
+if not chatsounds_enabled:GetBool() then
+	timer.Simple(0.05, function()
+		unhook()
+	end)
+end
