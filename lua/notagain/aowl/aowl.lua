@@ -619,14 +619,17 @@ do -- commands
   
  	function aowl.AddHelp(command, help)
   		local commandFound, msg = aowl.FindCommand(command)
-  		if commandFound == nil then
+  		if not commandFound then
   			return false
   		end
-  		aowl.help[commandFound] = help
+
+  		for _, alias in next, commandFound.aliases do 
+			aowl.help[alias] = help
+		end
   		return true
   	end
 
-	function aowl.FindCommand(str)
+  	function aowl.FindCommand(str)
 		local found = {}
 
 		for _, command in pairs(aowl.commands) do
@@ -649,7 +652,7 @@ do -- commands
     
 		local str = awol.help[command]
     
-		if str != nil then
+		if str then
 			return str
 		end
 
