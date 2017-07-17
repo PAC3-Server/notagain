@@ -690,8 +690,12 @@ do
 										local dist = ply:EyePos():Distance(LocalPlayer():EyePos())
 
 										local f = math.Clamp(1 - dist / 500, 0, 1) ^ 1.5
-
-										snd:SetVolume((self.gain or 1) * f)
+										
+										if system.HasFocus() then
+											snd:SetVolume((self.gain or 1) * f)
+										else
+											snd:SetVolume(0)
+										end
 									end)
 								end
 							end)
@@ -730,6 +734,8 @@ do
 							end
 
 							snd:SetPos(ply:EyePos(), ply:GetAimVector())
+										
+							snd:SetVolume(system.HasFocus() and 1 or 0)	
 						end)
 					end
 				end)
