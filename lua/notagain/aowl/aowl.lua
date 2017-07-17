@@ -475,6 +475,7 @@ do -- commands
 	end
 
 	aowl.commands = aowl.commands or {}
+	aowl.help = aowl.help or {}
 
 	local capture_symbols = {
 		["\""] = "\"",
@@ -615,6 +616,15 @@ do -- commands
 
 		hook.Run("AowlCommandAdded", aowl.commands[aliases[1]])
 	end
+  
+ 	function aowl.AddHelp(command, help)
+  		local commandFound, msg = aowl.FindCommand(command)
+  		if commandFound == nil then
+  			return false
+  		end
+  		aowl.help[commandFound] = help
+  		return true
+  	end
 
 	function aowl.FindCommand(str)
 		local found = {}
@@ -636,6 +646,12 @@ do -- commands
 	function aowl.GetHelpText(alias)
 		local command, msg = aowl.FindCommand(alias)
 		if not command then return false, msg end
+    
+		local str = awol.help[command]
+    
+		if str != nil then
+			return str
+		end
 
 		local params = {}
 
@@ -648,7 +664,7 @@ do -- commands
 			end
 		end
 
-		local str = "!" .. alias .. " "
+		str = "!" .. alias .. " "
 
 		if #params == 2 then
 			str = str .. params[2]
