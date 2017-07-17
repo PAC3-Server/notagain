@@ -21,7 +21,11 @@ local function check_dir(dir, cb, what, lib)
 			if last[path] then
 				local code = file.Read(path, "MOD")
 				if lib then
-					code = "notagain.loaded_libraries." .. name .. "=(function()" .. code .. ";end)()"
+					if isfunction(lib) then
+						code = lib(code)
+					else
+						code = "notagain.loaded_libraries." .. name .. "=(function()" .. code .. ";end)()"
+					end
 				end
 				cb(path, code, what)
 			end
@@ -42,20 +46,29 @@ local function callback(path, code, what)
 	end
 end
 
+local addon_dir = notagain.addon_dir .. "lua/"
+
 concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 	if b == "1" then
 		timer.Create("luadev_monitor_notagain", 0.1, 0, function()
 			if system.HasFocus() then return end
-			for _, dir in pairs(notagain.directories) do
-				check_dir("addons/notagain/lua/"..dir.."/autorun/", callback, "shared")
-				check_dir("addons/notagain/lua/"..dir.."/autorun/client/", callback, "clients")
-				check_dir("addons/notagain/lua/"..dir.."/autorun/server/", callback, "server")
-			end
 
 			for _, dir in pairs(notagain.directories) do
-				check_dir("addons/notagain/lua/"..dir.."/libraries/", callback, "shared", true)
-				check_dir("addons/notagain/lua/"..dir.."/libraries/client/", callback, "clients", true)
-				check_dir("addons/notagain/lua/"..dir.."/libraries/server/", callback, "server", true)
+				check_dir(addon_dir .. dir .. "/autorun/", callback, "shared")
+				check_dir(addon_dir .. dir .. "/autorun/client/", callback, "clients")
+				check_dir(addon_dir .. dir .. "/autorun/server/", callback, "server")
+
+				check_dir(addon_dir .. dir .. "/libraries/", callback, "shared", true)
+				check_dir(addon_dir .. dir .. "/libraries/client/", callback, "clients", true)
+				check_dir(addon_dir .. dir .. "/libraries/server/", callback, "server", true)
+			end
+
+			for _, lib in pairs(notagain.loaded_libraries) do
+				if istable(lib) and lib.notagain_monitor_directories then
+					for _, info in ipairs(lib.notagain_monitor_directories) do
+						check_dir(addon_dir .. info.dir, callback, info.what, info.lib)
+					end
+				end
 			end
 		end)
 	else

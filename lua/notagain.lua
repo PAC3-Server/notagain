@@ -7,6 +7,18 @@ notagain.directories = notagain.directories or {}
 notagain.hasloaded = false
 
 do
+	local addon_dir = "addons/notagain/"
+
+	local info = debug.getinfo(1)
+
+	if info then
+		addon_dir = info.source:match("^@(addons/.-/)") or addon_dir
+	end
+
+	notagain.addon_dir = addon_dir
+end
+
+do
 	local function load_path(path)
 		if not file.Exists(path, "LUA") then
 			return nil, "unable to find " .. path
