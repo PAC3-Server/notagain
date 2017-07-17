@@ -24,11 +24,11 @@ do -- _G
 		end
 		local lua = file.Read(path, "LUA")
 
-		return loadstring(lua, path)
+		return env.loadstring(lua, path)
 	end
 
 	function env.dofile(filename)
-		return assert(loadfile(filename))()
+		return assert(env.loadfile(filename))()
 	end
 end
 
@@ -304,19 +304,16 @@ do -- std lua env
 
 	_G.assert = assert
 	_G.collectgarbage = collectgarbage
-	_G.dofile = dofile
 	_G.error = error
 	_G.getfenv = getfenv
 	_G.getmetatable = getmetatable
 	_G.ipairs = ipairs
 	_G.load = load
-	_G.loadfile = loadfile
-	_G.loadstring = loadstring
 	_G.module = module
 	_G.next = next
 	_G.pairs = pairs
 	_G.pcall = pcall
-	_G.print = _G.print
+	_G.print = print
 	_G.rawequal = rawequal
 	_G.rawget = rawget
 	_G.rawset = rawset
