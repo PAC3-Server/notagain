@@ -617,14 +617,14 @@ do -- commands
 		hook.Run("AowlCommandAdded", aowl.commands[aliases[1]])
 	end
   
-  function aowl.AddHelp(command, help)
-    local commandFound, msg = aowl.FindCommand(command)
-    if commandFound == nil then
-      return false
-    end
-    aowl.help[commandFound] = help
-    return true
-  end
+ 	function aowl.AddHelp(command, help)
+  		local commandFound, msg = aowl.FindCommand(command)
+  		if commandFound == nil then
+  			return false
+  		end
+  		aowl.help[commandFound] = help
+  		return true
+  	end
 
 	function aowl.FindCommand(str)
 		local found = {}
