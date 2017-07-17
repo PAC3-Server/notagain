@@ -30,32 +30,34 @@ local function CrashTick(is_crashing, length, api_response)
 		crash_status = true
 		crash_time = math.Round(length)
 
-		if delay < RealTime() and times <= api_retry then
-			API_RESPONSE = 1 -- Waiting for Response.
+		if API_RESPONSE ~= 4 then
+			if delay < RealTime() and times <= api_retry then
+				API_RESPONSE = 1 -- Waiting for Response.
 
-			http.Fetch(string.format("https://api.steampowered.com/ISteamApps/GetServersAtAddress/v1/?addr=%s&format=json", tostring( game.GetIPAddress() )),
-				function( body, len, headers, code )
-					local data = util.JSONToTable(body)
-					if data and next(data) then
-						data = data["response"] and data["response"]["servers"]
+				http.Fetch(string.format("https://api.steampowered.com/ISteamApps/GetServersAtAddress/v1/?addr=%s&format=json", tostring( game.GetIPAddress() )),
+					function( body, len, headers, code )
+						local data = util.JSONToTable(body)
 						if data and next(data) then
-							if data[1]["addr"] then
-								API_RESPONSE = 4 -- Server Is Up Again
+							data = data["response"] and data["response"]["servers"]
+							if data and next(data) then
+								if data[1]["addr"] then
+									API_RESPONSE = 4 -- Server Is Up Again
+								end
+							else
+								API_RESPONSE = 2 -- Server Not Responding.
 							end
 						else
 							API_RESPONSE = 2 -- Server Not Responding.
 						end
-					else
-						API_RESPONSE = 2 -- Server Not Responding.
+					end,
+					function( error )
+						API_RESPONSE = 3 -- No Internet Connection or API Down.
 					end
-				end,
-				function( error )
-					API_RESPONSE = 3 -- No Internet Connection or API Down.
-				end
-			)
+				)
 
-			delay = RealTime() + api_retry_delay
-			times = times + 1
+				delay = RealTime() + api_retry_delay
+				times = times + 1
+			end
 		end
 	else
 		times = 1
