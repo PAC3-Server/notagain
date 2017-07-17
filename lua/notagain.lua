@@ -142,6 +142,10 @@ local function run_dir(dir)
 	end
 end
 
+function notagain.AutorunDirectory(addon_name)
+	run_dir(notagain.directories[addon_name] .. "/prerun/")
+	run_dir(notagain.directories[addon_name] .. "/autorun/")
+end
 
 function notagain.Autorun()
 	--If external stuff needs to be called before notagain

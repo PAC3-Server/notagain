@@ -37,15 +37,99 @@ local msgpack = requirex("msgpack")
 local mp3duration = requirex("mp3duration")
 local prettytext = requirex("pretty_text")
 
-local function print(...)
-	if env.DEBUG then
-		_G.print(...)
+include("notagain/goluwa/goluwa/std.lua")
+
+do
+	env._OLD_G = {}
+	local done = {[env._G] = true}
+
+	local function scan(tbl, store)
+		for key, val in pairs(tbl) do
+			local t = type(val)
+
+			if t == "table" and not done[val] and val ~= store then
+				store[key] = store[key] or {}
+				done[val] = true
+				scan(val, store[key])
+			else
+				store[key] = val
+			end
+		end
 	end
+	scan(env._G, env._OLD_G)
+end
+
+env.e = {}
+env.e.USERDATA_FOLDER = ""
+env.e.ROOT_FOLDER = notagain.addon_dir .. "lua/notagain/goluwa/goluwa/"
+
+do
+	local fs = {}
+
+	function fs.find(dir, exclude_dot)
+		local out = {}
+
+		return out
+	end
+
+	function fs.getcd()
+		return ""
+	end
+
+	function fs.setcd(path)
+
+	end
+
+	function fs.createdir(path)
+		file.CreateDir("goluwa/" .. path)
+	end
+
+	function fs.getattributes(path)
+		return {
+			creation_time = 0,
+			last_accessed = 0,
+			last_modified = 0,
+			last_changed = -1, -- last permission changes
+			size = 0,
+			type = "none",
+		}
+	end
+
+	env.fs = fs
+
+	env.ffi = false
+	env["table.new"] = false
+	env["table.clear"] = false
+	env["deflatelua"] = false
+	env["lunajson"] = false
+
+	env.msgpack = {encode = msgpack.pack, decode = msgpack.unpack}
+	env.msgpack2 = false
+	env.von = false
 end
 
 function env.runfile(path, ...)
 	if path:StartWith("lua/") then
 		path = "notagain/goluwa/goluwa/" .. path:sub(5)
+	end
+
+	if path:EndsWith("*") then
+		local dir = path:sub(2)
+		if not file.IsDir(path, "LUA") then
+			local folder_name = path:match(".+/(.-/)%*") or path:match("(.+/)%*")
+			local info = debug.getinfo(2)
+			dir = info.source:match("^.+lua/(notagain/goluwa/.+)")
+			dir = dir:match("(.+/)") .. folder_name
+			path = dir .. "*"
+		end
+		local files = file.Find(path, "LUA")
+		for _, name in pairs(files) do
+			env.runfile(dir .. name, ...)
+		end
+		if not files[1] then
+			ErrorNoHalt("no files in " .. path)
+		end
+		return
 	end
 
 	if file.Exists(path, "LUA") then
@@ -79,13 +163,12 @@ function env.runfile(path, ...)
 	end
 end
 
-function env.desire()
-
-end
-
-include("notagain/goluwa/goluwa/std.lua")
-
 env.runfile("goluwa/libraries/extensions/string.lua")
+for k,v in pairs(env.string) do _G.string[k] = _G.string[k] or v end -- :(
+
+env.runfile("goluwa/libraries/extensions/globals.lua")
+env.runfile("goluwa/libraries/extensions/debug.lua")
+env.runfile("goluwa/libraries/extensions/os.lua")
 env.runfile("goluwa/libraries/extensions/table.lua")
 env.runfile("goluwa/libraries/extensions/math.lua")
 env.utf8 = env.runfile("goluwa/libraries/utf8.lua")
@@ -172,45 +255,6 @@ function env.typex(val)
 	end
 
 	return type(val)
-end
-
-
-do -- log
-	function env.logf(str, ...)
-		MsgN("goluwa: " .. string.format(str, ...))
-	end
-
-	function env.logn(...)
-		local str = ""
-
-		for i = 1, select("#", ...) do
-			str = str .. tostring(select(i, ...))
-		end
-
-		MsgN("goluwa: " .. str)
-	end
-
-	function env.wlog(...)
-		env.logf(...)
-	end
-
-	function env.llog(...)
-		env.logf(...)
-	end
-
-	function env.log(...)
-		local str = ""
-
-		for i = 1, select("#", ...) do
-			str = str .. tostring(select(i, ...))
-		end
-
-		Msg("goluwa: " .. str)
-	end
-
-	function env.print(...)
-		print("goluwa:", ...)
-	end
 end
 
 do -- color
@@ -393,32 +437,6 @@ do
 end
 
 do
-	local event = {}
-
-	function event.Delay(time, cb)
-		timer.Simple(time, cb)
-	end
-
-	function event.AddListener(event, id, cb)
-		if event == "Update" then
-			event = "Think"
-		end
-
-		hook.Add(event, id, cb)
-	end
-
-	function event.RemoveListener(event, id)
-		if event == "Update" then
-			event = "Think"
-		end
-
-		hook.Remove(event, id)
-	end
-
-	env.event = event
-end
-
-do
 	local system = {}
 
 	function system.GetElapsedTime()
@@ -433,18 +451,31 @@ do
 		gui.OpenURL(url)
 	end
 
+	function system.OnError()
+		debug.Trace()
+	end
+
+	system.pcall = pcall
+
 	env.system = system
 end
 
-do -- serializer
-	local serializer = {}
+env.event = env.runfile("goluwa/libraries/event.lua")
 
-	function serializer.ReadFile(lib, path)
-		return msgpack.unpack(env.vfs.Read(path))
-	end
+env.event.AddListener("EventAdded", "gmod", function(info)
+	print("goluwa event added: ", info.event_type, info.id)
+end)
 
-	env.serializer = serializer
-end
+env.event.AddListener("EventRemoved", "gmod", function(info)
+	print("goluwa event removed: ", info.event_type, info.id)
+end)
+
+hook.Add("Think", "goluwa_timers", function()
+	env.event.UpdateTimers()
+	env.event.Call("Update", FrameTime())
+end)
+
+env.serializer = env.runfile("goluwa/libraries/serializer.lua")
 
 do -- render2d
 	local render2d = {}
@@ -607,6 +638,7 @@ do
 	audio.player_object = NULL
 
 	function audio.CreateSource(path)
+		print("audio.CreateSource: " .. path)
 		if path:StartWith("http") then
 			local url = path
 			local snd
@@ -895,8 +927,8 @@ end
 env.autocomplete = env.runfile("goluwa/libraries/autocomplete.lua")
 env.chatsounds = env.runfile("goluwa/libraries/audio/chatsounds/chatsounds.lua")
 
-for k,v in pairs(env.string) do
-	_G.string[k] = _G.string[k] or v
+if LocalPlayer():IsValid() then
+	notagain.AutorunDirectory("goluwa")
 end
 
 return env
