@@ -1351,7 +1351,9 @@ do -- groups
 				file.CreateDir("aowl")
 				luadata.WriteFile(USERSFILE, users)
 
-				log("rank", string.format("Changing %s (%s) usergroup to %s",self:Nick(), self:SteamID(), name))
+				if not game.SinglePlayer() then
+					log("rank", string.format("Changing %s (%s) usergroup to %s",self:Nick(), self:SteamID(), name))
+				end
 			end
 		end
 
