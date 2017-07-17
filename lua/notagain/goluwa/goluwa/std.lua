@@ -1,15 +1,12 @@
 local env = ... or _G.goluwa
 
-local handle_path = function(path, plain)
-	file.CreateDir("stdlua") -- hhh
+env.jit = table.Copy(_G.jit)
+env.newproxy = _G.newproxy
 
-	path = "stdlua/" .. path
+file.CreateDir("goluwa")
 
-	if not plain then
-		path = (path):gsub("%.", "_") .. ".txt"
-	end
-
-	return path
+local function data_path(path)
+	return "goluwa/" .. path:gsub("%.", "_") .. ".txt"
 end
 
 do -- _G
@@ -21,17 +18,17 @@ do -- _G
 		return setfenv(var, getfenv(1))
 	end
 
-	function env.loadfile(str)
-		if not file.Exists(handle_path(str, true), "DATA") then
-			return nil, str .. ": No such file", 2
+	function env.loadfile(path)
+		if not file.Exists(path, "LUA") then
+			return nil, path .. ": No such file", 2
 		end
-		local lua = file.Read(handle_path(str, true), "DATA")
-		return loadstring(lua, str)
+		local lua = file.Read(path, "LUA")
+
+		return loadstring(lua, path)
 	end
 
 	function env.dofile(filename)
-		local f = assert(loadfile(filename))
-		return f()
+		return assert(loadfile(filename))()
 	end
 end
 
@@ -63,27 +60,32 @@ do -- os
 	end
 
 	function os.remove(filename)
-		if file.Exists(handle_path(filename), "DATA") then
-			file.Delete(handle_path(filename), "DATA")
+		filename = data_path(filename)
+
+		if file.Exists(filename, "DATA") then
+			file.Delete(filename, "DATA")
 			return true
 		end
 
-		return nil, "data/" .. filename .. ": No such file or directory", 2
+		return nil, filename .. ": No such file or directory", 2
 	end
 
 	function os.rename(a, b)
-		if file.Exists(handle_path(filename), "DATA") then
-			local str = file.Read(handle_path(a), "DATA")
-			file.Delete(handle_path(b), "DATA")
-			file.Write(handle_path(b), str, "DATA")
+		a = data_path(a)
+		b = data_path(b)
+
+		if file.Exists(a, "DATA") then
+			local str = file.Read(a, "DATA")
+			file.Delete(a, "DATA")
+			file.Write(b, "DATA")
 			return true
 		end
 
-		return nil, "data/" .. a .. ": No such file or directory", 2
+		return nil, a .. ": No such file or directory", 2
 	end
 
 	function os.tmpname()
-		return "data/temp/" .. util.CRC(RealTime()) .. ".txt"
+		return data_path(util.CRC(RealTime()))
 	end
 
 	os.clock = _G.os.clock
@@ -109,115 +111,102 @@ do -- io
 		local str = ""
 
 		for i = 1, select("#", ...) do
-			str = str .. tostring(select(i, ...))
+			str = str .. tostring((select(i, ...)))
 		end
 
-		self.__data = str
-
-		if self.__path:sub(0, 5) == "data/" then
-			file.Write(handle_path(self.__path:sub(6)), self.__data, "DATA")
-		else
-			file.Write(handle_path(self.__path), self.__data, "DATA")
-		end
+		self.__file:Write(str)
 	end
 
 	local function read(self, format)
-		format = format or "*line"
-
-		self.__seekpos = self.__seekpos or 0
-
 		if type(format) == "number" then
-			return self.__data:sub(0, format)
+			return self.__file:Read(format)
 		elseif format:sub(1, 2) == "*a" then
-			return self.__data:sub(self.__seekpos)
+			return self.__file:Read(self.__file:Size())
 		elseif format:sub(1, 2) == "*l" then
-			if not self.__data:find("\n", nil, true) then
-				if self.__data == "" then return nil end
-
-				local str = self.__data
-				self.__data = ""
-
-				return str
-			else
-				local val = self.__data:match("(.-)\n")
-				self.__data = self.__data:match(".-\n(.+)")
-
-				return val
+			local str = ""
+			for i = 1, self.__file:Size() do
+				local char = self.__file:Read(1)
+				if char == "\n" then break end
+				str = str .. char
 			end
+			return str ~= "" and str or nil
 		elseif format:sub(1, 2) == "*n" then
-			local str = read("*line")
-			if str then
-				local numbers = {}
-				str:gsub("(%S+)", function(str) table.insert(numbers, tonumber(str)) end)
-				return unpack(numbers)
+			local str = self.__file:Read(1)
+			if tonumber(str) then
+				return tonumber(str)
 			end
 		end
 	end
 
 	function META:read(...)
-		local args = {...}
+		local args = {}
 
-		for k, v in pairs(args) do
-			args[k] = read(self, v) or nil
+		for i = 1, select("#", ...) do
+			args[k] = read(self, select(i, ...))
 		end
 
-		return unpack(args) or nil
+		return unpack(args)
 	end
 
 	function META:close()
-
+		self.__file:Close()
 	end
 
 	function META:flush()
-
+		self.__file:Flush()
 	end
 
 	function META:seek(whence, offset)
-		whence = whence or "cur"
 		offset = offset or 0
 
-		self.__seekpos = self.__seekpos or 0
-
 		if whence == "set" then
-			self.__seekpos = offset
+			self.__file:Seek(offset)
 		elseif whence == "end" then
-			self.__seekpos = #self.__data
+			self.__file:Seek(self.__file:Size())
 		elseif whence == "cur" then
-			self.__seekpos = self.__seekpos + offset
+			self.__file:Seek(self.__file:Tell() + offset)
 		end
 
-		return math.Clamp(self.__seekpos, 0, #self.__data)
+		return self.__file:Tell()
 	end
 
 	function META:lines()
-		return self.__data:gmatch("(.-)\n")
+		return function()
+			return self:Read("*line")
+		end
 	end
 
 	function META:setvbuf()
 
 	end
 
-	function io.open(filename, mode)
+	function io.open(path, mode)
 		mode = mode or "r"
-
-		if not file.Exists(handle_path(filename), "DATA") and mode == "w" then
-			error("No such file or directory", 2)
-		end
 
 		local self = setmetatable({}, META)
 
-		self.__data = file.Read(handle_path(filename), "DATA")
-		self.__path = filename
+		local where = "GAME"
+
+		if mode:find("w", nil, true) then
+			path = data_path(path)
+			where = "DATA"
+		end
+
+		local f = file.Open(path, mode, where)
+
+		if not f then
+			return nil, path .. " " .. mode .. " " .. where .. ": No such file", 2
+		end
+
+		self.__file = f
+		self.__path = path
 		self.__mode = mode
 
 		return self
 	end
 
-	io.stdin = setmetatable({}, META)
-	io.stdin.__data = ""
-
-	io.stdout = setmetatable({}, META)
-	io.stdout.__data = ""
+	io.stdin = io.open("stdin", "r")
+	io.stdout = io.open("stdout", "w")
 
 	local current_file = io.stdin
 
@@ -233,10 +222,20 @@ do -- io
 
 	function io.type(var)
 		if getmetatable(var) == META then
-			return file
+			return "file"
 		end
 
 		return nil
+	end
+
+	function io.write(...)
+		local str = ""
+
+		for i = 1, select("#", ...) do
+			str = str .. tostring(select(i, ...))
+		end
+
+		Msg(str)
 	end
 
 	function io.read(...) return current_file:read(...) end
@@ -266,20 +265,34 @@ do -- require
 		os = os,
 	}
 
+	local special = {
+		ffi = true,
+		["table.gcnew"] = true,
+		["table.clear"] = true,
+		["table.new"] = true,
+	}
+
+	local old_gmod_require = _G.require
+
 	function env.require(str, ...)
-		local args = {pcall(old_gmod_require, str, ...)}
+		if env[str] ~= nil then
+			return env[str]
+		end
 
-		if args[1] == false then
-			error(args[2],  2)
-		else
-			table.remove(args, 1)
+		if stdlibs[str] then
+			return stdlibs[str]
+		end
 
-			if args[1] == nil then
-				return stdlibs[str]
+		if special[str] then
+			if type(special[str]) == "function" then
+				return stdlibs[str](...)
 			end
 
-			return unpack(args)
+			error(str .. " not found", 2)
 		end
+
+
+		return old_gmod_require(str, ...)
 	end
 end
 
@@ -307,7 +320,6 @@ do -- std lua env
 	_G.rawequal = rawequal
 	_G.rawget = rawget
 	_G.rawset = rawset
-	_G.require = require
 	_G.select = select
 	_G.setfenv = setfenv
 	_G.setmetatable = setmetatable
