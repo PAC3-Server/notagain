@@ -1,5 +1,5 @@
 local enabled = CreateClientConVar("derma_skin_enabled", "1", true, false, "Custom derma skin. Changing this requires you to reconnect")
-if not enabled then return end
+if not enabled:GetBool() then return end
 
 local surface = surface
 local draw = draw
