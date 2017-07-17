@@ -650,7 +650,7 @@ do -- commands
 		local command, msg = aowl.FindCommand(alias)
 		if not command then return false, msg end
     
-		local str = awol.help[command]
+		local str = aowl.help[command]
     
 		if str then
 			return str
