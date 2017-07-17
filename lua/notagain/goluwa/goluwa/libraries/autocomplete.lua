@@ -1,5 +1,4 @@
 local autocomplete = _G.autocomplete or {}
-
 local env = {}
 
 do -- lists
@@ -93,7 +92,7 @@ function autocomplete.DrawFound(id, x, y, found, max, offset)
 	render2d.SetColor(1,1,1,1)
 
 	render2d.PushMatrix(x, y)
-		for i = offset+1, max do
+		for i = offset, max do
 			local v = found[i]
 
 			if not v then break end
@@ -102,7 +101,7 @@ function autocomplete.DrawFound(id, x, y, found, max, offset)
 			local alpha = (-(i / max) + 1) ^ 5
 
 			render2d.SetAlphaMultiplier(alpha)
-			gfx.DrawText(((env[id].scroll + i - 2)%#found%max + 1) .. ". " ..  v, 5, (i-offset - 1) * h)
+			gfx.DrawText(((env[id].scroll + i - 1)%#found + 1) .. ". " ..  v, 5, (i - offset) * h)
 		end
 
 		render2d.SetAlphaMultiplier(1)
@@ -152,9 +151,16 @@ function autocomplete.Query(id, str, scroll, list)
 				env[id].tab_autocomplete = env[id].found_autocomplete
 			end
 
+			if env[id].last_str then
+				env[id].scroll = env[id].scroll + scroll
+			end
+
 			env[id].last_str = str
-			env[id].scroll = env[id].scroll + scroll
 		end
+	end
+
+	if str == env[id].found_autocomplete[1] then
+		autocomplete.ScrollFound(env[id].tab_autocomplete or env[id].found_autocomplete, scroll)
 	end
 
 	return env[id].found_autocomplete
