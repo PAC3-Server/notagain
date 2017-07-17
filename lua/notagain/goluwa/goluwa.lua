@@ -44,6 +44,10 @@ local function print(...)
 end
 
 function env.runfile(path, ...)
+	if path:StartWith("lua/") then
+		path = "notagain/goluwa/goluwa/" .. path:sub(5)
+	end
+
 	if file.Exists(path, "LUA") then
 		local func = CompileFile(path)
 		if isfunction(func) then
@@ -170,94 +174,163 @@ function env.typex(val)
 	return type(val)
 end
 
-do
-	local utility = {}
 
-	function utility.CreateWeakTable()
-		return setmetatable({}, {__mode = "kv"})
+do -- log
+	function env.logf(str, ...)
+		MsgN("goluwa: " .. string.format(str, ...))
 	end
 
-	function utility.MakePushPopFunction(lib, name, func_set, func_get, reset)
-		func_set = func_set or lib["Set" .. name]
-		func_get = func_get or lib["Get" .. name]
+	function env.logn(...)
+		local str = ""
 
-		local stack = {}
-		local i = 1
-
-		lib["Push" .. name] = function(...)
-			stack[i] = stack[i] or {}
-			stack[i][1], stack[i][2], stack[i][3], stack[i][4] = func_get()
-
-			func_set(...)
-
-			i = i + 1
+		for i = 1, select("#", ...) do
+			str = str .. tostring(select(i, ...))
 		end
 
-		lib["Pop" .. name] = function()
-			i = i - 1
-
-			if i < 1 then
-				error("stack underflow", 2)
-			end
-
-			if i == 1 and reset then
-				reset()
-			end
-
-			func_set(stack[i][1], stack[i][2], stack[i][3], stack[i][4])
-		end
+		MsgN("goluwa: " .. str)
 	end
-	env.utility = utility
+
+	function env.wlog(...)
+		env.logf(...)
+	end
+
+	function env.llog(...)
+		env.logf(...)
+	end
+
+	function env.log(...)
+		local str = ""
+
+		for i = 1, select("#", ...) do
+			str = str .. tostring(select(i, ...))
+		end
+
+		Msg("goluwa: " .. str)
+	end
+
+	function env.print(...)
+		print("goluwa:", ...)
+	end
 end
 
+do -- color
+	local color_unpack = function(s) return s.r, s.g, s.b, s.a end
 
-do
-	local prototype = {}
+	function env.Color(r,g,b,a)
+		local c = Color(r,g,b,a)
+		c.Unpack = color_unpack
+		return c
+	end
 
-	function prototype.CreateObject(META, o)
-		local self = setmetatable(o or {}, META)
-
+	function env.ColorHSV(h,s,v)
+		local self = HSVToColor(h*360,s,v)
+		self.Unpack = color_unpack
 		return self
 	end
+end
 
-	function prototype.CreateTemplate()
-		local META = {}
-		META.__index = META
-
-		function META:GetSet(key, def)
-			local t = type(def)
-			local force
-
-			if t == "number" then
-				force = FORCE_NUMBER
-			elseif t == "string" then
-				force = FORCE_STRING
-			elseif t == "boolean" then
-				force = FORCE_BOOLEAN
-			end
-
-			AccessorFunc(META, key, key, force)
-
-			META[key] = def
-		end
-
-		function META:IsSet(key, def)
-			self:GetSet(key, def)
-			local func = self["Get" .. key]
-			self["Is" .. key] = func
-
-			META[key] = def
-		end
-
-		function META:Register()
-
-		end
-
-		return META
+do -- vec2
+	function env.Vec2(x, y)
+		return Vector(x, y, 0)
 	end
 
-	env.prototype = prototype
+	local META = FindMetaTable("Vector")
+
+	function META:Unpack()
+		return self.x, self.y, self.z
+	end
 end
+
+
+do
+	local vfs = {}
+
+	env.R = function(p) return p end
+
+	local illegal_characters = {
+		[":"] = "_semicolon_",
+		["*"] = "_star_",
+		["?"] = "_questionmark_",
+		["<"] = "_less_than_",
+		[">"] = "_greater_than_",
+		["|"] = "_line_",
+	}
+
+	function vfs.FixIllegalCharactersInPath(path)
+		for k,v in pairs(illegal_characters) do
+			path = path:gsub("%"..k, v)
+		end
+		return path
+	end
+
+	function vfs.Find(path)
+		if path:EndsWith("/") then
+			path = path .. "*"
+		end
+
+		local where = "GAME"
+
+		if path:StartWith("data/") then
+			path = path:gsub("data/", "goluwa/")
+			where = "DATA"
+		end
+
+		local tbl = table.Merge(file.Find(path, where))
+
+		if not tbl[1] then
+			tbl = table.Merge(file.Find(path, "DATA"))
+		end
+
+		return tbl
+	end
+
+	function vfs.Read(path)
+		if path:StartWith("data/") then
+			path = path:gsub("(.+)%..+", "%1.txt")
+			path = path:gsub("data/", "goluwa/")
+
+			if not file.Exists(path, "DATA") then
+				print("vfs.Read data: file does not exist", path)
+			end
+
+			return file.Read(path, "DATA")
+		end
+
+		if not file.Exists(path, "GAME") then
+			print("vfs.Read game: file does not exist", path)
+		end
+
+		return file.Read(path, "GAME")
+	end
+
+	function vfs.Exists(path)
+		if path:StartWith("data/") then
+			local path = path:gsub("(.+)%..+", "%1.txt")
+			path = path:gsub("^data/", "goluwa/")
+
+			if not file.Exists(path, "DATA") then
+				print("vfs.Exists data: file does not exist", path)
+			end
+
+			if file.Exists(path, "DATA") then
+				return true
+			end
+		end
+
+		if file.Exists(path, "GAME") then
+			return true
+		end
+
+		return false
+	end
+
+	vfs.IsFile = vfs.Exists
+
+	env.vfs = vfs
+end
+
+env.prototype = env.runfile("goluwa/libraries/prototype/prototype.lua")
+env.utility = env.runfile("goluwa/libraries/utilities/utility.lua")
 
 do -- texture
 	local render = {}
@@ -303,68 +376,6 @@ do -- commands
 	end
 
 	env.commands = commands
-end
-
-do -- log
-	function env.logf(str, ...)
-		MsgN("goluwa: " .. string.format(str, ...))
-	end
-
-	function env.logn(...)
-		local str = ""
-
-		for i = 1, select("#", ...) do
-			str = str .. tostring(select(i, ...))
-		end
-
-		MsgN("goluwa: " .. str)
-	end
-
-	function env.wlog(...)
-		env.logf(...)
-	end
-
-	function env.llog(...)
-		env.logf(...)
-	end
-
-	function env.log(...)
-		local str = ""
-
-		for i = 1, select("#", ...) do
-			str = str .. tostring(select(i, ...))
-		end
-
-		Msg("goluwa: " .. str)
-	end
-end
-
-do -- color
-	local color_unpack = function(s) return s.r, s.g, s.b, s.a end
-
-	function env.Color(r,g,b,a)
-		local c = Color(r,g,b,a)
-		c.Unpack = color_unpack
-		return c
-	end
-
-	function env.ColorHSV(h,s,v)
-		local self = HSVToColor(h*360,s,v)
-		self.Unpack = color_unpack
-		return self
-	end
-end
-
-do -- vec2
-	function env.Vec2(x, y)
-		return Vector(x, y, 0)
-	end
-
-	local META = FindMetaTable("Vector")
-
-	function META:Unpack()
-		return self.x, self.y, self.z
-	end
 end
 
 do
@@ -544,91 +555,6 @@ do -- render2d
 end
 
 env.expression = env.runfile("goluwa/libraries/expression.lua")
-
-do
-	local vfs = {}
-
-	local illegal_characters = {
-		[":"] = "_semicolon_",
-		["*"] = "_star_",
-		["?"] = "_questionmark_",
-		["<"] = "_less_than_",
-		[">"] = "_greater_than_",
-		["|"] = "_line_",
-	}
-
-	function vfs.FixIllegalCharactersInPath(path)
-		for k,v in pairs(illegal_characters) do
-			path = path:gsub("%"..k, v)
-		end
-		return path
-	end
-
-	function vfs.Find(path)
-		if path:EndsWith("/") then
-			path = path .. "*"
-		end
-
-		local where = "GAME"
-
-		if path:StartWith("data/") then
-			path = path:gsub("data/", "goluwa/")
-			where = "DATA"
-		end
-
-		local tbl = table.Merge(file.Find(path, where))
-
-		if not tbl[1] then
-			tbl = table.Merge(file.Find(path, "DATA"))
-		end
-
-		return tbl
-	end
-
-	function vfs.Read(path)
-		if path:StartWith("data/") then
-			path = path:gsub("(.+)%..+", "%1.txt")
-			path = path:gsub("data/", "goluwa/")
-
-			if not file.Exists(path, "DATA") then
-				print("vfs.Read data: file does not exist", path)
-			end
-
-			return file.Read(path, "DATA")
-		end
-
-		if not file.Exists(path, "GAME") then
-			print("vfs.Read game: file does not exist", path)
-		end
-
-		return file.Read(path, "GAME")
-	end
-
-	function vfs.Exists(path)
-		if path:StartWith("data/") then
-			local path = path:gsub("(.+)%..+", "%1.txt")
-			path = path:gsub("^data/", "goluwa/")
-
-			if not file.Exists(path, "DATA") then
-				print("vfs.Exists data: file does not exist", path)
-			end
-
-			if file.Exists(path, "DATA") then
-				return true
-			end
-		end
-
-		if file.Exists(path, "GAME") then
-			return true
-		end
-
-		return false
-	end
-
-	vfs.IsFile = vfs.Exists
-
-	env.vfs = vfs
-end
 
 do
 	local resource = {}
