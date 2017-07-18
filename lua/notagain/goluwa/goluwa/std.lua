@@ -1,13 +1,8 @@
 local env = ... or _G.goluwa
 
+env.bit = _G.bit
 env.jit = table.Copy(_G.jit)
 env.newproxy = _G.newproxy
-
-file.CreateDir("goluwa")
-
-local function data_path(path)
-	return "goluwa/" .. path:gsub("%.", "_") .. ".txt"
-end
 
 do -- _G
 	function env.loadstring(str, env)
@@ -48,44 +43,15 @@ do -- os
 	end
 
 	function os.setlocale(...)
-		print("os.setlocale: ", ...)
+		dprint("os.setlocale: ", ...)
 	end
 
 	function os.execute(...)
-		print("os.execute: ", ...)
+		dprint("os.execute: ", ...)
 	end
 
 	function os.exit(...)
-		print("os.exit: ", ...)
-	end
-
-	function os.remove(filename)
-		filename = data_path(filename)
-
-		if file.Exists(filename, "DATA") then
-			file.Delete(filename, "DATA")
-			return true
-		end
-
-		return nil, filename .. ": No such file or directory", 2
-	end
-
-	function os.rename(a, b)
-		a = data_path(a)
-		b = data_path(b)
-
-		if file.Exists(a, "DATA") then
-			local str = file.Read(a, "DATA")
-			file.Delete(a, "DATA")
-			file.Write(b, "DATA")
-			return true
-		end
-
-		return nil, a .. ": No such file or directory", 2
-	end
-
-	function os.tmpname()
-		return data_path(util.CRC(RealTime()))
+		dprint("os.exit: ", ...)
 	end
 
 	os.clock = _G.os.clock
@@ -99,110 +65,293 @@ end
 do -- io
 	local io = {}
 
-	local META = {}
-	META.__index = META
+	do -- file
+		--env.debugfs = true
 
-	function META:__tostring()
-		return ("file (%p)"):format(self)
-	end
+		env.e.DATA_FOLDER = "/data/goluwa/data/"
+		env.e.USERDATA_FOLDER = "/data/goluwa/userdata/"
+		env.e.ROOT_FOLDER = notagain.addon_dir .. "lua/notagain/goluwa/goluwa/"
+		env.e.SRC_FOLDER = env.e.ROOT_FOLDER
+		env.e.BIN_FOLDER = "bin/"
 
-	function META:write(...)
-
-		local str = ""
-
-		for i = 1, select("#", ...) do
-			str = str .. tostring((select(i, ...)))
+		local function dprint(...)
+			if env.debugfs then
+				print(...)
+			end
 		end
 
-		self.__file:Write(str)
-	end
+		local allowed = {
+			[".txt"] = true,
+			[".jpg"] = true,
+			[".png"] = true,
+			[".vtf"] = true,
+			[".dat"] = true,
+		}
+		local function get_path(path, is_dir, read_only)
+			if path:StartWith("/") then
+				path = path:sub(2)
+			end
 
-	local function read(self, format)
-		if type(format) == "number" then
-			return self.__file:Read(format)
-		elseif format:sub(1, 2) == "*a" then
-			return self.__file:Read(self.__file:Size())
-		elseif format:sub(1, 2) == "*l" then
+			local where = "GAME"
+
+			if path:StartWith("data/") then
+				if not read_only then
+					path = path:sub(6)
+					where = "DATA"
+				end
+
+				if not is_dir and not file.IsDir(path, where) then
+					if not allowed[path:sub(-4)] then
+						path = path:gsub("%.", "^") .. ".dat"
+					end
+				end
+			end
+
+			return path, where
+		end
+
+		function env.GoluwaToGmodPath(path)
+			if path:StartWith("/") then
+				path = path:sub(2)
+			end
+
+			if path:StartWith("data/") then
+				local dir, file_name = path:match("(.+/)(.+)")
+				file_name = file_name:gsub("%.", "%^")
+
+				if not allowed[path:sub(-4)] then
+					file_name = file_name .. ".dat"
+				end
+
+				return dir .. file_name
+			end
+
+			return path
+		end
+
+		local fs = {}
+
+		function fs.find(path, exclude_dot)
+			dprint("fs.find: ", path)
+
+			if path:startswith("/") then
+				path = path:sub(2)
+			end
+
+			if path:endswith("/") then
+				path = path .. "*"
+			end
+
+			local out
+
+			local files, dirs = file.Find(path, "GAME")
+
+			if files then
+				if path:StartWith("data/") then
+					for i, name in ipairs(files) do
+						local new_name, count = name:gsub("%^", "%.")
+						if count > 0 then
+							files[i] = new_name:sub(-4)
+						end
+					end
+				end
+
+				out = table.Add(files, dirs)
+			end
+
+			return out or {}
+		end
+
+		function fs.getcd()
+			dprint("fs.getcd")
+			return ""
+		end
+
+		function fs.setcd(path)
+			dprint("fs.setcd: ", path)
+		end
+
+		function fs.createdir(path)
+			dprint("fs.createdir: ", path)
+
+			local path, where = get_path(path, true)
+
+			file.CreateDir(path, where)
+		end
+
+		function fs.getattributes(path)
+			dprint("fs.getattributes: ", path)
+			local path, where = get_path(path, false, true)
+
+			if file.Exists(path, where) then
+				local size = file.Size(path, where)
+				local time = file.Time(path, where)
+				local type = file.IsDir(path, where) and "directory" or "file"
+
+				dprint("\t", size)
+				dprint("\t", time)
+				dprint("\t", type)
+
+				return {
+					creation_time = time,
+					last_accessed = time,
+					last_modified = time,
+					last_changed = time,
+					size = size,
+					type = type,
+				}
+			else
+				dprint("\t" .. path .. " " .. where .. " does not exist")
+			end
+		end
+
+		env.fs = fs
+
+		fs.createdir("data/goluwa")
+
+		function env.os.remove(path)
+			local path, where = get_path(path)
+
+			if file.Exists(path, where) then
+				file.Delete(path, where)
+				return true
+			end
+
+			return nil, filename .. ": No such file or directory", 2
+		end
+
+		function env.os.rename(a, b)
+			local a, where_a = get_path(a)
+			local b, where_b = get_path(b)
+
+			dprint("os.rename: " .. a .. " >> " .. b)
+
+			if file.Exists(a, where_a) then
+				local str = file.Read(a, where_a)
+				dprint("file.Read", a, where_a, type(str), str and #str)
+
+				if not str then return nil, a .. ": exists but file.Read returns nil" end
+
+				dprint("file.Delete", a, where_a)
+				file.Delete(a, where_a)
+
+				dprint("file.Write", b, #str)
+				file.Write(b, str)
+				return true
+			end
+
+			return nil, a .. ": No such file or directory", 2
+		end
+
+		function env.os.tmpname()
+			return "os_tmpname_" .. util.CRC(RealTime())
+		end
+
+		local META = {}
+		META.__index = META
+
+		function META:__tostring()
+			return ("file (%p)"):format(self)
+		end
+
+		function META:write(...)
+
 			local str = ""
-			for i = 1, self.__file:Size() do
-				local char = self.__file:Read(1)
-				if char == "\n" then break end
-				str = str .. char
+
+			for i = 1, select("#", ...) do
+				str = str .. tostring((select(i, ...)))
 			end
-			return str ~= "" and str or nil
-		elseif format:sub(1, 2) == "*n" then
-			local str = self.__file:Read(1)
-			if tonumber(str) then
-				return tonumber(str)
+
+			dprint("file " .. self.__path .. ":write: ", #str)
+
+			self.__file:Write(str)
+		end
+
+		local function read(self, format)
+			if type(format) == "number" then
+				return self.__file:Read(format)
+			elseif format:sub(1, 2) == "*a" then
+				return self.__file:Read(self.__file:Size())
+			elseif format:sub(1, 2) == "*l" then
+				local str = ""
+				for i = 1, self.__file:Size() do
+					local char = self.__file:Read(1)
+					if char == "\n" then break end
+					str = str .. char
+				end
+				return str ~= "" and str or nil
+			elseif format:sub(1, 2) == "*n" then
+				local str = self.__file:Read(1)
+				if tonumber(str) then
+					return tonumber(str)
+				end
 			end
 		end
-	end
 
-	function META:read(...)
-		local args = {}
+		function META:read(...)
+			dprint("file " .. self.__path .. ":read: ", ...)
 
-		for i = 1, select("#", ...) do
-			args[k] = read(self, select(i, ...))
+			local args = {}
+
+			for i = 1, select("#", ...) do
+				args[i] = read(self, select(i, ...))
+			end
+
+			return unpack(args)
 		end
 
-		return unpack(args)
-	end
-
-	function META:close()
-		self.__file:Close()
-	end
-
-	function META:flush()
-		self.__file:Flush()
-	end
-
-	function META:seek(whence, offset)
-		offset = offset or 0
-
-		if whence == "set" then
-			self.__file:Seek(offset)
-		elseif whence == "end" then
-			self.__file:Seek(self.__file:Size())
-		elseif whence == "cur" then
-			self.__file:Seek(self.__file:Tell() + offset)
+		function META:close()
+			self.__file:Close()
 		end
 
-		return self.__file:Tell()
-	end
-
-	function META:lines()
-		return function()
-			return self:Read("*line")
-		end
-	end
-
-	function META:setvbuf()
-
-	end
-
-	function io.open(path, mode)
-		mode = mode or "r"
-
-		local self = setmetatable({}, META)
-
-		local where = "GAME"
-
-		if mode:find("w", nil, true) then
-			path = data_path(path)
-			where = "DATA"
+		function META:flush()
+			self.__file:Flush()
 		end
 
-		local f = file.Open(path, mode, where)
+		function META:seek(whence, offset)
+			offset = offset or 0
 
-		if not f then
-			return nil, path .. " " .. mode .. " " .. where .. ": No such file", 2
+			if whence == "set" then
+				self.__file:Seek(offset)
+			elseif whence == "end" then
+				self.__file:Seek(self.__file:Size())
+			elseif whence == "cur" then
+				self.__file:Seek(self.__file:Tell() + offset)
+			end
+
+			return self.__file:Tell()
 		end
 
-		self.__file = f
-		self.__path = path
-		self.__mode = mode
+		function META:lines()
+			return function()
+				return self:Read("*line")
+			end
+		end
 
-		return self
+		function META:setvbuf()
+
+		end
+
+		function io.open(path, mode)
+			mode = mode or "r"
+
+			local self = setmetatable({}, META)
+
+			local path, where = get_path(path, false, not mode:find("w"))
+
+			local f = file.Open(path, mode, where)
+			dprint("file.Open: ", f, path, mode, where)
+
+			if not f then
+				return nil, path .. " " .. mode .. " " .. where .. ": No such file", 2
+			end
+
+			self.__file = f
+			self.__path = path
+			self.__mode = mode
+
+			return self
+		end
 	end
 
 	io.stdin = io.open("stdin", "r")
@@ -244,11 +393,11 @@ do -- io
 
 	function io.flush(...) return current_file:flush(...) end
 
-	function io.popen(...) print("io.popen: ", ...) end
+	function io.popen(...) dprint("io.popen: ", ...) end
 
 	function io.close(...) return current_file:close(...) end
 
-	function io.tmpfile(...) return current_file:flush(...)  end
+	function io.tmpfile(...) return io.open(os.tmpname(), "w")  end
 
 	env.io = io
 end

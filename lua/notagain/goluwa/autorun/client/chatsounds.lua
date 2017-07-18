@@ -83,14 +83,14 @@ hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 	if not init then
 		for i, info in ipairs(engine.GetGames()) do
 			if info.mounted then
-				if not file.Exists("goluwa/chatsounds/lists/" .. info.depot .. ".txt", "DATA") and not file.Exists("goluwa/chatsounds/trees/" .. info.depot .. ".txt", "DATA") then
+				if not file.Exists("goluwa/data/chatsounds/lists/" .. info.depot .. ".dat", "DATA") and not file.Exists("goluwa/data/chatsounds/trees/" .. info.depot .. ".txt", "DATA") then
 					print("downloading chatsounds list for " .. info.title)
 					local found_list = false
 
 					http.Fetch("https://raw.githubusercontent.com/PAC3-Server/chatsounds/master/lists/"..info.depot..".txt", function(data, _,_, code)
 						if code == 200 then
-							file.CreateDir("goluwa/chatsounds/lists")
-							file.Write("goluwa/chatsounds/lists/" .. info.depot .. ".txt", data)
+							file.CreateDir("goluwa/data/chatsounds/lists")
+							file.Write("goluwa/data/chatsounds/lists/" .. info.depot .. ".dat", data)
 							found_list = true
 						else
 							print("could not download chatsounds list for " .. info.title .. ": " .. code)
@@ -105,8 +105,8 @@ hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 
 					http.Fetch("https://raw.githubusercontent.com/PAC3-Server/chatsounds/master/trees/"..info.depot..".txt", function(data, _,_, code)
 						if code == 200 then
-							file.CreateDir("goluwa/chatsounds/trees")
-							file.Write("goluwa/chatsounds/trees/" .. info.depot .. ".txt", data)
+							file.CreateDir("goluwa/data/chatsounds/trees")
+							file.Write("goluwa/data/chatsounds/trees/" .. info.depot .. ".dat", data)
 							found_tree = true
 						else
 							print("could not download chatsounds tree for " .. info.title .. ": " .. code)
