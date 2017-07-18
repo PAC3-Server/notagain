@@ -153,6 +153,7 @@ end
 local sound = table.Copy(sound)
 
 if system.IsLinux() then -- sound.PlayFile fix
+	local print = function() end
 	sound.active = {}
 	sound.queue = {}
 	sound.requests = {}
@@ -266,7 +267,6 @@ do -- texture
 	function render.CreateTextureFromPath(path)
 		if path:StartWith("materials/") then
 			path = path:sub(#"materials/" + 1)
-			print(path)
 		end
 
 		local tex = {}
@@ -474,7 +474,6 @@ do -- render2d
 end
 
 env.expression = env.runfile("goluwa/libraries/expression.lua")
-env.resource = env.runfile("goluwa/libraries/network/resource.lua")
 
 env.sockets = {}
 env.SOCKETS = true
@@ -494,7 +493,9 @@ function env.sockets.Request(tbl)
 		end)
 	end
 
-	print("HTTP: " .. tbl.url)
+	tbl.url = tbl.url:gsub(" ", "%%20")
+
+	--print("HTTP: " .. tbl.url)
 
 	HTTP({
 		failed = tbl.error_callback,
@@ -527,6 +528,10 @@ function env.sockets.Request(tbl)
 	})
 end
 
+env.resource = env.runfile("goluwa/libraries/network/resource.lua")
+
+env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
+env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
 
 do
 	local audio = {}
@@ -534,7 +539,7 @@ do
 	audio.player_object = NULL
 
 	function audio.CreateSource(path)
-		print("audio.CreateSource: " .. path)
+		--print("audio.CreateSource: " .. path)
 		if path:StartWith("http") then
 			local url = path
 			local snd
@@ -544,10 +549,7 @@ do
 			local ply = audio.player_object
 
 			env.resource.Download(path, function(path)
-				print(path)
-				print(">>>")
 				path = env.GoluwaToGmodPath(path)
-				print(path)
 
 				sound.PlayFile("../" .. path, "noplay noblock 3d", function(snd_, _, err)
 					if not IsValid(snd_) then

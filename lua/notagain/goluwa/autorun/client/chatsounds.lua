@@ -81,58 +81,13 @@ end
 local init = false
 hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 	if not init then
-		for i, info in ipairs(engine.GetGames()) do
-			if info.mounted then
-				if not file.Exists("goluwa/data/chatsounds/lists/" .. info.depot .. ".dat", "DATA") and not file.Exists("goluwa/data/chatsounds/trees/" .. info.depot .. ".txt", "DATA") then
-					print("downloading chatsounds list for " .. info.title)
-					local found_list = false
-
-					http.Fetch("https://raw.githubusercontent.com/PAC3-Server/chatsounds/master/lists/"..info.depot..".txt", function(data, _,_, code)
-						if code == 200 then
-							file.CreateDir("goluwa/data/chatsounds/lists")
-							file.Write("goluwa/data/chatsounds/lists/" .. info.depot .. ".dat", data)
-							found_list = true
-						else
-							print("could not download chatsounds list for " .. info.title .. ": " .. code)
-							timer.Destroy("chatsounds_download_list_" .. info.depot)
-						end
-					end, function(err)
-						print("could not download chatsounds list for " .. info.title .. ": " .. err)
-						timer.Destroy("chatsounds_download_list_" .. info.depot)
-					end)
-
-					local found_tree = false
-
-					http.Fetch("https://raw.githubusercontent.com/PAC3-Server/chatsounds/master/trees/"..info.depot..".txt", function(data, _,_, code)
-						if code == 200 then
-							file.CreateDir("goluwa/data/chatsounds/trees")
-							file.Write("goluwa/data/chatsounds/trees/" .. info.depot .. ".dat", data)
-							found_tree = true
-						else
-							print("could not download chatsounds tree for " .. info.title .. ": " .. code)
-							timer.Destroy("chatsounds_download_list_" .. info.depot)
-						end
-					end, function(err)
-						print("could not download chatsounds tree for " .. info.title .. ": " .. err)
-						timer.Destroy("chatsounds_download_list_" .. info.depot)
-					end)
-
-					timer.Create("chatsounds_download_list_" .. info.depot, 1, 50, function()
-						if found_tree and found_list then
-							print("loading chatsounds data for " .. info.title)
-							chatsounds.LoadData(tostring(info.depot))
-							timer.Destroy("chatsounds_download_list_" .. info.depot)
-						end
-					end)
-				else
-					print("loading chatsounds data for " .. info.title)
-					chatsounds.LoadData(tostring(info.depot))
-				end
-			end
-		end
-
 		chatsounds.Initialize()
 		chatsounds.BuildFromGithub("https://api.github.com/repos/Metastruct/garrysmod-chatsounds/git/trees/master?recursive=1")
+		for i, info in ipairs(engine.GetGames()) do
+			if info.mounted then
+				chatsounds.LoadListFromAppID(info.depot)
+			end
+		end
 
 		init = true
 	end
