@@ -1,6 +1,7 @@
 local env = {}
 _G.goluwa = env
 
+env.e = {}
 env.notagain_monitor_directories = {}
 
 local function add(dir)
@@ -59,45 +60,11 @@ do
 	scan(env._G, env._OLD_G)
 end
 
-env.e = {}
-env.e.USERDATA_FOLDER = ""
-env.e.ROOT_FOLDER = notagain.addon_dir .. "lua/notagain/goluwa/goluwa/"
+env.check = function() end
 
 do
-	local fs = {}
-
-	function fs.find(dir, exclude_dot)
-		local out = {}
-
-		return out
-	end
-
-	function fs.getcd()
-		return ""
-	end
-
-	function fs.setcd(path)
-
-	end
-
-	function fs.createdir(path)
-		file.CreateDir("goluwa/" .. path)
-	end
-
-	function fs.getattributes(path)
-		return {
-			creation_time = 0,
-			last_accessed = 0,
-			last_modified = 0,
-			last_changed = -1, -- last permission changes
-			size = 0,
-			type = "none",
-		}
-	end
-
-	env.fs = fs
-
 	env.ffi = false
+	env.archive = false
 	env["table.new"] = false
 	env["table.clear"] = false
 	env["deflatelua"] = false
@@ -285,96 +252,13 @@ do -- vec2
 	end
 end
 
-
-do
-	local vfs = {}
-
-	env.R = function(p) return p end
-
-	local illegal_characters = {
-		[":"] = "_semicolon_",
-		["*"] = "_star_",
-		["?"] = "_questionmark_",
-		["<"] = "_less_than_",
-		[">"] = "_greater_than_",
-		["|"] = "_line_",
-	}
-
-	function vfs.FixIllegalCharactersInPath(path)
-		for k,v in pairs(illegal_characters) do
-			path = path:gsub("%"..k, v)
-		end
-		return path
-	end
-
-	function vfs.Find(path)
-		if path:EndsWith("/") then
-			path = path .. "*"
-		end
-
-		local where = "GAME"
-
-		if path:StartWith("data/") then
-			path = path:gsub("data/", "goluwa/")
-			where = "DATA"
-		end
-
-		local tbl = table.Merge(file.Find(path, where))
-
-		if not tbl[1] then
-			tbl = table.Merge(file.Find(path, "DATA"))
-		end
-
-		return tbl
-	end
-
-	function vfs.Read(path)
-		if path:StartWith("data/") then
-			path = path:gsub("(.+)%..+", "%1.txt")
-			path = path:gsub("data/", "goluwa/")
-
-			if not file.Exists(path, "DATA") then
-				print("vfs.Read data: file does not exist", path)
-			end
-
-			return file.Read(path, "DATA")
-		end
-
-		if not file.Exists(path, "GAME") then
-			print("vfs.Read game: file does not exist", path)
-		end
-
-		return file.Read(path, "GAME")
-	end
-
-	function vfs.Exists(path)
-		if path:StartWith("data/") then
-			local path = path:gsub("(.+)%..+", "%1.txt")
-			path = path:gsub("^data/", "goluwa/")
-
-			if not file.Exists(path, "DATA") then
-				print("vfs.Exists data: file does not exist", path)
-			end
-
-			if file.Exists(path, "DATA") then
-				return true
-			end
-		end
-
-		if file.Exists(path, "GAME") then
-			return true
-		end
-
-		return false
-	end
-
-	vfs.IsFile = vfs.Exists
-
-	env.vfs = vfs
-end
-
 env.prototype = env.runfile("goluwa/libraries/prototype/prototype.lua")
 env.utility = env.runfile("goluwa/libraries/utilities/utility.lua")
+env.vfs = env.runfile("goluwa/libraries/filesystem/vfs.lua")
+env.vfs.Mount("os:/", "os:")
+env.vfs.Mount("os:/data/goluwa/data/", "os:data/")
+env.R = env.vfs.GetAbsolutePath -- a nice global for loading resources externally from current dir
+env.crypto = env.runfile("goluwa/libraries/crypto.lua")
 
 do -- texture
 	local render = {}
@@ -438,6 +322,10 @@ end
 
 do
 	local system = {}
+
+	function system.GetFrameNumber()
+		return FrameNumber()
+	end
 
 	function system.GetElapsedTime()
 		return SysTime()
@@ -586,51 +474,59 @@ do -- render2d
 end
 
 env.expression = env.runfile("goluwa/libraries/expression.lua")
+env.resource = env.runfile("goluwa/libraries/network/resource.lua")
 
-do
-	local resource = {}
+env.sockets = {}
+env.SOCKETS = true
+env.runfile("goluwa/libraries/network/sockets/http.lua", env.sockets)
 
-	function resource.Download(path, cb)
-		if path:StartWith("http") then
-			local cache_path = "goluwa/downloads/" .. util.CRC(path) .. ".txt"
+function env.sockets.Request(tbl)
+	tbl.callback = tbl.callback or env.table.print
+	tbl.method = tbl.method or "GET"
 
-			if file.Exists(cache_path, "DATA") then
-				cache_path = cache_path:gsub("^goluwa/downloads/", "data/downloads/")
-				cb(cache_path)
-			else
-				path = path:gsub(" ", "%%20")
-				http.Fetch(path, function(data)
-					file.CreateDir("goluwa")
-					file.CreateDir("goluwa/downloads")
-					file.Write(cache_path, data)
+	local ok = false
 
-					cache_path = cache_path:gsub("^goluwa/downloads/", "data/downloads/")
-					cb(cache_path)
-				end)
+	if tbl.timeout and tbl.timedout_callback then
+		env.event.Delay(tbl.timeout, function()
+			if not ok then
+				tbl.timedout_callback()
 			end
-		else
-			if path:StartWith("data/") then
-				path = path:gsub("(.+)%..+", "%1.txt")
-				path = path:gsub("data/", "goluwa/")
-
-				if not file.Exists(path, "DATA") then
-					print("resource.Download data: file does not exist", path)
-				end
-
-				if file.Exists(path, "DATA") then
-					local path = path:gsub("^goluwa/", "data/")
-					cb(path)
-					return
-				end
-			end
-
-			if file.Exists(path, "GAME") then
-				cb(path)
-			end
-		end
+		end)
 	end
-	env.resource = resource
+
+	print("HTTP: " .. tbl.url)
+
+	HTTP({
+		failed = tbl.error_callback,
+		success = function(code, body, header)
+			ok = true
+
+			if not tbl.code_callback or tbl.code_callback(code) ~= false then
+
+				local copy = {}
+				for k,v in pairs(header) do
+					copy[k:lower()] = v
+				end
+
+				if not tbl.header_callback or tbl.header_callback(copy) ~= false then
+					if tbl.on_chunks then
+						tbl.on_chunks(body)
+					end
+
+					tbl.callback({content = body, header = copy, code = code})
+				end
+			end
+		end,
+		method = tbl.method,
+		url = tbl.url,
+
+		header = tbl.parameters,
+		headers = tbl.headers,
+		post_data = tbl.body,
+		type = tbl.type or "text/plain; charset=utf-8" ,
+	})
 end
+
 
 do
 	local audio = {}
@@ -648,7 +544,11 @@ do
 			local ply = audio.player_object
 
 			env.resource.Download(path, function(path)
-				path = path:gsub("data/", "../data/goluwa/")
+				print(path)
+				print(">>>")
+				path = env.GoluwaToGmodPath(path)
+				print(path)
+
 				sound.PlayFile("../" .. path, "noplay noblock 3d", function(snd_, _, err)
 					if not IsValid(snd_) then
 						if err == "BASS_ERROR_EMPTY" or err == "BASS_ERROR_UNKNOWN" then
@@ -690,7 +590,7 @@ do
 										local dist = ply:EyePos():Distance(LocalPlayer():EyePos())
 
 										local f = math.Clamp(1 - dist / 500, 0, 1) ^ 1.5
-										
+
 										if system.HasFocus() then
 											snd:SetVolume((self.gain or 1) * f)
 										else
@@ -734,8 +634,8 @@ do
 							end
 
 							snd:SetPos(ply:EyePos(), ply:GetAimVector())
-										
-							snd:SetVolume(system.HasFocus() and 1 or 0)	
+
+							snd:SetVolume(system.HasFocus() and 1 or 0)
 						end)
 					end
 				end)
@@ -934,6 +834,7 @@ env.autocomplete = env.runfile("goluwa/libraries/autocomplete.lua")
 env.chatsounds = env.runfile("goluwa/libraries/audio/chatsounds/chatsounds.lua")
 
 if LocalPlayer():IsValid() then
+	notagain.loaded_libraries.goluwa = env
 	notagain.AutorunDirectory("goluwa")
 end
 

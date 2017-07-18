@@ -27,6 +27,7 @@ local type_info = {
 }
 
 local function ADD_FFI_OPTIMIZED_TYPES(META)
+	if not ffi then return end
 	local ffi_cast = ffi.cast
 	local ffi_string = ffi.string
 	for name, type in pairs(type_info) do
@@ -534,7 +535,7 @@ do -- structures
 			if data.match then
 				local key, val = next(data.match)
 				if (type(val) == "function" and not val(out[key])) or out[key] ~= val then
-					goto continue
+					goto continue_
 				end
 			end
 
@@ -626,7 +627,7 @@ do -- structures
 				end
 			end
 
-			::continue::
+			::continue_::
 		end
 
 		return out
