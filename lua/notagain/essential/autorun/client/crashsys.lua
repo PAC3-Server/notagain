@@ -1,7 +1,8 @@
 if game.SinglePlayer() then return end
 
-local API_RESPONSE = 0 -- Idle, not waiting for a response.
+local GRACE_TIME = 3.5 -- How many seconds of lag should we have before showing the panel?
 
+local API_RESPONSE = 0 -- Idle, not waiting for a response.
 local api_retry = 5
 local api_retry_delay = 12
 
@@ -72,20 +73,24 @@ end
 
 hook.Add("Tick", "crashsys", function()
 	if not lastPong then return end
-	if not LocalPlayer():IsValid() then return end -- disconnected or connecting
+	if not IsValid(LocalPlayer()) then return end -- disconnected or connecting
 
 	local timeout = RealTime() - lastPong
 
-	if timeout > 1.3 then
+	if timeout > GRACE_TIME then
 		CrashTick(true, timeout, API_RESPONSE)
 	else
 		CrashTick(false)
 	end
 end)
 
+hook.Add("ShutDown", "crashsys", function()
+	lastPong = RealTime() -- If we are retrying stop CrashSys.
+	hook.Remove("Tick", "crashsys")
+end)
 
 net.Receive("crashsys", function()
-	if pong < 5 then
+	if pong < 5 then -- Allow 5 pings before actually starting crash systems. (Avoid bugs on join stutter.)
 		pong = pong + 1
 	else
 		lastPong = RealTime()

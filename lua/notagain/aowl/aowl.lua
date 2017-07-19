@@ -265,8 +265,15 @@ do
 			return vec3(str, Angle)
 		end,
 		location = function(str, me)
+			local ignore_entities = false
+
+			if string.sub(str, 1, 1) == "#" then
+				str = string.sub(str, 2, #str)
+				ignore_entities = true
+			end
+
 			if str == "spawn" then
-				return table.Random(ents.FindByClass("info_player_start")):GetPos()
+				return str
 			end
 
 			local pos = aowl.StringToType("vector", str, me)
@@ -275,11 +282,20 @@ do
 				return pos
 			end
 
-			-- player also searches for entity but we want to prioritize players
-			local ent = aowl.StringToType("player", str, me) or aowl.StringToType("entity", str, me)
+			if not ignore_entities then
+				-- player also searches for entity but we want to prioritize players
+				local ent = aowl.StringToType("player", str, me) or aowl.StringToType("entity", str, me)
 
-			if ent then
-				return ent:GetPos()
+				if ent then
+					return ent:GetPos()
+				end
+			end
+
+			local areas = MapDefine and MapDefine.Areas or {}
+			for area, data in next, areas do
+				if string.match(string.lower(area), string.lower(str)) then
+					return area
+				end
 			end
 		end,
 		entity = function(str, me)
