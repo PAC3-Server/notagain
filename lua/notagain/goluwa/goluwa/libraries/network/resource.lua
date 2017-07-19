@@ -66,7 +66,6 @@ local function download(from, to, callback, on_fail, on_header)
 		end,
 		function(header)
 			vfs.CreateFolders("os", e.DOWNLOAD_FOLDER .. to)
-
 			local file_, err = vfs.Open("os:" .. e.DOWNLOAD_FOLDER .. to .. ".temp", "write")
 			file = file_
 
