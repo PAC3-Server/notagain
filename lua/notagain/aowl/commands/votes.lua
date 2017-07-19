@@ -10,4 +10,14 @@ aowl.AddCommand("votekick=player,string[bye]",function(ply,line,ent,reason)
         end
       end
     end
-end
+end)
+    
+aowl.AddCommand("vote=string[vote],number[60],string", function(ply, line, str,num,...)  
+            if votes then
+                votes.Create(str,num,{...})
+                if votes.IsOnGoing() then
+                    gamemode.Call("PlayerButtonUp",ply,num+1)
+                end
+            end
+end)
+            
