@@ -281,6 +281,33 @@ do
 			if ent then
 				return ent:GetPos()
 			end
+
+			local areas = MapDefine.Areas
+
+			for area,data in next, areas do
+				if data.Map == game.GetMap() then
+					if string.lower(area) == string.lower(str) then
+						local refs = data.Refs
+						local pos = Vector(0,0,0)
+
+						if refs then
+							pos.x = math.random(refs.XMin, refs.XMax)
+							pos.y = math.random(refs.YMin, refs.YMax)
+
+							-- Trying to find the floor.
+							local trace = {
+								start = Vector(pos.x, pos.y, refs.ZMax),
+								endpos = Vector(pos.x, pos.y, refs.ZMin),
+								mask = MASK_PLAYERSOLID,
+							}
+							
+							pos.z = ( util.TraceLine(trace) ).HitPos.z
+
+							return pos
+						end
+					end
+				end
+			end
 		end,
 		entity = function(str, me)
 			local ent = find_entity(str, me) or find_player(str, me)
