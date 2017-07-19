@@ -68,7 +68,7 @@ local function SendPlayer( from, to )
 	return false
 end
 
-aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
+aowl.AddCommand("goto|warp|go=player|location|entity", function(ply, line, ent)
 	ply.aowl_tpprevious = ply:GetPos()
 
 	local oldpos = ply:GetPos() + Vector(0,0,32)
@@ -98,6 +98,9 @@ aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
 						end
 					end
 				end
+			end
+			if not isvector(ent) then
+				error('MapDefine: Location not found or is invalid.')
 			end
 		end
 	end
