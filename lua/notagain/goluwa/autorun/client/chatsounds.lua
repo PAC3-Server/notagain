@@ -81,8 +81,11 @@ end
 local init = false
 hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 	if not init then
+
+		goluwa.resource.AddProvider("https://github.com/PAC3-Server/chatsounds/raw/master/")
+
 		chatsounds.Initialize()
-		chatsounds.BuildFromGithub("https://api.github.com/repos/Metastruct/garrysmod-chatsounds/git/trees/master?recursive=1")
+		chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
 		for i, info in ipairs(engine.GetGames()) do
 			if info.mounted then
 				chatsounds.LoadListFromAppID(info.depot)

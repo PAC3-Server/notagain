@@ -530,9 +530,6 @@ end
 
 env.resource = env.runfile("goluwa/libraries/network/resource.lua")
 
-env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
-env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
-
 do
 	local audio = {}
 
