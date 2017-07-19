@@ -94,6 +94,7 @@ aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
 							pos.z = ( util.TraceLine(t) ).HitPos.z
 							
 							ent = pos
+							break
 						end
 					end
 				end
