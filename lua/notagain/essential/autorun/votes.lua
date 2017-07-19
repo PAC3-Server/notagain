@@ -87,7 +87,7 @@ if SERVER then
         net.Start(netend)
         net.WriteTable(GetMost())
         net.Broadcast()
-        votes.ActiveVote.Callback()
+        votes.ActiveVote.Callback(GetMost())
         votes.ActiveVote = {}
         plyvotes = {}
     end
