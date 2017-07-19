@@ -292,9 +292,9 @@ do
 			end
 
 			local areas = MapDefine and MapDefine.Areas or {}
-			for k,v in pairs(areas) do
-				if string.match(string.lower(str),string.lower(k)) then
-					return k
+			for area, data in next, areas do
+				if string.match(string.lower(area), string.lower(str)) then
+					return area
 				end
 			end
 		end,
