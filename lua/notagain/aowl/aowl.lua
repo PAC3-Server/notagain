@@ -266,7 +266,7 @@ do
 		end,
 		location = function(str, me)
 			if str == "spawn" then
-				return table.Random(ents.FindByClass("info_player_start")):GetPos()
+				return str
 			end
 
 			local pos = aowl.StringToType("vector", str, me)
@@ -283,28 +283,10 @@ do
 			end
 
 			local areas = MapDefine.Areas
-
 			for area,data in next, areas do
 				if data.Map == game.GetMap() then
 					if string.lower(area) == string.lower(str) then
-						local refs = data.Refs
-						local pos = Vector(0,0,0)
-
-						if refs then
-							pos.x = math.random(refs.XMin, refs.XMax)
-							pos.y = math.random(refs.YMin, refs.YMax)
-
-							-- Trying to find the floor.
-							local trace = {
-								start = Vector(pos.x, pos.y, refs.ZMax),
-								endpos = Vector(pos.x, pos.y, refs.ZMin),
-								mask = MASK_PLAYERSOLID,
-							}
-							
-							pos.z = ( util.TraceLine(trace) ).HitPos.z
-
-							return pos
-						end
+						return area
 					end
 				end
 			end
