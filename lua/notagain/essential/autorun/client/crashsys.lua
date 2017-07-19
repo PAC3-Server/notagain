@@ -84,6 +84,10 @@ hook.Add("Tick", "crashsys", function()
 	end
 end)
 
+hook.Add("ShutDown", "crashsys", function()
+	lastPong = RealTime() -- If we are retrying stop CrashSys.
+	hook.Remove("Tick", "crashsys")
+end)
 
 net.Receive("crashsys", function()
 	if pong < 5 then -- Allow 5 pings before actually starting crash systems. (Avoid bugs on join stutter.)
