@@ -34,6 +34,7 @@ aowl.AddCommand("fakedie=string[],string[],boolean", function(ply, line, killer,
 end, "clientside")
 
 aowl.AddCommand("volume|vol=number",function(ply, line, vol)
+	local vol = vol or "1"
 	ply:ConCommand("volume " .. tostring(vol))
 end, "localplayer")
 
@@ -50,9 +51,22 @@ aowl.AddCommand("ctp|thirdperson|view|3p", function(ply, line)
 end, "localplayer")
 
 aowl.AddCommand("g|search", function(ply, line)
-	local parts = string.Explode(" ", line)
-	gui.OpenURL("https://www.google.com/#q="..table.concat( parts, "+", 1, #parts ))
+	if line and line ~= "" then
+		local parts = string.Explode(" ", line)
+		gui.OpenURL("https://www.google.com/#q="..table.concat(parts, "+"))
+	else
+		gui.OpenURL("www.google.com")
+	end
 end, "localplayer")
+
+aowl.AddCommand("gwiki",function(ply,line)
+	if line and line ~= then
+		local parts = string.Explode(" ", line)
+		gui.OpenURL("http://wiki.garrysmod.com/page/Special:Search?search="..table.concat(parts,"+").."&fulltext=Search")
+	else
+		gui.OpenURL("http://wiki.garrysmod.com")
+	end
+end,"localplayer")
 
 aowl.AddCommand("cmd|console", function(ply, line)
 	ply:ConCommand(line)

@@ -191,8 +191,7 @@ local PLAYER_LINE = {
 		do -- health gradient
 			surface.SetMaterial(gradient)
 			surface.SetDrawColor(color)
-
-			draw_rect(x, y, w/ent:GetMaxHealth() * (ent:Health() > 100 and 100 or (ent:Health() < 0 and 0 or ent:Health())) , h , skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
+			draw_rect(x, y, w/ent:GetMaxHealth() * (ent:Health() > ent:GetMaxHealth() and ent:GetMaxHealth() or (ent:Health() < 0 and 0 or ent:Health())) , h , skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
 
 		do -- name
