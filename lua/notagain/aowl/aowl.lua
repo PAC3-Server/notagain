@@ -265,6 +265,10 @@ do
 			return vec3(str, Angle)
 		end,
 		location = function(str, me)
+			if string.sub(str, 1, 1) == "#" then
+				str = string.sub(str, 2, #str)
+			end
+
 			if str == "spawn" then
 				return str
 			end
