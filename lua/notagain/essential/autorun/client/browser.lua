@@ -104,5 +104,5 @@ gui.old_OpenURL = gui.old_OpenURL or gui.OpenURL
 gui.OpenURL = function(url)
     local b = vgui.Create("DBrowser")
     b:MakePopup()
-    b:OpenURL(url)
+    b:OpenURL(url or "")
 end
