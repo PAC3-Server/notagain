@@ -77,25 +77,23 @@ aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
 		if string.lower(ent) == "spawn" then
 			ent = table.Random(ents.FindByClass("info_player_start")):GetPos()
 		else
-			local areas = MapDefine.Areas
-			for area,data in next, areas do
-				if data.Map == game.GetMap() then
-					if string.lower(area) == string.lower(ent) then
-						local refs = data.Refs
-						local pos = Vector(0,0,0)
+			local areas = MapDefine and MapDefine.Areas or {}
+			for area, data in next, areas do
+				if string.match(string.lower(area), string.lower(ent)) then
+					local refs = data.Refs
+					local pos = Vector(0,0,0)
 
-						if refs then
-							pos.x = math.random(refs.XMin, refs.XMax)
-							pos.y = math.random(refs.YMin, refs.YMax)
+					if refs then
+						pos.x = math.random(refs.XMin, refs.XMax)
+						pos.y = math.random(refs.YMin, refs.YMax)
 
-							-- Trying to find the floor.
-							t.start = Vector(pos.x, pos.y, refs.ZMax)
-							t.endpos = Vector(pos.x, pos.y, refs.ZMin)
-							pos.z = ( util.TraceLine(t) ).HitPos.z
+						-- Trying to find the floor.
+						t.start = Vector(pos.x, pos.y, refs.ZMax)
+						t.endpos = Vector(pos.x, pos.y, refs.ZMin)
+						pos.z = ( util.TraceLine(t) ).HitPos.z
 							
-							ent = pos
-							break
-						end
+						ent = pos
+						break
 					end
 				end
 			end
