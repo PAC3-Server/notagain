@@ -95,12 +95,11 @@ end
 
 do
 	local out
-	local function search(path, ext, callback, dir_blacklist)
-		for _, v in ipairs(vfs.Find(path, nil,nil,nil,nil, true)) do
-			--rint(v.full_path)
-			if not ext or v.name:endswith(ext) then
+	local function search(path, ext, callback, dir_blacklist, userdata)
+		for _, v in ipairs(vfs.GetFiles({path = path, verbose = true})) do
+			if not ext or v.name:endswiththese(ext) then
 				if callback then
-					if callback(v.full_path, v.userdata) ~= nil then
+					if callback(v.full_path, v.userdata or userdata, v) ~= nil then
 						return
 					end
 				else
@@ -108,7 +107,8 @@ do
 				end
 			end
 
-			local dir = path .. v.name
+			local dir = v.full_path
+
 			if vfs.IsDirectory(dir) then
 				local okay = true
 				if dir_blacklist then
@@ -120,7 +120,7 @@ do
 					end
 				end
 				if okay then
-					search(dir .. "/", ext, callback, dir_blacklist)
+					search(dir .. "/", ext, callback, dir_blacklist, v.userdata or userdata)
 				end
 			end
 		end

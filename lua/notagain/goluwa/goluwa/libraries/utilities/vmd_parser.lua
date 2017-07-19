@@ -52,5 +52,5 @@ function utility.ParseVMD(file)
 end
 
 if RELOAD then
-	table.print(utility.ParseVMD(vfs.Open("E:/SteamLibrary/steamapps/common/GarrysMod/garrysmod/data/body_vmd.dat")))
+	--table.print(utility.ParseVMD(vfs.Open("E:/SteamLibrary/steamapps/common/GarrysMod/garrysmod/data/body_vmd.dat")))
 end

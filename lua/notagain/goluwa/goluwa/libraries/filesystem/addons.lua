@@ -1,11 +1,11 @@
 local vfs = (...) or _G.vfs
 
-vfs.loaded_addons = {}
-vfs.disabled_addons = {}
+vfs.loaded_addons = vfs.loaded_addons or {}
+vfs.disabled_addons = vfs.disabled_addons or {}
 
 function vfs.MountAddons(dir)
 	for info in vfs.Iterate(dir, true, nil, nil, nil, true) do
-		if vfs.IsDirectory(info.full_path2) and not info.name:startswith(".") and not info.name:startswith("__") then
+		if vfs.IsDirectory(info.full_path2) and info.name ~= "src" and not info.name:startswith(".") and not info.name:startswith("__") then
 			vfs.MountAddon(info.full_path2 .. "/")
 		end
 	end
