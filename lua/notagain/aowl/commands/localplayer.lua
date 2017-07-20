@@ -60,12 +60,16 @@ aowl.AddCommand("g|search", function(ply, line)
 end, "localplayer")
 
 aowl.AddCommand("gwiki",function(ply,line)
-	if line and line ~= then
+	if line and line ~= "" then
 		local parts = string.Explode(" ", line)
 		gui.OpenURL("http://wiki.garrysmod.com/page/Special:Search?search="..table.concat(parts,"+").."&fulltext=Search")
 	else
 		gui.OpenURL("http://wiki.garrysmod.com")
 	end
+end,"localplayer")
+
+aowl.AddCommand("browser",function(ply,line)
+	gui.OpenURL()
 end,"localplayer")
 
 aowl.AddCommand("cmd|console", function(ply, line)
