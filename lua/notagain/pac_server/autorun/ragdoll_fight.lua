@@ -2113,7 +2113,7 @@ function RagdollFightRemoveRagdoll( pl )
 		end
 		timer.Simple(0.1,function()
 			pl:SetRenderMode( RENDERMODE_NORMAL )
-		end
+		end)
 		pl:SetJumpPower( pl.OldJumpPower or 200 )
 		--pl:SetCollisionGroup( COLLISION_GROUP_PLAYER )
 		GAMEMODE:PlayerLoadout( pl )
