@@ -258,6 +258,7 @@ env.utility = env.runfile("goluwa/libraries/utilities/utility.lua")
 env.vfs = env.runfile("goluwa/libraries/filesystem/vfs.lua")
 env.vfs.Mount("os:/", "os:")
 env.vfs.Mount("os:/data/goluwa/data/", "os:data/")
+env.vfs.Mount("os:/data/goluwa/userdata/", "os:data/")
 env.R = env.vfs.GetAbsolutePath -- a nice global for loading resources externally from current dir
 env.crypto = env.runfile("goluwa/libraries/crypto.lua")
 

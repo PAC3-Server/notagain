@@ -186,7 +186,7 @@ function chatsounds.BuildFromGithub(repo, location)
 		local list = {}
 
 		local str = vfs.Read(path)
-		for path in str:gmatch('"path":%s*"('..location..'/.-)"') do
+		for path in str:gmatch('"path":%s-"("'..location..'/.-)"') do
 			local realm, trigger, file_name = path:match(location .. "/(.-)/(.-)/(.+)%.")
 			if not file_name then
 				realm, trigger = path:match(location .. "/(.-)/(.+)%.")
@@ -212,7 +212,7 @@ function chatsounds.BuildFromGithub(repo, location)
 		tree = chatsounds.TableToTree(tree)
 		chatsounds.tree = chatsounds.tree or {}
 		table.merge(chatsounds.tree, tree)
-	end)
+	end, nil, nil, nil, true)
 end
 
 function chatsounds.BuildAutocomplete()
@@ -852,6 +852,7 @@ end
 
 function chatsounds.LoadListFromAppID(name)
 	name = tostring(name)
+
 	local list_path = "data/chatsounds/lists/"..name..".txt"
 	local tree_path = "data/chatsounds/trees/"..name..".dat"
 
@@ -859,21 +860,15 @@ function chatsounds.LoadListFromAppID(name)
 		local list
 		local tree
 
-		if vfs.Exists(list_path) then
+		if vfs.IsFile(list_path) then
 			list = chatsounds.ListToTable(vfs.Read(list_path))
 		end
 
-		if vfs.Exists(tree_path) then
+		if vfs.IsFile(tree_path) then
 			tree = serializer.ReadFile("msgpack", tree_path)
 		elseif list then
 			tree = chatsounds.TableToTree(list)
-			name = vfs.FixIllegalCharactersInPath(name)
 			serializer.WriteFile("msgpack", "data/chatsounds/trees/" .. name, tree)
-		end
-
-		if not list then
-			wlog("chatsounds data for %s not found", name, 2)
-			return
 		end
 
 		local v = table.random(table.random(table.random(list))).path
@@ -886,7 +881,11 @@ function chatsounds.LoadListFromAppID(name)
 		chatsounds.list = chatsounds.list or {}
 
 		for k,v in pairs(list) do
-			chatsounds.list[k] = v
+			if chatsounds.list[k] then
+				table.merge(chatsounds.list[k], v)
+			else
+				chatsounds.list[k] = v
+			end
 		end
 
 		chatsounds.tree = chatsounds.tree or {}
@@ -897,7 +896,7 @@ function chatsounds.LoadListFromAppID(name)
 				chatsounds.BuildAutocomplete()
 			end, nil, "chatsounds_autocomplete")
 		end
-	end)
+	end, nil, nil, nil, true)
 end
 
 function chatsounds.AddSound(trigger, realm, ...)
