@@ -66,21 +66,28 @@ chatsounds.Modifiers = {
 		end,
 	},
 	pitch = {
-		init = function(self, pitch)
+		init = function(self, pitch, endpitch)
 			self.duration = self.duration / (math.abs(pitch) / 100)
+			self.endpitch = endpitch or pitch
 		end,
 
 		think = function(self, pitch)
-			if self.snd then
-				self.snd:SetPitch(pitch / 100)
-			end
+			local f = (system.GetElapsedTime() - self.start_time) / self.duration
+			local pitch = math.lerp(f, pitch, self.endpitch) / 100
+
+			self.snd:SetPitch(pitch)
 		end,
 	},
 	volume = {
-		think = function(self, volume)
-			if self.snd then
-				self.snd:SetGain(volume / 100)
-			end
+		init = function(self, volume, endvolume)
+			self.endvolume = endvolume or volume
+		end,
+
+		think = function(self, vol)
+			local f = (system.GetElapsedTime() - self.start_time) / self.duration
+			local vol = math.lerp(f, vol, self.endvolume) / 100
+
+			self.snd:SetGain(vol)
 		end,
 	},
 	realm = {
@@ -91,14 +98,23 @@ chatsounds.Modifiers = {
 }
 
 chatsounds.LegacyModifiers = {
+	["%%"] = "pitch",
 	["%"] = "pitch",
+	["^^"] = "volume",
 	["^"] = "volume",
 	["&"] = "dsp",
-	["-%-"] = "cutoff",
+	["--"] = "cutoff",
 	["#"] = "choose",
 	["="] = "duration",
 	["*"] = "repeat",
 }
+
+local modifiers = {}
+for k,v in pairs(chatsounds.LegacyModifiers) do
+	k = k:gsub("%p", "%%%1")
+	table.insert(modifiers, {mod = k, func = v})
+end
+table.sort(modifiers, function(a, b) return #a.mod > #b.mod end)
 
 do
 	local function preprocess(str)
@@ -109,8 +125,8 @@ do
 			logn(">>> ", str)
 		end
 
-		for old, new in pairs(chatsounds.LegacyModifiers) do
-			str = str:gsub("%"..old.."([%d%.]+)", function(str) str = str:gsub("%.", ",") return ":"..new.."("..str..")" end)
+		for _, val in ipairs(modifiers) do
+			str = str:gsub(val.mod.."([%d%.]+)", function(str) str = str:gsub("%.", ",") return ":"..val.func.."("..str..")" end)
 		end
 
 		str = str:lower()
@@ -571,11 +587,6 @@ function chatsounds.PlayScript(script)
 
 			sound.duration = sound.duration or sound.snd:GetDuration()
 
-			-- let it be able to think once first so we can modify duration and such when changing pitch
-			if sound.think then
-				sound:think()
-			end
-
 			-- init modifiers
 			if sound.modifiers then
 				for mod, data in pairs(sound.modifiers) do
@@ -708,20 +719,5 @@ function chatsounds.Shutdown()
 	autocomplete.RemoveList("chatsounds")
 	event.RemoveListener("Update", "chatsounds")
 end
-
-chatsounds.Say([[
-	nice of the princess to invite us over for a picnic eh luigi
-	(cdi%130--1 cdi%50--1 cdi%180--1 cdi%115--1 cdi%170--1)*5
-	i hope she made lots of spaghetti--10*20 spaghetti
-	cdi%150--4 cdi%130--4 cdi%120--4 cdi%50--4
-	luigi look its from | bowser bowser^50 bowser^25 bowser^12 bowser^5
-	dear pesky plumbers--50 plumbers%150--50 plumbers%200--50 plumbers%250--50 plumbers%400--50 plumbers%700--50 plumbers%1000--50 plumbers%2000--50 plumbers%5000--50
-	the koopalings and i have taken over the mushroom kingdom^1000
-	the princess is now a permanent	guest%150 at one of my seven (koopa hotels):pitch(50)
-	i dare you to find her if you can
-	we gotta find the princess
-	and you gotta help us if you need instructions on how to get through
-	the hotels check out the:choose(4, cdihm_mario) enclosed instruction book
-]])
 
 return chatsounds
