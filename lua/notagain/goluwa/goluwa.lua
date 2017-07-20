@@ -352,11 +352,11 @@ end
 env.event = env.runfile("goluwa/libraries/event.lua")
 
 env.event.AddListener("EventAdded", "gmod", function(info)
-	print("goluwa event added: ", info.event_type, info.id)
+--	print("goluwa event added: ", info.event_type, info.id)
 end)
 
 env.event.AddListener("EventRemoved", "gmod", function(info)
-	print("goluwa event removed: ", info.event_type, info.id)
+--	print("goluwa event removed: ", info.event_type, info.id)
 end)
 
 hook.Add("Think", "goluwa_timers", function()
