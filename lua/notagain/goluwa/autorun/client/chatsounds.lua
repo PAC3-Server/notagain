@@ -87,7 +87,7 @@ hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 		chatsounds.Initialize()
 		chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
 		for i, info in ipairs(engine.GetGames()) do
-			if info.mounted then
+			if info.mounted or info.depot == 220 then
 				chatsounds.LoadListFromAppID(info.depot)
 			end
 		end
