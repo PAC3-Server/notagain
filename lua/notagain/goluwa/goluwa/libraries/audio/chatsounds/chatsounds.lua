@@ -68,8 +68,11 @@ chatsounds.Modifiers = {
 	},
 	pitch = {
 		init = function(self, pitch, endpitch)
+			pitch = tonumber(pitch) or 100
+			endpitch = tonumber(endpitch) or pitch
+
 			self.duration = self.duration / (math.abs(pitch) / 100)
-			self.endpitch = endpitch or pitch
+			self.endpitch = endpitch
 		end,
 
 		think = function(self, pitch)
@@ -81,7 +84,10 @@ chatsounds.Modifiers = {
 	},
 	volume = {
 		init = function(self, volume, endvolume)
-			self.endvolume = endvolume or volume
+			volume = tonumber(volume) or 100
+			endvolume = tonumber(endvolume) or volume
+
+			self.endvolume = endvolume
 		end,
 
 		think = function(self, vol)
