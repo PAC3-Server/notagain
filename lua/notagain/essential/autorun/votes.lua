@@ -247,7 +247,7 @@ if CLIENT then
 		hook.Remove("AowlInitialized", "votes")
 	end)
 
-	if players.GetAll()[1] then
+	if player.GetAll()[1] then
 		hook.GetTable().AowlInitialized.votes()
 	end
 end
