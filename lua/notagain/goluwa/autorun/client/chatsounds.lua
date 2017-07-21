@@ -78,6 +78,13 @@ do
 	end)
 end
 
+local blacklist = {
+	[220] = true, -- hl2
+	[320] = true, -- hl2 death match
+	[360] = true, -- hl1 death match
+	[340] = true, -- hl2 lost coast
+}
+
 local init = false
 hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 	if not init then
@@ -89,7 +96,7 @@ hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 		chatsounds.LoadListFromAppID(220) -- hl2
 
 		for i, info in ipairs(engine.GetGames()) do
-			if info.mounted then
+			if info.mounted and not blacklist[info.depot] then
 				chatsounds.LoadListFromAppID(info.depot)
 			end
 		end
