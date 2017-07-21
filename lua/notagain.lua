@@ -7,15 +7,16 @@ notagain.directories = notagain.directories or {}
 notagain.hasloaded = false
 
 do
-	local addon_dir = "addons/notagain/"
+	notagain.addon_dir = "addons/notagain/"
 
-	local info = debug.getinfo(1)
+	local _, dirs = file.Find("addons/*", "MOD")
 
-	if info then
-		addon_dir = info.source:match("^@(addons/.-/)") or addon_dir
+	for _, dir in ipairs(dirs) do
+		if file.Exists("addons/" .. dir .. "/lua/notagain.lua", "MOD") then
+			notagain.addon_dir = "addons/" .. dir .. "/"
+			break
+		end
 	end
-
-	notagain.addon_dir = addon_dir
 end
 
 do
@@ -161,8 +162,6 @@ function notagain.Autorun()
 
 	-- autorun
 	for addon_name, addon_dir in pairs(notagain.directories) do
-		run_dir(addon_dir .. "/autorun/")
-
 		if SERVER then -- libraries
 			local dir = addon_dir .. "/libraries/"
 
@@ -182,6 +181,8 @@ function notagain.Autorun()
 				notagain.loaded_libraries[addon_name] = include(path)
 			end
 		end
+
+		run_dir(addon_dir .. "/autorun/")
 	end
 
 	notagain.hasloaded = true
