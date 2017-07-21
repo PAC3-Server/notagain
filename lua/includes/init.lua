@@ -1,6 +1,11 @@
-include("notagain.lua")
+local ok, err = pcall(function()
+	include("notagain.lua")
+	notagain.PreInit()
+end)
 
-notagain.PreInit()
+if not ok then
+	ErrorNoHalt(err)
+end
 
 --[[---------------------------------------------------------
 	Non-Module includes
@@ -83,7 +88,11 @@ if ( CLIENT ) then
 
 end
 
-notagain.PostInit()
+local ok, err = pcall(notagain.PostInit)
+
+if not ok then
+	ErrorNoHalt(err)
+end
 
 --[[---------------------------------------------------------
 	Shared modules
