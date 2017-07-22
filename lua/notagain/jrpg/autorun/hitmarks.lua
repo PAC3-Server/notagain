@@ -337,7 +337,7 @@ if CLIENT then
 						end
 					end
 
-					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), ent:IsPlayer() and team.GetColor(ent:Team() or nil), 0, -1)
+					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), (ent:IsPlayer() and team.GetColor(ent:Team()) or nil), 0, -1)
 
 					if ent:GetNWBool("rpg") then
 						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "arial", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, -1, -1)
