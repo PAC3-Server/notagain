@@ -9,7 +9,7 @@ chathud.default_font = {
 	size = 18,
 	weight = 600,
 	blur_size = 3,
-	background_color = Color(0,0,0,255),--Color(25,50,100,255),
+	background_color = Color(127,127,170),
 	blur_overdraw = 3,
 }
 
