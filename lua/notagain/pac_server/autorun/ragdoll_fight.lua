@@ -2005,7 +2005,7 @@ function RagdollFight.SpawnRagdoll( pl, cmd, args )
 
 					if data.HitEntity.IsRagdollFighter then
 						data.HitEntity.RagdollMode = true
-						RagdollFightRemoveMass( data.HitEntity )
+						RagdollFight.RemoveMass( data.HitEntity )
 						self.GrabDuration = CurTime() + 3
 						data.HitEntity.GrabbedBy = self
 					end
