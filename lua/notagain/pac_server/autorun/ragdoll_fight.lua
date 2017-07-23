@@ -2115,7 +2115,7 @@ function RagdollFight.RemoveRagdoll( pl )
 		end
 		pl:SetJumpPower( pl.OldJumpPower or 200 )
 		--pl:SetCollisionGroup( COLLISION_GROUP_PLAYER )
-		GAMEMODE:PlayerLoadout( pl )
+		gamemode.Call("PlayerLoadout",pl)
 		pl.Ragdoll = nil
 	end
 
