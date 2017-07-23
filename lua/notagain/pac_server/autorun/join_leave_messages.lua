@@ -12,7 +12,7 @@ if SERVER then
 		local steamid = data.networkid
 
 		local geoipres = geoip.Get(ip:Split(":")[1])
-		local geoipinfo = {geoipres.country_name, geoipres.city, geoipres.asn}
+		local geoipinfo = {geoipres.country_name, geoipres.asn}
 
 		MsgC(Color(0,255,0),"[Join] ") print(name.." ("..steamid..") is connecting to the server! ["..ip..(steamid ~= "BOT" and table.Count(geoipinfo) ~= 0 and " | "..table.concat(geoipinfo,", ").."]" or "]"))
 		--MsgC(Color(0,255,0),"[Join] ") print(name.." ("..steamid..") is connecting to the server! ["..ip.."]")
