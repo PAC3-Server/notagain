@@ -290,7 +290,7 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerInitialSpawn","MapDefineAreasSync",MapDefine.ClientSync)
-	hook.Add("Initialize","MapDefineLoadAreas",MapDefine.LoadAreas)
+	hook.Add("InitPostEntity","MapDefineLoadAreas",MapDefine.LoadAreas)
 	hook.Add("PostCleanupMap","MapDefineDONOTDELETEMYTRIGGERSYOUBLYAD",MapDefine.ResetAreas)
 
 end
