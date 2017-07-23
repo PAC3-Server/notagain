@@ -875,7 +875,7 @@ do -- commands
 	end
 
 	function aowl.ConsoleCommand(ply, cmd, args, line)
-		local cmd = table.remove(args, 1)
+		local cmd = table.remove(args, 1) or "Command Not Found"
 		local ok, reason = aowl.Execute(ply, cmd .. " " .. table.concat(args, ","))
 	end
 
