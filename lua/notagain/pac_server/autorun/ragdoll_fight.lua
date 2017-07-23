@@ -2586,8 +2586,8 @@ local function RagdollFightKeyPress( pl, key )
 
 		pl.Ragdoll.NextAttack = pl.Ragdoll.NextAttack or 0
 
-		if pl.Ragdoll.StanceDuration > CurTime() then return end
-		if pl.Ragdoll.NextAttack > CurTime() then return end
+		if pl.Ragdoll.StanceDuration and pl.Ragdoll.StanceDuration > CurTime() then return end
+		if pl.Ragdoll.NextAttack and pl.Ragdoll.NextAttack > CurTime() then return end
 		if pl.Ragdoll.XRay and pl.Ragdoll.XRayTime and pl.Ragdoll.XRayTime > CurTime() then return end
 
 		--escape grab powerup
