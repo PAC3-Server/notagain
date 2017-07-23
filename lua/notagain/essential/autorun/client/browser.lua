@@ -83,7 +83,7 @@ local browser = {
 
     RefreshURL = function(self)
         self.HistoryMove = true
-        self.Page:OpenURL(self.History[self.HistoryPos])
+        self.Page:OpenURL(self.History[self.HistoryPos] or self.URL:GetText())
     end,
 
     OpenURL = function(self,url)
