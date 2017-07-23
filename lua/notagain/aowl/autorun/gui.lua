@@ -64,6 +64,11 @@ if CLIENT then
 
     aowlgui.Commands = aowlgui.Commands or {}
 
+    function aowlgui.UpdateCommands()
+		net.Start(netrequestsync)
+		net.SendToServer()
+	end
+
     function aowlgui.Init()
 		local swidth,sheight = ScrW(),ScrH()
 
@@ -215,11 +220,6 @@ if CLIENT then
 		    aowlgui.GUI:Show()
 		end
 		aowlgui.UpdateCommands()
-	end
-
-	function aowlgui.UpdateCommands()
-		net.Start(netrequestsync)
-		net.SendToServer()
 	end
 
 	function aowlgui.Close()
