@@ -70,6 +70,7 @@ local browser = {
         end
         self.HistoryMove = true
         self.Page:OpenURL(self.History[self.HistoryPos])
+        pcall(self.Page.OpenURL,self,self.History[self.HistoryPos])
     end,
 
     NextURL = function(self)
@@ -78,17 +79,17 @@ local browser = {
             self.HistoryPos = 1
         end
         self.HistoryMove = true
-        self.Page:OpenURL(self.History[self.HistoryPos])
+        pcall(self.Page.OpenURL,self,self.History[self.HistoryPos])
     end,
 
     RefreshURL = function(self)
         self.HistoryMove = true
-        self.Page:OpenURL(self.History[self.HistoryPos] or self.URL:GetText())
+        pcall(self.Page.OpenURL,self,(self.History[self.HistoryPos] or self.URL:GetText()))
     end,
 
     OpenURL = function(self,url)
         self.URL:SetText(url)
-        self.Page:OpenURL(url)
+        pcall(self.Page.OpenURL,self,url)
     end,
 
     GetURL = function(self)
