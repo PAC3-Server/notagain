@@ -1726,11 +1726,9 @@ function RagdollFightSpawnRagdoll( pl, cmd, args )
 	ent:SetOwner( pl )
 	pl.Ragdoll = ent
 	ent.IsRagdollFighter = true
-	if pac then
-		pl.pac_owner_override = ent
-		if table.Count(pl.pac_parts) == 0 then
-			pl:SetRenderMode( RENDERMODE_NONE )
-		end
+	pl.pac_owner_override = ent
+	if not pl.pac_parts or (pl.pac_parts and table.Count(pl.pac_parts) == 0) then
+		pl:SetRenderMode( RENDERMODE_NONE )
 	end
 	ent:SetCollisionGroup( COLLISION_GROUP_WEAPON  )
 	ent:CollisionRulesChanged()
@@ -2110,11 +2108,9 @@ function RagdollFightRemoveRagdoll( pl )
 	if pl.Ragdoll and pl.Ragdoll:IsValid() then
 		RagdollFight.Ragdolls[tostring(pl.Ragdoll)] = nil
 		pl.Ragdoll:Remove()
-		if pac then
-			pl.pac_owner_override = nil
-			if table.Count(pl.pac_parts) == 0 then
-				pl:SetRenderMode( RENDERMODE_NORMAL )
-			end
+		pl.pac_owner_override = nil
+		if not pl.pac_parts or (pl.pac_parts and table.Count(pl.pac_parts) == 0) then
+			pl:SetRenderMode( RENDERMODE_NORMAL )
 		end
 		pl:SetJumpPower( pl.OldJumpPower or 200 )
 		--pl:SetCollisionGroup( COLLISION_GROUP_PLAYER )
