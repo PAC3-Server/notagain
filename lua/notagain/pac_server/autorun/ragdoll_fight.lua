@@ -22,7 +22,8 @@ util.PrecacheSound( "npc/antlion_guard/shove1.wav" )
 
 util.PrecacheModel( "models/dav0r/camera.mdl" )
 
-RagdollFight = {}
+local RagdollFight = _G.RagdollFight or {}
+_G.RagdollFight = RagdollFight
 
 if SERVER then
 	resource.AddFile( "materials/pac_server/ragdollfight_arena.png" )
@@ -1706,7 +1707,7 @@ local hitsound2 = Sound( "ambient/voices/citizen_punches2.wav" )
 
 util.AddNetworkString( "RagdollFightUpdateRagdoll" )
 
-function RagdollFightSpawnRagdoll( pl, cmd, args )
+function RagdollFight.SpawnRagdoll( pl, cmd, args )
 
 	local mdl = pl:GetModel()
 	local skin = pl:GetSkin()
@@ -2039,7 +2040,7 @@ function RagdollFightSpawnRagdoll( pl, cmd, args )
 end
 --concommand.Add( "rag_create", RagdollFightSpawnRagdoll )
 
-function RagdollFightApplyForce( ent, dir, power, noang )
+function RagdollFight.ApplyForce( ent, dir, power, noang )
 
 	if ent then
 		local pow = power / ent:GetPhysicsObjectCount()
@@ -2055,7 +2056,7 @@ function RagdollFightApplyForce( ent, dir, power, noang )
 	end
 end
 
-function RagdollFightRemoveMass( ent )
+function RagdollFight.RemoveMass( ent )
 	if ent and ent.OriginalMass then
 		for i=0, ent:GetPhysicsObjectCount() - 1 do
 			local phys_bone = ent:GetPhysicsObjectNum( i )
@@ -2067,7 +2068,7 @@ function RagdollFightRemoveMass( ent )
 	end
 end
 
-function RagdollFightResetMass( ent )
+function RagdollFight.ResetMass( ent )
 	if ent and ent.OriginalMass then
 		for i=0, ent:GetPhysicsObjectCount() - 1 do
 			local phys_bone = ent:GetPhysicsObjectNum( i )
@@ -2079,7 +2080,7 @@ function RagdollFightResetMass( ent )
 	end
 end
 
-function RagdollFightChangeDamping( ent, lin, ang )
+function RagdollFight.ChangeDamping( ent, lin, ang )
 	if ent and ent.OriginalMass then
 		for i=0, ent:GetPhysicsObjectCount() - 1 do
 			local phys_bone = ent:GetPhysicsObjectNum( i )
@@ -2090,7 +2091,7 @@ function RagdollFightChangeDamping( ent, lin, ang )
 	end
 end
 
-function RagdollFightResetDamping( ent )
+function RagdollFight.ResetDamping( ent )
 	if ent and ent.OriginalDamping then
 		for i=0, ent:GetPhysicsObjectCount() - 1 do
 			local phys_bone = ent:GetPhysicsObjectNum( i )
@@ -2103,7 +2104,7 @@ function RagdollFightResetDamping( ent )
 	end
 end
 
-function RagdollFightRemoveRagdoll( pl )
+function RagdollFight.RemoveRagdoll( pl )
 
 	if pl.Ragdoll and pl.Ragdoll:IsValid() then
 		RagdollFight.Ragdolls[tostring(pl.Ragdoll)] = nil
@@ -2120,7 +2121,7 @@ function RagdollFightRemoveRagdoll( pl )
 
 end
 
-local function RagdollFightThink( )
+local function RagdollFight.Think( )
 	if RagdollFight.Ragdolls then
 		for k, v in pairs( RagdollFight.Ragdolls ) do
 			if v and v:IsValid() and !IsValid(v:GetOwner()) then
@@ -2191,7 +2192,7 @@ local function RagdollFightThink( )
 						if v:GetOwner().RagdollFightArena and v:GetOwner().RagdollFightArena:IsValid() then
 							local safe_pos = v:GetOwner().RagdollFightArena:ConvertIntoSafePos( v:GetPos() )
 							v:GetOwner():SetPos( safe_pos )
-							RagdollFightResetMass( v )
+							RagdollFight.ResetMass( v )
 							v:GetOwner().RagdollFightArena:ClearPos( v:GetOwner(), v:GetOwner():GetPos() )--v:GetOwner():GetPos()
 						else
 							v:GetOwner():SetPos( v:GetPos() )
@@ -2206,7 +2207,7 @@ local function RagdollFightThink( )
 					if v.GrabbedObject and v.GrabbedObject:IsValid() then
 						if v.GrabbedObject.IsRagdollFighter then
 							v.GrabbedObject.NextGrab = CurTime() + 4
-							RagdollFightResetMass( v.GrabbedObject )
+							RagdollFight.ResetMass( v.GrabbedObject )
 						end
 						v.GrabbedObject.GrabbedBy = nil
 						v.GrabbedObject = nil
@@ -2230,7 +2231,7 @@ local function RagdollFightThink( )
 					v.Blocking = nil
 
 					if v.ForceResetDamping then
-						RagdollFightResetDamping( v )
+						RagdollFight.ResetDamping( v )
 						v.ForceResetDamping = nil
 					end
 
@@ -2433,7 +2434,7 @@ local function RagdollFightThink( )
 
 						if v:GetOwner():GetMoveType() == MOVETYPE_NONE then
 							v:GetOwner():SetMoveType( MOVETYPE_WALK )
-							RagdollFightResetDamping( v )
+							RagdollFight.ResetDamping( v )
 							--v.RagdollModeTime = CurTime() + 1.5
 						end
 
@@ -2449,7 +2450,7 @@ local function RagdollFightThink( )
 
 							v.XRay = nil
 							v.XRayTime = nil
-							RagdollFightResetDamping( v )
+							RagdollFight.ResetDamping( v )
 
 						end
 
@@ -2550,7 +2551,7 @@ local function RagdollFightThink( )
 		end
 	end
 end
-hook.Add( "Think", "RagdollFightThink", RagdollFightThink )
+hook.Add( "Think", "RagdollFightThink", RagdollFight.Think )
 
 local IdleActivity = ACT_HL2MP_IDLE_FIST
 local IdleActivityTranslate = {}
@@ -2567,16 +2568,16 @@ IdleActivityTranslate[ ACT_MP_JUMP ]						= ACT_HL2MP_JUMP_SLAM
 IdleActivityTranslate[ ACT_MP_SWIM ]						= IdleActivity + 9
 IdleActivityTranslate[ ACT_LAND ]							= ACT_LAND
 
-local function RagdollFightTranslateActivity( ply, act )
+local function RagdollFight.TranslateActivity( ply, act )
 	if ply.Ragdoll and ply.Ragdoll:IsValid() then
 		return IdleActivityTranslate[ act ]
 	end
 end
-hook.Add( "TranslateActivity", "RagdollFightTranslateActivity", RagdollFightTranslateActivity )
+hook.Add( "TranslateActivity", "RagdollFightTranslateActivity", RagdollFight.TranslateActivity )
 
 util.AddNetworkString( "RagdollFightSendXRay" )
 
-local function RagdollFightKeyPress( pl, key )
+local function RagdollFight.KeyPress( pl, key )
 
 	if pl.Ragdoll and pl.Ragdoll:IsValid() then
 
@@ -2591,12 +2592,12 @@ local function RagdollFightKeyPress( pl, key )
 			local enemy = pl.Ragdoll.GrabbedBy
 			pl.Ragdoll.WasThrown = nil
 			enemy.RagdollModeTime = CurTime() + 1.5
-			RagdollFightApplyForce( enemy, pl:GetForward() + vector_up, 3000 )
-			RagdollFightApplyForce( pl.Ragdoll, pl:GetForward() * -1 + vector_up, 3000 )
+			RagdollFight.ApplyForce( enemy, pl:GetForward() + vector_up, 3000 )
+			RagdollFight.ApplyForce( pl.Ragdoll, pl:GetForward() * -1 + vector_up, 3000 )
 			enemy.WasThrown = 1.2
 			enemy:EmitSound( "npc/antlion_guard/shove1.wav", 100, math.random( 100, 115 ) )
 			pl.Ragdoll:ConsumeCharge( RAGDOLL_POWERUP_BREAKER )
-			RagdollFightResetMass( pl.Ragdoll )
+			RagdollFight.ResetMass( pl.Ragdoll )
 			enemy.GrabbedObject.GrabbedBy = nil
 			enemy.GrabbedObject = nil
 			if enemy._Constraints then
@@ -2624,7 +2625,7 @@ local function RagdollFightKeyPress( pl, key )
 			pl.Ragdoll.StanceDuration = CurTime() + 0.2
 			pl.Ragdoll.RagdollModeTime = CurTime() + 0.2
 			pl.Ragdoll.NextTaunt = CurTime() + 5
-			RagdollFightApplyForce( pl.Ragdoll, 1 * pl:GetForward() * 0 - vector_up, 2800 )
+			RagdollFight.ApplyForce( pl.Ragdoll, 1 * pl:GetForward() * 0 - vector_up, 2800 )
 			pl.Ragdoll:EmitSound( "physics/body/body_medium_break"..math.random(2,4)..".wav", 100, math.random( 100, 115 ) )
 			return
 		end
@@ -2690,8 +2691,8 @@ local function RagdollFightKeyPress( pl, key )
 			victim:GetOwner():SetMoveType( MOVETYPE_NONE )
 
 			--we dont want to make slowmotion, so we are going make it look like one
-			RagdollFightChangeDamping( me, 70, 70 * 1.5 )
-			RagdollFightChangeDamping( victim, 70, 70 * 1.5 )
+			RagdollFight.ChangeDamping( me, 70, 70 * 1.5 )
+			RagdollFight.ChangeDamping( victim, 70, 70 * 1.5 )
 
 			--RagdollFightResetMass( victim )
 
@@ -2818,9 +2819,9 @@ local function RagdollFightKeyPress( pl, key )
 	end
 
 end
-hook.Add( "KeyPress", "RagdollFightKeyPress", RagdollFightKeyPress )
+hook.Add( "KeyPress", "RagdollFightKeyPress", RagdollFight.KeyPress )
 
-local function RagdollFightKeyRelease( pl, key )
+local function RagdollFight.KeyRelease( pl, key )
 
 	if pl.Ragdoll and pl.Ragdoll:IsValid() then
 
@@ -2839,14 +2840,14 @@ local function RagdollFightKeyRelease( pl, key )
 						if pl:Crouching() then
 							pl.Ragdoll.Stance = RAGDOLL_STANCE_GRAB_ATTACK_BACKTHROW
 							pl.Ragdoll.StanceNum = RandomStanceNum( pl.Ragdoll.Stance )
-							RagdollFightApplyForce( pl.Ragdoll.GrabbedObject, -1 * pl:GetForward() - vector_up , 7000, true )
+							RagdollFight.ApplyForce( pl.Ragdoll.GrabbedObject, -1 * pl:GetForward() - vector_up , 7000, true )
 							pl.Ragdoll.StanceDuration = CurTime() + dur
 							pl.Ragdoll.GrabbedObject.WasThrown = 1.6
 							pl.Ragdoll.NextAttack = CurTime() + 1
 						else
 							pl.Ragdoll.Stance = RAGDOLL_STANCE_GRAB_ATTACK_THROW
 							pl.Ragdoll.StanceNum = RandomStanceNum( pl.Ragdoll.Stance )
-							RagdollFightApplyForce( pl.Ragdoll.GrabbedObject, pl:GetForward() + vector_up * 0.05 , 1000 )
+							RagdollFight.ApplyForce( pl.Ragdoll.GrabbedObject, pl:GetForward() + vector_up * 0.05 , 1000 )
 							pl.Ragdoll.GrabbedObject.WasThrown = 0.2
 							pl.Ragdoll.StanceDuration = CurTime() + dur
 							pl.Ragdoll.NextAttack = CurTime() + 0
@@ -2856,14 +2857,14 @@ local function RagdollFightKeyRelease( pl, key )
 						pl:SetLocalVelocity( vector_up * -250 )
 						pl.Ragdoll.Stance = RAGDOLL_STANCE_GRAB_ATTACK_SLAM
 						pl.Ragdoll.StanceNum = RandomStanceNum( pl.Ragdoll.Stance )
-						RagdollFightApplyForce( pl.Ragdoll.GrabbedObject, pl:GetForward() * 0.1 - vector_up , 18000, true )
+						RagdollFight.ApplyForce( pl.Ragdoll.GrabbedObject, pl:GetForward() * 0.1 - vector_up , 18000, true )
 						pl.Ragdoll.GrabbedObject.WasThrown = 1.3
 						pl.Ragdoll.StanceDuration = CurTime() + dur
 						pl.Ragdoll.NextAttack = CurTime() + 1
 					end
 					pl.Ragdoll.ThrowTime = CurTime() + 4
 					pl.Ragdoll.GrabbedObject.NextGrab = CurTime() + 4
-					RagdollFightResetMass( pl.Ragdoll.GrabbedObject )
+					RagdollFight.ResetMass( pl.Ragdoll.GrabbedObject )
 
 				end
 				pl.Ragdoll.GrabbedObject.GrabbedBy = nil
@@ -2878,7 +2879,7 @@ local function RagdollFightKeyRelease( pl, key )
 	end
 
 end
-hook.Add( "KeyRelease", "RagdollFightKeyRelease", RagdollFightKeyRelease )
+hook.Add( "KeyRelease", "RagdollFightKeyRelease", RagdollFight.KeyRelease )
 
 hook.Add( "AllowPlayerPickup", "RagdollFightAllowPlayerPickup", function( pl, ent )
 	if pl.Ragdoll and pl.Ragdoll:IsValid() then
@@ -2897,7 +2898,7 @@ hook.Add( "PlayerSpawnProp", "RagdollFightPlayerSpawnProp", function( pl, model 
 end)
 
 --command for making stances. gonna lock it behind IsAdmin, just to be sure
-function RagdollFightSaveStance( pl, cmd, args )
+function RagdollFight.SaveStance( pl, cmd, args )
 
 	if not pl then return end
 	if !pl:IsAdmin() then return end
@@ -3001,10 +3002,10 @@ function RagdollFightSaveStance( pl, cmd, args )
 
 
 end
-concommand.Add( "rag_remember", RagdollFightSaveStance )
+concommand.Add( "rag_remember", RagdollFight.SaveStance )
 
 --small command for making xray weapons. gonna lock it behind IsAdmin, just to be sure
-function RagdollFightSaveWeapon( pl, cmd, args )
+function RagdollFight.SaveWeapon( pl, cmd, args )
 
 	if not pl then return end
 	if !pl:IsAdmin() then return end
@@ -3062,7 +3063,7 @@ function RagdollFightSaveWeapon( pl, cmd, args )
 
 
 end
-concommand.Add( "rag_remember_wep", RagdollFightSaveWeapon )
+concommand.Add( "rag_remember_wep", RagdollFight.SaveWeapon )
 
 end
 
@@ -3124,7 +3125,7 @@ net.Receive( "RagdollFightUpdateRagdoll", function( len )
 
 end)
 
-local function RagdollFightCreateMove( cmd )
+local function RagdollFight.CreateMove( cmd )
 
 	local pl = LocalPlayer()
 	local arena = IsValid( pl.RagdollFightArena ) and pl.RagdollFightArena
@@ -3162,7 +3163,7 @@ local function RagdollFightCreateMove( cmd )
 	end
 
 end
-hook.Add( "CreateMove", "RagdollFightCreateMove", RagdollFightCreateMove )
+hook.Add( "CreateMove", "RagdollFightCreateMove", RagdollFight.CreateMove )
 
 hook.Add( "OnSpawnMenuOpen", "RagdollFightOnSpawnMenuOpen", function()
 	local pl = LocalPlayer()
@@ -3500,7 +3501,7 @@ end
 
 
 
-local function RagdollFightRagdollDraw( self )
+local function RagdollFight.RagdollDraw( self )
 
 	if not self.OriginalModel then
 		self.OriginalModel = self:GetModel()
@@ -3636,7 +3637,7 @@ local zero_ang = Angle( 0, 0, 0 )
 local cur_viewpos
 local last_arena
 
-local function RagdollFightCalcView( pl, origin, angles, fov, znear, zfar )
+local function RagdollFight.CalcView( pl, origin, angles, fov, znear, zfar )
 
 	local arena = IsValid( pl.RagdollFightArena ) and pl.RagdollFightArena
 
@@ -3650,12 +3651,12 @@ local function RagdollFightCalcView( pl, origin, angles, fov, znear, zfar )
 		local rag2 = arena:GetRagdollFighter( 2 )
 
 		if rag1 and rag1:IsValid() and not rag1.SetRenderOverride then
-			rag1.RenderOverride = RagdollFightRagdollDraw
+			rag1.RenderOverride = RagdollFight.RagdollDraw
 			rag1.SetRenderOverride = true
 		end
 
 		if rag2 and rag2:IsValid() and not rag2.SetRenderOverride then
-			rag2.RenderOverride = RagdollFightRagdollDraw
+			rag2.RenderOverride = RagdollFight.RagdollDraw
 			rag2.SetRenderOverride = true
 		end
 
@@ -3777,7 +3778,7 @@ local function RagdollFightCalcView( pl, origin, angles, fov, znear, zfar )
 
 	end
 end
-hook.Add( "CalcView", "RagdollFightCalcView", RagdollFightCalcView )
+hook.Add( "CalcView", "RagdollFightCalcView", RagdollFight.CalcView )
 
 local hide_stuff = {
 	CHudHealth = true,
@@ -3803,7 +3804,7 @@ end )
 end
 
 --todo: do something about making player go faster over time, so slide/jumpkick triggering will stop being so shit!
-local function RagdollFightMove( pl, cmd )
+local function RagdollFight.Move( pl, cmd )
 
 	if pl.RagdollFightArena and pl.RagdollFightArena:IsValid() and pl:Alive() then
 		local ang = pl.RagdollFightArena:GetAngles()
@@ -3815,14 +3816,14 @@ local function RagdollFightMove( pl, cmd )
 	end
 
 end
-hook.Add( "Move", "RagdollFightMove", RagdollFightMove )
+hook.Add( "Move", "RagdollFightMove", RagdollFight.Move )
 
 hook.Add( "PlayerNoClip", "RagdollFightPlayerNoClip", function( pl )
 	if pl and pl.RagdollFightArena and pl.RagdollFightArena:IsValid() then return false end
 end )
 
 --thats a scary hook, without CollisionRulesChanged
-local function RagdollFightShouldCollide( ent1, ent2 )
+local function RagdollFight.ShouldCollide( ent1, ent2 )
 	if ent1:IsPlayer() and ent1.RagdollFightArena and ent1.RagdollFightArena:IsValid() and ent1:Alive() then
 		local rag1 = ent1.RagdollFightArena:GetRagdollFighter( 1 )
 		local rag2 = ent1.RagdollFightArena:GetRagdollFighter( 2 )
@@ -3838,7 +3839,7 @@ local function RagdollFightShouldCollide( ent1, ent2 )
 		end
 	end
 end
-hook.Add( "ShouldCollide", "RagdollFightShouldCollide", RagdollFightShouldCollide )
+hook.Add( "ShouldCollide", "RagdollFightShouldCollide", RagdollFight.ShouldCollide )
 
 
 --arena entity itself
@@ -4119,8 +4120,8 @@ util.AddNetworkString( "RagdollFightArenaSendMessage" )
 		net.Send( ent )
 
 		self:SetSpawnPos( slot, ent )
-		RagdollFightRemoveRagdoll( ent )
-		RagdollFightSpawnRagdoll( ent )
+		RagdollFight.RemoveRagdoll( ent )
+		RagdollFight.SpawnRagdoll( ent )
 
 		self:AddRagdollFighter( slot, ent )
 		self:ClearPos( ent )
@@ -4148,7 +4149,7 @@ util.AddNetworkString( "RagdollFightArenaSendMessage" )
 		local pl = self:GetPlayer( slot )
 
 		if pl and pl:IsValid() then
-			RagdollFightRemoveRagdoll( pl )
+			RagdollFight.RemoveRagdoll( pl )
 			pl:SetMoveType( MOVETYPE_WALK )
 			pl:SetCollisionGroup( COLLISION_GROUP_PLAYER )
 			if pl.OldJumpPower then
@@ -4519,7 +4520,7 @@ else
 	end)
 
 	--I'm gonna play it safe and have all HUD inside this panel, without worrrying about 400+ other HUD addons that players might have installed
-	local function RagdollFightHUD()
+	local function RagdollFight.HUD()
 
 		local pl = LocalPlayer()
 
