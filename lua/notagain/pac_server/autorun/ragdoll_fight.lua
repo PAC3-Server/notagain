@@ -2121,7 +2121,7 @@ function RagdollFight.RemoveRagdoll( pl )
 
 end
 
-local function RagdollFight.Think( )
+function RagdollFight.Think( )
 	if RagdollFight.Ragdolls then
 		for k, v in pairs( RagdollFight.Ragdolls ) do
 			if v and v:IsValid() and !IsValid(v:GetOwner()) then
@@ -2568,7 +2568,7 @@ IdleActivityTranslate[ ACT_MP_JUMP ]						= ACT_HL2MP_JUMP_SLAM
 IdleActivityTranslate[ ACT_MP_SWIM ]						= IdleActivity + 9
 IdleActivityTranslate[ ACT_LAND ]							= ACT_LAND
 
-local function RagdollFight.TranslateActivity( ply, act )
+function RagdollFight.TranslateActivity( ply, act )
 	if ply.Ragdoll and ply.Ragdoll:IsValid() then
 		return IdleActivityTranslate[ act ]
 	end
@@ -2577,7 +2577,7 @@ hook.Add( "TranslateActivity", "RagdollFightTranslateActivity", RagdollFight.Tra
 
 util.AddNetworkString( "RagdollFightSendXRay" )
 
-local function RagdollFight.KeyPress( pl, key )
+function RagdollFight.KeyPress( pl, key )
 
 	if pl.Ragdoll and pl.Ragdoll:IsValid() then
 
@@ -2821,7 +2821,7 @@ local function RagdollFight.KeyPress( pl, key )
 end
 hook.Add( "KeyPress", "RagdollFightKeyPress", RagdollFight.KeyPress )
 
-local function RagdollFight.KeyRelease( pl, key )
+function RagdollFight.KeyRelease( pl, key )
 
 	if pl.Ragdoll and pl.Ragdoll:IsValid() then
 
@@ -3125,7 +3125,7 @@ net.Receive( "RagdollFightUpdateRagdoll", function( len )
 
 end)
 
-local function RagdollFight.CreateMove( cmd )
+function RagdollFight.CreateMove( cmd )
 
 	local pl = LocalPlayer()
 	local arena = IsValid( pl.RagdollFightArena ) and pl.RagdollFightArena
@@ -3501,7 +3501,7 @@ end
 
 
 
-local function RagdollFight.RagdollDraw( self )
+function RagdollFight.RagdollDraw( self )
 
 	if not self.OriginalModel then
 		self.OriginalModel = self:GetModel()
@@ -3637,7 +3637,7 @@ local zero_ang = Angle( 0, 0, 0 )
 local cur_viewpos
 local last_arena
 
-local function RagdollFight.CalcView( pl, origin, angles, fov, znear, zfar )
+function RagdollFight.CalcView( pl, origin, angles, fov, znear, zfar )
 
 	local arena = IsValid( pl.RagdollFightArena ) and pl.RagdollFightArena
 
@@ -3804,7 +3804,7 @@ end )
 end
 
 --todo: do something about making player go faster over time, so slide/jumpkick triggering will stop being so shit!
-local function RagdollFight.Move( pl, cmd )
+function RagdollFight.Move( pl, cmd )
 
 	if pl.RagdollFightArena and pl.RagdollFightArena:IsValid() and pl:Alive() then
 		local ang = pl.RagdollFightArena:GetAngles()
@@ -3823,7 +3823,7 @@ hook.Add( "PlayerNoClip", "RagdollFightPlayerNoClip", function( pl )
 end )
 
 --thats a scary hook, without CollisionRulesChanged
-local function RagdollFight.ShouldCollide( ent1, ent2 )
+function RagdollFight.ShouldCollide( ent1, ent2 )
 	if ent1:IsPlayer() and ent1.RagdollFightArena and ent1.RagdollFightArena:IsValid() and ent1:Alive() then
 		local rag1 = ent1.RagdollFightArena:GetRagdollFighter( 1 )
 		local rag2 = ent1.RagdollFightArena:GetRagdollFighter( 2 )
@@ -4520,7 +4520,7 @@ else
 	end)
 
 	--I'm gonna play it safe and have all HUD inside this panel, without worrrying about 400+ other HUD addons that players might have installed
-	local function RagdollFight.HUD()
+function RagdollFight.HUD()
 
 		local pl = LocalPlayer()
 
@@ -5124,7 +5124,7 @@ else
 			pl.RagdollFightArena = arena
 			pl.RagdollFightArenaSlot = slot
 
-			RagdollFightHUD()
+			RagdollFight.HUD()
 		end
 
 
