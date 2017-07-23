@@ -31,9 +31,11 @@ hook.Add("PhysgunPickup", tag, function(ply, ent)
 	if not canphysgun then return end
 
 	if ply.CanAlter then
-		if ply:GetInfo(tag .. '_dont_touch_me') ~= 1 then
+		local notouch = tobool(ent:GetInfo(tag .. '_dont_touch_me'))
+		if not notouch then
 			canphysgun = ply:CanAlter(ent)
 		else
+			canphysgun = false
 			if ply.IsSudo then
 				canphysgun = ply:IsSudo()
 			else
