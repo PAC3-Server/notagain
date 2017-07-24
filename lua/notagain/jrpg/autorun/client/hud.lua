@@ -159,7 +159,7 @@ do
 			x = x + skew/4
 		end
 
-		if jattributes.HasMana(ply) then
+		if ply:GetNWBool("rpg",false) and jattributes.HasMana(ply) then
 			local real_cur = math.Round(jattributes.GetMana(ply))
 			local cur = smooth(real_cur, "mana"..ply:EntIndex())
 			local max = jattributes.GetMaxMana(ply)
@@ -170,7 +170,7 @@ do
 			x = x + skew/4
 		end
 
-		if jattributes.HasStamina(ply) then
+		if ply:GetNWBool("rpg",false) and jattributes.HasStamina(ply) then
 			local real_cur = jattributes.GetStamina(ply)
 			local cur = smooth(real_cur, "stamina"..ply:EntIndex())
 			local max = jattributes.GetMaxStamina(ply)
