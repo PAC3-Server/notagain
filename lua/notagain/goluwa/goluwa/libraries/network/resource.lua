@@ -8,6 +8,15 @@ e.DOWNLOAD_FOLDER = e.DATA_FOLDER .. "downloads/"
 vfs.CreateFolder("os:" .. e.DOWNLOAD_FOLDER)
 vfs.Mount("os:" .. e.DOWNLOAD_FOLDER, "os:downloads")
 
+_G.llog = _G.old_llog or _G.llog
+
+local goluwa_net_llog_cvar = CreatConVar("goluwa_print_network","0",FCVAR_ARCHIVE,"Print errors and downloads from goluwa network lib")
+function _G.llog = function(...)
+	if goluwa_net_llog_cvar:GetBool() then
+		_G.llog(...)
+	end
+end
+
 function resource.AddProvider(provider)
 	for i,v in ipairs(resource.providers) do
 		if v == provider then
