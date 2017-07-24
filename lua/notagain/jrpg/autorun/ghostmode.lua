@@ -66,9 +66,11 @@ if CLIENT then
 
 	hook.Add("CalcView", Tag, function(ply)
 		if ply:GetNWBool("rpg") and not ply:Alive() then
-			timer.Simple(0,function()
-				ctp:Disable()
-				battlecam.Disable()
+			timer.Simple(0.1,function()
+				if ctp and battlecam then
+					ctp:Disable()
+					battlecam.Disable()
+				end
 			end)
 			return {
 				origin = ply:EyePos() + ply:GetAimVector() * -200,
