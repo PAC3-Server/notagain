@@ -19,6 +19,8 @@ ENT.PlayerConfig = {
 
 if SERVER then
 	function ENT:Initialize()
+		self:SetModel("models/props_junk/PopCan01a.mdl")
+		self:SetModelScale(0.1)
 		self:InstallMediaPlayer( "entity" )
 
 		local mp = self:GetMediaPlayer()
@@ -33,7 +35,7 @@ if SERVER then
 			self:SetListeners(listeners)
 		end
 	end
-	
+
 	local spawn = function()
 		local remove_these = {
 			trigger_soundscape = true,
@@ -53,7 +55,7 @@ if SERVER then
 		screen:SetAngles(Angle(0,180,0))
 		screen:Spawn()
 	end
-	
+
 	hook.Add("InitPostEntity","bluehills_theater",spawn)
 	hook.Add("PostCleanupMap","bluehills_theater",spawn)
 end
