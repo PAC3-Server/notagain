@@ -45,7 +45,8 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Have Worm Sex."
 	ENT.Instructions 	= "Click on it to spawn it."
-	ENT.Category		= "Dark Messiah"
+	ENT.Category		= "VJ Base"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 		local Name = "Giant Worm"
@@ -177,6 +178,11 @@ do
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 
 do
@@ -256,7 +262,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spider!"
 	ENT.Instructions 	= "Click to spawn it."
-	ENT.Category		= "Dark Messiah"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Spider"
@@ -367,6 +373,11 @@ do
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 
 do
@@ -447,7 +458,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "She's your mother!"
 	ENT.Instructions 	= "Click to spawn it."
-	ENT.Category		= "Dark Messiah"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Spider Queen"
@@ -709,4 +720,9 @@ do
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
