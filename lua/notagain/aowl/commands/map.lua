@@ -1,4 +1,4 @@
-aowl.AddCommand("map|changelevel|level=string,number[10]", function(ply, line, map, time)
+aowl.AddCommand("map|changelevel=string,number[10]", function(ply, line, map, time) -- NO
 	if not file.Exists("maps/" .. map .. ".bsp", "GAME") then
 		return false, "map not found"
 	end

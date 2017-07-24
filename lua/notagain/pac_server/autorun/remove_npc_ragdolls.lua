@@ -19,11 +19,19 @@ if CLIENT then
 end
 
 if SERVER then
+	local isuseless = function(ent)
+		if not IsValid(ent:GetOwner()) then
+			if ent.CPPIGetOwner and not IsValid(ent:CPPIGetOwner()) then
+				return true
+			end
+		end
+		return false
+	end
 	hook.Add("OnEntityCreated","remove_npc_ragdolls",function(ent)
 		if ent:GetClass() == "prop_ragdoll" then
 			local rag = ent
 			timer.Simple(5, function()
-				if rag:IsValid() and (not IsValid(rag:GetOwner()) and not (rag.GetCPPiOwner and IsValid((rag:CPPIGetOwner()))) then
+				if rag:IsValid() and isuseless(rag) then
 					local time = RealTime() + 1
 					rag:SetRenderMode(RENDERMODE_TRANSALPHA)
 
