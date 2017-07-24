@@ -3,9 +3,9 @@ spawnmenu.old_AddToolMenuOption = spawnmenu.old_AddToolMenuOption or spawnmenu.A
 spawnmenu.AddToolMenuOption = function(tab,cat,class,name,cmd,config,cpanel,tbl)
     local cat = cat
     local alloweds = {
-        "Tools" = true,
-        "Utilities" = true,
-        "Wire" = true,
+        ["Tools"] = true,
+        ["Utilities"] = true,
+        ["Wire"] = true,
     }
     if not cat or not alloweds[cat] then
         cat = "Utilities"
