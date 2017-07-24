@@ -1,85 +1,62 @@
 AddCSLuaFile()
+local PLAYER = FindMetaTable("Player")
 
-local META = FindMetaTable("Player")
-
-function META:SetNick(nick)
-	nick = nick or self:RealNick()
-	if #string.Trim((string.gsub(nick,"%^%d",""))) == 0 then
-		nick = self:RealNick()
-	end
-	for k, v in pairs(player.GetAll()) do
-		if v:Nick() == nick and v ~= self and not self:IsAdmin() then
-			return
-		end
-	end
-	if SERVER and type(nick) == "string" or type(nick) == "nil" then
-		--hook.Call("NickChange", nil, self, self:GetNWString("nick_override", self:RealName()), nick)
-		self:SetNWString("nick_override", nick)
-		if not isstring(nick) or nick == self:RealNick() then
-			self:RemovePData("PlayerNick")
-		else
-			self:SetPData("PlayerNick", nick)
-		end
-	end
-	self.nick_override = nick
+function PLAYER:Nick()
+	local nick = self:GetNWString("Nick","")
+	return nick:Trim() == "" and self:RealName() or nick
 end
 
-do
-	local cvar = CreateConVar("sh_playernick_enabled", "1")
+PLAYER.Name = PLAYER.Nick
+PLAYER.GetNick = PLAYER.Nick
+PLAYER.GetName = PLAYER.Nick
 
-	META.OldGetName = META.OldGetName or META.GetName
+if CLIENT then
 
-	function META:GetName(...)
-		local ok = playernick and cvar:GetBool() and type(self) == "Player" and self.IsValid and self:IsValid()
-		return ok and (hook.Call("PlayerNick", GAMEMODE, self, self:RealNick()) or self:RealNick()) or self:OldGetName(...) or "Invalid player!?!?"
-	end
+	net.Receive("aowl_nick_names", function()
+		local ply = Player(net.ReadUInt(16))
+		local oldNick = net.ReadString()
+		local newNick = net.ReadString()
 
-	META.Nick = META.GetName
-	META.Name = META.GetName
-
-	META.RealNick = META.OldGetName
-	META.RealName = META.OldGetName
-	META.GetRealName = META.OldGetName
-end
-
-do
-	if SERVER then
-		hook.Add("PlayerInitialSpawn", "PlayerNick", function(ply)
-			timer.Simple(1,function()
-				if IsValid(ply) then
-					local nick = ply:GetPData("PlayerNick")
-					if isstring(nick) then
-						ply:SetNick(nick)
-					end
-				end
-			end)
-		end)
-	end
-
-	hook.Add("PlayerNick", "playernick_test_hook", function(ply, nick)
-		return ply:GetNWString("nick_override", ply:RealNick())
+		chat.AddText(team.GetColor(ply:Team()), oldNick, Color(255, 255, 255, 255), " is now called ", team.GetColor(ply:Team()), newNick)
 	end)
+
 end
 
 if SERVER then
 
-	aowl.AddCommand("name|nick|setnick|setname|nickname", function(player, line)
-		if line then
-			line=line:Trim()
-			if(line=="") or line:gsub(" ","")=="" then
-				line = nil
-			end
-			if line and #line>40 then
-				if not line.ulen or line:ulen()>40 then
-					return false,"my god what are you doing"
-				end
-			end
-		end
-		timer.Create("setnick"..player:UserID(),1,1,function()
-			if IsValid(player) then
-				player:SetNick(line)
-			end
-		end)
-	end, "players")
+    util.AddNetworkString("aowl_nick_names")
 
+	function PLAYER:SetNick(nick)
+		if not nick or nick:Trim() == "" then
+			self:RemovePData("Nick")
+		else
+			self:SetPData("Nick", nick)
+		end
+		self:SetNWString("Nick", nick)
+	end
+
+	local nextChange = {}
+	local nick
+
+    aowl.AddCommand("name|nick=string[404 no name found]", function(caller, line)
+		local cd = nextChange[caller:UserID()]
+		if cd and cd > CurTime() then
+			return false, "You're changing nicks too quickly!"
+		end
+
+		local oldNick = caller:Nick()
+		caller:SetNick(line)
+		net.Start("aowl_nick_names")
+		net.WriteUInt(caller:UserID(), 16)
+		net.WriteString(oldNick)
+		net.WriteString(caller:Nick())
+		net.Broadcast()
+		nextChange[caller:UserID()] = CurTime() + 2
+	end)
+
+	hook.Add("PlayerInitialSpawn", "aowl_nick_names", function(caller)
+		if caller:GetPData("Nick") and caller:GetPData("Nick"):Trim() ~= "" then
+			caller:SetNick(caller:GetPData("Nick"))
+		end
+	end)
 end
