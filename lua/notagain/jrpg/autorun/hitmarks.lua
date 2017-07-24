@@ -317,7 +317,7 @@ if CLIENT then
 
 					do
 						local cur = ent:GetNWFloat("jattributes_mana", -1)
-						if cur ~= -1 then
+						if ent:GetNWBool("rpg",false) and cur ~= -1 then
 							local max = ent:GetNWFloat("jattributes_max_mana", 100)
 							local width = math.Clamp(max*3, 0, 500)
 
@@ -329,7 +329,7 @@ if CLIENT then
 
 					do
 						local cur = ent:GetNWFloat("jattributes_stamina", -1)
-						if cur ~= -1 then
+						if ent:GetNWBool("rpg",false) and cur ~= -1 then
 							local max = ent:GetNWFloat("jattributes_max_stamina", 100)
 							local width = math.Clamp(max*3, 0, 500)
 
