@@ -3,6 +3,7 @@ local ENT = {}
 ENT.Type = "anim"
 ENT.Base = "base_entity"
 ENT.Spawnable = true
+ENT.Category = "CapsAdmin"
 
 function ENT:GetTipPos()
 	return self:NearestPoint(self:GetPos() + self:GetUp() * self:BoundingRadius() * 2)
