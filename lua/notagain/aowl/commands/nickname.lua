@@ -1,7 +1,6 @@
 AddCSLuaFile()
 
 local PLAYER = FindMetaTable("Player")
-
 PLAYER.old_Nick = PLAYER.old_Nick or PLAYER.Nick
 
 function PLAYER:Nick()
