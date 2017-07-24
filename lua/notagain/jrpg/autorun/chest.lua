@@ -5,6 +5,9 @@ local ENT = {}
 ENT.Type = "anim"
 ENT.Base = "base_entity"
 ENT.ClassName = "chest"
+ENT.Category = "JRPG"
+ENT.Spawnable = true
+ENT.AdminOnly = true
 
 ENT.Spread = 20
 
