@@ -86,7 +86,7 @@ local blacklist = {
 }
 
 local init = false
-hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
+local doit = function(ply, str)
 	if not init then
 
 		goluwa.resource.AddProvider("https://github.com/PAC3-Server/chatsounds/raw/master/")
@@ -108,7 +108,10 @@ hookAdd("OnPlayerChat", "chatsounds", function(ply, str)
 
 	goluwa.audio.player_object = ply
 	chatsounds.Say(str, math.Round(CurTime()))
-end)
+end
+
+hookAdd("OnPlayerChat", "chatsounds",doit)
+concommand.Add("saysound",doit) --LEGACY
 
 if not chatsounds_enabled:GetBool() then
 	timer.Simple(0.05, function()
