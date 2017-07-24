@@ -204,7 +204,7 @@ do
 	SWEP.Color = Vector(2, 1, 0.5)
 
 	SWEP.PrintName = "potion"
-	SWEP.Spawnable = true
+	SWEP.Spawnable = false
 	SWEP.WorldModel = "models/healthvial.mdl"
 
 	SWEP.ViewModel = Model( "models/weapons/c_medkit.mdl" )
@@ -371,6 +371,7 @@ local function make_potion(name, color, func)
 	SWEP.AdminSpawnable = false
 	SWEP.PrintName = name .. " potion"
 	SWEP.ClassName = "potion_" .. name
+	SWEP.Category = "JRPG"
 	SWEP.Base = "potion_base"
 	SWEP.Color = color
 	SWEP.OnDrink = func
