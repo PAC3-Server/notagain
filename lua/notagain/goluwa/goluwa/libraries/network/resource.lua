@@ -11,9 +11,9 @@ vfs.Mount("os:" .. e.DOWNLOAD_FOLDER, "os:downloads")
 _G.llog = _G.old_llog or _G.llog
 
 local goluwa_net_llog_cvar = CreatConVar("goluwa_print_network","0",FCVAR_ARCHIVE,"Print errors and downloads from goluwa network lib")
-function _G.llog = function(...)
+function _G.llog(...)
 	if goluwa_net_llog_cvar:GetBool() then
-		_G.llog(...)
+		_G.old_llog(...)
 	end
 end
 
