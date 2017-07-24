@@ -75,7 +75,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Allosaurus"
@@ -229,6 +229,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -241,7 +246,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Carcharodontosaurus"
@@ -317,6 +322,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -329,7 +339,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Carnotaurus"
@@ -399,6 +409,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -411,7 +426,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Ceratosaurus"
@@ -481,6 +496,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -493,7 +513,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Dilophosaurus"
@@ -566,6 +586,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -578,7 +603,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Giganotosaurus"
@@ -666,6 +691,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -678,7 +708,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Hadrosaur"
@@ -749,6 +779,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -761,7 +796,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Raptor (Jurassic park)"
@@ -834,6 +869,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -846,7 +886,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Raptor"
@@ -918,6 +958,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -930,7 +975,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Rugogps"
@@ -1000,6 +1045,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -1012,7 +1062,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Scarface Momma"
@@ -1102,6 +1152,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -1114,7 +1169,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Spinosaurus"
@@ -1199,6 +1254,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -1211,7 +1271,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Spinosaurus (Jurassic park)"
@@ -1298,6 +1358,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -1310,7 +1375,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "T-Rex"
@@ -1398,6 +1463,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -1410,7 +1480,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Kung Fu T-Rex"
@@ -1489,6 +1559,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -1501,7 +1576,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "T-Rex (Jurassic park)"
@@ -1591,6 +1666,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -1603,7 +1683,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "T-Rex (Lineage 2)"
@@ -1679,6 +1759,11 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -1691,7 +1776,7 @@ do
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with it!"
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Dinosaurs"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Triceratops"
@@ -1763,4 +1848,9 @@ do
 		----------------------------------------------- ]]
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
