@@ -17,8 +17,8 @@ ENT.PlayerConfig = {
 	height = 352
 }
 
-function ENT:Initialize()
-	if SERVER then
+if SERVER then
+	function ENT:Initialize()
 		self:InstallMediaPlayer( "entity" )
 
 		local mp = self:GetMediaPlayer()
@@ -33,18 +33,8 @@ function ENT:Initialize()
 			self:SetListeners(listeners)
 		end
 	end
-end
-
-if CLIENT then
-	function ENT:Draw()
-
-	end
-end
-
-scripted_ents.Register(ENT, ENT.ClassName)
-
-if SERVER then
-	hook.Add("InitPostEntity", "SpawnTheaterScreen", function()
+	
+	local spawn = function()
 		local remove_these = {
 			trigger_soundscape = true,
 			env_soundscape_triggerable = true,
@@ -62,8 +52,13 @@ if SERVER then
 		screen:SetPos(Vector(416,1176,352))
 		screen:SetAngles(Angle(0,180,0))
 		screen:Spawn()
-	end)
-else
+	end
+	
+	hook.Add("InitPostEntity","bluehills_theater",spawn)
+	hook.Add("PostCleanupMap","bluehills_theater",spawn)
+end
+
+if CLIENT then
 	--This is a very ugly way to do it
 	hook.Add("OnContextMenuOpen", "CinemaMediaplayer", function()
 		local ent = ents.FindByClass("bluehill_theater_screen")[1]
@@ -75,3 +70,5 @@ else
 		end
 	end)
 end
+
+scripted_ents.Register(ENT, ENT.ClassName)
