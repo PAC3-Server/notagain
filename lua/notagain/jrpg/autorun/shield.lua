@@ -155,7 +155,7 @@ do
 	SWEP.MagicDefence = 0
 	SWEP.PhysicalDefence = 1
 
-	SWEP.ClassName = "shield_base"
+	SWEP.ClassName = "weapon_shield_base"
 	SWEP.Category = "JRPG"
 
 	SWEP.PrintName = "shield"
