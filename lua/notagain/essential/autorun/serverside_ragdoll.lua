@@ -21,14 +21,6 @@ if CLIENT then
 		return META.Old_GetRagdollOwner(self, ...)
 	end
 
-	function META:GetRagdollEntity(...)
-		local ent = ply:GetNWEntity("serverside_ragdoll")
-		if ent:IsValid() then
-			return ent
-		end
-		return META.Old_GetRagdollEntity(self, ...)
-	end
-
 	hook.Add("CalcView", "serverside_ragdoll", function(ply, origin, angles)
 		local ent = ply:GetNWEntity("serverside_ragdoll")
 		if ent:IsValid() then
@@ -58,10 +50,10 @@ if SERVER then
 			end
 		end
 
-		timer.Simple(0, function() if ply:IsValid() then ply:SetMoveType(MOVETYPE_FLYGRAVITY) end end)
+		timer.Simple(0.1, function() if ply:IsValid() then ply:SetMoveType(MOVETYPE_FLYGRAVITY) end end) --0 does weird things
 
 		hook.Add("OnEntityCreated", "serverside_ragdoll", function(ent)
-			if ply:IsValid()  then
+			if ply:IsValid() then
 				if ent:GetOwner() == ply then
 					if ent.CPPISetOwner then
 						ent:CPPISetOwner(ply)

@@ -1,18 +1,15 @@
 AddCSLuaFile()
+
 local PLAYER = FindMetaTable("Player")
 
-PLAYER.SteamNick   = PLAYER.SteamNick or PLAYER.Nick
-PLAYER.SteamName   = PLAYER.SteamNick or PLAYER.Nick
-PLAYER.RealName    = PLAYER.SteamNick or PLAYER.Nick
-PLAYER.RealNick    = PLAYER.SteamNick or PLAYER.Nick
-PLAYER.GetRealName = PLAYER.SteamNick or PLAYER.Nick
-PLAYER.GetRealNick = PLAYER.SteamNick or PLAYER.Nick
+PLAYER.old_Nick = PLAYER.old_Nick or PLAYER.Nick
 
 function PLAYER:Nick()
 	local nick = self:GetNWString("Nick","")
-	return nick:Trim() == "" and self:RealName() or nick
+	return nick:Trim() == "" and self.old_Nick(self) or nick
 end
-PLAYER.Name = PLAYER.Nick
+
+PLAYER.Name    = PLAYER.Nick
 PLAYER.GetNick = PLAYER.Nick
 PLAYER.GetName = PLAYER.Nick
 
