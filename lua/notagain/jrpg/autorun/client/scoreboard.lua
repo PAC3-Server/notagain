@@ -407,7 +407,7 @@ local SCORE_BOARD = {
         self.Header:SetHeight( 100 )
         self.Header:DockMargin( 0,0,0,15)
 		self.Header.Paint = function(_, w, h)
-			prettytext.Draw(string.gsub(GetHostName(),"Official PAC3 Server - ",""), w/2, 0, "gabriola", 120, 800, 10, Color(255, 255, 255, 255), Color(75,75, 75, 150), -0.5)
+			prettytext.Draw(string.gsub(GetHostName(),"Official PAC3 Server%s%-%s",""), w/2, 0, "gabriola", 120, 800, 10, Color(255, 255, 255, 255), Color(75,75, 75, 150), -0.5)
 		end
 
         self.Scroll = self:Add( "DScrollPanel" )
