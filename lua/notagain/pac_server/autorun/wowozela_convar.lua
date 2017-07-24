@@ -1,7 +1,7 @@
 hook.Add("InitPostEntity","fuckwowozelaok",function()
     if wowozela then
         local wowo_en = CreateConVar("wowozela_enable","1",FCVAR_ARCHIVE,"Enable or disable wowozela")
-        local disabled = not wowo_en:Getbool()
+        local disabled = not wowo_en:GetBool()
         local DISABLE = function()
             hook.Remove("PostDrawOpaqueRenderables", "wowozela_draw")
             hook.Remove("Think","wowozela_think")
