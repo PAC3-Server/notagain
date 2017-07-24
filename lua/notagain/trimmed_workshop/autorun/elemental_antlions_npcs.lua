@@ -36,7 +36,7 @@ do
 	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Antlions"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Frostlion"
@@ -130,6 +130,11 @@ do
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -142,7 +147,7 @@ do
 	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click to spawn it."
-	ENT.Category		= "Antlions"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Frostlion Guard"
@@ -279,6 +284,11 @@ do
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -291,7 +301,7 @@ do
 	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Antlions"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Hellion"
@@ -378,6 +388,11 @@ do
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -390,7 +405,7 @@ do
 	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click to spawn it."
-	ENT.Category		= "Antlions"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Hellion Guard"
@@ -526,6 +541,11 @@ do
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -538,7 +558,7 @@ do
 	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click on the spawnicon to spawn it."
-	ENT.Category		= "Antlions"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Thunderlion"
@@ -624,6 +644,11 @@ do
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
@@ -636,7 +661,7 @@ do
 	ENT.Contact 		= "http:--steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and fight with itnot "
 	ENT.Instructions 	= "Click to spawn it."
-	ENT.Category		= "Antlions"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Thunderlion Guard"
@@ -776,21 +801,23 @@ do
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
 	ENT.ClassName = "obj_frostlion_iceball"
 
 
-	ENT.Type 			= "anim"
-	ENT.Base 			= "base_gmodentity"
+	ENT.Type 		= "anim"
+	ENT.Base 		= "base_gmodentity"
 	ENT.PrintName		= "Frostlion Guard"
-	ENT.Author			= "Norpa"
+	ENT.Author		= "Norpa"
 	ENT.Information		= ""
-	ENT.Category		= ""
-
-	ENT.Spawnable			= false
-	ENT.AdminSpawnable		= true
+	ENT.AdminOnly		= true
 
 	if SERVER then
 
@@ -842,21 +869,23 @@ do
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
 	ENT.ClassName = "obj_hellion_fireball"
 
 
-	ENT.Type 			= "anim"
-	ENT.Base 			= "base_gmodentity"
+	ENT.Type 		= "anim"
+	ENT.Base 		= "base_gmodentity"
 	ENT.PrintName		= "Hellion Guard"
-	ENT.Author			= "Norpa"
+	ENT.Author		= "Norpa"
 	ENT.Information		= ""
-	ENT.Category		= ""
-
-	ENT.Spawnable			= false
-	ENT.AdminSpawnable		= true
+	ENT.AdminOnly		= true
 
 	if SERVER then
 
@@ -905,6 +934,11 @@ do
 
 	end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 
 local function add(ENT, url)
@@ -922,12 +956,18 @@ do
 	ENT.PrintName = "robolion"
 	ENT.ClassName = "npc_vj_robolion"
 	ENT.Base = "npc_vj_thunderlion"
+	ENT.AdminOnly = true
 
 	if CLIENT then
 		add(ENT, "https://gist.githubusercontent.com/sambarinooo/fabe4356b0ab88965cf87bb570e60ee5/raw/b8fdd8cb39c13099ff11fe05301ca40833964dc2/antlion%2520robot%2520outfit")
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 
 do
@@ -936,10 +976,16 @@ do
 	ENT.PrintName = "robolion guard"
 	ENT.ClassName = "npc_vj_robolionguard"
 	ENT.Base = "npc_vj_thunderlionguard"
+	ENT.AdminOnly = true
 
 	if CLIENT then
 		add(ENT, "https://gist.githubusercontent.com/sambarinooo/93afdad8335e5bc0172b64b767eb1559/raw/e5fccc6349dcf934059d776082b681a4c2cd238b/antlionguard%2520robot%2520outfit")
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
