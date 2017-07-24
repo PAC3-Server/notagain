@@ -4,6 +4,7 @@ do
 
 	local ENT = {}
 	ENT.ClassName = "npc_vj_ds_artorias"
+	ENT.AdminOnly = true
 
 	game.AddParticles("particles/ds_artorias_fx.pcf")
 	game.AddParticles("particles/mh_scream_fx.pcf")
@@ -58,7 +59,6 @@ do
 	ENT.Contact 		= "http://vrejgaming.webs.com/"
 	ENT.Purpose 		= "Let it eat you."
 	ENT.Instructions	= "Click on it to spawn it."
-	ENT.Category		= "Dark Souls"
 
 	if (CLIENT) then
 		local Name = "Artorias"
@@ -955,11 +955,18 @@ do
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
+	
 end
 
 do
 	local ENT = {}
 	ENT.ClassName = "npc_vj_ds_gwyn"
+	ENT.AdminOnly = true
 
 	game.AddParticles("particles/ds_artorias_fx.pcf")
 
@@ -1681,4 +1688,9 @@ do
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
