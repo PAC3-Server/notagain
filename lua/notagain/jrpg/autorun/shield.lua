@@ -156,6 +156,7 @@ do
 	SWEP.PhysicalDefence = 1
 
 	SWEP.ClassName = "weapon_shield_base"
+	SWEP.Category = "JRPG"
 
 	SWEP.PrintName = "shield"
 	SWEP.Spawnable = true

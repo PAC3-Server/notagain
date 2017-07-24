@@ -249,6 +249,7 @@ local SWEP = {Primary = {Automatic = true}, Secondary = {}}
 SWEP.ClassName = "weapon_magic"
 SWEP.PrintName = "magic"
 SWEP.Spawnable = true
+SWEP.Category = "JRPG"
 SWEP.RenderGroup = RENDERGROUP_TRANSLUCENT
 SWEP.WorldModel = "models/Gibs/HGIBS.mdl"
 
@@ -299,7 +300,7 @@ if CLIENT then
 					pos, ang = self.Owner:GetBonePosition(id)
 					pos = pos + ang:Forward()*2
 				end
-				
+
 				if pos and ang then
 					self:SetPos(pos)
 					self:SetAngles(ang)
