@@ -4,14 +4,13 @@ do
 	local ENT = {}
 	ENT.ClassName = "npc_vj_mass_thresher"
 
-	ENT.Base 			= "npc_vj_creature_base"
-	ENT.Type 			= "ai"
+	ENT.Base 		= "npc_vj_creature_base"
+	ENT.Type 		= "ai"
 	ENT.PrintName 		= "Thresher Maw"
-	ENT.Author 			= "DrVrej"
+	ENT.Author 		= "DrVrej"
 	ENT.Contact 		= "http://steamcommunity.com/groups/vrejgaming"
 	ENT.Purpose 		= "Spawn it and let it maul you."
-	ENT.Instructions 	= "Click on it to spawn it."
-	ENT.Category		= "Mass Effect 3"
+	ENT.AdminOnly		= true
 
 	if (CLIENT) then
 	local Name = "Thresher Maw"
@@ -156,6 +155,11 @@ do
 
 end
 	scripted_ents.Register(ENT, ENT.ClassName)
+	list.Set("NPC",ENT.ClassName,{
+		Name = ENT.ClassName,
+		Class = ENT.ClassName,
+		Category = "VJ Base",
+	})
 end
 do
 	local ENT = {}
