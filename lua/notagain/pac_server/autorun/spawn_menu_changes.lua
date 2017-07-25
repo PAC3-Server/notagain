@@ -19,7 +19,7 @@ if CLIENT then
         end
         local entities = list.GetForEdit("SpawnableEntities")
         for k,v in pairs(entities) do
-            if string(k,"sent%_vj*") then
+            if string.match(k,"sent%_vj*") then
                 entities[k].Spawnable = false
             end
         end
