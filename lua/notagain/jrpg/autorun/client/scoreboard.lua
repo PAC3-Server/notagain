@@ -195,7 +195,7 @@ local PLAYER_LINE = {
 		end
 
 		do -- name
-			local text = ent:Nick().." \tLVL. "..(jlevel and jlevel.GetStats(ent).level or 0)
+			local text = (jrpg and jrpg.GetFriendlyName(ent) or ent:Nick()).." \tLVL. "..(jlevel and jlevel.GetStats(ent).level or 0)
 			local font = "arial"
 			local size = 17
 			local weight = 800
