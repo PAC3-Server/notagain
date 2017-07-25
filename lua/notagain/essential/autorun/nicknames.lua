@@ -17,11 +17,33 @@ PLAYER.GetName = PLAYER.Nick
 
 if SERVER then
 
-    PLAYER.SetNick = function(self,nick)
-		if not nick or string.TrimLeft(nick) == "" then
+	local validname = function(name)
+		local fuckthose = {
+			["font"] = true,
+			["hsv"] = true,
+			["translate"] = true,
+			["rotate"] = true,
+			["blackhole"] = true,
+		}
+		for k,v in pairs(fuckthose) do
+			if string.match(string.lower(nick),"<"..k) then
+				return false
+			end
+		end
+		return true
+	end
+
+	PLAYER.SetNick = function(self,nick)
+		local proper,_ = string.gsub((nick or ""),"<.->","")
+		if not nick or string.TrimLeft(proper) == "" then
 			self:SetPData("Nick","")
 		else
-			self:SetPData("Nick", nick)
+			if validname(nick) then
+				self:SetPData("Nick", nick)
+			else
+				self:SetPData("Nick","")
+				nick = ""
+			end
 		end
 		self:SetNWString("Nick", nick)
 	end

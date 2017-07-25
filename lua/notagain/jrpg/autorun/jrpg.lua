@@ -4,7 +4,7 @@ function jrpg.GetFriendlyName(ent)
 	local name
 
 	if ent:IsPlayer() then
-		name = ent:Nick()
+		name = (string.gsub(ent:Nick(),"<.->",""))
 	else
 		name = ent:GetClass()
 
