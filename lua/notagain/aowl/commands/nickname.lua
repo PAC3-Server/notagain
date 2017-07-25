@@ -20,6 +20,7 @@ if SERVER then
 	local nick
 
     aowl.AddCommand("name|nick=string[ ]", function(caller, line)
+		if not IsValid(caller) or not caller.SetNick then return end
 		local cd = nextChange[caller:UserID()]
 		if cd and cd > CurTime() then
 			return false, "You're changing nicks too quickly!"
