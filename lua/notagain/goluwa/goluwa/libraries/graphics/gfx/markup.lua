@@ -700,7 +700,7 @@ do -- tags
 
 	META.tags.texture =
 	{
-		arguments = {"error", {default = 16, min = 4, max = 128}},
+		arguments = {"error", {default = 32, min = 4, max = 128}},
 
 		init = function(markup, self, path)
 			self.mat = render.CreateTextureFromPath(path)
