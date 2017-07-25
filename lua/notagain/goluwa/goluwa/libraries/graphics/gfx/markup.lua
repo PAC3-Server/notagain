@@ -709,13 +709,13 @@ do -- tags
 		get_size = function(markup, self, path, size)
 			if not self.mat or not self.mat:IsValid() then self.mat = render.CreateTextureFromPath(path) end
 			if self.mat:IsLoading() then return 16, 16 end
-			return self.mat:GetSize().x or size, self.mat:GetSize().y or size
+			return size, size
 		end,
 
 		pre_draw = function(markup, self, x,y, path, size)
 			if not self.mat or not self.mat:IsValid() then return end
 			render2d.SetTexture(self.mat)
-			render2d.DrawRect(x, y, self.mat:GetSize().x or size, self.mat:GetSize().y or size)
+			render2d.DrawRect(x, y, size, size)
 		end,
 	}
 end
