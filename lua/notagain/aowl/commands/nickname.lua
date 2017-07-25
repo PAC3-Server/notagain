@@ -1,22 +1,5 @@
 AddCSLuaFile()
 
-local PLAYER = FindMetaTable("Player")
-PLAYER.old_Nick = PLAYER.old_Nick or PLAYER.Nick
-
-PLAYER.Nick = function(self)
-	local nick = self:GetNWString("Nick") 
-	if nick and string.TrimLeft(nick) ~= "" then
-		return nick
-	end
-	return self.old_Nick(self)
-end
-
-PLAYER.old_Name = PLAYER.old_Name or PLAYER.Name
-PLAYER.old_GetName = PLAYER.old_GetName or PLAYER.GetName
-
-PLAYER.Name = PLAYER.Nick
-PLAYER.GetName = PLAYER.Nick
-
 if CLIENT then
 
 	net.Receive("aowl_nick_names", function()
@@ -33,19 +16,10 @@ if SERVER then
 
     util.AddNetworkString("aowl_nick_names")
 
-	function PLAYER:SetNick(nick)
-		if not nick or nick:Trim() == "" then
-			self:SetPData("Nick","")
-		else
-			self:SetPData("Nick", nick)
-		end
-		self:SetNWString("Nick", nick)
-	end
-
 	local nextChange = {}
 	local nick
 
-    aowl.AddCommand("name|nick=string", function(caller, line)
+    aowl.AddCommand("name|nick=string[ ]", function(caller, line)
 		local cd = nextChange[caller:UserID()]
 		if cd and cd > CurTime() then
 			return false, "You're changing nicks too quickly!"
@@ -61,9 +35,4 @@ if SERVER then
 		nextChange[caller:UserID()] = CurTime() + 2
 	end)
 
-	hook.Add("PlayerInitialSpawn", "aowl_nick_names", function(caller)
-		if caller:GetPData("Nick") and caller:GetPData("Nick"):Trim() ~= "" then
-			caller:SetNick(caller:GetPData("Nick"))
-		end
-	end)
 end
