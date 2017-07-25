@@ -283,7 +283,7 @@ hook.Add("HUDPaint", "jhud", function()
 		c.a = 255
 
 
-		prettytext.Draw(ply:Nick(), x + 210, y - offset + 7, "gabriola", 55, 0, 3, Color(230, 230, 230, 255), c)
+		prettytext.Draw((jrpg and jrpg.GetFriendlyName(ply) or ply:Nick()), x + 210, y - offset + 7, "gabriola", 55, 0, 3, Color(230, 230, 230, 255), c)
 
 		x = x + 200
 		if ply:GetNWBool("rpg") then
