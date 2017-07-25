@@ -239,7 +239,7 @@ function notagain.Autorun()
 					local lib = info.ret[1]
 
 					if lib == nil then
-						msg("error", "library " .. name .. " returns nil")
+						msg("error", "library " .. addon_name .. " returns nil")
 					else
 						notagain.loaded_libraries[addon_name] = lib
 					end
