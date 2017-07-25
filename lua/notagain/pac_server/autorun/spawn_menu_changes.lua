@@ -3,24 +3,24 @@ if CLIENT then
     local HideUselessStuff = function()
         local npcs = list.GetForEdit("NPC")
         if npcs.sent_vj_test then
-            npcs.sent_vj_test.Spawnable = false
+            npcs.sent_vj_test = nil
         end
         if npcs.npc_vj_aerialtest then
-            npcs.npc_vj_aerialtest.Spawnable = false
+            npcs.npc_vj_aerialtest = nil
         end
         if npcs.npc_tf2_ghost then
-            npcs.npc_tf2_ghost.Spawnable = false
+            npcs.npc_tf2_ghost = nil
         end
         local weapons = list.GetForEdit("Weapon")
         for k,v in pairs(weapons) do
             if string.match(k,"weapon%_vj*") then
-                weapons[k].Spawnable = false
+                weapons[k] = nil
             end
         end
         local entities = list.GetForEdit("SpawnableEntities")
         for k,v in pairs(entities) do
             if string.match(k,"sent%_vj*") then
-                entities[k].Spawnable = false
+                entities[k] = nil
             end
         end
     end
