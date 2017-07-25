@@ -2,9 +2,8 @@ if not system.IsLinux() or XTERM_LOADED or game.IsDedicated() then
 	return
 end
 
-if not pcall(require, "xterm") then
-	return
-end
+local ok, err = pcall(require, "xterm")
+if not ok then return end
 
 local white = Color and Color(255,255,255,255) or {r=255,g=255,b=255,a=255}
 
