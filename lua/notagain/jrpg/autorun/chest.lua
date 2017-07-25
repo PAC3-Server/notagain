@@ -78,7 +78,6 @@ if SERVER then
 		end
 	end
 
-	EMF.AddEnt( ENT.ClassName )
 end
 
 scripted_ents.Register(ENT, ENT.ClassName, true)
