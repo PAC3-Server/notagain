@@ -374,7 +374,7 @@ do -- view
 				name = language.GetPhrase(name)
 			end
 		else
-			name = ent:Nick()
+			name = (jrpg and jrpg.GetFriendlyName(ent) or ent:Nick())
 		end
 
 		local font_size = 60
