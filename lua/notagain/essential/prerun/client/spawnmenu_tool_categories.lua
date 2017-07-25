@@ -10,7 +10,7 @@ spawnmenu.AddToolMenuOption = function(tab,cat,class,name,cmd,config,cpanel,tbl)
     }
     if not tab or not alloweds[tab] then
         if alloweds[string.lower(tab)] then
-            tab = string.SetChar(tab,1,string.Upper(tab[1]))
+            tab = string.SetChar(tab,1,string.upper(tab[1]))
         else
             tab = "Utilities"
         end
