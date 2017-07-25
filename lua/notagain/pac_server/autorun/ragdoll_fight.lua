@@ -1953,7 +1953,7 @@ function RagdollFight.SpawnRagdoll( pl, cmd, args )
 								if self.AttackForceRagdoll and self:GetOwner() and self:GetOwner():IsValid() then
 
 									data.HitEntity.RagdollModeTime = self.AttackForceRagdoll
-									Ragdoll.FightApplyForce( data.HitEntity, self.AttackForce , self.AttackForce:Length() * 2 )
+									RagdollFight.ApplyForce( data.HitEntity, self.AttackForce , self.AttackForce:Length() * 2 )
 
 									if self.AttackForceRagdollDamage then
 										data.HitEntity.WasThrown = self.AttackForceRagdollDamage
