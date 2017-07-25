@@ -4,12 +4,13 @@ local PLAYER = FindMetaTable("Player")
 PLAYER.old_Nick = PLAYER.old_Nick or PLAYER.Nick
 
 function PLAYER:Nick()
-	local nick = self:GetNWString("Nick","")
-	return nick:Trim() == "" and self.old_Nick(self) or nick
+	local nick = self:GetNWString("Nick")
+	return (nick and nick:Trim() == "") and self:old_Nick() or nick
 end
 
-PLAYER.Name    = PLAYER.Nick
-PLAYER.GetNick = PLAYER.Nick
+PLAYER.old_Name = PLAYER.old_Name or PLAYER.Name
+PLAYER.old_GetName = PLAYER.old_GetName or PLAYER.GetName
+PLAYER.Name = PLAYER.Nick
 PLAYER.GetName = PLAYER.Nick
 
 if CLIENT then
@@ -30,7 +31,7 @@ if SERVER then
 
 	function PLAYER:SetNick(nick)
 		if not nick or nick:Trim() == "" then
-			self:RemovePData("Nick")
+			self:SetPData("Nick","")
 		else
 			self:SetPData("Nick", nick)
 		end
@@ -40,7 +41,7 @@ if SERVER then
 	local nextChange = {}
 	local nick
 
-    aowl.AddCommand("name|nick=string[404 no name found]", function(caller, line)
+    aowl.AddCommand("name|nick=string", function(caller, line)
 		local cd = nextChange[caller:UserID()]
 		if cd and cd > CurTime() then
 			return false, "You're changing nicks too quickly!"
