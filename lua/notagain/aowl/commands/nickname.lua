@@ -3,13 +3,17 @@ AddCSLuaFile()
 local PLAYER = FindMetaTable("Player")
 PLAYER.old_Nick = PLAYER.old_Nick or PLAYER.Nick
 
-function PLAYER:Nick()
-	local nick = self:GetNWString("Nick")
-	return (nick and nick:Trim() == "") and self:old_Nick() or nick
+PLAYER.Nick = function(self)
+	local nick = self:GetNWString("Nick") 
+	if nick and string.TrimLeft(nick) ~= "" then
+		return nick
+	end
+	return self.old_Nick(self)
 end
 
 PLAYER.old_Name = PLAYER.old_Name or PLAYER.Name
 PLAYER.old_GetName = PLAYER.old_GetName or PLAYER.GetName
+
 PLAYER.Name = PLAYER.Nick
 PLAYER.GetName = PLAYER.Nick
 
