@@ -26,7 +26,7 @@ if SERVER then
 			["blackhole"] = true,
 		}
 		for k,v in pairs(fuckthose) do
-			if string.match(string.lower(nick),"<"..k) then
+			if string.match(string.lower(name),"<"..k) then
 				return false
 			end
 		end
