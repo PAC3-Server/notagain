@@ -1,4 +1,4 @@
-hook.Add("OnPlayerAFK", "afk_notifications", function(ply, afk, time)
+local notify = function(ply, afk, time)
 	if ply:GetFriendStatus() == "friend" then
 		if afk then
 			chat.AddText(Color(255,127,127),"⮞ ",Color(200,200,200),ply:GetName().." is now ",Color(255,127,127),"away")
@@ -12,4 +12,8 @@ hook.Add("OnPlayerAFK", "afk_notifications", function(ply, afk, time)
 			chat.AddText(Color(127,255,127),"⮞ Welcome Back!",Color(200,200,200)," You were away for ",Color(175,175,175),string.NiceTime(time))
 		end
 	end
+end)
+
+hook.Add("InitPostEntity","afk_notifications",function()
+	hook.Add("OnPlayerAFK", "afk_notifications",notify)
 end)
