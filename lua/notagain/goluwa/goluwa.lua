@@ -65,6 +65,7 @@ env.check = function() end
 do
 	env.ffi = false
 	env.archive = false
+	env.opengl = false
 	env["table.new"] = false
 	env["table.clear"] = false
 	env["deflatelua"] = false
@@ -262,6 +263,15 @@ env.vfs.Mount("os:/data/goluwa/userdata/", "os:data/")
 env.R = env.vfs.GetAbsolutePath -- a nice global for loading resources externally from current dir
 env.crypto = env.runfile("goluwa/libraries/crypto.lua")
 
+env.commands = env.runfile("goluwa/libraries/commands.lua")
+
+concommand.Add("goluwa", function(ply, cmd, args, line) env.commands.RunString(line, false, false, true) end)
+
+env.profiler = env.runfile("goluwa/libraries/profiler.lua")
+env.P = env.profiler.ToggleTimer
+env.I = env.profiler.ToggleInstrumental
+env.S = env.profiler.ToggleStatistical
+
 do -- texture
 	local render = {}
 
@@ -297,16 +307,6 @@ do -- texture
 	env.render = render
 end
 
-do -- commands
-	local commands = {}
-
-	function commands.RunString(str)
-		LocalPlayer():ConCommand(str)
-	end
-
-	env.commands = commands
-end
-
 do
 	local window = {}
 
@@ -329,18 +329,23 @@ do
 	end
 
 	function system.GetElapsedTime()
-		return SysTime()
+		return RealTime()
 	end
 
 	function system.GetFrameTime()
 		return FrameTime()
 	end
 
+	function system.GetTime()
+		return SysTime()
+	end
+
 	function system.OpenURL(url)
 		gui.OpenURL(url)
 	end
 
-	function system.OnError()
+	function system.OnError(...)
+		print(...)
 		debug.Trace()
 	end
 
