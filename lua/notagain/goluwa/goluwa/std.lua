@@ -5,12 +5,12 @@ env.jit = table.Copy(_G.jit)
 env.newproxy = _G.newproxy
 
 do -- _G
-	function env.loadstring(str, env)
-		local var = CompileString(str, env or "loadstring", false)
+	function env.loadstring(str, chunkname)
+		local var = CompileString(str, chunkname or "loadstring", false)
 		if type(var) == "string" then
 			return nil, var, 2
 		end
-		return setfenv(var, getfenv(1))
+		return setfenv(var, env)
 	end
 
 	function env.loadfile(path)
