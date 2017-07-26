@@ -12,7 +12,7 @@ local notify = function(ply, afk, time)
 			chat.AddText(Color(127,255,127),"⮞ Welcome Back!",Color(200,200,200)," You were away for ",Color(175,175,175),string.NiceTime(time))
 		end
 	end
-end)
+end
 
 hook.Add("InitPostEntity","afk_notifications",function()
 	hook.Add("OnPlayerAFK", "afk_notifications",notify)
