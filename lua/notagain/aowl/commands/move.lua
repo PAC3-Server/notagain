@@ -302,7 +302,7 @@ aowl.AddCommand("back=entity_alter|self", function(ply, line, ent)
 	hook.Run("AowlTargetCommand", ply, "back", ent)
 end)
 
-aowl.AddCommand("bring=player_alter|entity_alter", function(ply, line, ent)
+aowl.AddCommand("bring=player_alter", function(ply, line, ent)
 	if ent:IsPlayer() then
 		if not ent:Alive() then
 			ent:Spawn()
@@ -330,6 +330,14 @@ aowl.AddCommand("bring=player_alter|entity_alter", function(ply, line, ent)
 		ent:SetAngles(ang)
 	else
 		ent:SetAngles(ang)
+	end
+
+	if ent.UnStuck then
+		timer.Create(tostring(ent)..'unstuck!',1,1,function()
+			if IsValid(ent) and IsStuck(ent) then
+				ent:UnStuck()
+			end
+		end)
 	end
 
 	aowlMsg("bring", tostring(ply) .." <- ".. tostring(ent))
