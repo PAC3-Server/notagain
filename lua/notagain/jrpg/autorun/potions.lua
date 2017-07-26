@@ -303,7 +303,7 @@ do
 
 		net.Receive("potion", function()
 			local wep = net.ReadEntity()
-			if not wep:IsValid() then return end
+			if not IsValid(wep) or not wep.Animation then return end
 
 			wep:Animation()
 		end)
