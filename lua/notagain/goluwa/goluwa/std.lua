@@ -201,6 +201,8 @@ do -- io
 			else
 				dprint("\t" .. path .. " " .. where .. " does not exist")
 			end
+
+			return false
 		end
 
 		env.fs = fs
