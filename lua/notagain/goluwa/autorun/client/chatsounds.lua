@@ -11,16 +11,16 @@ local function hookAdd(event, id, callback)
 end
 
 local function unhook()
-	for event, data in next, hooks do
-		for id, callback in next, data do
+	for event, data in pairs(hooks) do
+		for id, callback in pairs(data) do
 			hook.Remove(event, id)
 		end
 	end
 end
 
 local function rehook()
-	for event, data in next, hooks do
-		for id, callback in next, data do
+	for event, data in pairs(hooks) do
+		for id, callback in pairs(data) do
 			hook.Add(event, id, callback)
 		end
 	end
