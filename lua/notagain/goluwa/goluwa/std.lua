@@ -95,10 +95,8 @@ do -- io
 			local where = "GAME"
 
 			if path:StartWith("data/") then
-				if not read_only then
-					path = path:sub(6)
-					where = "DATA"
-				end
+				path = path:sub(6)
+				where = "DATA"
 
 				if not is_dir and not file.IsDir(path, where) then
 					if not allowed[path:sub(-4)] then
