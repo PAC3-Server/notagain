@@ -1,5 +1,38 @@
 local goluwa = requirex("goluwa")
 
+local enabled = CreateClientConVar("goluwa_chathud_enabled", "1", true, false, "Disable chatsounds")
+
+local hooks = {}
+local function hookAdd(event, id, callback)
+	hooks[event] = hooks[event] or {}
+	hooks[event][id] = callback
+	hook.Add(event, id, callback)
+end
+
+local function unhook()
+	for event, data in pairs(hooks) do
+		for id, callback in pairs(data) do
+			hook.Remove(event, id)
+		end
+	end
+end
+
+local function rehook()
+	for event, data in pairs(hooks) do
+		for id, callback in pairs(data) do
+			hook.Add(event, id, callback)
+		end
+	end
+end
+
+cvars.AddChangeCallback("goluwa_chathud_enabled", function(convar_name, value_old, value_new)
+	if value_new ~= '0' then
+		rehook()
+	else
+		unhook()
+	end
+end)
+
 chathud = chathud or {}
 
 chathud.panel = chathud.panel or NULL
@@ -75,7 +108,7 @@ function chathud.Initialize()
 		markup:Draw()
 	end
 
-	hook.Add("HUDPaint", "chathud", function()
+	hookAdd("HUDPaint", "chathud", function()
 		if chathud.panel:IsVisible() then
 			surface.DisableClipping(true)
 			goluwa.render2d.PushMatrix(chathud.panel:GetPos())
@@ -183,23 +216,18 @@ function chathud.AddText(...)
 	end
 end
 
-chathud_old_AddText = chathud_old_AddText or chat.AddText
+hookAdd("ChatHudDraw", "chathud", function(panel)
+	if not chathud.panel:IsValid() then return end
+	-- can't draw here cause PushModelMatrix behaves strange when called in panels
 
-function chat.AddText(...)
-    chathud.AddText(...)
-    chathud_old_AddText(...)
-end
+	chathud.panel:SetPos(panel:LocalToScreen(0, 0))
+	chathud.panel:SetSize(panel:GetSize())
 
-hook.Add("HUDShouldDraw", "chathud", function(name)
- 	if name == "CHudChat" then
-		return false
-	end
+	return false
 end)
 
-hook.Add("ChatText", "chathud", function(index, name, text, type)
-	if type == "none" then
-		chathud.AddText(text)
-	end
+hookAdd("ChatHudAddText", "chathud", function(...)
+	chathud.AddText(...)
 end)
 
 if LocalPlayer():IsValid() then
