@@ -3,6 +3,15 @@ local goluwa = requirex("goluwa")
 local autocomplete = goluwa.autocomplete
 local chatsounds = goluwa.chatsounds
 
+local autocomplete_font = {
+	font = "Roboto-Black.ttf",
+	size = 18,
+	weight = 600,
+	blur_size = 3,
+	background_color = Color(25,50,100,255),
+	blur_overdraw = 3,
+}
+
 local hooks = {}
 local function hookAdd(event, id, callback)
 	hooks[event] = hooks[event] or {}
@@ -68,6 +77,7 @@ do
 			if found_autocomplete and #found_autocomplete > 0 then
 				local x, y = chat.GetChatBoxPos()
 				local w, h = chat.GetChatBoxSize()
+				goluwa.gfx.SetFont(autocomplete_font)
 				autocomplete.DrawFound("chatsounds", x, y + h, found_autocomplete)
 			end
 		end)
