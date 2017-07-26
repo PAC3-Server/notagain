@@ -208,7 +208,6 @@ function chathud.AddText(...)
 		markup:AddFont(chathud.default_font)
 		markup:AddTable(args, true)
 		markup:AddTagStopper()
-		markup:AddString("\n")
 	markup:EndLifeTime()
 
 	for k,v in pairs(chathud.tags) do
@@ -228,6 +227,7 @@ end)
 
 hookAdd("ChatHudAddText", "chathud", function(...)
 	chathud.AddText(...)
+	return false
 end)
 
 if LocalPlayer():IsValid() then
