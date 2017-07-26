@@ -1,5 +1,5 @@
 local notify = function(ply, afk, time)
-	if ply:GetFriendStatus() == "friend" then
+	if IsValid(ply) and ply:GetFriendStatus() == "friend" then
 		if afk then
 			chat.AddText(Color(255,127,127),"⮞ ",Color(200,200,200),ply:GetName().." is now ",Color(255,127,127),"away")
 		else
