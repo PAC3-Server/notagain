@@ -18,7 +18,7 @@ after_failure: >-
   { "embeds": [
     { "title": "BUILD FAILED for $TRAVIS_REPO_SLUG",
       "color": 0xb30000,
-      "description": "Commit: `$TRAVIS_COMMIT`\nMessage:`$TRAVIS_COMMIT_MESSAGE`"
+      "description": "Commit: \`$TRAVIS_COMMIT\`\nMessage:\`$TRAVIS_COMMIT_MESSAGE\`"
     }
   ]
   }
