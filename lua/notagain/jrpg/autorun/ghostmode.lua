@@ -150,7 +150,7 @@ if CLIENT then
 
     hook.Add("OnPlayerChat",Tag,function(ply, txt)
         if ply:GetNWBool("rpg") and not ply:Alive() then
-            chat.AddText(Color(130, 162, 214),"[Ghost-",ply:GetName(),Color(130, 162, 214),"]",Color(255,255,255),": "..txt)
+            chat.AddText(Color(130, 162, 214),"[Ghost-",ply,Color(130, 162, 214),"]",Color(255,255,255),": "..txt)
             return true
         end
     end)
