@@ -1728,7 +1728,14 @@ function RagdollFight.SpawnRagdoll( pl, cmd, args )
 	pl.Ragdoll = ent
 	ent.IsRagdollFighter = true
 	pl.pac_owner_override = ent
-	pl:SetNoDraw(true)
+	do
+		local id = pl:EntIndex() 
+		BroadcastLua([[Entity(]]..id..[[):SetNoDraw(true)]])
+	end
+	if pl:HasGodMode() then
+		pl.rfwasgoded = true
+	end
+	pl:GodEnable()
 	ent:SetCollisionGroup( COLLISION_GROUP_WEAPON  )
 	ent:CollisionRulesChanged()
 	pl.OldJumpPower = pl:GetJumpPower()
@@ -2108,7 +2115,13 @@ function RagdollFight.RemoveRagdoll( pl )
 		RagdollFight.Ragdolls[tostring(pl.Ragdoll)] = nil
 		pl.Ragdoll:Remove()
 		pl.pac_owner_override = nil
-		pl:SetNoDraw(false)
+		do
+			local id = pl:EntIndex() 
+			BroadcastLua([[Entity(]]..id..[[):SetNoDraw(false)]])
+		end
+		if not pl.rfwasgoded then
+			pl:GodDisable()
+		end
 		pl:SetJumpPower( pl.OldJumpPower or 200 )
 		--pl:SetCollisionGroup( COLLISION_GROUP_PLAYER )
 		gamemode.Call("PlayerLoadout",pl)
