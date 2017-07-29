@@ -36,7 +36,7 @@ end
 
 local function run_func(path, ...)
 	local OLD = _G.AddCSLuaFile
-	_G.AddCSLuaFile = function(...) if not ... then OLD(path) return end return OLD(...) end
+	_G.AddCSLuaFile = function(...) if not ... then OLD(debug.getinfo(2).source:match("@.-lua/(.+)") or path) return end return OLD(...) end
 
 	local res = {pcall(...)}
 
