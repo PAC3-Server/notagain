@@ -1,5 +1,10 @@
 local utf8 = _G.utf8 or {}
 
+function utf8.midsplit(str)
+	local half = math.round(str:ulength()/2+1)
+	return str:usub(1, half-1), str:usub(half)
+end
+
 local math_floor = math.floor
 
 function utf8.byte(char, offset)
@@ -9,7 +14,7 @@ function utf8.byte(char, offset)
 
 	local byte = char:byte(offset)
 
-	if byte >= 128 then
+	if byte and byte >= 128 then
 		if byte >= 240 then
 			if #char < 4 then return -1 end
 			byte = (byte % 8) * 262144
@@ -118,7 +123,7 @@ end
 
 local function utf8replace(str, mapping)
 	local out = {}
-	for i, char in ipairs(utf8.totable(a)) do
+	for i, char in ipairs(utf8.totable(str)) do
 		table.insert(out, mapping[char] or char)
 	end
 	return table.concat(out)
