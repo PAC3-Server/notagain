@@ -4,18 +4,9 @@ function META:GetProperName()
 	if not IsValid(self) then return nil end
 	local name,_ = string.gsub(self:GetName(),"(%^%d+)","")
 	name,_ = string.gsub(name,"(<.->)","")
-	name,_ = string.gsub(name,"(%s)","")
 	name,_ = string.gsub(name,"(%(.*%))","")
 	name,_ = string.gsub(name,"(%[.*%])","")
-	return string.lower(name)
-end
-
-function META:CapitalizeName() 
-	local name = self:GetProperName()
-	name = string.Explode("",name)
-	name[1] = string.upper(name[1])
-	name = table.concat(name,"",1,#name)
-	return name 
+	return name
 end
 
 function player.FindByName(name)
