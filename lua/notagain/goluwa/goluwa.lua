@@ -132,7 +132,6 @@ function env.runfile(path, ...)
 end
 
 env.runfile("goluwa/libraries/extensions/string.lua")
-for k,v in pairs(env.string) do _G.string[k] = _G.string[k] or v end -- :(
 
 env.runfile("goluwa/libraries/extensions/globals.lua")
 env.runfile("goluwa/libraries/extensions/debug.lua")
@@ -140,6 +139,8 @@ env.runfile("goluwa/libraries/extensions/os.lua")
 env.runfile("goluwa/libraries/extensions/table.lua")
 env.runfile("goluwa/libraries/extensions/math.lua")
 env.utf8 = env.runfile("goluwa/libraries/utf8.lua")
+
+for k,v in pairs(env.string) do _G.string[k] = _G.string[k] or v end -- :(
 
 local http = table.Copy(http)
 

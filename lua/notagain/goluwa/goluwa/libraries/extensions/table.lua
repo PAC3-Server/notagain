@@ -16,6 +16,17 @@ if not table.unpack then
 	end
 end
 
+function table.slice(tbl, first, last, step)
+	local sliced = {}
+
+	for i = first or 1, last or #tbl, step or 1 do
+		sliced[#sliced+1] = tbl[i]
+	end
+
+	return sliced
+end
+
+
 function table.shuffle(a, times)
 	times = times or 1
 	local c = #a
@@ -62,6 +73,8 @@ function table.reverse(tbl)
 	for i = 1, math.floor(#tbl / 2) do
 		tbl[i], tbl[#tbl - i + 1] = tbl[#tbl - i + 1], tbl[i]
 	end
+
+	return tbl
 end
 
 -- 12:34 - <mniip> http://codepad.org/cLaX7lVn
