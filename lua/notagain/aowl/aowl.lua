@@ -272,7 +272,7 @@ do
 				ignore_entities = true
 			end
 
-			if str == "spawn" then
+			if str == "spawn" or str == "randloc" then
 				return str
 			end
 
