@@ -78,6 +78,11 @@ aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
 			ent = table.Random(ents.FindByClass("info_player_start")):GetPos()
 		else
 			local areas = MapDefine and MapDefine.Areas or {}
+
+			if next(areas) and ent == "randloc" then
+				ent = table.Random(table.GetKeys(areas))
+			end
+
 			for area, data in next, areas do
 				if string.match(string.lower(area), string.lower(ent)) then
 					local refs = data.Refs
@@ -97,6 +102,7 @@ aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
 					end
 				end
 			end
+
 			if not isvector(ent) then
 				error('MapDefine: Location not found or is invalid.')
 			end
