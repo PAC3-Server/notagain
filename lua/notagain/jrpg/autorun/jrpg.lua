@@ -68,3 +68,10 @@ function jrpg.FindHeadPos(ent)
 
 	return ent:EyePos(), ent:EyeAngles()
 end
+
+function jrpg.IsRPG(ply)
+	if not IsValid(ply) or not ply:IsPlayer() then return false
+	return ply:GetNWBool("rpg",false)
+end
+
+FindMetaTable("Player").IsRPG = jrpg.IsRPG
