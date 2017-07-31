@@ -9,6 +9,21 @@ function jlevel.GetStats(ent)
 	}
 end
 
+local PLAYER = FindMetaTable("Player")
+PLAYER.GetLevel = function(self)
+	return self:GetNWInt("jlevel_level", 0)
+end
+PLAYER.GetXP = function(self)
+	return self:GetNWInt("jlevel_xp", 0)
+end
+PLAYER.GetXPToNextLevel = function(self)
+	return self:GetNWInt("jlevel_next_level", 0)
+end
+PLAYER.GetAttributePoints = function(self)
+	return self:GetNWInt("jlevel_attribute_points", 0)
+end
+PLAYER.GetRPGStats = jlevel.GetStats
+
 if SERVER then
 
 	function jlevel.GiveXP(ent, xp)
