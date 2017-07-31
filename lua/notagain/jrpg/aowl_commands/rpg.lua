@@ -3,34 +3,8 @@ local function loadout(ply)
 	ply:Give("magic")
 end
 
-local function set_rpg(ply, b, cheat)
-	ply:SetNWBool("rpg", b)
-	if b then
-		hook.Run("OnRPGEnabled",ply,cheat)
-	else
-		hook.Run("OnRPGDisabled",ply)
-	end
-	if ply:GetNWBool("rpg") then
-		jattributes.SetTable(ply, {mana = 75, stamina = 25, health = 100})
-		jlevel.LoadStats(ply)
-		ply:SetHealth(ply:GetMaxHealth())
-		jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
-		jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
-
-		loadout(ply)
-		ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
-		ply:ChatPrint("RPG: Enabled")
-	else
-		jattributes.Disable(ply)
-		ply:SendLua([[if battlecam and battlecam.IsEnabled() then battlecam.Disable() end]])
-		ply:ChatPrint("RPG: Disabled")
-	end
-
-	ply.rpg_cheat = cheat
-end
-
 aowl.AddCommand("rpg=boolean", function(ply, _, cheat)
-	set_rpg(ply, not ply:GetNWBool("rpg",false), cheat)
+	jrpg.SetRPG(ply,not ply:GetNWBool("rpg",false), cheat)
 end)
 
 aowl.AddCommand("level=string", function(ply, what)
