@@ -199,6 +199,8 @@ jattributes.types = {
 	},
 }
 
+local PLAYER = FindMetaTable("Player")
+
 if SERVER then
 
 	function jattributes.SetElementalMultiplier(ent, type, num)
@@ -337,6 +339,9 @@ if SERVER then
 		function jattributes.SetMana(ent, num)
 			ent:SetNWFloat("jattributes_mana", num)
 		end
+		
+		PLAYER.SetMaxMana = jattributes.SetMaxMana
+		PLAYER.SetMana = jattributes.SetMana
 
 		function jattributes.DrainMana(ply, wep, amt)
 			local mana = math.max(jattributes.GetMana(ply) - amt, 0)
@@ -365,6 +370,9 @@ if SERVER then
 			end
 			ent:SetNWFloat("jattributes_stamina", num)
 		end
+		
+		PLAYER.SetMaxStamina = jattributes.SetMaxStamina
+		PLAYER.SetStamina = jattributes.SetStamina
 
 		function jattributes.CanRegenStamina(ent)
 			return not ent.jattributes_regen_stamina_timer or ent.jattributes_regen_stamina_timer < CurTime()
@@ -429,6 +437,13 @@ end
 function jattributes.HasMana(ent)
 	return ent:GetNWBool("rpg",false) and ent:GetNWFloat("jattributes_mana", -1) ~= -1
 end
+
+PLAYER.GetMana = jattributes.GetMana
+PLAYER.GetMaxMana = jattributes.GetMaxMana
+PLAYER.HasMana = jattributes.HasMana
+PLAYER.GetStamina = jattributes.GetStamina
+PLAYER.GetMaxStamina = jattributes.GetMaxStamina
+PLAYER.HasStamina = jattributes.HasStamina
 
 if SERVER then
 	for _, ent in ipairs(ents.GetAll()) do
