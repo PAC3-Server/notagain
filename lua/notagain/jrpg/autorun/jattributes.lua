@@ -411,7 +411,7 @@ function  jattributes.GetStamina(ent)
 end
 
 function jattributes.HasStamina(ent)
-	return ent:GetNWFloat("jattributes_stamina", -1) ~= -1
+	return ent:GetNWBool("rpg",false) and ent:GetNWFloat("jattributes_stamina", -1) ~= -1
 end
 
 function jattributes.GetMaxStamina(ent)
@@ -427,7 +427,7 @@ function  jattributes.GetMana(ent)
 end
 
 function jattributes.HasMana(ent)
-	return ent:GetNWFloat("jattributes_mana", -1) ~= -1
+	return ent:GetNWBool("rpg",false) and ent:GetNWFloat("jattributes_mana", -1) ~= -1
 end
 
 if SERVER then
