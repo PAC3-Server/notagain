@@ -42,6 +42,37 @@ if SERVER then
 
 		return a:IsFriend(b)
 	end
+	
+	local function loadout(ply)
+		ply:Give("weapon_shield_scanner")
+		ply:Give("magic")
+	end
+	
+	function jrpg.SetRPG(ply, b, cheat)
+		ply:SetNWBool("rpg", b)
+		if b then
+			hook.Run("OnRPGEnabled",ply,cheat)
+		else
+			hook.Run("OnRPGDisabled",ply)
+		end
+		if ply:GetNWBool("rpg") then
+			jattributes.SetTable(ply, {mana = 75, stamina = 25, health = 100})
+			jlevel.LoadStats(ply)
+			ply:SetHealth(ply:GetMaxHealth())
+			jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
+			jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
+			loadout(ply)
+			ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
+			ply:ChatPrint("RPG: Enabled")
+		else
+			jattributes.Disable(ply)
+			ply:SendLua([[if battlecam and battlecam.IsEnabled() then battlecam.Disable() end]])
+			ply:ChatPrint("RPG: Disabled")
+		end
+
+		ply.rpg_cheat = cheat
+	end
+	FindMetaTable("Player").SetRPG = jrpg.SetRPG
 end
 
 function jrpg.FindHeadPos(ent)
