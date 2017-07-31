@@ -32,17 +32,7 @@ if SERVER then
 			local rag = ent
 			timer.Simple(5, function()
 				if rag:IsValid() and isuseless(rag) then
-					local time = RealTime() + 1
-					rag:SetRenderMode(RENDERMODE_TRANSALPHA)
-
-					rag.RenderOverride = function()
-						local f = time - RealTime()
-						render.SetBlend(f)
-						rag:DrawModel()
-						if f <= 0 then
-							SafeRemoveEntityDelayed(rag, 0)
-						end
-					end
+					SafeRemoveEntity(rag)
 				end
 			end)
 		end
