@@ -1269,7 +1269,11 @@ do -- groups
 	end
 
 	function META:IsSudo()
-		return self.aowl_sudo
+		return self.aowl_sudo and true or false
+	end
+	
+	function META:SetSudo(b)
+		self.aowl_sudo = b
 	end
 
 	function META.CanAlter(a, b)
