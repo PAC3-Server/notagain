@@ -19,7 +19,8 @@ after_failure: >-
   {
   "title": "BUILD FAILED for '"$TRAVIS_REPO_SLUG"'",
   "color": 16711680,
-  "description": "Author: `'$(git log -1 --pretty=format:'%an')'`\nMessage: `'"$TRAVIS_COMMIT_MESSAGE"'`"
+  "description": "Author: `'$(git log -1 --pretty=format:'%an')'`\nMessage: `'"$TRAVIS_COMMIT_MESSAGE"'`",
+  "url": "https://travis-ci.org/PAC3-Server/notagain/builds/$$TRAVIS_JOB_ID"
   }
   ]
   }
