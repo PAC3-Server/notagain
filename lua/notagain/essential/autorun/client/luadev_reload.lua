@@ -46,13 +46,46 @@ local function callback(path, code, what)
 	end
 end
 
+local function set_timer(id, cb)
+	if cb then
+		local next_run = 0
+		hook.Add("RenderScene", "luadev_monitor_" .. id, function()
+			if system.HasFocus() then return end
+			local time = SysTime()
+			if next_run > next_run then return end
+			next_run = next_run + 0.1
+
+			cb()
+		end)
+	else
+		hook.Remove("RenderScene", "luadev_monitor_" .. id)
+	end
+end
+
 local addon_dir = notagain.addon_dir .. "lua/"
+
+local function dump_dir(dir)
+	for _, path in ipairs(find(dir .. "*")) do
+		print("\t" .. (dir .. path):match(".-lua/notagain/(.+)"))
+	end
+end
 
 concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 	if b == "1" then
-		timer.Create("luadev_monitor_notagain", 0.1, 0, function()
-			if system.HasFocus() then return end
 
+		print("monitoring these files in lua/notagain/*")
+
+		for _, dir in pairs(notagain.directories) do
+			dump_dir(addon_dir .. dir .. "/autorun/")
+			dump_dir(addon_dir .. dir .. "/autorun/client/")
+			dump_dir(addon_dir .. dir .. "/autorun/server/")
+
+			dump_dir(addon_dir .. dir .. "/libraries/")
+			dump_dir(addon_dir .. dir .. "/libraries/client/")
+			dump_dir(addon_dir .. dir .. "/libraries/server/")
+		end
+
+		set_timer("notagain", function()
 			for _, dir in pairs(notagain.directories) do
 				check_dir(addon_dir .. dir .. "/autorun/", callback, "shared")
 				check_dir(addon_dir .. dir .. "/autorun/client/", callback, "clients")
@@ -72,15 +105,17 @@ concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 			end
 		end)
 	else
+		print("stop monitoring files in lua/notagain/*")
+
 		table.Empty(find_cache)
-		timer.Remove("luadev_monitor_notagain")
+		set_timer("notagain")
 	end
 end)
 
 concommand.Add("luadev_monitor_last_send", function(ply,_,_,b)
 	local last_time
 	if b == "1" then
-		timer.Create("luadev_monitor_last_send", 0.1, 0, function()
+		set_timer("last_send", function()
 			local path, where = luadev.GetLastRunPath()
 			if path then
 				local time = file.Time(path, where)
@@ -92,6 +127,6 @@ concommand.Add("luadev_monitor_last_send", function(ply,_,_,b)
 			end
 		end)
 	else
-
+		set_timer("last_send")
 	end
 end)
