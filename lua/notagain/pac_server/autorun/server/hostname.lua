@@ -1,4 +1,4 @@
-loca testing = CreateConVar("sv_testing","0",{FCVAR_NOTIFY,FCVAR_ARCHIVE,FCVAR_REPLICATED},"testing mode")
+loc testing = CreateConVar("sv_testing","0",{FCVAR_NOTIFY,FCVAR_ARCHIVE,FCVAR_REPLICATED},"testing mode")
 local hostname = "Official PAC3 Server"
 local extra = ""
 
