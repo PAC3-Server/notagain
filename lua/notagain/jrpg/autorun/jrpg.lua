@@ -70,7 +70,7 @@ function jrpg.FindHeadPos(ent)
 end
 
 function jrpg.IsRPG(ply)
-	if not IsValid(ply) or not ply:IsPlayer() then return false
+	if not IsValid(ply) or not ply:IsPlayer() then return false end
 	return ply:GetNWBool("rpg",false)
 end
 
