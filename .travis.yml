@@ -19,7 +19,7 @@ after_failure: >-
   {
   "title": "BUILD FAILED for '"$TRAVIS_REPO_SLUG"'",
   "color": 16711680,
-  "description": "Author: `'`git log -1 --pretty=format:'%an'`'` Message: `'"$TRAVIS_COMMIT_MESSAGE"'`"
+  "description": "Author: `'`git log -1 --pretty=format:'%an'`'`\nMessage: `'"$TRAVIS_COMMIT_MESSAGE"'`\nChanged File(s): `'`git -C $TRAVIS_BUILD_DIR diff --name-only $TRAVIS_COMMIT_RANGE`'`"
   }
   ]
   }
