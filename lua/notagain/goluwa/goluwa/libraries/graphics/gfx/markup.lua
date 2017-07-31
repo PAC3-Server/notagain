@@ -173,6 +173,8 @@ function META:CallTagFunction(chunk, name, ...)
 					local ok, v = pcall(val, chunk.exp_env)
 					if ok then
 						val = v
+					else
+						wlog(v)
 					end
 				end
 
@@ -451,6 +453,28 @@ do -- tags
 		end,
 	}
 
+	META.tags.nolinebreak = {
+		arguments = {},
+		post_init = function(markup, self)
+			local ok = false
+			for i = 1, #markup.chunks do
+				local chunk = markup.chunks[i]
+
+				if ok then
+					chunk.nolinebreak = true
+				end
+
+				if chunk.type == "custom" and chunk.val.type == "nolinebreak" then
+					if not chunk.val.stop_tag then
+						ok = true
+					else
+						ok = false
+					end
+				end
+			end
+		end,
+	}
+
 	if string.anime then
 		META.tags.anime =
 		{
@@ -515,7 +539,7 @@ do -- tags
 
 			for i = self.i+1, math.huge do
 				local chunk = markup.chunks[i]
-				if not chunk or (chunk.type == "custom" and chunk.val.type == "hsv") then break end
+				if not chunk or (chunk.type == "custom" and chunk.val.type == "hsv") or chunk.type == "tag_stopper" then break end
 
 				if chunk.color then
 					chunk.color = c
@@ -538,7 +562,7 @@ do -- tags
 
 			for i = self.i+1, math.huge do
 				local chunk = markup.chunks[i]
-				if not chunk or (chunk.type == "custom" and chunk.val.type == "hsv") then break end
+				if not chunk or (chunk.type == "custom" and chunk.val.type == "hsv") or chunk.type == "tag_stopper" then break end
 
 				if chunk.color then
 					chunk.color = c
@@ -1379,6 +1403,13 @@ do -- invalidate
 		add_chunk(self, out, {type = "color", val = Color(1, 1, 1, 1), internal = true}, 1)
 		add_chunk(self, out, {type = "string", val = "", internal = true})
 
+		for _, chunk in ipairs(self.chunks) do
+			if chunk.type == "custom" and not chunk.post_init_called then
+				self:CallTagFunction(chunk, "post_init")
+				chunk.post_init_called = true
+			end
+		end
+
 		return out
 	end
 
@@ -1423,7 +1454,7 @@ do -- invalidate
 			end
 			if chunk.type == "string" and not chunk.val:find("^%s+$") then
 				if chunk.val:ulength() > 1 then
-					if chunk.w >= self.MaxWidth then
+					if not chunk.nolinebreak and chunk.w >= self.MaxWidth then
 						table.remove(chunks, i)
 						for _, new_chunk in ipairs(additional_split(self, chunk.val, self.MaxWidth)) do
 							new_chunk.old_chunk = chunk
@@ -1456,45 +1487,34 @@ do -- invalidate
 				if newline or x + chunk.w > self.MaxWidth then
 					local left_over_space = x - self.MaxWidth
 
-					y = y + chunk_height
-					x = 0
+					if not chunk.nolinebreak then
+						y = y + chunk_height
+						x = 0
 
-					chunk_height = 0
+						chunk_height = 0
 
-					if not newline then
-						if false then
+						if not newline then
 							-- go backwards and stretch all the words so
 							-- it fits the line using the leftover space
-							local x = self.MaxWidth
-							local space = left_over_space/(i-prev_line_i)
+							local x = 0
+							local space_size = get_text_size(self, " ")
+							local space = left_over_space/(prev_line_i-i)
 
-							for i2 = i-1, prev_line_i+1, -1 do
+							local div = (1/(i-prev_line_i))^0.25
+
+							for i2 = prev_line_i, i do
 								local chunk = chunks[i2]
-								x = x - chunk.w + space
-								chunk.x = math.max(x + space*2, 0)
+								local space = math.min(space, space_size*div)
+								chunk.x = math.max(x - space*2, 0)
+								x = x + chunk.w + space
 							end
 						end
 
-						-- go backwards and stretch all the words so
-						-- it fits the line using the leftover space
-						local x = 0
-						local space_size = get_text_size(self, " ")
-						local space = left_over_space/(prev_line_i-i)
-
-						local div = (1/(i-prev_line_i))^0.25
-
-						for i2 = prev_line_i, i do
-							local chunk = chunks[i2]
-							local space = math.min(space, space_size*div)
-							chunk.x = math.max(x - space*2, 0)
-							x = x + chunk.w + space
-						end
+						prev_line_i = i
 					end
-
-					prev_line_i = i
 				end
-
 			end
+
 			chunk.x = x
 			chunk.y = y
 
@@ -1573,16 +1593,6 @@ do -- invalidate
 
 		for i, chunk in ipairs(chunks) do
 
-			-- this is for expressions to be use d like line.i+time()
-			chunk.exp_env = {
-				i = chunk.real_i,
-				w = chunk.w,
-				h = chunk.h,
-				x = chunk.x,
-				y = chunk.y,
-			--	rand = math.random()
-			}
-
 			if chunk.type == "font" then
 				font = chunk.val
 			elseif chunk.type == "color" then
@@ -1632,6 +1642,16 @@ do -- invalidate
 			chunk.build_chars = build_chars
 			chunk.i = i
 			chunk.real_i = chunk.real_i or i -- expressions need this
+
+			-- this is for expressions to be use d like line.i+time()
+			chunk.exp_env = {
+				i = chunk.real_i,
+				w = chunk.w,
+				h = chunk.h,
+				x = chunk.x,
+				y = chunk.y,
+			--	rand = math.random()
+			}
 
 			if chunk.type == "custom" and not chunk.val.stop_tag then
 
@@ -2895,20 +2915,12 @@ do -- drawing
 						render2d.SetColor(c.r, c.g, c.b, c.a)
 
 						gfx.DrawText(chunk.val, chunk.x, chunk.y, max_w)
-					elseif chunk.type == "tag_stopper" then
-						for _, chunks in pairs(self.started_tags) do
-							for i = #chunks, 1, -1 do
-								local chunk = chunks[i]
-								self:CallTagFunction(chunk, "post_draw", chunk.x, chunk.y)
-								chunks[i] = nil
-							end
-						end
 					elseif chunk.type == "custom" then
 
 						-- init
-						if not chunk.init_called and not chunk.val.stop_tag then
-							self:CallTagFunction(chunk, "init")
-							chunk.init_called = true
+						if not chunk.draw_init_called and not chunk.val.stop_tag then
+							self:CallTagFunction(chunk, "draw_init")
+							chunk.draw_init_called = true
 						end
 
 						-- we need to make sure post_draw is called on tags to prevent
@@ -2962,6 +2974,18 @@ do -- drawing
 					if chunk.type == "end_fade" then
 						render2d.SetAlphaMultiplier(1)
 						start_remove = false
+					end
+
+					if started_tags then
+						if chunk.type == "tag_stopper" then
+							for _, chunks in pairs(self.started_tags) do
+								for _, chunk in ipairs(chunks) do
+									self:CallTagFunction(chunk, "post_draw", chunk.x, chunk.y)
+								end
+							end
+							table.clear(self.started_tags)
+							started_tags = false
+						end
 					end
 
 					chunk.culled = false
