@@ -219,7 +219,7 @@ hookAdd("ChatHudDraw", "chathud", function(panel)
 	if not chathud.panel:IsValid() then return end
 	-- can't draw here cause PushModelMatrix behaves strange when called in panels
 
-	chathud.panel:SetPos(panel:LocalToScreen(0, 0))
+	chathud.panel:SetPos(panel:LocalToScreen(0, -chathud.markup.height + panel:GetTall()/2))
 	chathud.panel:SetSize(panel:GetSize())
 
 	return false
