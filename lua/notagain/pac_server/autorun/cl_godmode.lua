@@ -4,7 +4,7 @@ local help = [[(o)ff = disable, (a)ll = godmode, (w)orld = no world damage, (e)n
 
  -- Separate using any symbol you'd like! ( , | & * + % ), they should all work!
  -- You may combine variables for diffrent results for example `world,enemy`, means god against world damage, and non-friend damage.
- -- Note, that `off` disables everything, and `all` enables full godmode. (These work as both 0 and 1 as well.)]]
+ -- Note, that `off` disables everything, and `all` enables full godmode. (Both 0 and 1 work as well.)]]
 
 if CLIENT then
 	CreateClientConVar("cl_godmode", "1", true, true, help)
