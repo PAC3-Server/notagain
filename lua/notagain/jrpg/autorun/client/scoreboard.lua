@@ -362,10 +362,6 @@ local scoreboard = {
 
 vgui.Register("Scoreboard",scoreboard,"DFrame")
 
-local sc = vgui.Create("Scoreboard")
-_G.SCOREBOARD = sc
-sc:Hide()
-
 local cv_scoreboard = CreateConVar("rpg_scoreboard","1",FCVAR_ARCHIVE,"Enable or disable the rpg scoreboard")
 local cv_scoreboard_mouse = CreateConVar("rpg_scoreboard_mouse_on_open","1",FCVAR_ARCHIVE,"Enables cursor on scoreboard opening or not")
 cvars.AddChangeCallback("rpg_scoreboard",function(name,old,new)
@@ -376,7 +372,11 @@ end)
 
 hook.Add("ScoreboardShow","rpg_scoreboard",function()
 	if cv_scoreboard:GetBool() then
-		sc:Show()
+		if not IsValid(_G.SCOREBOARD) then
+			local sc = vgui.Create("Scoreboard")
+			_G.SCOREBOARD = sc
+		end
+		_G.SCOREBOARD:Show()
 		if cv_scoreboard_mouse:GetBool() then
 			gui.EnableScreenClicker(true)
 		end
@@ -386,7 +386,7 @@ end)
 
 hook.Add("ScoreboardHide","rpg_scoreboard",function()
 	if cv_scoreboard:GetBool() then
-		sc:Hide()
+		_G.SCOREBOARD:Hide()
 		CloseDermaMenus()
 		gui.EnableScreenClicker(false)
 	end
