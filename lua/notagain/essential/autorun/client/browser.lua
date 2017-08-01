@@ -106,3 +106,12 @@ gui.OpenURL = function(url)
     b:MakePopup()
     b:OpenURL(url or "www.google.com")
 end
+
+gui.ShowProfile = function(ply)
+    if not IsValid(ply) then return end
+    gui.OpenURL("https://steamcommunity.com/profiles/"..ply:SteamID64())
+end
+
+local PLAYER = FindMetaTable("Player")
+PLAYER.old_ShowProfile = PLAYER.old_ShowProfile or PLAYER.ShowProfile
+PLAYER.ShowProfile = gui.ShowProfile
