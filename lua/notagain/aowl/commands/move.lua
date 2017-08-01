@@ -79,7 +79,7 @@ aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
 		else
 			local areas = MapDefine and MapDefine.Areas or {}
 
-			if next(areas) and ent == "randloc" then
+			if next(areas) and ( ent == "randloc" or ent == "somewhere" ) then
 				ent = table.Random(table.GetKeys(areas))
 			end
 
