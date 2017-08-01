@@ -1,6 +1,7 @@
 -- Original cl_godmode: https://github.com/PAC3-Server/notagain/commit/8b141b0760c620045593701f89869f289b985e0b
 
 local help = [[(o)ff = disable, (a)ll = godmode, (w)orld = no world damage, (e)nemy = no non-friend damage, (f)riend = no friend damage, (n)pc = no npc damage, (s)elf = no self damage
+ -- Separate using any symbol you'd like! ( , | & * + % ), they should all work!
  -- You may combine variables for diffrent results for example `world,enemy`, means god against world damage, and non-friend damage.
  -- Note, that `off` disables everything, and `all` enables full godmode. (These work as both 0 and 1 as well.)]]
 
