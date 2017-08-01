@@ -99,12 +99,18 @@ local browser = {
 
 vgui.Register("DBrowser", browser, "DFrame")
 
+local cv = CreateConVar("custom_browser","1",FCVAR_ARCHIVE,"use the custom ingame browser or the steam browser")
+
 gui.old_OpenURL = gui.old_OpenURL or gui.OpenURL
 
 gui.OpenURL = function(url)
-    local b = vgui.Create("DBrowser")
-    b:MakePopup()
-    b:OpenURL(url or "www.google.com")
+    if cv:GetBool() then
+        local b = vgui.Create("DBrowser")
+        b:MakePopup()
+        b:OpenURL(url or "www.google.com")
+    else
+        gui.old_OpenURL(url or "www.google.com")
+    end
 end
 
 gui.ShowProfile = function(ply)
