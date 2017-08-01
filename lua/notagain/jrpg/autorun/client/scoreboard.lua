@@ -2,7 +2,10 @@ if _G.SCOREBOARD and IsValid(_G.SCOREBOARD) then
 	_G.SCOREBOARD:Remove()
 end
 
-surface.CreateFont("scoreboard_title_b",{
+--micro opti?
+local Surface = _G.surface
+
+Surface.CreateFont("scoreboard_title_b",{
 	font = "DermaDefaultBold",
 	size = 30,
 	outline = true,
@@ -10,7 +13,7 @@ surface.CreateFont("scoreboard_title_b",{
 	weight = 700,
 })
 
-surface.CreateFont("scoreboard_title_m",{
+Surface.CreateFont("scoreboard_title_m",{
 	font = "DermaDefaultBold",
 	size = 20,
 	outline = true,
@@ -18,7 +21,7 @@ surface.CreateFont("scoreboard_title_m",{
 	weight = 700,
 })
 
-surface.CreateFont("scoreboard_desc",{
+Surface.CreateFont("scoreboard_desc",{
 	font = "DermaDefaultBold",
 	size = 15,
 	outline = true,
@@ -26,7 +29,7 @@ surface.CreateFont("scoreboard_desc",{
 	weight = 700,
 })
 
-surface.CreateFont("scoreboard_line",{
+Surface.CreateFont("scoreboard_line",{
 	font = "Roboto",
 	size = 18,
 	additive = false,
@@ -39,8 +42,8 @@ local ScrH = _G.ScrH()
 local selected_player = LocalPlayer()
 local ply_lines = {}
 
-local gr_dw_id = surface.GetTextureID("gui/gradient_down")
-local gr_up_id = surface.GetTextureID("gui/gradient_up")
+local gr_dw_id = Surface.GetTextureID("gui/gradient_down")
+local gr_up_id = Surface.GetTextureID("gui/gradient_up")
 --models/props_combine/portalball001_sheet maybe for selected line?
 
 local text_color = Color(200,200,200,255)
@@ -57,7 +60,7 @@ local colorstring = function(str,x,y)
 	local index = 1
 	local x,y = (x or 0),(y or 0)
 	for tag,values in string.gmatch(str,pattern) do
-		surface.DrawText(parts[index])
+		Surface.DrawText(parts[index])
 		index = index + 1
 		if tag == "color" then -- maybe more tags to support but heh
 			local r,g,b
@@ -68,12 +71,12 @@ local colorstring = function(str,x,y)
 				return ""
 			end)
 			if r and g and b then
-				surface.SetTextColor(r,g,b,255)
+				Surface.SetTextColor(r,g,b,255)
 			end
 		end
 	end
-	surface.DrawText(parts[#parts])
-	surface.SetTextColor(255,255,255)
+	Surface.DrawText(parts[#parts])
+	Surface.SetTextColor(255,255,255)
 end
 
 local player_line = {
@@ -138,9 +141,9 @@ local player_line = {
 				if pac then
 					local SubPac,Image = self.Menu:AddSubMenu("PAC3")
 					Image.PaintOver = function(self,w,h) -- little bit hacky but cant resize images with setimage
-						surface.SetMaterial(pacicon)
-						surface.SetDrawColor(255,255,255,255)
-						surface.DrawTexturedRect(2,1,20,20)
+						Surface.SetMaterial(pacicon)
+						Surface.SetDrawColor(255,255,255,255)
+						Surface.DrawTexturedRect(2,1,20,20)
 					end
 
 					SubPac:AddOption(parent.Player.pac_ignored and "Unignore" or "Ignore",function() if parent.Player.pac_ignored then pac.UnIgnoreEntity(parent.Player) else pac.IgnoreEntity(parent.Player) end end):SetImage(parent.Player.pac_ignored and "icon16/accept.png" or "icon16/cancel.png")
@@ -167,45 +170,45 @@ local player_line = {
 
 		self.btn.Paint = function(self,w,h)
 			if not IsValid(parent.Player) then return end
-			surface.SetTexture(gr_up_id)
-			surface.SetDrawColor(0,0,0,255)
-			surface.DrawTexturedRect(0,0,w,h)
+			Surface.SetTexture(gr_up_id)
+			Surface.SetDrawColor(0,0,0,255)
+			Surface.DrawTexturedRect(0,0,w,h)
 			if self:IsHovered() then
-				surface.SetDrawColor(127,255,127)
+				Surface.SetDrawColor(127,255,127)
 			elseif not parent.Player:Alive() then
-				surface.SetDrawColor(255,127,127)
+				Surface.SetDrawColor(255,127,127)
 			else
-				surface.SetDrawColor(parent.Color)
+				Surface.SetDrawColor(parent.Color)
 			end
-			surface.DrawLine(0,0,w,0)
-			--surface.DrawOutlinedRect(0,0,w,h)
+			Surface.DrawLine(0,0,w,0)
+			--Surface.DrawOutlinedRect(0,0,w,h)
 			--draw.NoTexture()
-			surface.DrawPoly({
+			Surface.DrawPoly({
 				{ x = 0,      y = 0 },
 				{ x = w*2/3,  y = 0 },
 				{ x = w*1.9/3,y = h },
 				{ x = 0,      y = h },
 			})
 
-			surface.SetFont("scoreboard_line")
-			surface.SetTextPos(w/scale_coef,5)
+			Surface.SetFont("scoreboard_line")
+			Surface.SetTextPos(w/scale_coef,5)
 			colorstring(parent.Player:Nick())
 
-			surface.SetTextPos(w*3/scale_coef,5)
-			surface.DrawText(jlevel and jlevel.GetStats(parent.Player).level or 0)
+			Surface.SetTextPos(w*3/scale_coef,5)
+			Surface.DrawText(jlevel and jlevel.GetStats(parent.Player).level or 0)
 
 		 	local formattedtime = parent.Player:GetNiceTotalTime() or {h = 0,m = 0,s = 0}
             local time = formattedtime.h >= 1 and formattedtime.h or formattedtime.m
             local unit = formattedtime.h >= 1 and "h" or "min"
-			surface.SetTextPos(w-w*2/scale_coef,5)
-			surface.DrawText(time..unit)
+			Surface.SetTextPos(w-w*2/scale_coef,5)
+			Surface.DrawText(time..unit)
 
-			surface.SetTextPos(w-w/scale_coef,5)
-			surface.DrawText(parent.Player:Ping())
+			Surface.SetTextPos(w-w/scale_coef,5)
+			Surface.DrawText(parent.Player:Ping())
 
 			if parent.Selected then
-			surface.SetTextPos(1.75,5)
-				surface.DrawText("⮞")
+			Surface.SetTextPos(1.75,5)
+				Surface.DrawText("⮞")
 			end
 		end
 	end,
@@ -248,16 +251,16 @@ local scoreboard = {
 		title:SetTall(50)
 		title:DockMargin(100,-30,100,10)
 		title.Paint = function(self,w,h)
-			surface.SetDrawColor(0,0,0,0)
-			surface.DrawRect(0,0,w,h)
-			surface.SetDrawColor(text_color)
-			surface.DrawLine(0,h-5,w,h-5)
-			surface.SetFont("scoreboard_title_b")
+			Surface.SetDrawColor(0,0,0,0)
+			Surface.DrawRect(0,0,w,h)
+			Surface.SetDrawColor(text_color)
+			Surface.DrawLine(0,h-5,w,h-5)
+			Surface.SetFont("scoreboard_title_b")
 			local hostname = string.gsub(GetHostName(),"Official%sPAC3%sServer%s%-%s","")
-			local x,y = surface.GetTextSize(hostname)
-			surface.SetTextPos(w/2-x/2,h/2-y/2)
-			surface.SetTextColor(text_color)
-			surface.DrawText(hostname)
+			local x,y = Surface.GetTextSize(hostname)
+			Surface.SetTextPos(w/2-x/2,h/2-y/2)
+			Surface.SetTextColor(text_color)
+			Surface.DrawText(hostname)
 		end
 
 		-- players
@@ -266,33 +269,33 @@ local scoreboard = {
 		dplayers:SetPos(20,60)
 		dplayers:SetSize(ply_scale,50)
 		dplayers.Paint = function(self,w,h)
-			surface.SetTextColor(text_color)
+			Surface.SetTextColor(text_color)
 
-			surface.SetFont("scoreboard_title_m")
-			surface.SetTextPos(0,0)
-			surface.DrawText("Players - "..player.GetCount())
-			surface.SetDrawColor(text_color)
-			surface.DrawLine(0,19,w*2/scale_coef,19)
+			Surface.SetFont("scoreboard_title_m")
+			Surface.SetTextPos(0,0)
+			Surface.DrawText("Players - "..player.GetCount())
+			Surface.SetDrawColor(text_color)
+			Surface.DrawLine(0,19,w*2/scale_coef,19)
 
-			surface.SetTexture(gr_dw_id)
-			surface.SetDrawColor(0,0,0,255)
-			surface.DrawTexturedRect(0,30,w,20)
-			surface.SetDrawColor(100,100,100,200)
-			surface.DrawOutlinedRect(0,30,w,20)
+			Surface.SetTexture(gr_dw_id)
+			Surface.SetDrawColor(0,0,0,255)
+			Surface.DrawTexturedRect(0,30,w,20)
+			Surface.SetDrawColor(100,100,100,200)
+			Surface.DrawOutlinedRect(0,30,w,20)
 
-			surface.SetFont("scoreboard_desc")
+			Surface.SetFont("scoreboard_desc")
 
-			surface.SetTextPos(w/scale_coef,32)
-			surface.DrawText("Name")
+			Surface.SetTextPos(w/scale_coef,32)
+			Surface.DrawText("Name")
 
-			surface.SetTextPos(w-w*2/scale_coef,32)
-			surface.DrawText("Playtime")
+			Surface.SetTextPos(w-w*2/scale_coef,32)
+			Surface.DrawText("Playtime")
 
-			surface.SetTextPos(w*3/scale_coef,32)
-			surface.DrawText(".LVL")
+			Surface.SetTextPos(w*3/scale_coef,32)
+			Surface.DrawText(".LVL")
 
-			surface.SetTextPos(w-w/scale_coef,32)
-			surface.DrawText("Ping")
+			Surface.SetTextPos(w-w/scale_coef,32)
+			Surface.DrawText("Ping")
 		end
 
 		local players = self:Add("DScrollPanel")
@@ -312,8 +315,8 @@ local scoreboard = {
 			end
 		end
 		--[[players.Paint = function(self,w,h)
-			surface.SetDrawColor(100,100,100,200)
-			surface.DrawOutlinedRect(0,0,w,h)
+			Surface.SetDrawColor(100,100,100,200)
+			Surface.DrawOutlinedRect(0,0,w,h)
 		end]]--
 
 		--selected players jrpg infos
@@ -322,13 +325,13 @@ local scoreboard = {
 		dinfos:SetPos(dplayers:GetWide()+40,60)
 		dinfos:SetSize(info_scale-40,50)
 		dinfos.Paint = function(self,w,h)
-			surface.SetTextColor(text_color)
+			Surface.SetTextColor(text_color)
 
-			surface.SetFont("scoreboard_title_m")
-			surface.SetTextPos(0,0)
-			surface.DrawText("JRPG Infos")
-			surface.SetDrawColor(text_color)
-			surface.DrawLine(0,19,w*4/scale_coef,19)
+			Surface.SetFont("scoreboard_title_m")
+			Surface.SetTextPos(0,0)
+			Surface.DrawText("JRPG Infos")
+			Surface.SetDrawColor(text_color)
+			Surface.DrawLine(0,19,w*4/scale_coef,19)
 		end
 
 		local infos = self:Add("DPanel")
@@ -337,11 +340,11 @@ local scoreboard = {
 		local ix,iy = infos:LocalToScreen(dplayers:GetWide()+40,ScrH/2-self:GetTall()/2+90)
 		infos.Paint = function(self,w,h)
 			if not IsValid(selected_player) then return end
-			surface.SetTexture(gr_up_id)
-			surface.SetDrawColor(30,30,30,200)
-			surface.DrawTexturedRect(0,0,w/3,h)
-			surface.SetDrawColor(100,100,100,200)
-			surface.DrawOutlinedRect(0,0,w/3,h)
+			Surface.SetTexture(gr_up_id)
+			Surface.SetDrawColor(30,30,30,200)
+			Surface.DrawTexturedRect(0,0,w/3,h)
+			Surface.SetDrawColor(100,100,100,200)
+			Surface.DrawOutlinedRect(0,0,w/3,h)
 			if pac then
 				pac.DrawEntity2D(selected_player,ix,iy,w/3,h,nil,nil,40)
 			end
@@ -354,8 +357,8 @@ local scoreboard = {
 	end,
 
 	Paint = function(self,w,h)
-		surface.SetDrawColor(0,0,0,173)
-		surface.DrawRect(0,0,w,h)
+		Surface.SetDrawColor(0,0,0,173)
+		Surface.DrawRect(0,0,w,h)
 		Derma_DrawBackgroundBlur(self,0)
 	end,
 }
@@ -365,8 +368,8 @@ vgui.Register("Scoreboard",scoreboard,"DFrame")
 local cv_scoreboard = CreateConVar("rpg_scoreboard","1",FCVAR_ARCHIVE,"Enable or disable the rpg scoreboard")
 local cv_scoreboard_mouse = CreateConVar("rpg_scoreboard_mouse_on_open","1",FCVAR_ARCHIVE,"Enables cursor on scoreboard opening or not")
 cvars.AddChangeCallback("rpg_scoreboard",function(name,old,new)
-	if old ~= "0" and sc:IsVisible() then
-		sc:Hide()
+	if old ~= "0" and IsValid(_G.SCOREBOARD) then
+		_G.SCOREBOARD:Remove()
 	end
 end)
 
@@ -387,7 +390,7 @@ hook.Add("ScoreboardShow","rpg_scoreboard",function()
 end)
 
 hook.Add("ScoreboardHide","rpg_scoreboard",function()
-	if cv_scoreboard:GetBool() then
+	if cv_scoreboard:GetBool() and IsValid(_G.SCOREBOARD) then
 		_G.SCOREBOARD:Hide()
 		CloseDermaMenus()
 		gui.EnableScreenClicker(false)
@@ -407,9 +410,11 @@ hook.Add("PreRender", "rpg_scoreboard", function()
 		ScrH = _G.ScrH()
 		if _G.SCOREBOARD and IsValid(_G.SCOREBOARD) then
 			_G.SCOREBOARD:Remove()
-			local board = vgui.Create("Scoreboard")
-			_G.SCOREBOARD = board
-			board:Hide()
+			selected_player = LocalPlayer()
+			ply_lines = {}
+			local sc = vgui.Create("Scoreboard")
+			_G.SCOREBOARD = sc
+			sc:Hide()
 		end
 	end
 end)
