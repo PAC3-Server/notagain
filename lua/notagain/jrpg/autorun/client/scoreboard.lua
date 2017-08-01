@@ -373,6 +373,8 @@ end)
 hook.Add("ScoreboardShow","rpg_scoreboard",function()
 	if cv_scoreboard:GetBool() then
 		if not IsValid(_G.SCOREBOARD) then
+			selected_player = LocalPlayer()
+			ply_lines = {}
 			local sc = vgui.Create("Scoreboard")
 			_G.SCOREBOARD = sc
 		end
@@ -407,7 +409,6 @@ hook.Add("PreRender", "rpg_scoreboard", function()
 			_G.SCOREBOARD:Remove()
 			local board = vgui.Create("Scoreboard")
 			_G.SCOREBOARD = board
-			board:MakePopup()
 			board:Hide()
 		end
 	end
