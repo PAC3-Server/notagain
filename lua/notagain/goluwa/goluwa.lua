@@ -538,6 +538,8 @@ end
 env.resource = env.runfile("goluwa/libraries/network/resource.lua")
 
 do
+	local use_webaudio = CreateClientConVar("goluwa_use_webaudio", "0")
+
 	local audio = {}
 
 	audio.player_object = NULL
@@ -555,96 +557,127 @@ do
 			env.resource.Download(path, function(path)
 				path = env.GoluwaToGmodPath(path)
 
-				sound.PlayFile("../" .. path, "noplay noblock 3d", function(snd_, _, err)
-					if not IsValid(snd_) then
-						if err == "BASS_ERROR_EMPTY" or err == "BASS_ERROR_UNKNOWN" then
-							sound.PlayFile("../" .. path, "noplay noblock", function(snd_, _, err)
-								if not IsValid(snd_) then
-									print("audio.CreateSource(\"" .. url .. "\"): " .. err)
-									print(path)
+				if use_webaudio:GetBool() then
+					local webaudio = requirex("webaudio")
+
+					if not webaudio.init then
+						webaudio.Initialize()
+						webaudio.init = true
+					end
+
+					local stream = webaudio.CreateStream("../" .. path)
+					stream:Set3D(true)
+					stream:SetSourceEntity(ply)
+
+					stream.OnLoad = function()
+						snd = stream
+
+						if self.play_me == true then
+							self:Play()
+						elseif self.play_me == false then
+							self:Stop()
+						end
+
+						if self.pitch_me then
+							self:SetPlaybackSpeed(self.pitch_me)
+						end
+
+						if self.volume_me then
+							self:SetVolume(self.volume_me)
+						end
+					end
+				else
+					sound.PlayFile("../" .. path, "noplay noblock 3d", function(snd_, _, err)
+						if not IsValid(snd_) then
+							if err == "BASS_ERROR_EMPTY" or err == "BASS_ERROR_UNKNOWN" then
+								sound.PlayFile("../" .. path, "noplay noblock", function(snd_, _, err)
+									if not IsValid(snd_) then
+										print("audio.CreateSource(\"" .. url .. "\"): " .. err)
+										print(path)
+										return
+									end
+									snd = snd_
+									dbg_str = tostring(snd)
+
+									if self.play_me == true then
+										self:Play()
+									elseif self.play_me == false then
+										self:Stop()
+									end
+
+									if self.pitch_me then
+										self:SetPitch(self.pitch_me)
+									end
+
+									if self.volume_me then
+										self:SetPitch(self.volume_me)
+									end
+
+									if ply:IsValid() then
+										local id = ply:UniqueID() .. "_goluwa_audio_createsource_" .. tostring(self)
+
+										hook.Add("RenderScene", id, function()
+
+											if not ply:IsValid() or not snd:IsValid() then
+												hook.Remove("RenderScene", id)
+												return
+											end
+
+											snd:SetPos(ply:EyePos(), ply:GetAimVector())
+
+											local dist = ply:EyePos():Distance(LocalPlayer():EyePos())
+
+											local f = math.Clamp(1 - dist / 500, 0, 1) ^ 1.5
+
+											if system.HasFocus() then
+												snd:SetVolume((self.gain or 1) * f)
+											else
+												snd:SetVolume(0)
+											end
+										end)
+									end
+								end)
+							else
+								print("audio.CreateSource(\"" .. url .. "\"): " .. err)
+								print(path)
+							end
+							return
+						end
+
+						snd = snd_
+						dbg_str = tostring(snd)
+
+						if self.play_me == true then
+							self:Play()
+						elseif self.play_me == false then
+							self:Stop()
+						end
+
+						if self.pitch_me then
+							self:SetPitch(self.pitch_me)
+						end
+
+						if self.volume_me then
+							self:SetPitch(self.volume_me)
+						end
+
+						if ply:IsValid() then
+							local id = ply:UniqueID() .. "_goluwa_audio_createsource_" .. tostring(self)
+
+							hook.Add("RenderScene", id, function()
+
+								if not ply:IsValid() or not snd:IsValid() then
+									hook.Remove("RenderScene", id)
 									return
 								end
-								snd = snd_
-								dbg_str = tostring(snd)
 
-								if self.play_me == true then
-									self:Play()
-								elseif self.play_me == false then
-									self:Stop()
-								end
+								snd:SetPos(ply:EyePos(), ply:GetAimVector())
 
-								if self.pitch_me then
-									self:SetPitch(self.pitch_me)
-								end
-
-								if self.volume_me then
-									self:SetPitch(self.volume_me)
-								end
-
-								if ply:IsValid() then
-									local id = ply:UniqueID() .. "_goluwa_audio_createsource_" .. tostring(self)
-
-									hook.Add("RenderScene", id, function()
-
-										if not ply:IsValid() or not snd:IsValid() then
-											hook.Remove("RenderScene", id)
-											return
-										end
-
-										snd:SetPos(ply:EyePos(), ply:GetAimVector())
-
-										local dist = ply:EyePos():Distance(LocalPlayer():EyePos())
-
-										local f = math.Clamp(1 - dist / 500, 0, 1) ^ 1.5
-
-										if system.HasFocus() then
-											snd:SetVolume((self.gain or 1) * f)
-										else
-											snd:SetVolume(0)
-										end
-									end)
-								end
+								snd:SetVolume(system.HasFocus() and 1 or 0)
 							end)
-						else
-							print("audio.CreateSource(\"" .. url .. "\"): " .. err)
-							print(path)
 						end
-						return
-					end
-
-					snd = snd_
-					dbg_str = tostring(snd)
-
-					if self.play_me == true then
-						self:Play()
-					elseif self.play_me == false then
-						self:Stop()
-					end
-
-					if self.pitch_me then
-						self:SetPitch(self.pitch_me)
-					end
-
-					if self.volume_me then
-						self:SetPitch(self.volume_me)
-					end
-
-					if ply:IsValid() then
-						local id = ply:UniqueID() .. "_goluwa_audio_createsource_" .. tostring(self)
-
-						hook.Add("RenderScene", id, function()
-
-							if not ply:IsValid() or not snd:IsValid() then
-								hook.Remove("RenderScene", id)
-								return
-							end
-
-							snd:SetPos(ply:EyePos(), ply:GetAimVector())
-
-							snd:SetVolume(system.HasFocus() and 1 or 0)
-						end)
-					end
-				end)
+					end)
+				end
 			end)
 
 			function self:IsReady()
