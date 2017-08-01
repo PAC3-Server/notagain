@@ -1,247 +1,115 @@
-local dmgvar = CreateClientConVar("cl_godmode", "3", true, true, "0 = off, 1 = on, 2 = world damage, 3 = friend damage + world damage")
+-- Original cl_godmode: https://github.com/PAC3-Server/notagain/commit/8b141b0760c620045593701f89869f289b985e0b
+
+local help = [[(o)ff = disable, (a)ll = godmode, (w)orld = no world damage, (e)nemy = no non-friend damage, (f)riend = no friend damage, (n)pc = no npc damage, (s)elf = no self damage
+ -- You may combine variables for diffrent results for example `world,enemy`, means god against world damage, and non-friend damage.
+ -- Note, that `off` disables everything, and `all` enables full godmode. (These work as both 0 and 1 as well.)]]
 
 if CLIENT then
-	local victim = NULL
-
-	timer.Create("cl_godmode", 0.1, 0, function()
-		local ply = LocalPlayer()
-		if ply:IsValid() and ply:GetEyeTrace() then
-			victim = ply:GetEyeTrace().Entity -- todo: fatter trace?
-		end
-	end)
-
-	local last_play = 0
-	local mat = CreateMaterial("cl_dmg_mode_block", "UnlitGeneric", {
-		["$BaseTexture"] = "vgui/cursors/no",
-		["$VertexColor"] = 1,
-		["$VertexAlpha"] = 1,
-	})
-
-
-	hook.Add("PostDrawHUD", "cl_godmode", function()
-		if last_play > RealTime() then
-			surface.SetDrawColor(255,0,0,200 + math.sin(RealTime()*10)*50)
-			surface.SetMaterial(mat)
-			surface.DrawTexturedRect(ScrW()/2 - 32, ScrH()/2 - 32, 64, 64)
-		end
-	end)
-
-	hook.Add("CreateMove", "cl_godmode", function(cmd)
-		if not victim:IsPlayer() or victim:GetNWBool("cl_godmode", 1) == false then return end
-
-		local attacker = LocalPlayer()
-		local wep = attacker:GetActiveWeapon()
-
-		if wep:GetNWBool("cl_godmode_lethal") then
-			if cmd:KeyDown(IN_ATTACK) or cmd:KeyDown(IN_ATTACK2) then
-				local buttons = cmd:GetButtons()
-				if cmd:KeyDown(IN_ATTACK) then
-					buttons = bit.band(buttons, bit.bnot(IN_ATTACK))
-				end
-				if cmd:KeyDown(IN_ATTACK2) then
-					buttons = bit.band(buttons, bit.bnot(IN_ATTACK2))
-				end
-				cmd:SetButtons(buttons)
-				if last_play < RealTime() then
-					surface.PlaySound("buttons/button11.wav")
-					last_play = RealTime() + 0.5
-
-					net.Start("cl_godmode_ask")
-					net.WriteEntity(victim)
-					net.SendToServer()
-				end
-				return true
-			end
-		end
-	end)
-
-	net.Receive("cl_godmode_clear_decals", function()
-		local ent = net.ReadEntity()
-		if ent:IsValid() then
-			ent:RemoveAllDecals()
-		end
-	end)
+	CreateClientConVar("cl_godmode", "1", true, true, help)
+	CreateClientConVar("cl_godmode_reflect", "1", true, true, help)
 end
 
-hook.Add("PlayerTraceAttack", "cl_godmode", function(victim, dmginfo)
-	if victim:GetNWBool("cl_godmode", 1) == true  then
-		return false
-	end
-end)
-
 if SERVER then
-	util.AddNetworkString("cl_godmode_ask")
-	util.AddNetworkString("cl_godmode_clear_decals")
-
-	net.Receive("cl_godmode_ask", function(len, attacker)
-		local victim = net.ReadEntity()
-		if victim:IsValid() and attacker:GetEyeTrace().Entity == victim then
-			attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
-			attacker.cl_dmg_mode_want_attack[victim] = true
-
-			if victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
-				victim:SetNWBool("cl_godmode", false)
-			end
-			local mode = victim:GetInfoNum("cl_godmode", 1)
-
-			victim:SetNWBool("cl_godmode", mode == 0)
-		end
-	end)
-
-	timer.Simple(0.1, function()
+	timer.Simple(0.3, function()
 		RunConsoleCommand("sbox_godmode", "0")
 	end)
 
-	hook.Add("PlayerSpawn", "cl_godmode", function(ply)
-		ply.cl_dmg_mode_want_attack = nil
+	local function IsPlayer(ent)
+		return IsValid(ent) and ent:GetClass() == "player" or false
+	end
+
+	local function ValidString(v)
+		return string.Trim(v) ~= "" and v or false
+	end
+
+
+	local d = {
+		['off'] = 'o',
+		['all'] = 'a',
+		['world'] = 'w',
+		['enemy'] = 'e',
+		['friend'] = 'f',
+		['npc'] = 'n',
+		['self'] = 's',
+	}
+
+	local alias = {
+		['0'] = d['off'],
+		['1'] = d['all'],
+		['on'] = d['all'],
+	}
+
+	local function check(v,key)
+		local v = alias[v] or v
+		return v == d[key]
+	end
+
+	local function GodCheck(ply, dmginfo, actor)
+		if ply.reflected then return end
+
+		local block = false
+		local infoTable = {}
+		local infoStr = ValidString( ply:GetInfo("cl_godmode") ) or "0"
+
+		local v = string.sub(string.lower(infoStr), 1, 1)
+
+		if check(v,'off') then
+			return false
+		elseif check(v,'all') then
+			return true
+		end
+
+		string.gsub(infoStr, "(%w+)", function(char) table.insert(infoTable, char) end)
+
+		for _,v in next, infoTable do
+			local v = string.sub(string.lower(v), 1, 1)
+
+			if actor == game.GetWorld() and check(v,'world') then
+				return true
+			elseif actor.CanAlter and ( not actor:CanAlter(ply) ) and check(v,'enemy') then
+				return true
+			elseif actor.CanAlter and ( actor:CanAlter(ply) ) and check(v,'friend') then
+				return true
+			elseif actor.IsNPC and actor:IsNPC() and check(v,'npc') then
+				return true
+			elseif actor == ply and check(v,'self') then
+				return true
+			end
+		end
+
+		return block, actor
+	end
+
+	hook.Add("InitPostEntity", "cl_godmode", function()
+		scripted_ents.Register({Base = "base_brush", Type = "brush"}, "god_reflect_damage")
+		timer.Simple(0, function()
+			local e = ents.Create("god_reflect_damage")
+			e:Spawn()
+			e:SetPos(Vector(0,0,0))
+			e:Initialize()
+		end)
 	end)
 
 	local suppress = false
 
-	hook.Add("EntityTakeDamage", "cl_godmode", function(victim, dmginfo)
+	hook.Add("EntityTakeDamage", "cl_godmode", function(ply, dmginfo)
 		if suppress then return end
 
-		if not victim:IsPlayer() then return end
-
-		local attacker = dmginfo:GetAttacker()
-		if not IsValid(attacker) then return end
-
-		if victim:GetInfoNum("cl_godmode", 1) == 2 or victim:GetInfoNum("cl_godmode", 1) == 3 then
-			if attacker == victim or attacker:IsWorld() or (not attacker:IsPlayer() and attacker.CPPIGetOwner and not attacker:CPPIGetOwner()) then
-				return
-			end
-		end
-
-		if (not attacker:IsNPC() and not attacker:IsPlayer()) and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
-			attacker = attacker:CPPIGetOwner()
-		end
-
-		local npc
-
-		if attacker:IsNPC() and attacker.CPPIGetOwner and attacker:CPPIGetOwner() then
-			npc = attacker
-			attacker = attacker:CPPIGetOwner()
-		end
-
-		if attacker:IsPlayer() then
-			if attacker.CanAlter and attacker:CanAlter(victim) and victim:GetInfoNum("cl_godmode", 1) == 3 then
-				return
-			end
-
-			if attacker ~= victim then
-				attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
-				attacker.cl_dmg_mode_want_attack[victim] = true
-			end
-		end
-
-		local godmode = victim:GetInfoNum("cl_godmode", 1) > 0
-
-		if attacker:IsPlayer() and victim.cl_dmg_mode_want_attack and victim.cl_dmg_mode_want_attack[attacker] then
-			victim:SetNWBool("cl_godmode", false)
-			return
-		else
-			victim:SetNWBool("cl_godmode", godmode)
-		end
-
-		if godmode then
-			if attacker:IsPlayer() then
-				if attacker ~= victim then
-					attacker.cl_dmg_mode_want_attack = attacker.cl_dmg_mode_want_attack or {}
-					attacker.cl_dmg_mode_want_attack[victim] = true
-				end
-
-				local wep = attacker:GetActiveWeapon()
-				if wep:IsValid() then
-					wep:SetNWBool("cl_godmode_lethal", true)
-				end
-
-				if attacker ~= victim then
+		if IsPlayer(ply) and ply.GetInfo then
+			local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
+			if GodCheck(ply, dmginfo, actor) then
+				if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(actor) then
 					suppress = true
-					dmginfo:SetAttacker(victim)
-					dmginfo:SetDamageForce(vector_origin)
-					attacker:TakeDamageInfo(dmginfo)
+					local mirror = ents.FindByClass('god_reflect_damage')[1]
+					
+					dmginfo:SetAttacker(ply)
+					dmginfo:SetInflictor(mirror or actor)
 
-					if npc then
-						npc:TakeDamageInfo(dmginfo)
-					end
+					actor:TakeDamageInfo(dmginfo)
 					suppress = false
 				end
-			end
-
-			dmginfo:SetDamage(0)
-			dmginfo:SetDamageForce(vector_origin)
-
-			net.Start("cl_godmode_clear_decals", true) net.WriteEntity(victim) net.Broadcast()
-
-			-- no blood
-			if not victim.damage_mode_bleed_color then
-				victim.damage_mode_bleed_color = victim:GetBloodColor()
-				victim:SetBloodColor(DONT_BLEED)
-			end
-
-			return false
-		end
-
-		if victim.damage_mode_bleed_color then
-			victim:SetBloodColor(victim.damage_mode_bleed_color)
-			victim.damage_mode_bleed_color = nil
-		end
-	end)
-
-	function _G.cl_godmode_physics_collide(self, data)
-		local victim = data.HitEntity
-		if not IsValid(victim) or not victim:IsPlayer() then return end
-
-		if (victim:GetInfoNum("cl_godmode", 1) or 1) == 0 then
-			return
-		end
-
-		local attacker = self:CPPIGetOwner()
-
-		if self:GetOwner():IsPlayer() then
-			attacker = self
-		end
-
-		if self.cl_godmode_owner_override and self.cl_godmode_owner_override:IsValid() then
-			attacker = self.cl_godmode_owner_override
-		end
-
-		if victim:IsPlayer() and attacker and IsValid(attacker) and attacker:IsPlayer() and not attacker:CanAlter(victim) and data.OurOldVelocity:Length() > 25 then
-			local dmg = DamageInfo()
-			dmg:SetDamageType(DMG_CRUSH)
-			dmg:SetAttacker(attacker)
-			dmg:SetInflictor(self)
-			dmg:SetDamage(data.Speed/10)
-			dmg:SetDamageForce(self:GetVelocity())
-			suppress = true
-			attacker:TakeDamageInfo(dmg)
-			suppress = false
-
-			if not victim.cl_godmode_nocollide_hack then
-				victim:SetVelocity(Vector(0,0,0))
-				local old = victim:GetMoveType()
-				victim:SetMoveType(MOVETYPE_NOCLIP)
-				victim.cl_godmode_nocollide_hack = true
-				timer.Simple(0, function()
-					if victim:IsValid() then
-						victim:SetMoveType(old)
-						victim.cl_godmode_nocollide_hack = nil
-						victim:SetVelocity(-victim:GetVelocity())
-					end
-				end)
+				return true
 			end
 		end
-	end
-
-	hook.Add("PhysgunPickup", "cl_godmode", function(ply, ent)
-		ent.cl_godmode_owner_override = ply
-		if not ent.cl_godmode_physics_collide_added and ply.CanAlter and ent.CPPIGetOwner then
-			ent.cl_godmode_physics_collide_added = true
-			ent:AddCallback("PhysicsCollide", function(...) _G.cl_godmode_physics_collide(...) end)
-		end
-	end)
-
-	hook.Add("PhysgunDrop", "cl_godmode", function(ply, ent)
-		ent.cl_godmode_owner_override = nil
 	end)
 end
