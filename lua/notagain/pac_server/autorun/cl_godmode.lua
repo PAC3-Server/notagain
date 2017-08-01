@@ -1,3 +1,5 @@
+-- Original cl_godmode: https://github.com/PAC3-Server/notagain/commit/8b141b0760c620045593701f89869f289b985e0b
+
 local help = [[0 = off, 1 = on, 2 = world damage, 3 = non-friend damage, 4 = self damage
  -- You may combine variables for diffrent results for example 23, means god against world damage, and non-friend damage.
  -- Note, that 0 disables everything, and 1 enables full godmode.]]
@@ -11,6 +13,7 @@ if CLIENT then
 	end)
 else
 	util.AddNetworkString("cl_godmode")
+
 	net.Receive("cl_godmode", function(len, ply)
 		if ply:GetInfo("cl_godmode") == "1" then
 			ply:GodEnable()
@@ -19,14 +22,18 @@ else
 		end
 	end)
 
+	local function IsPlayer(ent)
+		return IsValid(ent) and ent:GetClass() == "player"
+	end
+
 	hook.Add("EntityTakeDamage", "cl_godmode", function(ply, dmginfo)
-		if IsValid(ply) then
+		if IsPlayer(ply) and ply.GetInfo then
 			local infoTable = {}
 			local block = false
 
 			do
 				local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
-				local infoStr = ply.GetInfo and ply:GetInfo("cl_godmode") or "[no info]"
+				local infoStr = ply:GetInfo("cl_godmode")
 
 				if infoStr == "0" then
 					return
