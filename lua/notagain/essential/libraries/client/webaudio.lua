@@ -1,8 +1,6 @@
 local webaudio = _G.webaudio or {}
 _G.webaudio = webaudio
 
---webaudio.debug = true
-
 webaudio.sample_rate = nil
 webaudio.speed_of_sound = 340.29 -- metres per
 
@@ -28,7 +26,10 @@ local function run_javascript(code)
 	if script_queue then
 		table.insert(script_queue, code)
 	else
-		webaudio.browser_panel:RunJavascript(code)
+		if code ~= "" then
+			--print("|" .. code .. "|")
+			webaudio.browser_panel:RunJavascript(code)
+		end
 	end
 end
 
@@ -120,7 +121,7 @@ function webaudio.Initialize()
 			webaudio.sample_rate = args[1]
 		elseif typ == "stream" then
 			local stream = webaudio.GetStream(tonumber(args[2]) or 0)
-			if stream then
+			if stream:IsValid() then
 				stream:HandleBrowserMessage(args[1], unpack(args, 3, table.maxn(args)))
 			end
 		end
@@ -147,12 +148,17 @@ end
 
 webaudio.html = [==[
 <script>
+/*jslint bitwise: true */
+
 window.onerror = function(description, url, line)
 {
-	lua.print("Unhandled exception at line " + line + ": " + description);
+	dprint("Unhandled exception at line " + line + ": " + description);
 };
 
-/*jslint bitwise: true */
+function dprint(str)
+{
+	]==] .. (webaudio.debug and "lua.print(str);" or "") .. [==[
+}
 
 var audio;
 var gain;
@@ -330,13 +336,13 @@ function download_buffer(url, callback, skip_cache, id)
 
     request.onload = function()
     {
-        lua.print("decoding " + url + " " + request.response.byteLength + " ...");
+        dprint("decoding " + url + " " + request.response.byteLength + " ...");
 
         audio.decodeAudioData(request.response,
 
             function(buffer)
             {
-                lua.print("decoded " + url + " successfully");
+                dprint("decoded " + url + " successfully");
 
                 callback(buffer);
 
@@ -345,7 +351,7 @@ function download_buffer(url, callback, skip_cache, id)
 
             function(err)
             {
-                lua.print("decoding error " + url + " " + err);
+                dprint("decoding error " + url + " " + err);
 				lua.message("stream", "call", id, "OnError", "decoding failed", err);
             }
         );
@@ -353,19 +359,19 @@ function download_buffer(url, callback, skip_cache, id)
 
     request.onprogress = function(event)
     {
-        lua.print("downloading " +  (event.loaded / event.total) * 100);
+        dprint("downloading " +  (event.loaded / event.total) * 100);
     };
 
     request.onerror = function()
     {
-        lua.print("downloading " + url + " errored");
+        dprint("downloading " + url + " errored");
 		lua.message("stream", "call", id, "OnError", "download failed");
     };
 }
 
 function CreateStream(url, id, skip_cache)
 {
-    lua.print("Loading " + url);
+    dprint("Loading " + url);
 
     download_buffer(url, function(buffer)
     {
@@ -553,7 +559,7 @@ do
 	function META:Call(fmt, ...)
 		if not self.Loaded then return end
 
-		local code = string.format("var id = %d; try { if (streams[id]) { streams[id]%s } } catch(e) { lua.print('streams[' + id + '] ' + e.toString()) }", self:GetId(), string.format(fmt, ...))
+		local code = string.format("var id = %d; try { if (streams[id]) { streams[id]%s } } catch(e) { dprint('streams[' + id + '] ' + e.toString()) }", self:GetId(), string.format(fmt, ...))
 
 		run_javascript(code)
 	end
@@ -656,7 +662,10 @@ do
 			speed = speed + add
 		end
 
-		self:Call(".speed = %f", speed)
+		if speed ~= self.last_speed then
+			self:Call(".speed = %f", speed)
+			self.last_speed = speed
+		end
 	end
 
 	function META:SetPanning(panning)
@@ -706,8 +715,22 @@ do
 	end
 
 	function META:UpdateVolumeFlat()
-		self:Call(".vol_right = %f", (math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
-		self:Call(".vol_left  = %f", (math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+		self:SetRightVolume((math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+		self:SetLeftVolume((math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+	end
+
+	function META:SetLeftVolume(vol)
+		if self.last_left_volume ~= vol then
+			self:Call(".vol_left= %f", vol)
+			self.last_left_volume = vol
+		end
+	end
+
+	function META:SetRightVolume(vol)
+		if self.last_right_volume ~= vol then
+			self:Call(".vol_right = %f", vol)
+			self.last_right_volume = vol
+		end
 	end
 
 	function META:UpdateVolume3d()
@@ -733,8 +756,8 @@ do
 			local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 1.5
 			volumeFraction = volumeFraction * 0.75 * self.Volume
 
-			self:Call(".vol_right = %f", (math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
-			self:Call(".vol_left  = %f", (math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
+			self:SetRightVolume((math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
+			self:SetLeftVolume((math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 
 			if self:GetDoppler() then
 				local relativeSourceVelocity = self.SourceVelocity - webaudio.eye_velocity
@@ -746,8 +769,8 @@ do
 			self.ListenerOutOfRadius = false
 		else
 			if not self.ListenerOutOfRadius then
-				self:Call(".vol_right = 0")
-				self:Call(".vol_left  = 0")
+				self:SetRightVolume(0)
+				self:SetLeftVolume(0)
 				self.ListenerOutOfRadius = true
 			end
 		end
@@ -804,12 +827,14 @@ do
 		self.Loaded = true
 
 		self.SampleCount = sampleCount
-		self:SetFilterType(0)
 
+		queue_javascript()
+		self:SetFilterType(0)
 		self:SetMaxLoopCount(self:GetMaxLoopCount())
 		self:SetEcho(self:GetEcho())
 		self:SetEchoFeedback(self:GetEchoFeedback())
 		self:SetEchoDelay(self:GetEchoDelay())
+		execute_javascript()
 
 		if self.OnLoad then
 			self:OnLoad()
@@ -859,7 +884,7 @@ function webaudio.CreateStream(path)
 end
 
 function webaudio.GetStream(streamId)
-	return webaudio.streams[streamId]
+	return webaudio.streams[streamId] or NULL
 end
 
 function webaudio.StreamExists(streamId)
