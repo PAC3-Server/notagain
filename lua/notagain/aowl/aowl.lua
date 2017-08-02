@@ -265,37 +265,35 @@ do
 			return vec3(str, Angle)
 		end,
 		location = function(str, me)
-			local ignore_entities = false
+			local force_entities = false
 
 			if string.sub(str, 1, 1) == "#" then
 				str = string.sub(str, 2, #str)
-				ignore_entities = true
+				force_entities = true
 			end
 
-			if str == "spawn" or str == "randloc" or str == "somewhere" then
-				return str
-			end
+			if not force_entities then
+				if compare(str, "spawn") or compare(str, "somewhere") then
+					return str
+				end
 
-			local pos = aowl.StringToType("vector", str, me)
+				local pos = aowl.StringToType("vector", str, me)
 
-			if pos then
-				return pos
-			end
+				if pos then
+					return pos
+				end
 
-			if not ignore_entities then
-				-- player also searches for entity but we want to prioritize players
-				local ent = aowl.StringToType("player", str, me) or aowl.StringToType("entity", str, me)
-
-				if ent then
-					return ent:GetPos()
+				local areas = MapDefine and MapDefine.Areas or {}
+				for area, data in next, areas do
+					if compare(area, str) then
+						return area
+					end
 				end
 			end
 
-			local areas = MapDefine and MapDefine.Areas or {}
-			for area, data in next, areas do
-				if string.match(string.lower(area), string.lower(str)) then
-					return area
-				end
+			local ent = find_player(str, me) or find_entity(str, me)
+			if ent then
+				return ent
 			end
 		end,
 		entity = function(str, me)

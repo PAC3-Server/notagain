@@ -1,3 +1,5 @@
+gui.oldOpenURL = gui.oldOpenURL or gui.OpenURL
+
 local browser = {
     History = {},
     HistoryPos = 0,
@@ -13,6 +15,7 @@ local browser = {
         self.Previous = self:Add("DButton")
         self.Next     = self:Add("DButton")
         self.Refresh  = self:Add("DButton")
+        self.SteamO   = self:Add("DButton")
 
         self.URL:Dock(TOP)
         self.URL:SetTall(20)
@@ -51,16 +54,27 @@ local browser = {
             self:GetParent():NextURL()
         end
 
-        self.Refresh:SetSize(75,22)
+        self.Refresh:SetSize(30,22)
         self.Refresh:SetPos(self:GetWide()-90,33)
-        self.Refresh:SetText("Refresh")
+        self.Refresh:SetText("R")
         self.Refresh.DoClick = function(self)
             self:GetParent():RefreshURL()
         end
+
         self.Refresh.Think = function(self)
             self:SetPos(self:GetParent():GetWide()-90,33)
         end
 
+        self.SteamO:SetSize(30,22)
+        self.SteamO:SetPos(self:GetWide()-50,33)
+        self.SteamO:SetText("S-O")
+        self.SteamO.DoClick = function(self)
+            gui.oldOpenURL(self:GetParent():GetURL())
+        end
+
+        self.SteamO.Think = function(self)
+            self:SetPos(self:GetParent():GetWide()-50,33)
+        end
     end,
 
     PreviousURL = function(self)
@@ -101,15 +115,13 @@ vgui.Register("DBrowser", browser, "DFrame")
 
 local cv = CreateConVar("custom_browser","1",FCVAR_ARCHIVE,"use the custom ingame browser or the steam browser")
 
-gui.old_OpenURL = gui.old_OpenURL or gui.OpenURL
-
 gui.OpenURL = function(url)
     if cv:GetBool() then
         local b = vgui.Create("DBrowser")
         b:MakePopup()
         b:OpenURL(url or "www.google.com")
     else
-        gui.old_OpenURL(url or "www.google.com")
+        gui.oldOpenURL(url or "www.google.com")
     end
 end
 
@@ -119,5 +131,5 @@ gui.ShowProfile = function(ply)
 end
 
 local PLAYER = FindMetaTable("Player")
-PLAYER.old_ShowProfile = PLAYER.old_ShowProfile or PLAYER.ShowProfile
+PLAYER.oldShowProfile = PLAYER.oldShowProfile or PLAYER.ShowProfile
 PLAYER.ShowProfile = gui.ShowProfile

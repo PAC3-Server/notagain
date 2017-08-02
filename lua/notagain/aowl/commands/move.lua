@@ -3,7 +3,6 @@ local t = {
 }
 
 local function IsStuck(ply)
-
 	t.start = ply:GetPos()
 	t.endpos = t.start
 	t.filter = ply
@@ -16,6 +15,7 @@ local function LookAt(ply, pos)
 		pos = pos:EyePos()
 	end
 
+	if pos == ply:EyePos() then return end
 	ply:SetEyeAngles( (pos - ply:EyePos()):Angle() )
 end
 
@@ -68,7 +68,16 @@ local function SendPlayer( from, to )
 	return false
 end
 
-aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
+local function compare(a, b)
+	if a == b then return true end
+	if a:find(b, nil, true) then return true end
+	if a:lower() == b:lower() then return true end
+	if a:lower():find(b:lower(), nil, true) then return true end
+
+	return false
+end
+
+aowl.AddCommand("goto|warp|go=location", function(ply, line, ent)
 	ply.aowl_tpprevious = ply:GetPos()
 
 	local oldpos = ply:GetPos() + Vector(0,0,32)
@@ -79,12 +88,12 @@ aowl.AddCommand("goto|warp|go=player|entity|location", function(ply, line, ent)
 		else
 			local areas = MapDefine and MapDefine.Areas or {}
 
-			if next(areas) and ( ent == "randloc" or ent == "somewhere" ) then
+			if next(areas) and ent == "somewhere" then
 				ent = table.Random(table.GetKeys(areas))
 			end
 
 			for area, data in next, areas do
-				if string.match(string.lower(area), string.lower(ent)) then
+				if compare(area, ent) then
 					local refs = data.Refs
 					local pos = Vector(0,0,0)
 
