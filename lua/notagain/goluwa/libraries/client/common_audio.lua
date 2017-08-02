@@ -30,6 +30,7 @@ do
 	DEFINE_FUNCTION("Duration", -1)
 	DEFINE_FUNCTION("Gain", 1)
 	DEFINE_FUNCTION("Entity", NULL)
+	DEFINE_FUNCTION("Looping", false)
 
 	function META:SetPath(path)
 		self.Path = path
@@ -226,7 +227,9 @@ do
 			self.obj:Remove()
 		end
 
-		if event == "SetEntity" then
+		if event == "SetLooping" then
+			self.obj:SetMaxLoopCount(val)
+		elseif event == "SetEntity" then
 			self.obj:Set3D(true)
 			self.obj:SetSourceEntity(val)
 		elseif event == "SetGain" then

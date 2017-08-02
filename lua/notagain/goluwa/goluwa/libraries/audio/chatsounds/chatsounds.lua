@@ -63,7 +63,7 @@ chatsounds.Modifiers = {
 			end
 
 			self.duration = time or self.duration
-			self.dont_stop = true
+			self.overlap = true
 		end,
 	},
 	pitch = {
@@ -73,6 +73,8 @@ chatsounds.Modifiers = {
 
 			self.duration = self.duration / (math.abs(pitch) / 100)
 			self.endpitch = endpitch
+
+			self.snd:SetLooping(true)
 		end,
 
 		think = function(self, pitch)
@@ -80,6 +82,10 @@ chatsounds.Modifiers = {
 			local pitch = math.lerp(f, pitch, self.endpitch) / 100
 
 			self.snd:SetPitch(pitch)
+
+			if self.overlap and f >= 1 then
+				self.snd:Stop()
+			end
 		end,
 	},
 	volume = {
@@ -552,7 +558,7 @@ function chatsounds.PlayScript(script)
 							end
 						end
 
-						if not self.dont_stop then
+						if not self.overlap then
 							self.snd:Stop()
 						end
 					end
