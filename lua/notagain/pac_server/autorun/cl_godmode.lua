@@ -47,11 +47,10 @@ if SERVER then
 	end
 
 	local function GodCheck(ply, dmginfo, actor)
-		if ply.reflected then return end
-
 		local block = false
 		local infoTable = {}
-		local infoStr = ValidString( ply:GetInfo("cl_godmode") ) or "0"
+		local infoStr = ValidString( ply:GetInfo("cl_godmode") ) or "0" -- Maybe we should store this as a variable on the player and only update with the command, so we don't have to poll the client on every hit.
+		-- Maybe it's done internally?
 
 		local v = string.sub(string.lower(infoStr), 1, 1)
 
