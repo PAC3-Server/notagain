@@ -105,7 +105,7 @@ do
 	end
 
 	function META:IsReady()
-		return self.obj ~= nil
+		return self.obj and self.obj:IsValid()
 	end
 
 	function META:OnEvent(event, val)
@@ -242,7 +242,7 @@ do
 	end
 
 	function META:IsReady()
-		return self.obj and self.obj:IsReady()
+		return self.obj and self.obj:IsValid() and self.obj:IsReady()
 	end
 
 	function META:OnLoad(path)
