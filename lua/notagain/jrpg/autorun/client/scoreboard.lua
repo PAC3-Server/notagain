@@ -195,6 +195,7 @@ local player_line = {
 			colorstring(parent.Player:Nick())
 
 			Surface.SetTextPos(w*3/scale_coef,5)
+			local jlevel = _G.jlevel
 			Surface.DrawText(jlevel and jlevel.GetStats(parent.Player).level or 0)
 
 		 	local formattedtime = parent.Player:GetNiceTotalTime() or {h = 0,m = 0,s = 0}
@@ -238,7 +239,7 @@ vgui.Register("ScoreboardPlayerLine",player_line,"DPanel")
 local scoreboard = {
 	Init = function(self)
 		self:SetTitle("")
-		self:SetSize(ScrW,ScrH-ScrH/2)
+		self:SetSize(ScrW,ScrH-ScrH*1.2/3)
 		self:SetPos(ScrW/2-self:GetWide()/2,ScrH/2-self:GetTall()/2)
 		self.btnClose:SetZPos(999)
 		self.btnClose:Hide()
