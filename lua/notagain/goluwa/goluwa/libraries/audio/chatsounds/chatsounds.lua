@@ -35,15 +35,6 @@ end
 -- modifiiers
 
 chatsounds.Modifiers = {
-	dsp = {
-		start = function(self, dsp)
-			self.snd:SetDSP(dsp)
-		end,
-
-		stop = function(self, dsp)
-			self.snd:SetDSP(0)
-		end,
-	},
 	cutoff = {
 		args = {
 			function(stop_percent) return tonumber(stop_percent) or 100 end
@@ -115,7 +106,6 @@ chatsounds.LegacyModifiers = {
 	["%"] = "pitch",
 	["^^"] = "volume",
 	["^"] = "volume",
-	["&"] = "dsp",
 	["--"] = "cutoff",
 	["#"] = "choose",
 	["="] = "duration",
