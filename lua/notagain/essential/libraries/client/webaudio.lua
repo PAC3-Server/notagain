@@ -644,12 +644,18 @@ do
 		return self
 	end
 
-	function META:UpdatePlaybackSpeed()
+	function META:UpdatePlaybackSpeed(add)
 		local speed = self.PlaybackSpeed + self.AdditivePitchModifier
+
 		if speed < 0 then
 			self:Call(".reverse = true")
 			speed = math.abs(speed)
 		end
+
+		if add then
+			speed = speed + add
+		end
+
 		self:Call(".speed = %f", speed)
 	end
 
@@ -734,7 +740,7 @@ do
 				local relativeSourceVelocity = self.SourceVelocity - webaudio.eye_velocity
 				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
 
-				self:Call(".speed = %f", (self.PlaybackSpeed + (relativeSourceSpeed / webaudio.speed_of_sound)) + self.AdditivePitchModifier)
+				self:UpdatePlaybackSpeed(relativeSourceSpeed / webaudio.speed_of_sound)
 			end
 
 			self.ListenerOutOfRadius = false
