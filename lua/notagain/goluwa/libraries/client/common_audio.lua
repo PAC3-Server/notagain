@@ -101,7 +101,7 @@ do
 	local META = audio.CreateTemplate("bass")
 
 	function META:Panic()
-		RunConsoleCommand("stopsounds")
+		RunConsoleCommand("stopsound")
 	end
 
 	function META:IsReady()
@@ -263,7 +263,7 @@ do
 	local META = audio.CreateTemplate("createsound")
 
 	function META:Panic()
-		RunConsoleCommand("stopsounds")
+		RunConsoleCommand("stopsound")
 	end
 
 	function META:OnEvent(event, val)
