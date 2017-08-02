@@ -1,6 +1,10 @@
 local webaudio = _G.webaudio or {}
 _G.webaudio = webaudio
 
+if me then
+	webaudio.debug = true
+end
+
 webaudio.sample_rate = nil
 webaudio.speed_of_sound = 340.29 -- metres per
 
@@ -176,7 +180,7 @@ function open()
     if (typeof AudioContext != "undefined")
     {
         audio = new AudioContext();
-        processor = audio.createScriptProcessor(2048, 0, 2);
+        processor = audio.createScriptProcessor(2048, 0, 0);
         gain = audio.createGain();
     } else {
         audio = new webkitAudioContext();
@@ -215,6 +219,18 @@ function open()
 				stream.vol_left_smooth  = stream.vol_left_smooth;
 				stream.vol_right_smooth = stream.vol_right_smooth;
 			}
+
+			if(!stream.use_echo && (stream.paused || (stream.vol_left < 0.001 && stream.vol_right < 0.001)))
+            {
+                continue;
+            }
+            var echol;
+            var echor;
+            if (stream.use_echo && stream.echo_buffer)
+            {
+                echol = stream.echo_buffer.getChannelData(0);
+                echor = stream.echo_buffer.getChannelData(1);
+            }
 
             var sml = 0;
             var smr = 0;
@@ -279,6 +295,13 @@ function open()
                     }
                 }
 
+				if (stream.lfo_volume_time)
+				{
+					var res = (Math.sin((stream.position/audio.sampleRate)*10*stream.lfo_volume_time)*stream.lfo_volume_amount);
+					left *= res;
+					right *= res;
+				}
+
                 if (stream.use_echo)
                 {
 					var echo_index = (stream.position >> 0) % stream.echo_delay;
@@ -295,7 +318,14 @@ function open()
                     output_right[j] += right;
                 }
 
-                stream.position += stream.speed_smooth;
+				var speed = stream.speed_smooth;
+
+				if (stream.lfo_pitch_time)
+				{
+					speed -= (Math.sin((stream.position/audio.sampleRate)*10*stream.lfo_pitch_time)*stream.lfo_pitch_amount);
+					speed += Math.pow(stream.lfo_pitch_amount*0.5,2);
+				}
+                stream.position += speed;
             }
         }
     };
@@ -470,13 +500,6 @@ open();
 
 webaudio.streams = setmetatable({}, {__mode = "kv"})
 
-webaudio.FilterType =
-{
-	None     = 0,
-	LowPass  = 1,
-	HighPass = 2,
-}
-
 do
 	local META = {}
 	META.__index = META
@@ -526,6 +549,12 @@ do
 	DECLARE_PROPERTY("PlaybackSpeed", 1)
 	DECLARE_PROPERTY("AdditivePitchModifier", 0)
 	DECLARE_PROPERTY("SamplePosition", 0, ".position = %f")
+
+	DECLARE_PROPERTY("PitchLFOAmount", nil, ".lfo_pitch_amount = %f")
+	DECLARE_PROPERTY("PitchLFOTime", nil, ".lfo_pitch_time = %f")
+
+	DECLARE_PROPERTY("VolumeLFOAmount", nil, ".lfo_volume_amount = %f")
+	DECLARE_PROPERTY("VolumeLFOTime", nil, ".lfo_volume_time = %f")
 
 	DECLARE_PROPERTY("FilterType", nil, ".filter_type = %i")
 	DECLARE_PROPERTY("FilterFraction", 0, ".filter_fraction = %f", function(num) return math.Clamp(num, 0, 1) end)
@@ -895,6 +924,11 @@ end
 
 function webaudio.StreamExists(streamId)
 	return webaudio.streams[streamId] ~= nil
+end
+
+if me then
+	--local snd = webaudio.CreateStream("sound/vo/breencast/br_overwatch07.wav")
+	--snd:Play()
 end
 
 return webaudio

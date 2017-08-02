@@ -35,6 +35,60 @@ end
 -- modifiiers
 
 chatsounds.Modifiers = {
+	echo = {
+		args = {
+			function(delay) return tonumber(delay) or 0.25 end,
+			function(feedback) return tonumber(feedback) or 0.5 end,
+		},
+		init = function(self, delay, feedback)
+			self.overlap = true
+			self.snd.obj:SetEcho(true)
+			self.snd.obj:SetEchoDelay(delay)
+			self.snd.obj:SetEchoFeedback(feedback)
+		end,
+	},
+	lfopitch = {
+		args = {
+			function(time) return tonumber(time) or 5 end,
+			function(amount) return tonumber(amount) or 0.1 end,
+		},
+		init = function(self, time, amount)
+			self.overlap = true
+			self.snd.obj:SetPitchLFOAmount(amount)
+			self.snd.obj:SetPitchLFOTime(time)
+		end,
+	},
+	lfovolume = {
+		args = {
+			function(time) return tonumber(time) or 5 end,
+			function(amount) return tonumber(amount) or 0.1 end,
+		},
+		init = function(self, time, amount)
+			self.overlap = true
+			self.snd.obj:SetVolumeLFOAmount(amount)
+			self.snd.obj:SetVolumeLFOTime(time)
+		end,
+	},
+	lowpass = {
+		args = {
+			function(num) return tonumber(num) or 0.5 end,
+		},
+		init = function(self, num)
+			self.overlap = true
+			self.snd.obj:SetFilterType(1)
+			self.snd.obj:SetFilterFraction(num)
+		end,
+	},
+	highpass = {
+		args = {
+			function(num) return tonumber(num) or 0.5 end,
+		},
+		init = function(self, num)
+			self.overlap = true
+			self.snd.obj:SetFilterType(2)
+			self.snd.obj:SetFilterFraction(num)
+		end,
+	},
 	cutoff = {
 		args = {
 			function(stop_percent) return tonumber(stop_percent) or 100 end
