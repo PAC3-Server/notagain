@@ -883,6 +883,12 @@ function webaudio.CreateStream(path)
 	return self
 end
 
+function webaudio.Panic()
+	for k,v in pairs(webaudio.streams) do
+		v:Remove()
+	end
+end
+
 function webaudio.GetStream(streamId)
 	return webaudio.streams[streamId] or NULL
 end
