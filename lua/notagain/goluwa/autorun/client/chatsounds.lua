@@ -116,6 +116,10 @@ local doit = function(ply, str)
 		init = true
 	end
 
+	if str == "sh" or (str:find("sh%s") and not str:find("%Ssh")) or (str:find("%ssh") and not str:find("sh%S")) then
+		goluwa.audio.Panic()
+	end
+
 	goluwa.audio.player_object = ply
 	chatsounds.Say(str, math.Round(CurTime()))
 end

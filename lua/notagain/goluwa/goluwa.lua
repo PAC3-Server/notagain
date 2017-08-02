@@ -557,6 +557,10 @@ do
 		return snd
 	end
 
+	function audio.Panic()
+		common_audio.Panic()
+	end
+
 	env.audio = audio
 end
 
