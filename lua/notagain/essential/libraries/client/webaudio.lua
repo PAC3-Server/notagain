@@ -193,9 +193,9 @@ function open()
         {
             var stream = streams_array[i];
 
-            var inputLength = stream.buffer.length;
-            var inputLeft = stream.buffer.getChannelData(0);
-            var inputRight = stream.buffer.numberOfChannels == 1 ? inputLeft : stream.buffer.getChannelData(1);
+            var buffer_length = stream.buffer.length;
+            var buffer_left = stream.buffer.getChannelData(0);
+            var buffer_right = stream.buffer.numberOfChannels == 1 ? buffer_left : stream.buffer.getChannelData(1);
 
 			if (stream.use_smoothing)
 			{
@@ -215,7 +215,7 @@ function open()
 
             for(var j = 0; j < event.outputBuffer.length; ++j)
             {
-				if (stream.paused || stream.max_loop > 0 && stream.position > inputLength * stream.max_loop)
+				if (stream.paused || stream.max_loop > 0 && stream.position > buffer_length * stream.max_loop)
                 {
                     stream.done_playing = true;
 
@@ -234,11 +234,11 @@ function open()
                     stream.done_playing = false;
                 }
 
-                var index = (stream.position >> 0) % inputLength;
+                var index = (stream.position >> 0) % buffer_length;
 
 				if (stream.reverse)
 				{
-					index = -index + inputLength;
+					index = -index + buffer_length;
 				}
 
                 var left  = 0;
@@ -250,25 +250,25 @@ function open()
 					if (stream.filter_type == 0)
 					{
 						// None
-                        left  = inputLeft [index] * stream.vol_left_smooth;
-                        right = inputRight[index] * stream.vol_right_smooth;
+                        left = buffer_left[index] * stream.vol_left_smooth;
+                        right = buffer_right[index] * stream.vol_right_smooth;
 					}
 					else
                     {
-                        sml = sml + (inputLeft [index] - sml) * stream.filter_fraction;
-                        smr = smr + (inputRight[index] - smr) * stream.filter_fraction;
+                        sml = sml + (buffer_left[index] - sml) * stream.filter_fraction;
+                        smr = smr + (buffer_right[index] - smr) * stream.filter_fraction;
 
                         if (stream.filter_type == 1)
                         {
 							// Low pass
-                            left  = sml * stream.vol_left_smooth;
+                            left = sml * stream.vol_left_smooth;
                             right = smr * stream.vol_right_smooth;
                         }
                         else if (stream.filter_type == 2)
                         {
 							// High pass
-                            left  = (inputLeft [index] - sml) * stream.vol_left_smooth;
-                            right = (inputRight[index] - smr) * stream.vol_right_smooth;
+                            left = (buffer_left[index] - sml) * stream.vol_left_smooth;
+                            right = (buffer_right[index] - smr) * stream.vol_right_smooth;
                         }
                     }
                 }
@@ -280,12 +280,12 @@ function open()
                     echol[echo_index] = echol[echo_index] * stream.echo_feedback + left;
                     echor[echo_index] = echor[echo_index] * stream.echo_feedback + right;
 
-                    output_left [j] += echol[echo_index];
+                    output_left[j] += echol[echo_index];
                     output_right[j] += echor[echo_index];
                 }
                 else
                 {
-                    output_left [j] += left;
+                    output_left[j] += left;
                     output_right[j] += right;
                 }
 
