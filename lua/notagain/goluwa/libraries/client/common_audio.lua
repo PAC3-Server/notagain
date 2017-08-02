@@ -99,6 +99,10 @@ end
 do
 	local META = audio.CreateTemplate("bass")
 
+	function META:Panic()
+		RunConsoleCommand("stopsounds")
+	end
+
 	function META:IsReady()
 		return self.obj ~= nil
 	end
@@ -198,6 +202,10 @@ do
 
 	local META = audio.CreateTemplate("webaudio")
 
+	function META:Panic()
+		webaudio.Panic()
+	end
+
 	function META:OnEvent(event, val)
 		if not self.obj then
 			self:QueueEvent(event, val)
@@ -250,6 +258,10 @@ end
 
 do
 	local META = audio.CreateTemplate("createsound")
+
+	function META:Panic()
+		RunConsoleCommand("stopsounds")
+	end
 
 	function META:OnEvent(event, val)
 		if not self.obj then
@@ -304,6 +316,12 @@ function audio.CreateSoundFromInterface(interface)
 	interface = interface or "webaudio"
 
 	return setmetatable({}, audio.registered[interface])
+end
+
+function audio.Panic()
+	for name, interface in pairs(audio.registered) do
+		interface.Panic()
+	end
 end
 
 if me then
