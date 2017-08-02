@@ -126,7 +126,7 @@ gui.OpenURL = function(url)
 end
 
 gui.ShowProfile = function(ply)
-    if not IsValid(ply) then return end
+    if not IsValid(ply) and not ply:IsBot() then return end
     gui.OpenURL("https://steamcommunity.com/profiles/"..ply:SteamID64())
 end
 
