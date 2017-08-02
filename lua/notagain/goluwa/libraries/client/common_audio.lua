@@ -218,7 +218,10 @@ do
 			self.obj:Remove()
 		end
 
-		if event == "SetGain" then
+		if event == "SetEntity" then
+			self.obj:Set3D(true)
+			self.obj:SetSourceEntity(val)
+		elseif event == "SetGain" then
 			self.obj:SetVolume(val)
 		elseif event == "SetPitch" then
 			self.obj:SetPlaybackRate(val)
