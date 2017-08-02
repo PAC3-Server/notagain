@@ -92,6 +92,13 @@ if SERVER then
 		end)
 	end)
 
+	hook.Add("PostCleanupMap", "cl_godmode", function()
+		local e = ents.Create("god_reflect_damage")
+		e:Spawn()
+		e:SetPos(Vector(0,0,0))
+		e:Initialize()
+	end)
+
 	local suppress = false
 
 	hook.Add("EntityTakeDamage", "cl_godmode", function(ply, dmginfo)
