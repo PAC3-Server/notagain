@@ -1,7 +1,7 @@
 local webaudio = _G.webaudio or {}
 _G.webaudio = webaudio
 
-webaudio.debug = true
+--webaudio.debug = true
 
 webaudio.sample_rate = nil
 webaudio.speed_of_sound = 340.29 -- metres per
@@ -76,11 +76,7 @@ do
 			if stream:IsValid() then
 				stream:Think()
 			else
-				stream:Stop()
 				webaudio.streams[streamId] = nil
-				run_javascript(string.format("DestroyStream(%i)", stream:GetId()))
-
-				setmetatable(stream, getmetatable(NULL))
 			end
 		end
 	end
@@ -240,6 +236,11 @@ function open()
 
                 var index = (stream.position >> 0) % inputLength;
 
+				if (stream.reverse)
+				{
+					index = -index + inputLength;
+				}
+
                 var left  = 0;
                 var right = 0;
 
@@ -293,9 +294,9 @@ function open()
         }
     };
 
-    //processor.connect(gain);
-    //gain.connect(audio.destination);
-    processor.connect(audio.destination);
+    processor.connect(gain);
+    gain.connect(audio.destination);
+    //processor.connect(audio.destination);
 
     lua.message("initialized", audio.sampleRate);
 }
@@ -345,7 +346,7 @@ function download_buffer(url, callback, skip_cache, id)
             function(err)
             {
                 lua.print("decoding error " + url + " " + err);
-								lua.message("stream", "call", id, "OnError", "decoding failed", err);
+				lua.message("stream", "call", id, "OnError", "decoding failed", err);
             }
         );
     };
@@ -358,7 +359,7 @@ function download_buffer(url, callback, skip_cache, id)
     request.onerror = function()
     {
         lua.print("downloading " + url + " errored");
-				lua.message("stream", "call", id, "OnError", "download failed");
+		lua.message("stream", "call", id, "OnError", "download failed");
     };
 }
 
@@ -378,7 +379,6 @@ function CreateStream(url, id, skip_cache)
         stream.max_loop = 1; // -1 = inf
         stream.vol_left = 1;
         stream.vol_right = 1;
-        stream.filter = audio.createBiquadFilter();
         stream.paused = true;
         stream.use_smoothing = true;
         stream.echo_volume = 0;
@@ -445,10 +445,15 @@ function CreateStream(url, id, skip_cache)
 function DestroyStream(id)
 {
 	var stream = streams[id];
-	buffer_cache[stream.url] = undefined;
 
-	var i = stream_array.indexOf(stream);
-	streams.splice(i, 1);
+	if (stream)
+	{
+		streams[id] = undefined;
+		buffer_cache[stream.url] = undefined;
+
+		var i = streams_array.indexOf(stream);
+		streams_array.splice(i, 1);
+	}
 }
 
 open();
@@ -539,14 +544,16 @@ do
 	end
 
 	function META:Remove()
-		self.IsValid = function() return false end
+		self:Stop()
+		run_javascript(string.format("DestroyStream(%i)", self:GetId()))
+		setmetatable(self, getmetatable(NULL))
 	end
 
 	-- Browser
 	function META:Call(fmt, ...)
 		if not self.Loaded then return end
 
-		local code = string.format("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }", self:GetId(), string.format(fmt, ...))
+		local code = string.format("var id = %d; try { if (streams[id]) { streams[id]%s } } catch(e) { lua.print('streams[' + id + '] ' + e.toString()) }", self:GetId(), string.format(fmt, ...))
 
 		run_javascript(code)
 	end
@@ -638,7 +645,12 @@ do
 	end
 
 	function META:UpdatePlaybackSpeed()
-		self:Call(".speed = %f", self.PlaybackSpeed + self.AdditivePitchModifier)
+		local speed = self.PlaybackSpeed + self.AdditivePitchModifier
+		if speed < 0 then
+			self:Call(".reverse = true")
+			speed = math.abs(speed)
+		end
+		self:Call(".speed = %f", speed)
 	end
 
 	function META:SetPanning(panning)
@@ -816,6 +828,9 @@ webaudio.streams = webaudio.streams or {}
 webaudio.last_stream_id = 0
 
 function webaudio.CreateStream(path)
+	webaudio.Initialize()
+
+	path = "../" .. path
 	local self = setmetatable({}, webaudio.stream_meta)
 
 	webaudio.last_stream_id = webaudio.last_stream_id + 1
@@ -824,8 +839,10 @@ function webaudio.CreateStream(path)
 
 	self.__gcobj = newproxy()
 	debug.setmetatable(self.__gcobj, {__gc = function()
-		dprint("destroying  " .. tostring(self) .. " because it has no references")
-		self:Remove()
+		if self:IsValid() then
+			dprint("destroying  " .. tostring(self) .. " because it has no references")
+			self:Remove()
+		end
 	end})
 
 	webaudio.streams[self:GetId()] = self
