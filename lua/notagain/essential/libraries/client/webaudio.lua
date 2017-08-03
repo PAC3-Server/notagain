@@ -541,7 +541,7 @@ do
 	DECLARE_PROPERTY("LastSourcePosition", nil)
 	DECLARE_PROPERTY("LastSourcePositionTime", nil)
 	DECLARE_PROPERTY("SourceVelocity", nil)
-	DECLARE_PROPERTY("SourceRadius", 1000)
+	DECLARE_PROPERTY("SourceRadius", 5000)
 	DECLARE_PROPERTY("ListenerOutOfRadius", false)
 
 	DECLARE_PROPERTY("Id")
