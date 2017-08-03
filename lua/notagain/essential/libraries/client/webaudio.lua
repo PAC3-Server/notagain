@@ -325,7 +325,19 @@ function open()
 					speed -= (Math.sin((stream.position/audio.sampleRate)*10*stream.lfo_pitch_time)*stream.lfo_pitch_amount);
 					speed += Math.pow(stream.lfo_pitch_amount*0.5,2);
 				}
+
                 stream.position += speed;
+
+				output_left[j] = Math.min(Math.max(output_left[j], -1), 1);
+				output_right[j] = Math.min(Math.max(output_right[j], -1), 1);
+
+				if (!isFinite(output_left[j])) {
+					output_left[j] = 0
+				}
+
+				if (!isFinite(output_right[j])) {
+					output_right[j] = 0
+				}
             }
         }
     };
