@@ -1,4 +1,5 @@
 local weps = {
+	"weapon_crowbar",
 	"weapon_physgun",
 	"weapon_physcannon",
 	"gmod_camera",
