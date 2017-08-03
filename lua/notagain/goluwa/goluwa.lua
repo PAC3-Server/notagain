@@ -142,124 +142,10 @@ env.utf8 = env.runfile("goluwa/libraries/utf8.lua")
 
 for k,v in pairs(env.string) do _G.string[k] = _G.string[k] or v end -- :(
 
-local http = table.Copy(http)
-
-do
-	-- just to debug any http requests
-	function http.Fetch(url, ...)
-		--print("http.Fetch: " .. url)
-		_G.http.Fetch(url, ...)
-	end
-end
-
-local sound = table.Copy(sound)
-
-if system.IsLinux() then -- sound.PlayFile fix
-	local print = function() end
-	sound.active = {}
-	sound.queue = {}
-	sound.requests = {}
-
-	GOLUWA_SOUND_FIX = sound
-
-	local counter = 0
-	function sound.PlayFile(url, flags, cb)
-		print("sound.Play: " .. url)
-		print("COUNTER: " .. counter)
-
-		if #sound.requests >= 16 then
-			table.insert(sound.queue, {url, flags, cb})
-			print("queuing " .. url)
-			return
-		end
-
-		print(#sound.requests .. " requests in queue")
-
-		table.insert(sound.requests, cb)
-
-		counter = counter + 1
-		_G.sound.PlayFile(url, flags, function(snd, ...)
-			for i, v in ipairs(sound.requests) do
-				if v == cb then
-					table.remove(sound.requests, i)
-					print(#sound.requests .. " requests in queue")
-				end
-			end
-
-			if IsValid(snd) then
-				table.insert(sound.active, snd)
-				print(#sound.active .. " active sounds")
-			end
-			cb(snd, ...)
-		end)
-	end
-
-	hook.Add("Think", "soundplay_queue", function()
-		for i = #sound.active, 1, -1 do
-			local snd = sound.active[i]
-
-			if not snd:IsValid() then
-				table.remove(sound.active, i)
-				print("remove invalid sound " .. i)
-				print(#sound.active .. " active sounds")
-			end
-		end
-
-		if #sound.requests < 16 then
-			for i = #sound.queue, 1, -1 do
-				local args = sound.queue[i]
-				table.remove(sound.queue, i)
-				print("playing sound from queue")
-				sound.PlayFile(unpack(args))
-				if #sound.requests >= 16 then
-					break
-				end
-			end
-		end
-	end)
-end
-
-function env.typex(val)
-	if IsColor(val) then
-		return "color"
-	end
-
-	return type(val)
-end
-
-do -- color
-	local color_unpack = function(s) return s.r, s.g, s.b, s.a end
-
-	function env.Color(r,g,b,a)
-		local c = Color(r,g,b,a)
-		c.Unpack = color_unpack
-		return c
-	end
-
-	function env.ColorHSV(h,s,v)
-		local self = HSVToColor((h*360)%360,s,v)
-		self.r = self.r / 255
-		self.g = self.g / 255
-		self.b = self.b / 255
-		self.a = self.a / 255
-		self.Unpack = color_unpack
-		return self
-	end
-end
-
-do -- vec2
-	function env.Vec2(x, y)
-		return Vector(x, y, 0)
-	end
-
-	local META = FindMetaTable("Vector")
-
-	function META:Unpack()
-		return self.x, self.y, self.z
-	end
-end
-
 env.prototype = env.runfile("goluwa/libraries/prototype/prototype.lua")
+env.serializer = env.runfile("goluwa/libraries/serializer.lua")
+env.structs = env.runfile("goluwa/libraries/structs.lua")
+
 env.utility = env.runfile("goluwa/libraries/utilities/utility.lua")
 env.vfs = env.runfile("goluwa/libraries/filesystem/vfs.lua")
 env.vfs.Mount("os:/", "os:")
@@ -373,8 +259,6 @@ hook.Add("Think", "goluwa_timers", function()
 	env.event.UpdateTimers()
 	env.event.Call("Update", FrameTime())
 end)
-
-env.serializer = env.runfile("goluwa/libraries/serializer.lua")
 
 do -- render2d
 	local render2d = {}

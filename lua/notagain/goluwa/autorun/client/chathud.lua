@@ -164,9 +164,9 @@ function chathud.AddText(...)
 		local t = type(v)
 		if t == "Player" then
 			local c = team.GetColor(v:Team())
-			table.insert(args, Color(c.r/255, c.g/255, c.b/255, c.a/255))
+			table.insert(args, goluwa.Color(c.r/255, c.g/255, c.b/255, c.a/255))
 			table.insert(args, v:GetName())
-			table.insert(args, Color(1,1,1,1))
+			table.insert(args, goluwa.Color(1,1,1,1))
 		elseif t == "string" then
 
 			if v == ": sh" or v == "sh" or v:find("%ssh%s") then
@@ -198,7 +198,7 @@ function chathud.AddText(...)
 
 			table.insert(args, v)
 		elseif t == "table" and IsColor(v) then
-			table.insert(args, Color(v.r/255, v.g/255, v.b/255, v.a/255))
+			table.insert(args, goluwa.Color(v.r/255, v.g/255, v.b/255, v.a/255))
 		else
 			table.insert(args, v)
 		end
