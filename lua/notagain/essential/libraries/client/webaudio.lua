@@ -781,7 +781,7 @@ do
 
 		self.SourcePosition = self.SourcePosition or Vector()
 
-		self.LastSourcePosition = self.LastSourcePosition     or self.SourcePosition
+		self.LastSourcePosition = self.LastSourcePosition or self.SourcePosition
 		self.LastSourcePositionTime = self.LastSourcePositionTime or (time - FrameTime())
 
 		self.SourceVelocity = (self.SourcePosition - self.LastSourcePosition) / (time - self.LastSourcePositionTime)
