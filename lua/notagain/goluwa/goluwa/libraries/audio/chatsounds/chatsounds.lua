@@ -53,7 +53,6 @@ chatsounds.Modifiers = {
 			function(amount) return tonumber(amount) or 0.1 end,
 		},
 		init = function(self, time, amount)
-			self.overlap = true
 			self.snd.obj:SetPitchLFOAmount(amount)
 			self.snd.obj:SetPitchLFOTime(time)
 		end,
@@ -64,7 +63,6 @@ chatsounds.Modifiers = {
 			function(amount) return tonumber(amount) or 0.1 end,
 		},
 		init = function(self, time, amount)
-			self.overlap = true
 			self.snd.obj:SetVolumeLFOAmount(amount)
 			self.snd.obj:SetVolumeLFOTime(time)
 		end,
@@ -74,7 +72,6 @@ chatsounds.Modifiers = {
 			function(num) return tonumber(num) or 0.5 end,
 		},
 		init = function(self, num)
-			self.overlap = true
 			self.snd.obj:SetFilterType(1)
 			self.snd.obj:SetFilterFraction(num)
 		end,
@@ -84,7 +81,6 @@ chatsounds.Modifiers = {
 			function(num) return tonumber(num) or 0.5 end,
 		},
 		init = function(self, num)
-			self.overlap = true
 			self.snd.obj:SetFilterType(2)
 			self.snd.obj:SetFilterFraction(num)
 		end,
