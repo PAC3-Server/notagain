@@ -237,7 +237,11 @@ do -- color
 	end
 
 	function env.ColorHSV(h,s,v)
-		local self = HSVToColor(h*360,s,v)
+		local self = HSVToColor((h*360)%360,s,v)
+		self.r = self.r / 255
+		self.g = self.g / 255
+		self.b = self.b / 255
+		self.a = self.a / 255
 		self.Unpack = color_unpack
 		return self
 	end
