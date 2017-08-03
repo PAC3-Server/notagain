@@ -1,4 +1,4 @@
-local goluwa = requirex("goluwa")
+local goluwa = requirex("goluwa").env
 
 local enabled = CreateClientConVar("goluwa_chathud_enabled", "1", true, false, "Disable chatsounds")
 

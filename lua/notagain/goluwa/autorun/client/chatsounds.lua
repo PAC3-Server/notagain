@@ -1,4 +1,4 @@
-local goluwa = requirex("goluwa")
+local goluwa = requirex("goluwa").env
 
 local autocomplete = goluwa.autocomplete
 local chatsounds = goluwa.chatsounds
@@ -70,9 +70,7 @@ do
 	hookAdd("ChatTextChanged", "chatsounds_autocomplete", function(str)
 		random_mode = false
 		query(str, 0)
-	end)
 
-	hookAdd("StartChat", "chatsounds_autocomplete", function()
 		hookAdd("PostRenderVGUI", "chatsounds_autocomplete", function()
 			if found_autocomplete and #found_autocomplete > 0 then
 				local x, y = chat.GetChatBoxPos()

@@ -1,4 +1,4 @@
-local env = ... or _G.goluwa
+local env = ... or _G.goluwa.env
 
 env.bit = _G.bit
 env.jit = table.Copy(_G.jit)
