@@ -104,10 +104,67 @@ chatsounds.Modifiers = {
 			end
 
 			self.duration = time or self.duration
+		end,
+	},
+	legacyduration = {
+		init = function(self, time, um)
+
+			-- legacy modifier workaround..
+			-- =0.125
+			if um then
+				time = tonumber(time .. "." .. um)
+			end
+
+			self.duration = time or self.duration
 			self.overlap = true
 		end,
 	},
+	overlap = {
+		init = function(self, b)
+			self.overlap = tonumber(b) ~= 0
+		end,
+	},
+	loop = {
+		init = function(self, b)
+			self.snd:SetLooping(tonumber(b) ~= 0)
+		end,
+	},
 	pitch = {
+		init = function(self, num)
+			num = tonumber(num) or 1
+			self.duration = self.duration / math.abs(num)
+		end,
+		think = function(self, num)
+			num = tonumber(num) or 1
+
+			self.snd:SetPitch(num)
+		end,
+	},
+	volume = {
+		think = function(self, num)
+			num = tonumber(num) or 1
+
+			self.snd:SetPitch(num)
+		end,
+	},
+	legacyvolume = {
+		init = function(self, volume, endvolume)
+			volume = tonumber(volume) or 100
+			endvolume = tonumber(endvolume) or volume
+
+			self.endvolume = endvolume
+		end,
+
+		think = function(self, vol)
+			vol = tonumber(vol) or 100
+
+			local f = (system.GetElapsedTime() - self.start_time) / self.duration
+			local vol = math.lerp(f, vol, self.endvolume) / 100
+
+			self.snd:SetGain(vol)
+		end,
+	},
+	legacypitch = {
 		init = function(self, pitch, endpitch)
 			pitch = tonumber(pitch) or 100
 			endpitch = tonumber(endpitch) or pitch
@@ -119,6 +176,8 @@ chatsounds.Modifiers = {
 		end,
 
 		think = function(self, pitch)
+			pitch = tonumber(pitch) or 100
+
 			local f = (system.GetElapsedTime() - self.start_time) / self.duration
 			local pitch = math.lerp(f, pitch, self.endpitch) / 100
 
@@ -129,21 +188,6 @@ chatsounds.Modifiers = {
 			end
 		end,
 	},
-	volume = {
-		init = function(self, volume, endvolume)
-			volume = tonumber(volume) or 100
-			endvolume = tonumber(endvolume) or volume
-
-			self.endvolume = endvolume
-		end,
-
-		think = function(self, vol)
-			local f = (system.GetElapsedTime() - self.start_time) / self.duration
-			local vol = math.lerp(f, vol, self.endvolume) / 100
-
-			self.snd:SetGain(vol)
-		end,
-	},
 	realm = {
 		pre_init = function(realm)
 			chatsounds.last_realm = realm
@@ -152,13 +196,13 @@ chatsounds.Modifiers = {
 }
 
 chatsounds.LegacyModifiers = {
-	["%%"] = "pitch",
-	["%"] = "pitch",
-	["^^"] = "volume",
-	["^"] = "volume",
+	["%%"] = "legacypitch",
+	["%"] = "legacypitch",
+	["^^"] = "legacyvolume",
+	["^"] = "legacyvolume",
 	["--"] = "cutoff",
 	["#"] = "choose",
-	["="] = "duration",
+	["="] = "legacyduration",
 	["*"] = "repeat",
 }
 
@@ -179,7 +223,12 @@ do
 		end
 
 		for _, val in ipairs(modifiers) do
+			local protect = {}
+			str = str:gsub("%b[]", function(val) table.insert(protect, val) return "____PROTECT_" .. #protect end)
 			str = str:gsub(val.mod.."([%d%.]+)", function(str) str = str:gsub("%.", ",") return ":"..val.func.."("..str..")" end)
+			for i,v in ipairs(protect) do
+				str = str:gsub("____PROTECT_" .. i, v)
+			end
 		end
 
 		str = str:lower()
@@ -196,6 +245,10 @@ do
 		local words = {}
 		local temp = {}
 		local last = string.getchartype(str:sub(1,1))
+		local exp = false
+		local exp_level = 0
+		local capture_exp = true
+		local bracket_level = 0
 
 		for i = 1, #str + 1 do
 			local char = str:sub(i,i)
@@ -211,12 +264,33 @@ do
 
 				if type == "digit" and (last == "letters" or string.getchartype(next) == "letters") then type = "letters" end
 
-				if type ~= last or char == ":" or char == ")" or char == "(" then
+				if bracket_level > 0 then
+					if char == "[" then
+						exp = true
+						exp_level = exp_level + 1
+						capture_exp = true
+					elseif char == "]" then
+						exp = false
+						exp_level = exp_level - 1
+						capture_exp = true
+						table.insert(temp, char)
+						char = ""
+					end
+				end
+
+				if char == "(" then
+					bracket_level = bracket_level + 1
+				elseif char == ")" then
+					inside_brackets = bracket_level - 1
+				end
+
+				if not exp and (type ~= last or char == ":" or char == ")" or char == "(" or char == ",") or capture_exp then
 					local word = table.concat(temp, "")
 					if #word > 0 then
 						table.insert(words, table.concat(temp, ""))
 						table.clear(temp)
 					end
+					capture_exp = nil
 				end
 
 				table.insert(temp, char)
@@ -232,6 +306,8 @@ do
 
 		local count = #words
 
+		local level = 0
+
 		for i = 1, chatsounds.max_iterations do
 			local word = words[i]
 
@@ -244,20 +320,39 @@ do
 				words[i+2] = nil
 				words[i+1] = nil
 
+				level = level + 1
+
 				for i2 = i + 3, i + 10 do
 					local word = words[i2]
 					words[i2] = nil
 
-					if word ~= ")" then
-						if word ~= "," then
+					if word == "(" then
+						level = level + 1
+					end
+
+					if word == ")" then
+						level = level - 1
+					end
+
+					if level == 0 then break end
+
+					if word then
+						if word:startswith("[") and word:endswith("]") then
+							local ok, func = expression.Compile(word:sub(2, -2))
+							if ok then
+								table.insert(args, func)
+							else
+								wlog("failed to compile expression: ", func)
+								table.insert(args, exp)
+							end
+						elseif word ~= "," then
 							table.insert(args, word)
 						end
-					else
-						break
 					end
 				end
 
 				table.fixindices(words)
+
 				table.insert(words, i, {type = "modifier", mod = mod, args = args})
 
 				i = 1
@@ -326,7 +421,7 @@ do
 						if type(mod) ~= "table" then break end
 						table.insert(out, mod)
 					end
-				else
+ 				else
 					for _, info in ipairs(matched) do
 						table.insert(out, {type = "unmatched", val = info.word})
 					end
@@ -490,6 +585,28 @@ end
 
 chatsounds.queue_calc = {}
 
+local function get_arg(data, i)
+	local val = data.args[i]
+	if type(val) == "function" then
+		local ok, v = pcall(val, {i = i})
+		if ok then
+			return v
+		else
+			wlog(v)
+		end
+	else
+		return val
+	end
+end
+
+local function unpack_args(data)
+	local args = {}
+	for i = 1, #data.args do
+		args[i] = get_arg(data, i)
+	end
+	return unpack(args)
+end
+
 function chatsounds.PlayScript(script)
 
 	local sounds = {}
@@ -575,28 +692,27 @@ function chatsounds.PlayScript(script)
 
 					--print("DURATION", path, sound.duration)
 
-					sound.play = function(self)
-						if self.modifiers then
-							for _, data in pairs(self.modifiers) do
-								local mod = chatsounds.Modifiers[data.mod]
-								if mod and mod.start then
-									mod.start(self, unpack(data.args))
+					sound.call = function(self, func_name)
+						if not self.modifiers then return end
+						for _, data in pairs(self.modifiers) do
+							local mod = chatsounds.Modifiers[data.mod]
+							if mod and mod[func_name] then
+								local ok, err = pcall(mod[func_name], self, unpack_args(data))
+								if not ok then
+									wlog(err)
 								end
 							end
 						end
+					end
+
+					sound.play = function(self)
+						self:call("start")
 
 						self.snd:Play()
 					end
 
 					sound.remove = function(self)
-						if self.modifiers then
-							for _, data in pairs(self.modifiers) do
-								local mod = chatsounds.Modifiers[data.mod]
-								if mod and mod.stop then
-									mod.stop(self, unpack(data.args))
-								end
-							end
-						end
+						self:call("stop")
 
 						if not self.overlap then
 							self.snd:Stop()
@@ -605,12 +721,7 @@ function chatsounds.PlayScript(script)
 
 					if sound.modifiers then
 						sound.think = function(self)
-							for _, data in pairs(self.modifiers) do
-								local mod = chatsounds.Modifiers[data.mod]
-								if mod and mod.think then
-									mod.think(self, unpack(data.args))
-								end
-							end
+							self:call("think")
 						end
 					end
 
@@ -643,14 +754,7 @@ function chatsounds.PlayScript(script)
 			sound.duration = sound.duration or sound.snd:GetDuration()
 
 			-- init modifiers
-			if sound.modifiers then
-				for mod, data in pairs(sound.modifiers) do
-					mod = chatsounds.Modifiers[data.mod]
-					if mod and mod.init then
-						mod.init(sound, unpack(data.args))
-					end
-				end
-			end
+			sound:call("init")
 
 			-- this is when the sound starts
 			sound.start_time = time + duration
