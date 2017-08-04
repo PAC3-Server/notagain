@@ -182,13 +182,15 @@ local function run(path)
 	}
 end
 
-local function run_dir(addon_name, dir)
+local function run_dir(addon_name, dir, addcsluafile_only)
 	notagain.autorun_results[addon_name] = notagain.autorun_results[addon_name] or {}
 
 	for _, name in pairs((file.Find(dir .. "*.lua", "LUA"))) do
 		local path = dir .. name
 
-		notagain.autorun_results[addon_name][path] = run(path)
+		if not addcsluafile_only then
+			notagain.autorun_results[addon_name][path] = run(path)
+		end
 
 		if SERVER then
 			AddCSLuaFile(path)
@@ -199,7 +201,9 @@ local function run_dir(addon_name, dir)
 		local path = dir .. "client/" .. name
 
 		if CLIENT then
-			notagain.autorun_results[addon_name][path] = run(path)
+			if not addcsluafile_only then
+				notagain.autorun_results[addon_name][path] = run(path)
+			end
 		end
 
 		if SERVER then
@@ -208,9 +212,11 @@ local function run_dir(addon_name, dir)
 	end
 
 	if SERVER then
-		for _, name in pairs((file.Find(dir .. "server/*.lua", "LUA"))) do
-			local path = dir .. "server/" .. name
-			notagain.autorun_results[addon_name][path] = run(path)
+		if not addcsluafile_only then
+			for _, name in pairs((file.Find(dir .. "server/*.lua", "LUA"))) do
+				local path = dir .. "server/" .. name
+				notagain.autorun_results[addon_name][path] = run(path)
+			end
 		end
 	end
 end
@@ -249,16 +255,14 @@ function notagain.Autorun()
 	end
 
 	for addon_name, addon_dir in pairs(notagain.directories) do
-		if not notagain.loaded_libraries[addon_name] or notagain.loaded_libraries[addon_name].notagain_autorun ~= false then
-			run_dir(addon_name, addon_dir .. "/prerun/")
-		end
+		local lib = notagain.loaded_libraries[addon_name]
+		run_dir(addon_name, addon_dir .. "/prerun/", lib and lib.notagain_autorun == false)
 	end
 
 	-- autorun
 	for addon_name, addon_dir in pairs(notagain.directories) do
-		if not notagain.loaded_libraries[addon_name] or notagain.loaded_libraries[addon_name].notagain_autorun ~= false then
-			run_dir(addon_name, addon_dir .. "/autorun/")
-		end
+		local lib = notagain.loaded_libraries[addon_name]
+		run_dir(addon_name, addon_dir .. "/autorun/", lib and lib.notagain_autorun == false)
 	end
 
 	notagain.hasloaded = true
