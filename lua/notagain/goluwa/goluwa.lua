@@ -819,12 +819,18 @@ function goluwa.CreateEnv()
 					path = path:sub(#"materials/" + 1)
 				end
 
-				tex.mat = Material(path, "unlitgeneric mips noclamp")
+				if path:endswith(".vtf") then
+					tex.mat = CreateMaterial("goluwa_" .. path, "UnlitGeneric", {
+						["$basetexture"] = path:sub(0, -5),
+					})
+				else
+					tex.mat = Material(path, "unlitgeneric mips noclamp")
+				end
 
-				--tex.tex = tex.mat:GetTexture("$basetexture")
+				tex.tex = tex.mat:GetTexture("$basetexture")
 
-				tex.width = tex.mat:GetInt("$realwidth")
-				tex.height = tex.mat:GetInt("$realheight")
+				tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
+				tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
 
 				tex.loading = false
 			end)
@@ -1197,8 +1203,10 @@ if CLIENT then
 	goluwa.Update(goluwa.Initialize)
 end
 
-concommand.Add("goluwa_reload", function()
-	notagain.loaded_libraries.goluwa = CompileString(file.Read(notagain.addon_dir .. "lua/notagain/goluwa/goluwa.lua", "MOD"))()
-end)
+if (not game.SinglePlayer() or CLIENT) then
+	concommand.Add("goluwa_reload", function()
+		notagain.loaded_libraries.goluwa = CompileString(file.Read(notagain.addon_dir .. "lua/notagain/goluwa/goluwa.lua", "MOD"), "goluwa_reload")()
+	end)
+end
 
 return goluwa
