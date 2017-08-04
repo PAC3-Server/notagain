@@ -136,7 +136,7 @@ function chathud.Initialize()
 		end
 
 		chathud.panel.OnCursorMoved = function(_, x, y)
-			markup:SetMousePosition(Vector(x, y, 0))
+			markup:SetMousePosition(env.Vec2(x, y))
 		end
 	end
 
