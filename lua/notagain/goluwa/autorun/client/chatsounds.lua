@@ -1,7 +1,4 @@
-local goluwa = requirex("goluwa").env
-
-local autocomplete = goluwa.autocomplete
-local chatsounds = goluwa.chatsounds
+local env = requirex("goluwa").env
 
 local autocomplete_font = {
 	font = "Roboto-Black.ttf",
@@ -50,7 +47,7 @@ do
 	local random_mode = false
 
 	local function query(str, scroll)
-		found_autocomplete = autocomplete.Query("chatsounds", str, scroll)
+		found_autocomplete = env.autocomplete.Query("chatsounds", str, scroll)
 	end
 
 	hookAdd("OnChatTab", "chatsounds_autocomplete", function(str)
@@ -75,8 +72,8 @@ do
 			if found_autocomplete and #found_autocomplete > 0 then
 				local x, y = chat.GetChatBoxPos()
 				local w, h = chat.GetChatBoxSize()
-				goluwa.gfx.SetFont(autocomplete_font)
-				autocomplete.DrawFound("chatsounds", x, y + h, found_autocomplete)
+				env.gfx.SetFont(autocomplete_font)
+				env.autocomplete.DrawFound("chatsounds", x, y + h, found_autocomplete)
 			end
 		end)
 	end)
@@ -97,29 +94,29 @@ local init = false
 local doit = function(ply, str)
 	if not init then
 
-		goluwa.resource.AddProvider("https://github.com/PAC3-Server/chatsounds/raw/master/")
+		env.resource.AddProvider("https://github.com/PAC3-Server/chatsounds/raw/master/")
 
-		chatsounds.Initialize()
+		env.chatsounds.Initialize()
 
-		chatsounds.LoadListFromAppID(220) -- hl2
+		env.chatsounds.LoadListFromAppID(220) -- hl2
 
 		for i, info in ipairs(engine.GetGames()) do
 			if info.mounted and not blacklist[info.depot] then
-				chatsounds.LoadListFromAppID(info.depot)
+				env.chatsounds.LoadListFromAppID(info.depot)
 			end
 		end
 
-		chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
+		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
 
 		init = true
 	end
 
 	if str == "sh" or (str:find("sh%s") and not str:find("%Ssh")) or (str:find("%ssh") and not str:find("sh%S")) then
-		goluwa.audio.Panic()
+		env.audio.Panic()
 	end
 
-	goluwa.audio.player_object = ply
-	chatsounds.Say(str, math.Round(CurTime()))
+	env.audio.player_object = ply
+	env.chatsounds.Say(str, math.Round(CurTime()))
 end
 
 hookAdd("OnPlayerChat", "chatsounds",doit)
