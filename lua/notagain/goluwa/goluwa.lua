@@ -192,7 +192,7 @@ function goluwa.CreateEnv()
 					[".vtf"] = true,
 					[".dat"] = true,
 				}
-				local function get_path(path, is_dir, read_only)
+				local function get_path(path, is_dir)
 					if path:StartWith("/") then
 						path = path:sub(2)
 					end
@@ -234,7 +234,7 @@ function goluwa.CreateEnv()
 
 				local fs = {}
 
-				function fs.find(path, exclude_dot)
+				function fs.find(path)
 					dprint("fs.find: ", path)
 
 					if path:startswith("/") then
@@ -695,6 +695,7 @@ function goluwa.CreateEnv()
 	do
 		env.ffi = false
 		env.archive = false
+		env.freeimage = false
 		env.opengl = false
 		env["table.new"] = false
 		env["table.clear"] = false
@@ -708,6 +709,8 @@ function goluwa.CreateEnv()
 
 	function env.runfile(path, ...)
 		if path:EndsWith("*") then
+			if env.dont_include_multiple_files then return end
+
 			local dir = path:sub(0, -2)
 
 			if not file.IsDir("goluwa/src/" .. dir, "DATA") then
@@ -786,86 +789,6 @@ function goluwa.CreateEnv()
 	env.I = env.profiler.ToggleInstrumental
 	env.S = env.profiler.ToggleStatistical
 
-	do -- texture
-		local render = {}
-
-		local loading_material = Material("gui/progress_cog.png")
-
-		function render.CreateTextureFromPath(path, gmod_path)
-			local tex = {}
-			tex.mat = loading_material
-			tex.loading = true
-
-			function tex:IsValid()
-				return true
-			end
-
-			function tex:IsLoading()
-				return self.loading
-			end
-
-			function tex:GetSize()
-				if self:IsLoading() then
-					return env.Vec2(16, 16)
-				end
-
-				return env.Vec2(self.width, self.height)
-			end
-
-			if gmod_path then
-				tex.mat = Material(path)
-
-				tex.tex = tex.mat:GetTexture("$basetexture")
-
-				tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
-				tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
-
-				tex.loading = false
-			else
-				env.resource.Download(path, function(path)
-					path = env.GoluwaToGmodPath(path)
-
-					if path:StartWith("materials/") then
-						path = path:sub(#"materials/" + 1)
-					end
-
-					if path:endswith(".vtf") then
-						tex.mat = CreateMaterial("goluwa_" .. path, "UnlitGeneric", {
-							["$basetexture"] = path:sub(0, -5),
-							["$translucent"] = 1,
-							["$vertexcolor"] = 1,
-							["$vertexalpha"] = 1,
-						})
-					else
-						tex.mat = Material(path, "unlitgeneric mips noclamp")
-					end
-
-					tex.tex = tex.mat:GetTexture("$basetexture")
-
-					tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
-					tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
-
-					tex.loading = false
-				end)
-			end
-
-			return tex
-		end
-
-		render.white_texture = render.CreateTextureFromPath("vgui/white", true)
-		render.error_texture = render.CreateTextureFromPath("error", true)
-
-		function render.GetWhiteTexture()
-			return render.white_texture
-		end
-
-		function render.GetErrorTexture()
-			return render.error_texture
-		end
-
-		env.render = render
-	end
-
 	do
 		local window = {}
 
@@ -875,6 +798,14 @@ function goluwa.CreateEnv()
 
 		function window.GetClipboard()
 			ErrorNoHalt("NYI")
+		end
+
+		function window.GetMousePosition()
+			return env.Vec2(gui.MousePos())
+		end
+
+		function window.GetMouseTrapped()
+			return false
 		end
 
 		env.window = window
@@ -928,162 +859,64 @@ function goluwa.CreateEnv()
 		env.event.Call("Update", FrameTime())
 	end)
 
-	env.camera = env.runfile("lua/libraries/graphics/camera.lua")
-	env.render2d = env.runfile("lua/libraries/graphics/render2d/render2d.lua")
-
-	do
-		local temp = {{}, {}, {}, {}}
-		function env.GoluwaMatrixToGmodMatrix()
-			local m = env.render2d.GetWorldMatrix()
-
-			temp[1][1] = m.m00
-			temp[1][2] = m.m10
-			temp[1][3] = m.m20
-			temp[1][4] = m.m30
-
-			temp[2][1] = m.m01
-			temp[2][2] = m.m11
-			temp[2][3] = m.m21
-			temp[2][4] = m.m31
-
-			temp[3][1] = m.m02
-			temp[3][2] = m.m12
-			temp[3][3] = m.m22
-			temp[3][4] = m.m32
-
-			temp[4][1] = m.m03
-			temp[4][2] = m.m13
-			temp[4][3] = m.m23
-			temp[4][4] = m.m33
-
-			return Matrix(temp)
-		end
-	end
-
-	env.render2d.shader = {
-		global_color = env.Color(1,1,1,1),
-		color_override = env.Color(1,1,1),
-		alpha_multiplier = 1,
-		hsv_mult = env.Vec3(1,1,1),
-	}
-
-	function env.render2d.shader:Bind()
-		surface.SetDrawColor(self.global_color.r*255,self.global_color.g*255,self.global_color.b*255,self.global_color.a*255)
-		surface.SetMaterial(self.tex.mat)
-		surface.SetAlphaMultiplier(self.alpha_multiplier)
-	end
-
-	do
-		env.render2d.rectangle = {}
-
-		env.render2d.rectangle.Vertices = {}
-
-		env.render2d.rectangle.Vertices[0] = {pos = {[0] = 0, [1] = 0}, uv = {}, color = {}}
-		env.render2d.rectangle.Vertices[1] = {pos = {[0] = 0, [1] = 1}, uv = {}, color = {}}
-		env.render2d.rectangle.Vertices[2] = {pos = {[0] = 1, [1] = 1}, uv = {}, color = {}}
-
-		env.render2d.rectangle.Vertices[3] = {pos = {[0] = 1, [1] = 1}, uv = {}, color = {}}
-		env.render2d.rectangle.Vertices[4] = {pos = {[0] = 1, [1] = 0}, uv = {}, color = {}}
-		env.render2d.rectangle.Vertices[5] = {pos = {[0] = 0, [1] = 0}, uv = {}, color = {}}
-
-		env.render2d.rectangle.poly = {{}, {}, {}, {}, {}, {}}
-
-		function env.render2d.rectangle:UpdateBuffer()
-			self.poly[5].x = self.Vertices[0].pos[0]
-			self.poly[5].y = self.Vertices[0].pos[1]
-			self.poly[5].u = self.Vertices[0].uv[0]
-			self.poly[5].v = self.Vertices[0].uv[1]
-
-			self.poly[4].x = self.Vertices[1].pos[0]
-			self.poly[4].y = self.Vertices[1].pos[1]
-			self.poly[4].u = self.Vertices[1].uv[0]
-			self.poly[4].v = self.Vertices[1].uv[1]
-
-			self.poly[6].x = self.Vertices[2].pos[0]
-			self.poly[6].y = self.Vertices[2].pos[1]
-			self.poly[6].u = self.Vertices[2].uv[0]
-			self.poly[6].v = self.Vertices[2].uv[1]
-
-			self.poly[3].x = self.Vertices[3].pos[0]
-			self.poly[3].y = self.Vertices[3].pos[1]
-			self.poly[3].u = self.Vertices[3].uv[0]
-			self.poly[3].v = self.Vertices[3].uv[1]
-
-			self.poly[1].x = self.Vertices[4].pos[0]
-			self.poly[1].y = self.Vertices[4].pos[1]
-			self.poly[1].u = self.Vertices[4].uv[0]
-			self.poly[1].v = self.Vertices[4].uv[1]
-
-			self.poly[2].x = self.Vertices[5].pos[0]
-			self.poly[2].y = self.Vertices[5].pos[1]
-			self.poly[2].u = self.Vertices[5].uv[0]
-			self.poly[2].v = self.Vertices[5].uv[1]
-		end
-
-
-		env.render2d.SetRectUV()
-		env.render2d.SetRectColors()
-
-		function env.render2d.rectangle:Draw()
-			cam.PushModelMatrix(env.GoluwaMatrixToGmodMatrix())
-			surface.DrawPoly(self.poly)
-			cam.PopModelMatrix()
-		end
-	end
-
 	env.expression = env.runfile("lua/libraries/expression.lua")
+	env.autocomplete = env.runfile("lua/libraries/autocomplete.lua")
 
-	env.sockets = {}
-	env.SOCKETS = true
-	env.runfile("lua/libraries/network/sockets/http.lua", env.sockets)
+	do
+		local sockets = {}
+		env.SOCKETS = true
+		env.runfile("lua/libraries/network/sockets/http.lua", sockets)
 
-	function env.sockets.Request(tbl)
-		tbl.callback = tbl.callback or env.table.print
-		tbl.method = tbl.method or "GET"
+		function sockets.Request(tbl)
+			tbl.callback = tbl.callback or env.table.print
+			tbl.method = tbl.method or "GET"
 
-		local ok = false
+			local ok = false
 
-		if tbl.timeout and tbl.timedout_callback then
-			env.event.Delay(tbl.timeout, function()
-				if not ok then
-					tbl.timedout_callback()
-				end
-			end)
-		end
-
-		tbl.url = tbl.url:gsub(" ", "%%20")
-
-		--print("HTTP: " .. tbl.url)
-
-		HTTP({
-			failed = tbl.error_callback,
-			success = function(code, body, header)
-				ok = true
-
-				if not tbl.code_callback or tbl.code_callback(code) ~= false then
-
-					local copy = {}
-					for k,v in pairs(header) do
-						copy[k:lower()] = v
+			if tbl.timeout and tbl.timedout_callback then
+				env.event.Delay(tbl.timeout, function()
+					if not ok then
+						tbl.timedout_callback()
 					end
+				end)
+			end
 
-					if not tbl.header_callback or tbl.header_callback(copy) ~= false then
-						if tbl.on_chunks then
-							tbl.on_chunks(body)
+			tbl.url = tbl.url:gsub(" ", "%%20")
+
+			--print("HTTP: " .. tbl.url)
+
+			HTTP({
+				failed = tbl.error_callback,
+				success = function(code, body, header)
+					ok = true
+
+					if not tbl.code_callback or tbl.code_callback(code) ~= false then
+
+						local copy = {}
+						for k,v in pairs(header) do
+							copy[k:lower()] = v
 						end
 
-						tbl.callback({content = body, header = copy, code = code})
-					end
-				end
-			end,
-			method = tbl.method,
-			url = tbl.url,
+						if not tbl.header_callback or tbl.header_callback(copy) ~= false then
+							if tbl.on_chunks then
+								tbl.on_chunks(body)
+							end
 
-			header = tbl.parameters,
-			headers = tbl.headers,
-			post_data = tbl.body,
-			type = tbl.type or "text/plain; charset=utf-8" ,
-		})
+							tbl.callback({content = body, header = copy, code = code})
+						end
+					end
+				end,
+				method = tbl.method,
+				url = tbl.url,
+
+				header = tbl.parameters,
+				headers = tbl.headers,
+				post_data = tbl.body,
+				type = tbl.type or "text/plain; charset=utf-8" ,
+			})
+		end
+
+		env.sockets = sockets
 	end
 
 	env.resource = env.runfile("lua/libraries/network/resource.lua")
@@ -1114,89 +947,7 @@ function goluwa.CreateEnv()
 		env.audio = audio
 	end
 
-	do
-		local fonts = {}
-
-		function fonts.CreateFont(options)
-			options.font = options.path
-			local handle = {}
-			handle.name = tostring(handle)
-			surface.CreateFont(handle.name, options)
-			return handle
-		end
-
-		function fonts.FindFont(name)
-			return {
-				font = name,
-				size = 16,
-				weight = 600,
-				blur_size = 2,
-				background_color = Color(25,50,100,255),
-				blur_overdraw = 10,
-			}
-		end
-
-		env.fonts = fonts
-	end
-
-	do
-		local gfx = {}
-
-		function gfx.GetMousePosition()
-			return gui.MousePos()
-		end
-
-		function gfx.GetDefaultFont()
-			return {name = "DermaDefault"}
-		end
-
-		function gfx.DrawLine(x1,y1,x2,y2)
-			cam.PushModelMatrix(env.GoluwaMatrixToGmodMatrix())
-
-			local r,g,b,a = env.render2d.GetColor()
-			surface.SetDrawColor(r*255,g*255,b*255,(a*255)*env.render2d.GetAlphaMultiplier())
-			surface.DrawLine(x1,y1,x2,y2)
-			cam.PopModelMatrix()
-		end
-
-		do
-			local FONT = {}
-
-			function gfx.SetFont(font)
-				FONT = font or gfx.GetDefaultFont()
-			end
-
-			function gfx.DrawText(str, x,y,w,h)
-
-				cam.PushModelMatrix(env.GoluwaMatrixToGmodMatrix())
-				local r,g,b,a = env.render2d.GetColor()
-
-				prettytext.DrawText({
-					text = str,
-					x = x,
-					y = y,
-					font = FONT.font,
-					size = FONT.size,
-					weight = FONT.weight,
-					blur_size = FONT.blur_size,
-					foreground_color = Color(r*255,g*255,b*255,a*255*env.render2d.GetAlphaMultiplier()),
-					background_color = FONT.background_color,
-					blur_overdraw = FONT.blur_overdraw,
-					shadow_x = FONT.shadow_x or FONT.shadow,
-					shadow_y = FONT.shadow_y,
-				})
-				cam.PopModelMatrix()
-			end
-
-			function gfx.GetTextSize(str)
-				return prettytext.GetTextSize(str, FONT.font, FONT.size, FONT.weight, FONT.blur_size)
-			end
-		end
-
-		env.gfx = gfx
-
-		env.runfile("lua/libraries/graphics/gfx/markup.lua", env.gfx)
-	end
+	env.chatsounds = env.runfile("lua/libraries/audio/chatsounds/chatsounds.lua")
 
 	do
 		local steam = {}
@@ -1208,8 +959,291 @@ function goluwa.CreateEnv()
 		env.steam = steam
 	end
 
-	env.autocomplete = env.runfile("lua/libraries/autocomplete.lua")
-	env.chatsounds = env.runfile("lua/libraries/audio/chatsounds/chatsounds.lua")
+	do -- rendering
+		local cam_PushModelMatrix = cam.PushModelMatrix
+		local cam_PopModelMatrix = cam.PopModelMatrix
+
+		local get_world_matrix
+
+		do
+			local temp = {{}, {}, {}, {}}
+			get_world_matrix = function()
+				local m = env.render2d.GetWorldMatrix()
+
+				temp[1][1] = m.m00
+				temp[1][2] = m.m10
+				temp[1][3] = m.m20
+				temp[1][4] = m.m30
+
+				temp[2][1] = m.m01
+				temp[2][2] = m.m11
+				temp[2][3] = m.m21
+				temp[2][4] = m.m31
+
+				temp[3][1] = m.m02
+				temp[3][2] = m.m12
+				temp[3][3] = m.m22
+				temp[3][4] = m.m32
+
+				temp[4][1] = m.m03
+				temp[4][2] = m.m13
+				temp[4][3] = m.m23
+				temp[4][4] = m.m33
+
+				return Matrix(temp)
+			end
+		end
+
+		do
+			local render = {}
+
+			local loading_material = Material("gui/progress_cog.png")
+
+			function render.CreateTextureFromPath(path, gmod_path)
+				local tex = {}
+				tex.mat = loading_material
+				tex.loading = true
+
+				function tex:IsValid()
+					return true
+				end
+
+				function tex:IsLoading()
+					return self.loading
+				end
+
+				function tex:GetSize()
+					if self:IsLoading() then
+						return env.Vec2(16, 16)
+					end
+
+					return env.Vec2(self.width, self.height)
+				end
+
+				if gmod_path then
+					tex.mat = Material(path)
+
+					tex.tex = tex.mat:GetTexture("$basetexture")
+
+					tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
+					tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
+
+					tex.loading = false
+				else
+					env.resource.Download(path, function(path)
+						path = env.GoluwaToGmodPath(path)
+
+						if path:StartWith("materials/") then
+							path = path:sub(#"materials/" + 1)
+						end
+
+						if path:endswith(".vtf") then
+							tex.mat = CreateMaterial("goluwa_" .. path, "UnlitGeneric", {
+								["$basetexture"] = path:sub(0, -5),
+								["$translucent"] = 1,
+								["$vertexcolor"] = 1,
+								["$vertexalpha"] = 1,
+							})
+						else
+							tex.mat = Material(path, "unlitgeneric mips noclamp")
+						end
+
+						tex.tex = tex.mat:GetTexture("$basetexture")
+
+						tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
+						tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
+
+						tex.loading = false
+					end)
+				end
+
+				return tex
+			end
+
+			render.white_texture = render.CreateTextureFromPath("vgui/white", true)
+			render.loading_texture = render.CreateTextureFromPath("gui/progress_cog.png", true)
+			render.error_texture = render.CreateTextureFromPath("error", true)
+
+			function render.GetLoadingTexture()
+				return render.loading_texture
+			end
+
+			function render.GetWhiteTexture()
+				return render.white_texture
+			end
+
+			function render.GetErrorTexture()
+				return render.error_texture
+			end
+
+			local ScrW = ScrW
+			function render.GetWidth()
+				return ScrW()
+			end
+
+			local ScrH = ScrH
+			function render.GetHeight()
+				return ScrH()
+			end
+
+			function render.GetScreenSize()
+				return env.Vec2(ScrW(), ScrH())
+			end
+
+			env.render = render
+		end
+
+		env.camera = env.runfile("lua/libraries/graphics/camera.lua")
+
+		do
+			local render2d = env.runfile("lua/libraries/graphics/render2d/render2d.lua")
+
+			render2d.shader = {
+				global_color = env.Color(1,1,1,1),
+				color_override = env.Color(1,1,1),
+				alpha_multiplier = 1,
+				hsv_mult = env.Vec3(1,1,1),
+			}
+
+			local surface_SetDrawColor = surface.SetDrawColor
+			local surface_SetMaterial = surface.SetMaterial
+			local surface_SetAlphaMultiplier = surface.SetAlphaMultiplier
+
+			function render2d.shader:Bind()
+				surface_SetDrawColor(self.global_color.r*255,self.global_color.g*255,self.global_color.b*255,self.global_color.a*255)
+				surface_SetMaterial(self.tex.mat)
+				surface_SetAlphaMultiplier(self.alpha_multiplier)
+			end
+
+			do
+				render2d.rectangle = {}
+
+				render2d.rectangle.Vertices = {}
+
+				render2d.rectangle.Vertices[0] = {pos = {[0] = 0, [1] = 0}, uv = {}, color = {}}
+				render2d.rectangle.Vertices[1] = {pos = {[0] = 0, [1] = 1}, uv = {}, color = {}}
+				render2d.rectangle.Vertices[2] = {pos = {[0] = 1, [1] = 1}, uv = {}, color = {}}
+
+				render2d.rectangle.Vertices[3] = {pos = {[0] = 1, [1] = 1}, uv = {}, color = {}}
+				render2d.rectangle.Vertices[4] = {pos = {[0] = 1, [1] = 0}, uv = {}, color = {}}
+				render2d.rectangle.Vertices[5] = {pos = {[0] = 0, [1] = 0}, uv = {}, color = {}}
+
+				render2d.rectangle.poly = {{}, {}, {}, {}, {}, {}}
+
+				function render2d.rectangle:UpdateBuffer()
+					self.poly[5].x = self.Vertices[0].pos[0]
+					self.poly[5].y = self.Vertices[0].pos[1]
+					self.poly[5].u = self.Vertices[0].uv[0]
+					self.poly[5].v = self.Vertices[0].uv[1]
+
+					self.poly[4].x = self.Vertices[1].pos[0]
+					self.poly[4].y = self.Vertices[1].pos[1]
+					self.poly[4].u = self.Vertices[1].uv[0]
+					self.poly[4].v = self.Vertices[1].uv[1]
+
+					self.poly[6].x = self.Vertices[2].pos[0]
+					self.poly[6].y = self.Vertices[2].pos[1]
+					self.poly[6].u = self.Vertices[2].uv[0]
+					self.poly[6].v = self.Vertices[2].uv[1]
+
+					self.poly[3].x = self.Vertices[3].pos[0]
+					self.poly[3].y = self.Vertices[3].pos[1]
+					self.poly[3].u = self.Vertices[3].uv[0]
+					self.poly[3].v = self.Vertices[3].uv[1]
+
+					self.poly[1].x = self.Vertices[4].pos[0]
+					self.poly[1].y = self.Vertices[4].pos[1]
+					self.poly[1].u = self.Vertices[4].uv[0]
+					self.poly[1].v = self.Vertices[4].uv[1]
+
+					self.poly[2].x = self.Vertices[5].pos[0]
+					self.poly[2].y = self.Vertices[5].pos[1]
+					self.poly[2].u = self.Vertices[5].uv[0]
+					self.poly[2].v = self.Vertices[5].uv[1]
+				end
+
+				render2d.SetRectUV()
+				render2d.SetRectColors()
+
+				local surface_DrawPoly = surface.DrawPoly
+
+				function render2d.rectangle:Draw()
+					cam_PushModelMatrix(get_world_matrix())
+					surface_DrawPoly(self.poly)
+					cam_PopModelMatrix()
+				end
+			end
+
+			env.render2d = render2d
+		end
+
+		do
+			local fonts = {}
+
+			function fonts.CreateFont(options)
+				local obj = {}
+
+				local temp_color = Color(255, 255, 255, 255)
+
+				function obj:DrawString(str, x, y, w)
+					local r,g,b,a = env.render2d.GetColor()
+
+					cam_PushModelMatrix(get_world_matrix())
+						temp_color.r = r * 255
+						temp_color.g = g * 255
+						temp_color.b = b * 255
+						temp_color.a = a * 255 * env.render2d.GetAlphaMultiplier()
+
+						prettytext.DrawText({
+							text = str,
+							x = x,
+							y = y,
+							font = options.font,
+							size = options.size,
+							weight = options.weight,
+							blur_size = options.blur_size,
+							foreground_color = temp_color,
+							background_color = options.background_color,
+							blur_overdraw = options.blur_overdraw,
+							shadow_x = options.shadow_x or options.shadow,
+							shadow_y = options.shadow_y,
+						})
+					cam_PopModelMatrix()
+				end
+
+				function obj:GetTextSize(str)
+					return prettytext.GetTextSize(str, options.font, options.size, options.weight, options.blur_size)
+				end
+
+				function obj:IsReady()
+					return true
+				end
+
+				return obj
+			end
+
+			fonts.default_font = fonts.CreateFont({
+				font = name,
+				size = 16,
+				weight = 600,
+				blur_size = 2,
+				background_color = Color(25,50,100,255),
+				blur_overdraw = 10,
+			})
+
+			function fonts.GetDefaultFont()
+				return fonts.default_font
+			end
+
+			function fonts.FindFont()
+				return fonts.default_font
+			end
+
+			env.fonts = fonts
+		end
+
+		env.gfx = env.runfile("lua/libraries/graphics/gfx/gfx.lua")
+	end
 
 	return env
 end

@@ -64,6 +64,11 @@ for _, font in pairs(chathud.font_modifiers) do
 	end
 end
 
+chathud.default_font = env.fonts.CreateFont(chathud.default_font)
+for k,v in pairs(chathud.font_modifiers) do
+	chathud.font_modifiers[k] = env.fonts.CreateFont(v)
+end
+
 chathud.emote_shortcuts = chathud.emote_shortcuts or {
 	smug = "<texture=masks/smug>",
 	downs = "<texture=masks/downs>",

@@ -1,13 +1,13 @@
 local env = requirex("goluwa").env
 
-local autocomplete_font = {
+local autocomplete_font = env.fonts.CreateFont({
 	font = "Roboto-Black.ttf",
 	size = 18,
 	weight = 600,
 	blur_size = 3,
 	background_color = Color(25,50,100,255),
 	blur_overdraw = 3,
-}
+})
 
 local hooks = {}
 local function hookAdd(event, id, callback)
