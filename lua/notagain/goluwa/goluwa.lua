@@ -791,7 +791,7 @@ function goluwa.CreateEnv()
 
 		local loading_material = Material("gui/progress_cog.png")
 
-		function render.CreateTextureFromPath(path)
+		function render.CreateTextureFromPath(path, gmod_path)
 			local tex = {}
 			tex.mat = loading_material
 			tex.loading = true
@@ -812,20 +812,8 @@ function goluwa.CreateEnv()
 				return env.Vec2(self.width, self.height)
 			end
 
-			env.resource.Download(path, function(path)
-				path = env.GoluwaToGmodPath(path)
-
-				if path:StartWith("materials/") then
-					path = path:sub(#"materials/" + 1)
-				end
-
-				if path:endswith(".vtf") then
-					tex.mat = CreateMaterial("goluwa_" .. path, "UnlitGeneric", {
-						["$basetexture"] = path:sub(0, -5),
-					})
-				else
-					tex.mat = Material(path, "unlitgeneric mips noclamp")
-				end
+			if gmod_path then
+				tex.mat = Material(path)
 
 				tex.tex = tex.mat:GetTexture("$basetexture")
 
@@ -833,9 +821,46 @@ function goluwa.CreateEnv()
 				tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
 
 				tex.loading = false
-			end)
+			else
+				env.resource.Download(path, function(path)
+					path = env.GoluwaToGmodPath(path)
+
+					if path:StartWith("materials/") then
+						path = path:sub(#"materials/" + 1)
+					end
+
+					if path:endswith(".vtf") then
+						tex.mat = CreateMaterial("goluwa_" .. path, "UnlitGeneric", {
+							["$basetexture"] = path:sub(0, -5),
+							["$translucent"] = 1,
+							["$vertexcolor"] = 1,
+							["$vertexalpha"] = 1,
+						})
+					else
+						tex.mat = Material(path, "unlitgeneric mips noclamp")
+					end
+
+					tex.tex = tex.mat:GetTexture("$basetexture")
+
+					tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
+					tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
+
+					tex.loading = false
+				end)
+			end
 
 			return tex
+		end
+
+		render.white_texture = render.CreateTextureFromPath("vgui/white", true)
+		render.error_texture = render.CreateTextureFromPath("error", true)
+
+		function render.GetWhiteTexture()
+			return render.white_texture
+		end
+
+		function render.GetErrorTexture()
+			return render.error_texture
 		end
 
 		env.render = render
@@ -903,103 +928,107 @@ function goluwa.CreateEnv()
 		env.event.Call("Update", FrameTime())
 	end)
 
-	do -- render2d
-		local render2d = {}
+	env.camera = env.runfile("lua/libraries/graphics/camera.lua")
+	env.render2d = env.runfile("lua/libraries/graphics/render2d/render2d.lua")
 
-		do
-			local R,G,B,A = 1,1,1,1
+	do
+		local temp = {{}, {}, {}, {}}
+		function env.GoluwaMatrixToGmodMatrix()
+			local m = env.render2d.GetWorldMatrix()
 
-			function render2d.SetColor(r,g,b,a)
-				R = r
-				G = g
-				B = b
-				A = a or 1
+			temp[1][1] = m.m00
+			temp[1][2] = m.m10
+			temp[1][3] = m.m20
+			temp[1][4] = m.m30
 
-				--surface.SetDrawColor(R*255,G*255,B*255,A*255)
-				--surface.SetTextColor(R*255,G*255,B*255,A*255)
-			end
+			temp[2][1] = m.m01
+			temp[2][2] = m.m11
+			temp[2][3] = m.m21
+			temp[2][4] = m.m31
 
-			function render2d.GetColor()
-				return R, G, B, A
-			end
+			temp[3][1] = m.m02
+			temp[3][2] = m.m12
+			temp[3][3] = m.m22
+			temp[3][4] = m.m32
 
-			env.utility.MakePushPopFunction(render2d, "Color")
+			temp[4][1] = m.m03
+			temp[4][2] = m.m13
+			temp[4][3] = m.m23
+			temp[4][4] = m.m33
+
+			return Matrix(temp)
+		end
+	end
+
+	env.render2d.shader = {
+		global_color = env.Color(1,1,1,1),
+		color_override = env.Color(1,1,1),
+		alpha_multiplier = 1,
+		hsv_mult = env.Vec3(1,1,1),
+	}
+
+	function env.render2d.shader:Bind()
+		surface.SetDrawColor(self.global_color.r*255,self.global_color.g*255,self.global_color.b*255,self.global_color.a*255)
+		surface.SetMaterial(self.tex.mat)
+		surface.SetAlphaMultiplier(self.alpha_multiplier)
+	end
+
+	do
+		env.render2d.rectangle = {}
+
+		env.render2d.rectangle.Vertices = {}
+
+		env.render2d.rectangle.Vertices[0] = {pos = {[0] = 0, [1] = 0}, uv = {}, color = {}}
+		env.render2d.rectangle.Vertices[1] = {pos = {[0] = 0, [1] = 1}, uv = {}, color = {}}
+		env.render2d.rectangle.Vertices[2] = {pos = {[0] = 1, [1] = 1}, uv = {}, color = {}}
+
+		env.render2d.rectangle.Vertices[3] = {pos = {[0] = 1, [1] = 1}, uv = {}, color = {}}
+		env.render2d.rectangle.Vertices[4] = {pos = {[0] = 1, [1] = 0}, uv = {}, color = {}}
+		env.render2d.rectangle.Vertices[5] = {pos = {[0] = 0, [1] = 0}, uv = {}, color = {}}
+
+		env.render2d.rectangle.poly = {{}, {}, {}, {}, {}, {}}
+
+		function env.render2d.rectangle:UpdateBuffer()
+			self.poly[5].x = self.Vertices[0].pos[0]
+			self.poly[5].y = self.Vertices[0].pos[1]
+			self.poly[5].u = self.Vertices[0].uv[0]
+			self.poly[5].v = self.Vertices[0].uv[1]
+
+			self.poly[4].x = self.Vertices[1].pos[0]
+			self.poly[4].y = self.Vertices[1].pos[1]
+			self.poly[4].u = self.Vertices[1].uv[0]
+			self.poly[4].v = self.Vertices[1].uv[1]
+
+			self.poly[6].x = self.Vertices[2].pos[0]
+			self.poly[6].y = self.Vertices[2].pos[1]
+			self.poly[6].u = self.Vertices[2].uv[0]
+			self.poly[6].v = self.Vertices[2].uv[1]
+
+			self.poly[3].x = self.Vertices[3].pos[0]
+			self.poly[3].y = self.Vertices[3].pos[1]
+			self.poly[3].u = self.Vertices[3].uv[0]
+			self.poly[3].v = self.Vertices[3].uv[1]
+
+			self.poly[1].x = self.Vertices[4].pos[0]
+			self.poly[1].y = self.Vertices[4].pos[1]
+			self.poly[1].u = self.Vertices[4].uv[0]
+			self.poly[1].v = self.Vertices[4].uv[1]
+
+			self.poly[2].x = self.Vertices[5].pos[0]
+			self.poly[2].y = self.Vertices[5].pos[1]
+			self.poly[2].u = self.Vertices[5].uv[0]
+			self.poly[2].v = self.Vertices[5].uv[1]
 		end
 
-		do
-			local TEX
-			function render2d.SetTexture(tex)
-				if tex then
-					surface.SetMaterial(tex.mat)
-				else
-					draw.NoTexture()
-				end
-			end
 
-			function render2d.GetTexture()
-				return TEX
-			end
+		env.render2d.SetRectUV()
+		env.render2d.SetRectColors()
 
-			env.utility.MakePushPopFunction(render2d, "Texture")
-		end
-
-		function render2d.SetAlphaMultiplier(m)
-			render2d.alpha_multiplier = m
-			--surface.SetAlphaMultiplier(m)
-		end
-
-		do
-			local matrix_stack_i = 1
-			local matrix_stack = {}
-
-			render2d.world_matrix = Matrix()
-
-			function render2d.PushMatrix(x,y, w,h, a, dont_multiply)
-				local old = matrix_stack[matrix_stack_i]
-				matrix_stack[matrix_stack_i] = render2d.world_matrix
-
-				if dont_multiply then
-					render2d.world_matrix = Matrix()
-				else
-					render2d.world_matrix = Matrix()
-					if old then render2d.world_matrix:Set(old) end
-				end
-
-				matrix_stack_i = matrix_stack_i + 1
-
-				if x and y then render2d.Translate(x, y) end
-				if w and h then render2d.Scale(w, h) end
-				if a then render2d.Rotate(a) end
-			end
-
-			function render2d.PopMatrix()
-				matrix_stack_i = matrix_stack_i - 1
-
-				render2d.world_matrix = matrix_stack[matrix_stack_i]
-			end
-
-			function render2d.Translate(x, y)
-				render2d.world_matrix:Translate(Vector(x,y,0))
-			end
-
-			function render2d.Scale(w, h)
-				render2d.world_matrix:Scale(Vector(w,h,1))
-			end
-
-			function render2d.Rotate(ang)
-				render2d.world_matrix:Rotate(Angle(0,math.deg(ang),0))
-			end
-		end
-
-		function render2d.DrawRect(x,y,w,h)
-			cam.PushModelMatrix(render2d.world_matrix)
-			local r,g,b,a = render2d.GetColor()
-			surface.SetDrawColor(r*255,g*255,b*255,(a*255)*render2d.alpha_multiplier)
-			surface.DrawTexturedRect(x,y,w,h)
+		function env.render2d.rectangle:Draw()
+			cam.PushModelMatrix(env.GoluwaMatrixToGmodMatrix())
+			surface.DrawPoly(self.poly)
 			cam.PopModelMatrix()
 		end
-
-		env.render2d = render2d
 	end
 
 	env.expression = env.runfile("lua/libraries/expression.lua")
@@ -1122,9 +1151,10 @@ function goluwa.CreateEnv()
 		end
 
 		function gfx.DrawLine(x1,y1,x2,y2)
-			cam.PushModelMatrix(env.render2d.world_matrix)
+			cam.PushModelMatrix(env.GoluwaMatrixToGmodMatrix())
+
 			local r,g,b,a = env.render2d.GetColor()
-			surface.SetDrawColor(r*255,g*255,b*255,(a*255)*env.render2d.alpha_multiplier)
+			surface.SetDrawColor(r*255,g*255,b*255,(a*255)*env.render2d.GetAlphaMultiplier())
 			surface.DrawLine(x1,y1,x2,y2)
 			cam.PopModelMatrix()
 		end
@@ -1136,10 +1166,9 @@ function goluwa.CreateEnv()
 				FONT = font or gfx.GetDefaultFont()
 			end
 
-			env.render2d.alpha_multiplier = 1
-
 			function gfx.DrawText(str, x,y,w,h)
-				cam.PushModelMatrix(env.render2d.world_matrix)
+
+				cam.PushModelMatrix(env.GoluwaMatrixToGmodMatrix())
 				local r,g,b,a = env.render2d.GetColor()
 
 				prettytext.DrawText({
@@ -1150,7 +1179,7 @@ function goluwa.CreateEnv()
 					size = FONT.size,
 					weight = FONT.weight,
 					blur_size = FONT.blur_size,
-					foreground_color = Color(r*255,g*255,b*255,a*255*env.render2d.alpha_multiplier),
+					foreground_color = Color(r*255,g*255,b*255,a*255*env.render2d.GetAlphaMultiplier()),
 					background_color = FONT.background_color,
 					blur_overdraw = FONT.blur_overdraw,
 					shadow_x = FONT.shadow_x or FONT.shadow,
@@ -1205,7 +1234,7 @@ end
 
 if (not game.SinglePlayer() or CLIENT) then
 	concommand.Add("goluwa_reload", function()
-		notagain.loaded_libraries.goluwa = CompileString(file.Read(notagain.addon_dir .. "lua/notagain/goluwa/goluwa.lua", "MOD"), "goluwa_reload")()
+		notagain.loaded_libraries.goluwa = CompileString(file.Read(notagain.addon_dir .. "lua/notagain/goluwa/goluwa.lua", "MOD"), "lua/notagain/goluwa/goluwa.lua")()
 	end)
 end
 
