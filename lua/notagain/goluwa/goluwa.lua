@@ -34,7 +34,7 @@ function goluwa.Update(cb)
 
 		for path, sha in body:gmatch('"path":%s-"(src/lua/libraries/.-)".-"sha":%s-"(.-)"') do
 			if path:EndsWith(".lua") then
-				if prev_paths[path] ~= sha then
+				if prev_paths[path] ~= sha or not file.Exists("goluwa/" .. path:gsub("%.", "^") .. ".txt", "DATA") then
 					paths[path] = sha
 				end
 			end
@@ -73,18 +73,31 @@ function goluwa.Update(cb)
 				end
 				done[dir] = true
 			end
-			http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, function(lua)
-				file.Write("goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
-				left = left - 1
 
-				if left == 0 then
-					dprint("finished downloading all files")
-					cb()
-				elseif next_print < RealTime() then
-					dprint(left .. " files left")
-					next_print = RealTime() + 0.5
+			local function download(lua, _,_, code)
+				left = left - 1
+				if code == 200 then
+					file.Write("goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
+
+					if left == 0 then
+						dprint("finished downloading all files")
+						cb()
+					elseif next_print < RealTime() then
+						dprint(left .. " files left")
+						next_print = RealTime() + 0.5
+					end
+				else
+					dprint(lua)
+					dprint(path .. " failed to download with error code: " .. code)
+
+					if code == 503 then
+						dprint("trying " .. path .. " again because it timed out")
+						http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, download)
+					end
 				end
-			end)
+			end
+
+			http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, download)
 		end
 	end)
 end
