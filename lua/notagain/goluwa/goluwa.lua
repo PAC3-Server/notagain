@@ -1,4 +1,3 @@
-local urlimage = CLIENT and requirex("urlimage")
 local msgpack = requirex("msgpack")
 local prettytext = CLIENT and requirex("pretty_text")
 local common_audio = CLIENT and requirex("common_audio")
@@ -221,9 +220,9 @@ function goluwa.CreateEnv()
 
 					if path:StartWith("data/") then
 						local dir, file_name = path:match("(.+/)(.+)")
-						file_name = file_name:gsub("%.", "%^")
 
 						if not allowed[path:sub(-4)] then
+							file_name = file_name:gsub("%.", "%^")
 							file_name = file_name .. ".dat"
 						end
 
@@ -790,32 +789,46 @@ function goluwa.CreateEnv()
 	do -- texture
 		local render = {}
 
+		local loading_material = Material("gui/progress_cog.png")
+
 		function render.CreateTextureFromPath(path)
-			if path:StartWith("materials/") then
-				path = path:sub(#"materials/" + 1)
-			end
-
 			local tex = {}
+			tex.mat = loading_material
+			tex.loading = true
 
-			if path:StartWith("http") then
-				tex.mat = urlimage.URLMaterial(path)
-				tex.urlimage = true
-			else
-				tex.mat = Material(path)
+			function tex:IsValid()
+				return true
 			end
-			tex.IsValid = function()return true end
-			tex.IsLoading = function() return false end
-			tex.GetSize = function()
-				if tex.urlimage then
-					local w, h = tex.mat()
-					if w then
-						return Vector(w, h)
-					end
 
-					return Vector(16, 16)
+			function tex:IsLoading()
+				return self.loading
+			end
+
+			function tex:GetSize()
+				if self:IsLoading() then
+					return env.Vec2(16, 16)
 				end
-				return Vector(tex.mat:Width(), tex.mat:Height())
+
+				return env.Vec2(self.width, self.height)
 			end
+
+			env.resource.Download(path, function(path)
+				path = env.GoluwaToGmodPath(path)
+
+				if path:StartWith("materials/") then
+					path = path:sub(#"materials/" + 1)
+				end
+
+				tex.mat = Material(path, "unlitgeneric mips noclamp")
+
+				--tex.tex = tex.mat:GetTexture("$basetexture")
+
+				tex.width = tex.mat:GetInt("$realwidth")
+				tex.height = tex.mat:GetInt("$realheight")
+
+				tex.loading = false
+			end)
+
 			return tex
 		end
 
@@ -911,16 +924,7 @@ function goluwa.CreateEnv()
 			local TEX
 			function render2d.SetTexture(tex)
 				if tex then
-					if tex.urlimage then
-						local w,h, mat = tex.mat()
-						if mat then
-							surface.SetMaterial(mat)
-						else
-							draw.NoTexture()
-						end
-					else
-						surface.SetMaterial(tex.mat)
-					end
+					surface.SetMaterial(tex.mat)
 				else
 					draw.NoTexture()
 				end
@@ -1192,5 +1196,9 @@ end
 if CLIENT then
 	goluwa.Update(goluwa.Initialize)
 end
+
+concommand.Add("goluwa_reload", function()
+	notagain.loaded_libraries.goluwa = CompileString(file.Read(notagain.addon_dir .. "lua/notagain/goluwa/goluwa.lua", "MOD"))()
+end)
 
 return goluwa
