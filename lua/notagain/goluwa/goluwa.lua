@@ -43,7 +43,7 @@ function goluwa.Update(cb)
 		local count = table.Count(paths)
 
 		if count == 0 then
-			dprint("everything is up to date")
+			dprint("everything is already up to date")
 			cb()
 			return
 		end
@@ -78,11 +78,11 @@ function goluwa.Update(cb)
 				left = left - 1
 
 				if left == 0 then
-					dprint("done!")
+					dprint("finished downloading all files")
 					cb()
 				elseif next_print < RealTime() then
 					dprint(left .. " files left")
-					next_print = RealTime() + 1
+					next_print = RealTime() + 0.5
 				end
 			end)
 		end
@@ -764,6 +764,7 @@ function goluwa.CreateEnv()
 	env.R = env.vfs.GetAbsolutePath -- a nice global for loading resources externally from current dir
 	env.crypto = env.runfile("lua/libraries/crypto.lua")
 
+	env.pvars = env.runfile("lua/libraries/pvars.lua")
 	env.commands = env.runfile("lua/libraries/commands.lua")
 
 	concommand.Add("goluwa", function(ply, cmd, args, line) env.commands.RunString(line, false, false, true) end)
@@ -1162,10 +1163,13 @@ function goluwa.CreateEnv()
 end
 
 function goluwa.Initialize()
+	dprint("initializing goluwa ...")
+	local time = SysTime()
 	goluwa.env = goluwa.CreateEnv()
 	_G.goluwa = goluwa
 
 	notagain.AutorunDirectory("goluwa")
+	dprint("initializing goluwa took " .. (SysTime() - time) .. " seconds")
 end
 
 function goluwa.SetEnv()
