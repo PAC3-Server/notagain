@@ -950,177 +950,9 @@ function goluwa.CreateEnv()
 	--	print("goluwa event removed: ", info.event_type, info.id)
 	end)
 
-	env.input = env.runfile("lua/libraries/input.lua")
-
-
-	do
-		local translate_key = {}
-
-		local function find_enums(name)
-			for k,v in pairs(_G) do
-				if k:startswith(name .. "_") then
-					translate_key[k:match(name .. "_(.+)"):lower()] = v
-				end
-			end
-		end
-
-		find_enums("KEY")
-		find_enums("MOUSE")
-		find_enums("BUTTON")
-		find_enums("JOYSTICK")
-
-		local translate_key_rev = {}
-		for k,v in pairs(translate_key) do
-			translate_key_rev[v] = k
-		end
-
-		function goluwa.GetKeyCode(key, rev)
-			if rev then
-				if translate_key_rev[key] then
-					--if goluwa.print_keys then llog("key reverse: ", key, " >> ", translate_key_rev[key]) end
-					return translate_key_rev[key]
-				else
-					--logf("key %q could not be translated!\n", key)
-					return translate_key_rev.KEY_P -- dunno
-				end
-			else
-				if translate_key[key] then
-					if goluwa.print_keys then llog("key: ", key, " >> ", translate_key[key]) end
-					return translate_key[key]
-				else
-					--logf("key %q could not be translated!\n", key)
-					return translate_key.p -- dunno
-				end
-			end
-		end
-
-		local translate_mouse = {
-			button_1 = _G.MOUSE_LEFT,
-			button_2 = _G.MOUSE_RIGHT,
-			button_3 = _G.MOUSE_MIDDLE,
-			button_4 = _G.MOUSE_4,
-			button_5 = _G.MOUSE_5,
-			mwheel_up = _G.MOUSE_WHEEL_UP,
-			mwheel_down = _G.MOUSE_WHEEL_DOWN,
-		}
-
-		local translate_mouse_rev = {}
-		for k,v in pairs(translate_mouse) do
-			translate_mouse_rev[v] = k
-		end
-
-		function goluwa.GetMouseCode(button, rev)
-			if rev then
-				if translate_mouse_rev[button] then
-					return translate_mouse_rev[button]
-				else
-					--llog("mouse button %q could not be translated!\n", button)
-					return translate_mouse.MOUSE_5
-				end
-			else
-				if translate_mouse[button] then
-					return translate_mouse[button]
-				else
-					--llog("mouse button %q could not be translated!\n", button)
-					return translate_mouse.button_5
-				end
-			end
-		end
-	end
-
-	local keys = {}
-	local key_trigger = env.input.SetupInputEvent("Key")
-	local function key_input(key, press)
-		env.event.Call("WindowKeyInput", goluwa.window, key, press)
-		if key_trigger(key, press) ~= false then
-			env.event.Call("KeyInput", key, press)
-		end
-
-		if press then
-			local char = key
-
-			-- etc
-			if system.GetCountry() == "NO" then
-				if key == "`" then
-					char = "|"
-				elseif key == "SEMICOLON" then
-					char = "ø"
-				elseif key == "'" then
-					char = "æ"
-				elseif key == "[" then
-					char = "å"
-				end
-			end
-
-			if input.IsShiftDown() then
-				char = env.utf8.upper(char)
-			end
-
-			if env.utf8.length(char) == 1 then
-				env.event.Call("WindowCharInput", goluwa.window, char)
-				env.event.Call("CharInput", char)
-			end
-		end
-	end
-
-	local buttons = {}
-	local mouse_trigger = env.input.SetupInputEvent("Mouse")
-
-	local translate = {
-		MOUSE1 = "button_1",
-		MOUSE2 = "button_2",
-		MOUSE3 = "button_3",
-		MOUSE4 = "button_4",
-	}
-
-	local function mouse_input(btn, press)
-		btn = translate[btn] or btn
-
-		env.event.Call("WindowMouseInput", goluwa.window, btn, press)
-		if mouse_trigger(btn, press) ~= false then
-			env.event.Call("MouseInput", btn, press)
-		end
-	end
-
-
-	hook.Add("SetupMove", "goluwa", function()
+	hook.Add("Think", "goluwa", function()
 		env.event.UpdateTimers()
 		env.event.Call("Update", FrameTime())
-
-		for i = KEY_FIRST, KEY_LAST do
-			if input.IsKeyDown(i) then
-				if not keys[i] then
-					key_input(input.GetKeyName(i), true)
-				end
-				keys[i] = true
-			else
-				if keys[i] then
-					key_input(input.GetKeyName(i), false)
-				end
-				keys[i] = false
-			end
-		end
-
-		for i = MOUSE_FIRST, MOUSE_LAST do
-			if input.IsMouseDown(i) then
-				if not buttons[i] then
-					mouse_input(input.GetKeyName(i), true)
-				end
-				buttons[i] = true
-			else
-				if buttons[i] then
-					mouse_input(input.GetKeyName(i), false)
-				end
-				buttons[i] = false
-			end
-		end
-	end)
-
-	hook.Add("HUDPaint", "goluwa_2d", function()
-		local dt = FrameTime()
-		env.event.Call("PreDrawGUI", dt)
-		env.event.Call("DrawGUI", dt)
-		env.event.Call("PostDrawGUI", dt)
 	end)
 
 	env.expression = env.runfile("lua/libraries/expression.lua")
@@ -1692,17 +1524,114 @@ function goluwa.CreateEnv()
 		env.gfx = env.runfile("lua/libraries/graphics/gfx/gfx.lua")
 		env.gfx.ninepatch_poly = env.gfx.CreatePolygon2D(9 * 6)
 		env.gfx.ninepatch_poly.vertex_buffer:SetDrawHint("dynamic")
-
-		env.language = env.runfile("lua/libraries/language.lua")
-		env.L = env.language.LanguageString
-
-		--env.gui = env.runfile("lua/libraries/graphics/gui/gui.lua")
-		--env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
-		--env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
-		--env.gui.Initialize()
 	end
 
 	return env
+end
+
+
+function goluwa.InitializeGUI()
+	local env = goluwa.env
+
+	env.input = env.runfile("lua/libraries/input.lua")
+	env.language = env.runfile("lua/libraries/language.lua")
+	env.L = env.language.LanguageString
+
+	env.gui = env.runfile("lua/libraries/graphics/gui/gui.lua")
+	env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
+	env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
+	env.gui.Initialize()
+
+	local keys = {}
+	local key_trigger = env.input.SetupInputEvent("Key")
+	local function key_input(key, press)
+		env.event.Call("WindowKeyInput", goluwa.window, key, press)
+		if key_trigger(key, press) ~= false then
+			env.event.Call("KeyInput", key, press)
+		end
+
+		if press then
+			local char = key
+
+			-- etc
+			if system.GetCountry() == "NO" then
+				if key == "`" then
+					char = "|"
+				elseif key == "SEMICOLON" then
+					char = "ø"
+				elseif key == "'" then
+					char = "æ"
+				elseif key == "[" then
+					char = "å"
+				end
+			end
+
+			if input.IsShiftDown() then
+				char = env.utf8.upper(char)
+			end
+
+			if env.utf8.length(char) == 1 then
+				env.event.Call("WindowCharInput", goluwa.window, char)
+				env.event.Call("CharInput", char)
+			end
+		end
+	end
+
+	local buttons = {}
+	local mouse_trigger = env.input.SetupInputEvent("Mouse")
+
+	local translate = {
+		MOUSE1 = "button_1",
+		MOUSE2 = "button_2",
+		MOUSE3 = "button_3",
+		MOUSE4 = "button_4",
+	}
+
+	local function mouse_input(btn, press)
+		btn = translate[btn] or btn
+
+		env.event.Call("WindowMouseInput", goluwa.window, btn, press)
+		if mouse_trigger(btn, press) ~= false then
+			env.event.Call("MouseInput", btn, press)
+		end
+	end
+
+	hook.Add("Think", "goluwa_keys", function()
+		for i = KEY_FIRST, KEY_LAST do
+			if input.IsKeyDown(i) then
+				if not keys[i] then
+					key_input(input.GetKeyName(i), true)
+				end
+				keys[i] = true
+			else
+				if keys[i] then
+					key_input(input.GetKeyName(i), false)
+				end
+				keys[i] = false
+			end
+		end
+
+		for i = MOUSE_FIRST, MOUSE_LAST do
+			if input.IsMouseDown(i) then
+				if not buttons[i] then
+					mouse_input(input.GetKeyName(i), true)
+				end
+				buttons[i] = true
+			else
+				if buttons[i] then
+					mouse_input(input.GetKeyName(i), false)
+				end
+				buttons[i] = false
+			end
+		end
+	end)
+
+	hook.Add("HUDPaint", "goluwa_2d", function()
+		local dt = FrameTime()
+		env.event.Call("PreDrawGUI", dt)
+		env.event.Call("DrawGUI", dt)
+		env.event.Call("PostDrawGUI", dt)
+	end)
 end
 
 function goluwa.Initialize()
