@@ -12,105 +12,148 @@ local function dprint(...)
 	print("goluwa: ", ...)
 end
 
-function goluwa.Update(cb)
-	http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/git/trees/master?recursive=1", function(body)
-		file.CreateDir("goluwa/")
+local next_print = 0
 
-		local prev_paths = {}
-		local prev_body = file.Read("goluwa/downloaded_lua_files.txt")
-
-		if prev_body then
-			for path, sha in prev_body:gmatch('"path":%s-"(src/lua/libraries/.-)".-"sha":%s-"(.-)"') do
-				if path:EndsWith(".lua") then
-					prev_paths[path] = sha
-				end
-			end
-		else
-			dprint("downloading files for first time")
-		end
-
-		local paths = {}
-
-		for path, sha in body:gmatch('"path":%s-"(src/lua/libraries/.-)".-"sha":%s-"(.-)"') do
-			if path:EndsWith(".lua") then
-				if prev_paths[path] ~= sha or not file.Exists("goluwa/" .. path:gsub("%.", "^") .. ".txt", "DATA") then
-					paths[path] = sha
-				end
-			end
-		end
-
-		local count = table.Count(paths)
-
-		if count == 0 then
-			dprint("everything is already up to date")
-			cb()
-			return
-		end
-
-		file.Write("goluwa/downloaded_lua_files.txt", body)
-
-		dprint("downloading " .. count .. " files")
-
-		local next_print = 0
-		local left = count
-
+local function download_path(path, cb)
+	do -- create directories
 		local done = {}
-
-		for path in pairs(paths) do
-			local dir = (path:match("(.+)/.-%.lua") or path)
-			if not dir:EndsWith("/") then
-				dir = dir .. "/"
-			end
-			if not done[dir] then
-				local folder_path = ""
-				for folder in dir:gmatch("(.-/)") do
-					folder_path = folder_path .. folder
-					if not done[folder_path] then
-						file.CreateDir("goluwa/" .. folder_path)
-						done[folder_path] = true
-					end
-				end
-				done[dir] = true
-			end
-
-			local function download(lua, _,_, code)
-				left = left - 1
-				if code == 200 then
-					file.Write("goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
-
-					if left == 0 then
-						dprint("finished downloading all files")
-						cb()
-					elseif next_print < RealTime() then
-						dprint(left .. " files left")
-						next_print = RealTime() + 0.5
-					end
-				else
-					dprint(lua)
-					dprint(path .. " failed to download with error code: " .. code)
-
-					if code == 503 then
-						dprint("trying " .. path .. " again because it timed out")
-						http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, download)
-					end
-				end
-			end
-
-			http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, download)
+		local dir = (path:match("(.+)/.-%.lua") or path)
+		if not dir:EndsWith("/") then
+			dir = dir .. "/"
 		end
-	end)
+		if not done[dir] then
+			local folder_path = ""
+			for folder in dir:gmatch("(.-/)") do
+				folder_path = folder_path .. folder
+				if not done[folder_path] then
+					file.CreateDir("goluwa/" .. folder_path)
+					done[folder_path] = true
+				end
+			end
+			done[dir] = true
+		end
+	end
+
+	local function download(lua, _,_, code)
+		if code == 200 then
+			file.Write("goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
+			cb()
+		else
+			dprint(lua)
+			dprint(path .. " failed to download with error code: " .. code)
+
+			if code == 503 then
+				dprint("trying " .. path .. " again because it timed out")
+				http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, download)
+			end
+		end
+	end
+
+	http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, download)
+end
+
+local function download_paths(paths, cb)
+	local count = table.Count(paths)
+	local left = count
+
+	dprint("downloading " .. count .. " files")
+	if count < 10 then
+		for path in pairs(paths) do
+			print(path)
+		end
+	end
+
+	for path in pairs(paths) do
+		download_path(path, function()
+			left = left - 1
+			if left == 0 then
+				dprint("finished downloading all files")
+				cb()
+			elseif next_print < RealTime() then
+				dprint(left .. " files left")
+				next_print = RealTime() + 0.5
+			end
+		end)
+	end
+end
+function goluwa.Update(cb)
+	local prev_commit = file.Read("goluwa/prev_commit.txt", "DATA")
+
+	if not prev_commit then
+		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/git/trees/master?recursive=1", function(body)
+			if code ~= 200 then
+				ErrorNoHalt("goluwa: " .. body)
+				return
+			end
+
+			file.CreateDir("goluwa/")
+			dprint("downloading files for first time")
+
+			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body)
+				if code ~= 200 then
+					ErrorNoHalt("goluwa: " .. body)
+					return
+				end
+
+				local head = body:match('^.-"sha":%s-"(.-)"')
+				dprint("last commit is: " .. head)
+				file.Write("goluwa/prev_commit.txt", head)
+			end)
+
+			local paths = {}
+
+			for path in body:gmatch('"path":%s-"(src/lua/libraries/.-)"') do
+				if path:EndsWith(".lua") then
+					paths[path] = path
+				end
+			end
+
+			download_paths(paths, cb)
+		end)
+	else
+		local head
+		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body, _,_, code)
+			if code ~= 200 then
+				dprint(body)
+				cb()
+				return
+			end
+
+			head = body:match('^.-"sha":%s-"(.-)"')
+			file.Write("goluwa/prev_commit.txt", head)
+
+			if head == prev_commit then
+				dprint("everything is already up to date")
+				cb()
+				return
+			end
+
+			print(body, code)
+
+			do return end
+
+			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/compare/" .. prev_commit .. "..." .. head, function(body)
+				local paths = {}
+
+				for path in body:gmatch('"filename":%s-"(src/lua/libraries/.-)"') do
+					if path:EndsWith(".lua") then
+						paths[path] = path
+					end
+				end
+
+				download_paths(paths, cb)
+			end)
+		end)
+	end
 end
 
 function goluwa.CreateEnv()
 	local env = {}
+	env._G = env
 
 	env.e = {}
 
 	do
-		env.bit = table.Copy(_G.bit)
-		env.jit = table.Copy(_G.jit)
-		env.newproxy = _G.newproxy
-
 		do -- _G
 			function env.loadstring(str, chunkname)
 				local var = CompileString(str, chunkname or "loadstring", false)
@@ -551,137 +594,164 @@ function goluwa.CreateEnv()
 		end
 
 		do -- std lua env
-			local _G = env
+			env._VERSION = _VERSION
 
-			_G._G = _G
-			_G._VERSION = _VERSION
+			env.assert = assert
+			env.collectgarbage = collectgarbage
+			env.error = error
+			env.getfenv = getfenv
+			env.getmetatable = getmetatable
+			env.ipairs = ipairs
+			env.load = load
+			env.module = module
+			env.next = next
+			env.pairs = pairs
+			env.pcall = pcall
+			env.print = print
+			env.rawequal = rawequal
+			env.rawget = rawget
+			env.rawset = rawset
+			env.select = select
+			env.setfenv = setfenv
+			env.setmetatable = setmetatable
+			env.tonumber = tonumber
+			env.tostring = tostring
+			env.type = type
+			env.unpack = unpack
+			env.xpcall = xpcall
 
-			_G.assert = assert
-			_G.collectgarbage = collectgarbage
-			_G.error = error
-			_G.getfenv = getfenv
-			_G.getmetatable = getmetatable
-			_G.ipairs = ipairs
-			_G.load = load
-			_G.module = module
-			_G.next = next
-			_G.pairs = pairs
-			_G.pcall = pcall
-			_G.print = print
-			_G.rawequal = rawequal
-			_G.rawget = rawget
-			_G.rawset = rawset
-			_G.select = select
-			_G.setfenv = setfenv
-			_G.setmetatable = setmetatable
-			_G.tonumber = tonumber
-			_G.tostring = tostring
-			_G.type = type
-			_G.unpack = unpack
-			_G.xpcall = xpcall
+			env.coroutine = {}
+			env.coroutine.create = coroutine.create
+			env.coroutine.resume = coroutine.resume
+			env.coroutine.running = coroutine.running
+			env.coroutine.status = coroutine.status
+			env.coroutine.wrap = coroutine.wrap
+			env.coroutine.yield = coroutine.yield
 
-			_G.coroutine = {}
-			_G.coroutine.create = coroutine.create
-			_G.coroutine.resume = coroutine.resume
-			_G.coroutine.running = coroutine.running
-			_G.coroutine.status = coroutine.status
-			_G.coroutine.wrap = coroutine.wrap
-			_G.coroutine.yield = coroutine.yield
+			env.debug = {}
+			env.debug.debug = debug.debug
+			env.debug.getfenv = debug.getfenv
+			env.debug.gethook = debug.gethook
+			env.debug.getinfo = debug.getinfo
+			env.debug.getlocal = debug.getlocal
+			env.debug.getmetatable = debug.getmetatable
+			env.debug.getregistry = debug.getregistry
+			env.debug.getupvalue = debug.getupvalue
+			env.debug.setfenv = debug.setfenv
+			env.debug.sethook = debug.sethook
+			env.debug.setlocal = debug.setlocal
+			env.debug.setmetatable = debug.setmetatable
+			env.debug.setupvalue = debug.setupvalue
+			env.debug.traceback = debug.traceback
 
-			_G.debug = {}
-			_G.debug.debug = debug.debug
-			_G.debug.getfenv = debug.getfenv
-			_G.debug.gethook = debug.gethook
-			_G.debug.getinfo = debug.getinfo
-			_G.debug.getlocal = debug.getlocal
-			_G.debug.getmetatable = debug.getmetatable
-			_G.debug.getregistry = debug.getregistry
-			_G.debug.getupvalue = debug.getupvalue
-			_G.debug.setfenv = debug.setfenv
-			_G.debug.sethook = debug.sethook
-			_G.debug.setlocal = debug.setlocal
-			_G.debug.setmetatable = debug.setmetatable
-			_G.debug.setupvalue = debug.setupvalue
-			_G.debug.traceback = debug.traceback
+			env.math = {}
+			env.math.abs = math.abs
+			env.math.acos = math.acos
+			env.math.asin = math.asin
+			env.math.atan = math.atan
+			env.math.atan2 = math.atan2
+			env.math.ceil = math.ceil
+			env.math.cos = math.cos
+			env.math.cosh = math.cosh
+			env.math.deg = math.deg
+			env.math.exp = math.exp
+			env.math.floor = math.floor
+			env.math.fmod = math.fmod
+			env.math.frexp = math.frexp
+			env.math.huge = math.huge
+			env.math.ldexp = math.ldexp
+			env.math.log = math.log
+			env.math.log10 = math.log10
+			env.math.max = math.max
+			env.math.min = math.min
+			env.math.modf = math.modf
+			env.math.pi = math.pi
+			env.math.pow = math.pow
+			env.math.rad = math.rad
+			env.math.random = math.random
+			env.math.randomseed = math.randomseed
+			env.math.sin = math.sin
+			env.math.sinh = math.sinh
+			env.math.sqrt = math.sqrt
+			env.math.tan = math.tan
+			env.math.tanh = math.tanh
 
-			_G.math = {}
-			_G.math.abs = math.abs
-			_G.math.acos = math.acos
-			_G.math.asin = math.asin
-			_G.math.atan = math.atan
-			_G.math.atan2 = math.atan2
-			_G.math.ceil = math.ceil
-			_G.math.cos = math.cos
-			_G.math.cosh = math.cosh
-			_G.math.deg = math.deg
-			_G.math.exp = math.exp
-			_G.math.floor = math.floor
-			_G.math.fmod = math.fmod
-			_G.math.frexp = math.frexp
-			_G.math.huge = math.huge
-			_G.math.ldexp = math.ldexp
-			_G.math.log = math.log
-			_G.math.log10 = math.log10
-			_G.math.max = math.max
-			_G.math.min = math.min
-			_G.math.modf = math.modf
-			_G.math.pi = math.pi
-			_G.math.pow = math.pow
-			_G.math.rad = math.rad
-			_G.math.random = math.random
-			_G.math.randomseed = math.randomseed
-			_G.math.sin = math.sin
-			_G.math.sinh = math.sinh
-			_G.math.sqrt = math.sqrt
-			_G.math.tan = math.tan
-			_G.math.tanh = math.tanh
+			env.package = {}
+			env.package.cpath = package.cpath
+			env.package.loaded = package.loaded
+			env.package.loaders = package.loaders
+			env.package.loadlib = package.loadlib
+			env.package.path = package.path
+			env.package.preload = package.preload
+			env.package.seeall = package.seeall
 
-			_G.package = {}
-			_G.package.cpath = package.cpath
-			_G.package.loaded = package.loaded
-			_G.package.loaders = package.loaders
-			_G.package.loadlib = package.loadlib
-			_G.package.path = package.path
-			_G.package.preload = package.preload
-			_G.package.seeall = package.seeall
+			env.string = {}
+			env.string.byte = string.byte
+			env.string.char = string.char
+			env.string.dump = string.dump
+			env.string.find = string.find
+			env.string.format = string.format
+			env.string.gmatch = string.gmatch
+			env.string.gsub = string.gsub
+			env.string.len = string.len
+			env.string.lower = string.lower
+			env.string.match = string.match
+			env.string.rep = string.rep
+			env.string.reverse = string.reverse
+			env.string.sub = string.sub
+			env.string.upper = string.upper
 
-			_G.string = {}
-			_G.string.byte = string.byte
-			_G.string.char = string.char
-			_G.string.dump = string.dump
-			_G.string.find = string.find
-			_G.string.format = string.format
-			_G.string.gmatch = string.gmatch
-			_G.string.gsub = string.gsub
-			_G.string.len = string.len
-			_G.string.lower = string.lower
-			_G.string.match = string.match
-			_G.string.rep = string.rep
-			_G.string.reverse = string.reverse
-			_G.string.sub = string.sub
-			_G.string.upper = string.upper
+			env.table = {}
+			env.table.concat = table.concat
+			env.table.insert = table.insert
+			env.table.maxn = table.maxn
+			env.table.remove = table.remove
+			env.table.sort = table.sort
 
-			_G.table = {}
-			_G.table.concat = table.concat
-			_G.table.insert = table.insert
-			_G.table.maxn = table.maxn
-			_G.table.remove = table.remove
-			_G.table.sort = table.sort
+			env.bit = {}
+			env.bit.tobit = bit.tobit
+			env.bit.tohex = bit.tohex
+			env.bit.bnot = bit.bnot
+			env.bit.band = bit.band
+			env.bit.bor = bit.bor
+			env.bit.bxor = bit.bxor
+			env.bit.lshift = bit.lshift
+			env.bit.rshift = bit.rshift
+			env.bit.arshift = bit.arshift
+			env.bit.rol = bit.rol
+			env.bit.ror = bit.ror
+			env.bit.bswap = bit.bswap
+
+			env.jit = {}
+			env.jit.arch = jit.arch
+			env.jit.version = jit.version
+			env.jit.version_num = jit.version_num
+			env.jit.status = jit.status
+			env.jit.on = jit.on
+			env.jit.os = jit.os
+			env.jit.off = jit.off
+			env.jit.flush = jit.flush
+			env.jit.attach = jit.attach
+			env.jit.util = jit.util
+			env.jit.opt = jit.opt
+
+			env.newproxy = _G.newproxy
 		end
 	end
 
 	do
 		env._OLD_G = {}
-		local done = {[env._G] = true}
-
+		local done = {[env._G] = true, [env.package.loaded] = true}
+		local indent = 0
 		local function scan(tbl, store)
 			for key, val in pairs(tbl) do
 				local t = type(val)
-
 				if t == "table" and not done[val] and val ~= store then
 					store[key] = store[key] or {}
 					done[val] = true
+					indent = indent + 1
 					scan(val, store[key])
+					indent = indent - 1
 				else
 					store[key] = val
 				end
@@ -808,7 +878,29 @@ function goluwa.CreateEnv()
 			return false
 		end
 
+		function window.SetMouseTrapped(b)
+			gui.EnableScreenClicker(not b)
+		end
+
+		function window.SetCursor(cursor)
+
+		end
+
+		function window.GetCursor()
+			return "normal"
+		end
+
+		function window.GetSize()
+			return env.Vec2(ScrW(), ScrH())
+		end
+
 		env.window = window
+
+		local wnd = {}
+		for k,v in pairs(env.window) do
+			wnd[k] = function(self, ...) return v(...) end
+		end
+		goluwa.window = wnd
 	end
 
 	do
@@ -839,7 +931,9 @@ function goluwa.CreateEnv()
 			debug.Trace()
 		end
 
-		system.pcall = pcall
+		function system.pcall(func, ...)
+			return xpcall(func, system.OnError, ...)
+		end
 
 		env.system = system
 	end
@@ -854,9 +948,177 @@ function goluwa.CreateEnv()
 	--	print("goluwa event removed: ", info.event_type, info.id)
 	end)
 
-	hook.Add("Think", "goluwa_timers", function()
+	env.input = env.runfile("lua/libraries/input.lua")
+
+
+	do
+		local translate_key = {}
+
+		local function find_enums(name)
+			for k,v in pairs(_G) do
+				if k:startswith(name .. "_") then
+					translate_key[k:match(name .. "_(.+)"):lower()] = v
+				end
+			end
+		end
+
+		find_enums("KEY")
+		find_enums("MOUSE")
+		find_enums("BUTTON")
+		find_enums("JOYSTICK")
+
+		local translate_key_rev = {}
+		for k,v in pairs(translate_key) do
+			translate_key_rev[v] = k
+		end
+
+		function goluwa.GetKeyCode(key, rev)
+			if rev then
+				if translate_key_rev[key] then
+					--if goluwa.print_keys then llog("key reverse: ", key, " >> ", translate_key_rev[key]) end
+					return translate_key_rev[key]
+				else
+					--logf("key %q could not be translated!\n", key)
+					return translate_key_rev.KEY_P -- dunno
+				end
+			else
+				if translate_key[key] then
+					if goluwa.print_keys then llog("key: ", key, " >> ", translate_key[key]) end
+					return translate_key[key]
+				else
+					--logf("key %q could not be translated!\n", key)
+					return translate_key.p -- dunno
+				end
+			end
+		end
+
+		local translate_mouse = {
+			button_1 = _G.MOUSE_LEFT,
+			button_2 = _G.MOUSE_RIGHT,
+			button_3 = _G.MOUSE_MIDDLE,
+			button_4 = _G.MOUSE_4,
+			button_5 = _G.MOUSE_5,
+			mwheel_up = _G.MOUSE_WHEEL_UP,
+			mwheel_down = _G.MOUSE_WHEEL_DOWN,
+		}
+
+		local translate_mouse_rev = {}
+		for k,v in pairs(translate_mouse) do
+			translate_mouse_rev[v] = k
+		end
+
+		function goluwa.GetMouseCode(button, rev)
+			if rev then
+				if translate_mouse_rev[button] then
+					return translate_mouse_rev[button]
+				else
+					--llog("mouse button %q could not be translated!\n", button)
+					return translate_mouse.MOUSE_5
+				end
+			else
+				if translate_mouse[button] then
+					return translate_mouse[button]
+				else
+					--llog("mouse button %q could not be translated!\n", button)
+					return translate_mouse.button_5
+				end
+			end
+		end
+	end
+
+	local keys = {}
+	local key_trigger = env.input.SetupInputEvent("Key")
+	local function key_input(key, press)
+		env.event.Call("WindowKeyInput", goluwa.window, key, press)
+		if key_trigger(key, press) ~= false then
+			env.event.Call("KeyInput", key, press)
+		end
+
+		if press then
+			local char = key
+
+			-- etc
+			if system.GetCountry() == "NO" then
+				if key == "`" then
+					char = "|"
+				elseif key == "SEMICOLON" then
+					char = "ø"
+				elseif key == "'" then
+					char = "æ"
+				elseif key == "[" then
+					char = "å"
+				end
+			end
+
+			if input.IsShiftDown() then
+				char = env.utf8.upper(char)
+			end
+
+			if env.utf8.length(char) == 1 then
+				env.event.Call("WindowCharInput", goluwa.window, char)
+				env.event.Call("CharInput", char)
+			end
+		end
+	end
+
+	local buttons = {}
+	local mouse_trigger = env.input.SetupInputEvent("Mouse")
+
+	local translate = {
+		MOUSE1 = "button_1",
+		MOUSE2 = "button_2",
+		MOUSE3 = "button_3",
+		MOUSE4 = "button_4",
+	}
+
+	local function mouse_input(btn, press)
+		btn = translate[btn] or btn
+
+		env.event.Call("WindowMouseInput", goluwa.window, btn, press)
+		if mouse_trigger(btn, press) ~= false then
+			env.event.Call("MouseInput", btn, press)
+		end
+	end
+
+
+	hook.Add("SetupMove", "goluwa", function()
 		env.event.UpdateTimers()
 		env.event.Call("Update", FrameTime())
+
+		for i = KEY_FIRST, KEY_LAST do
+			if input.IsKeyDown(i) then
+				if not keys[i] then
+					key_input(input.GetKeyName(i), true)
+				end
+				keys[i] = true
+			else
+				if keys[i] then
+					key_input(input.GetKeyName(i), false)
+				end
+				keys[i] = false
+			end
+		end
+
+		for i = MOUSE_FIRST, MOUSE_LAST do
+			if input.IsMouseDown(i) then
+				if not buttons[i] then
+					mouse_input(input.GetKeyName(i), true)
+				end
+				buttons[i] = true
+			else
+				if buttons[i] then
+					mouse_input(input.GetKeyName(i), false)
+				end
+				buttons[i] = false
+			end
+		end
+	end)
+
+	hook.Add("HUDPaint", "goluwa_2d", function()
+		local dt = FrameTime()
+		env.event.Call("PreDrawGUI", dt)
+		env.event.Call("DrawGUI", dt)
+		env.event.Call("PostDrawGUI", dt)
 	end)
 
 	env.expression = env.runfile("lua/libraries/expression.lua")
@@ -1020,6 +1282,14 @@ function goluwa.CreateEnv()
 					return env.Vec2(self.width, self.height)
 				end
 
+				function tex:SetMinFilter() end
+				function tex:SetMagFilter() end
+
+				function tex:GetPixelColor(x,y)
+					local c = self.tex:GetColor(x,y)
+					return env.Color(c.r/255, c.g/255, c.b/255, c.a/255)
+				end
+
 				if gmod_path then
 					tex.mat = Material(path)
 
@@ -1027,6 +1297,7 @@ function goluwa.CreateEnv()
 
 					tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
 					tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
+					tex.Size = env.Vec2(tex.width, tex.height)
 
 					tex.loading = false
 				else
@@ -1052,6 +1323,7 @@ function goluwa.CreateEnv()
 
 						tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
 						tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
+						tex.Size = env.Vec2(tex.width, tex.height)
 
 						tex.loading = false
 					end)
@@ -1059,6 +1331,20 @@ function goluwa.CreateEnv()
 
 				return tex
 			end
+
+			function render.SetPresetBlendMode()
+
+			end
+
+			function render.SetBlendMode()
+
+			end
+
+			function render.SetStencil() end
+			function render.GetStencil() end
+			function render.StencilFunction() end
+			function render.StencilOperation() end
+			function render.StencilMask() end
 
 			render.white_texture = render.CreateTextureFromPath("vgui/white", true)
 			render.loading_texture = render.CreateTextureFromPath("gui/progress_cog.png", true)
@@ -1074,6 +1360,43 @@ function goluwa.CreateEnv()
 
 			function render.GetErrorTexture()
 				return render.error_texture
+			end
+
+			function render.GetWindow()
+				return goluwa.window
+			end
+
+			function render.CreateBlankTexture()
+			end
+
+			function render.IsExtensionSupported()
+				return false
+			end
+
+			function render.CreateFrameBuffer(size, textures, id_override)
+				local fb = {}
+				function fb:Begin()
+
+				end
+
+				function fb:End()
+
+				end
+
+				function fb:GetTexture()
+
+				end
+
+				function fb:SetTexture()
+
+				end
+				function fb:Clear() end
+				function fb:ClearStencil() end
+				return fb
+			end
+
+			function render.GetFrameBuffer()
+				return render.CreateFrameBuffer()
 			end
 
 			do
@@ -1093,7 +1416,6 @@ function goluwa.CreateEnv()
 				function render.CreateVertexBuffer(mesh_layout, vertices, indices, is_valid_table)
 					local self = META:CreateObject()
 					self.Vertices = {Pointer = {}}
-					self.imesh_vertices = {}
 
 					return self
 				end
@@ -1140,125 +1462,79 @@ function goluwa.CreateEnv()
 						end
 						self.vertices_length = #vertices
 					end
-					for i = 1, self.vertices_length do
-						self.imesh_vertices[i] = {
-							pos = Vector(
-								0,
-								0,
-								0
-							),
-							u = 0,
-							v = 0,
-							color = Color(
-								0,
-								0,
-								0,
-								0
-							)
-						}
-					end
 				end
 
-				--env.VERTEX_BUFFER_TYPE = "mesh"
+				local max_vertices = 32768
 
 				function META:UpdateBuffer()
-					--[[
-					if env.VERTEX_BUFFER_TYPE == "imesh" then
-						for i = 1, self.vertices_length do
-							local vertex = self.Vertices.Pointer[i-1]
+					if self.vertices_length == 0 then return end
+					local chunks = {}
 
-							if vertex.pos then
-								self.imesh_vertices[i].pos.x = vertex.pos[0]
-								self.imesh_vertices[i].pos.y = vertex.pos[1]
-							end
+					for chunk_i = 1, math.ceil(self.vertices_length/max_vertices) do
+						local vertices = {}
+						for i = 0, max_vertices - 1 do
+							local vertex = self.Vertices.Pointer[i + ((chunk_i - 1) * max_vertices)]
+							if not vertex then break end
+							i = i + 1
+							vertices[i] = vertices[i] or {}
 
-							self.imesh_vertices[i].u = vertex.uv[0]
-							self.imesh_vertices[i].v = vertex.uv[1]
+							vertices[i].x = vertex.pos[0]
+							vertices[i].y = vertex.pos[1]
 
-							if vertex.color then
+							vertices[i].u = vertex.uv[0]
+							vertices[i].v = -vertex.uv[1]+1
 
-								if vertex.color[0] then
-									self.imesh_vertices[i].color.r = vertex.color[0] * 255
-								end
-
-								if vertex.color[1] then
-									self.imesh_vertices[i].color.g = vertex.color[1] * 255
-								end
-
-								if vertex.color[2] then
-									self.imesh_vertices[i].color.b = vertex.color[2] * 255
-								end
-
-								if vertex.color[3] then
-									self.imesh_vertices[i].color.a = vertex.color[3] * 255
-								end
-							end
+							vertices[i].r = vertex.color[0] or 1
+							vertices[i].g = vertex.color[1] or 1
+							vertices[i].b = vertex.color[2] or 1
+							vertices[i].a = vertex.color[3] or 1
 						end
-						if self.imesh then
-							self.imesh:Destroy()
-						end
-						self.imesh = Mesh()
-						self.imesh:BuildFromTriangles(self.imesh_vertices)
-					elseif env.VERTEX_BUFFER_TYPE == "poly" then
-						self.poly = self.poly or {}
-						for i = 1, self.vertices_length do
-							local vertex = self.Vertices.Pointer[i-1]
-
-							self.poly[i] = self.poly[i] or {}
-
-							self.poly[i].x = vertex.pos[0]
-							self.poly[i].y = vertex.pos[1]
-
-							self.poly[i].u = vertex.uv[0]
-							self.poly[i].v = vertex.uv[1]
-						end
+						chunks[chunk_i] = vertices
 					end
-					]]
+					self.chunks = chunks
 				end
 
-				local MATERIAL_TRIANGLE_STRIP = MATERIAL_TRIANGLE_STRIP
-				local mesh = mesh
-				local surface_DrawPoly = surface.DrawPoly
+				local MATERIAL_TRIANGLES = MATERIAL_TRIANGLES
 				local mesh_Begin = mesh.Begin
 				local mesh_End = mesh.End
 				local mesh_TexCoord = mesh.TexCoord
 				local mesh_Color = mesh.Color
 				local mesh_AdvanceVertex = mesh.AdvanceVertex
 				local mesh_Position = mesh.Position
+				local temp_vector = Vector(0,0,0)
 
-				function META:Draw()--[[
-					if env.VERTEX_BUFFER_TYPE == "imesh" then
-						if self.imesh then
-							cam_PushModelMatrix(get_world_matrix())
-							self.imesh:Draw()
-							cam_PopModelMatrix()
-						end
-					elseif env.VERTEX_BUFFER_TYPE == "mesh" then]]
-						cam_PushModelMatrix(get_world_matrix())
-						mesh_Begin(MATERIAL_TRIANGLE_STRIP, self.vertices_length)
-						for i = 1, self.vertices_length do
-							local vertex = self.Vertices.Pointer[i-1]
+				function META:Draw()
+					if self.vertices_length == 0 then return end
 
-							if vertex.pos[0] and vertex.pos[1] then
-								mesh_Position(Vector(vertex.pos[0], vertex.pos[1], 0))
+					cam_PushModelMatrix(get_world_matrix())
+						for i, vertices in ipairs(self.chunks) do
+							mesh_Begin(MATERIAL_TRIANGLES, #vertices / 3)
+							for i, vertex in ipairs(vertices) do
+
+								temp_vector.x = vertex.x
+								temp_vector.y = vertex.y
+								mesh_Position(temp_vector)
+								mesh_TexCoord(0, vertex.u, vertex.v)
+
+								local r,g,b,a = vertex.r, vertex.g, vertex.b, vertex.a
+
+								r = r * env.render2d.shader.global_color.r
+								g = g * env.render2d.shader.global_color.g
+								b = b * env.render2d.shader.global_color.b
+								a = a * env.render2d.shader.global_color.a * env.render2d.shader.alpha_multiplier
+
+								r = r * 255
+								g = g * 255
+								b = b * 255
+								a = a * 255
+
+								mesh_Color(r,g,b,a)
+
+								mesh_AdvanceVertex()
 							end
-
-							if vertex.uv[0] and vertex.uv[1] then
-								mesh_TexCoord(0, vertex.uv[0], -vertex.uv[1]+1)
-							end
-
-							mesh_Color((vertex.color[0] or 1) * 255, (vertex.color[1] or 1) * 255, (vertex.color[2] or 1) * 255, (vertex.color[3] or 1) * 255)
-							mesh_AdvanceVertex()
+							mesh_End()
 						end
-						mesh_End()
-						cam_PopModelMatrix()
-					--[[elseif env.VERTEX_BUFFER_TYPE == "poly" then
-						if self.poly then
-							cam_PushModelMatrix(get_world_matrix())
-							surface_DrawPoly(self.poly)
-							cam_PopModelMatrix()
-						end
-					end]]
+					cam_PopModelMatrix()
 				end
 			end
 
@@ -1286,7 +1562,7 @@ function goluwa.CreateEnv()
 
 			render2d.shader = {
 				global_color = env.Color(1,1,1,1),
-				color_override = env.Color(1,1,1),
+				color_override = env.Color(1,1,1,1),
 				alpha_multiplier = 1,
 				hsv_mult = env.Vec3(1,1,1),
 			}
@@ -1294,19 +1570,26 @@ function goluwa.CreateEnv()
 			function render2d.shader:GetMeshLayout() end
 
 			local surface_SetDrawColor = surface.SetDrawColor
+			local render_SetColorModulation = render.SetColorModulation
+			local render_SetBlend = render.SetBlend
 			local render_SetMaterial = render.SetMaterial
 			local surface_SetMaterial = surface.SetMaterial
 			local surface_SetAlphaMultiplier = surface.SetAlphaMultiplier
 
 			function render2d.shader:Bind()
-				surface_SetDrawColor(self.global_color.r*255,self.global_color.g*255,self.global_color.b*255,self.global_color.a*255)
+				--surface_SetDrawColor(self.global_color.r*255,self.global_color.g*255,self.global_color.b*255,self.global_color.a*255)
 				--if env.VERTEX_BUFFER_TYPE == "poly" then
 					--surface_SetMaterial(self.tex.mat)
 				--else
+					--render_SetColorModulation(self.global_color.r, self.global_color.g, self.global_color.b)
+					--render_SetBlend(self.global_color.a * self.alpha_multiplier)
 					render_SetMaterial(self.tex.mat)
 				--end
-				surface_SetAlphaMultiplier(self.alpha_multiplier)
+			--	surface_SetAlphaMultiplier(self.alpha_multiplier)
 			end
+
+
+			env.render2d = render2d
 
 			render2d.rectangle = render2d.CreateMesh()
 			render2d.rectangle:SetBuffersFromTables({
@@ -1322,8 +1605,6 @@ function goluwa.CreateEnv()
 			render2d.SetRectUV()
 			render2d.SetRectColors()
 
-
-			env.render2d = render2d
 		end
 
 		do
@@ -1368,6 +1649,21 @@ function goluwa.CreateEnv()
 					return true
 				end
 
+				function obj:CompileString(data)
+					local str = ""
+					for i = 3, #data, 3 do
+						str = str .. data[i]
+					end
+
+					local obj = {}
+
+					function obj.Draw()
+						self:DrawString(str)
+					end
+
+					return obj, self:GetTextSize(str)
+				end
+
 				return obj
 			end
 
@@ -1392,6 +1688,16 @@ function goluwa.CreateEnv()
 		end
 
 		env.gfx = env.runfile("lua/libraries/graphics/gfx/gfx.lua")
+		env.gfx.ninepatch_poly = env.gfx.CreatePolygon2D(9 * 6)
+		env.gfx.ninepatch_poly.vertex_buffer:SetDrawHint("dynamic")
+
+		env.language = env.runfile("lua/libraries/language.lua")
+		env.L = env.language.LanguageString
+
+		--env.gui = env.runfile("lua/libraries/graphics/gui/gui.lua")
+		--env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
+		--env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
+		--env.gui.Initialize()
 	end
 
 	return env
@@ -1415,7 +1721,7 @@ if CLIENT then
 	goluwa.Update(goluwa.Initialize)
 end
 
-if (not game.SinglePlayer() or CLIENT) then
+if game.IsDedicated() or CLIENT then
 	concommand.Add("goluwa_reload", function()
 		notagain.loaded_libraries.goluwa = CompileString(file.Read(notagain.addon_dir .. "lua/notagain/goluwa/goluwa.lua", "MOD"), "lua/notagain/goluwa/goluwa.lua")()
 	end)
