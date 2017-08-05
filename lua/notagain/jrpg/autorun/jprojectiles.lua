@@ -92,12 +92,18 @@ do
 				suppress = false
 			elseif ent:IsValid() then
 				for _, name in ipairs(self:GetDamageTypes():Split(",")) do
-					local d = DamageInfo()
-					d:SetDamage(50)
-					d:SetDamageCustom(jdmg.enums[name])
-					d:SetAttacker(self:GetOwner())
-					d:SetInflictor(self:GetOwner())
-					ent:TakeDamageInfo(d)
+					if jdmg.enums[name] then
+						local d = DamageInfo()
+						d:SetDamage(50)
+						d:SetDamageCustom(jdmg.enums[name])
+						d:SetAttacker(self:GetOwner())
+						d:SetInflictor(self:GetOwner())
+						ent:TakeDamageInfo(d)
+					else
+						print("invalid damage type", name, "!?")
+						print(self:GetDamageTypes())
+						ErrorNoHalt()
+					end
 				end
 			end
 
