@@ -1076,6 +1076,192 @@ function goluwa.CreateEnv()
 				return render.error_texture
 			end
 
+			do
+				local META = env.prototype.CreateTemplate("vertex_buffer")
+
+				META:StartStorable()
+					META:GetSet("UpdateIndices", true)
+					META:GetSet("Mode", "triangles")
+					META:GetSet("IndicesType", "uint16_t")
+					META:GetSet("DrawHint", "dynamic")
+					META:GetSet("Vertices")
+					META:GetSet("Indices")
+				META:EndStorable()
+
+				META:Register()
+
+				function render.CreateVertexBuffer(mesh_layout, vertices, indices, is_valid_table)
+					local self = META:CreateObject()
+					self.Vertices = {Pointer = {}}
+					self.imesh_vertices = {}
+
+					return self
+				end
+
+				function META:SetBuffersFromTables(vertices, indices, is_valid_table)
+					if type(vertices) == "number" then
+						for i = 1, vertices do
+							self.Vertices.Pointer[i-1] = {
+								pos = {
+									[0] = 0,
+									[1] = 0,
+								},
+								uv = {
+									[0] = 0,
+									[1] = 0,
+								},
+								color = {
+									[0] = 0,
+									[1] = 0,
+									[2] = 0,
+									[3] = 0,
+								}
+							}
+						end
+						self.vertices_length = vertices
+					else
+						for i, vertex in ipairs(vertices) do
+							self.Vertices.Pointer[i-1] = {
+								pos = {
+									[0] = vertex.pos[1],
+									[1] = vertex.pos[2],
+								},
+								uv = {
+									[0] = vertex.uv[1],
+									[1] = vertex.uv[2],
+								},
+								color = {
+									[0] = vertex.color[1],
+									[1] = vertex.color[2],
+									[2] = vertex.color[3],
+									[3] = vertex.color[4],
+								}
+							}
+						end
+						self.vertices_length = #vertices
+					end
+					for i = 1, self.vertices_length do
+						self.imesh_vertices[i] = {
+							pos = Vector(
+								0,
+								0,
+								0
+							),
+							u = 0,
+							v = 0,
+							color = Color(
+								0,
+								0,
+								0,
+								0
+							)
+						}
+					end
+				end
+
+				--env.VERTEX_BUFFER_TYPE = "mesh"
+
+				function META:UpdateBuffer()
+					--[[
+					if env.VERTEX_BUFFER_TYPE == "imesh" then
+						for i = 1, self.vertices_length do
+							local vertex = self.Vertices.Pointer[i-1]
+
+							if vertex.pos then
+								self.imesh_vertices[i].pos.x = vertex.pos[0]
+								self.imesh_vertices[i].pos.y = vertex.pos[1]
+							end
+
+							self.imesh_vertices[i].u = vertex.uv[0]
+							self.imesh_vertices[i].v = vertex.uv[1]
+
+							if vertex.color then
+
+								if vertex.color[0] then
+									self.imesh_vertices[i].color.r = vertex.color[0] * 255
+								end
+
+								if vertex.color[1] then
+									self.imesh_vertices[i].color.g = vertex.color[1] * 255
+								end
+
+								if vertex.color[2] then
+									self.imesh_vertices[i].color.b = vertex.color[2] * 255
+								end
+
+								if vertex.color[3] then
+									self.imesh_vertices[i].color.a = vertex.color[3] * 255
+								end
+							end
+						end
+						if self.imesh then
+							self.imesh:Destroy()
+						end
+						self.imesh = Mesh()
+						self.imesh:BuildFromTriangles(self.imesh_vertices)
+					elseif env.VERTEX_BUFFER_TYPE == "poly" then
+						self.poly = self.poly or {}
+						for i = 1, self.vertices_length do
+							local vertex = self.Vertices.Pointer[i-1]
+
+							self.poly[i] = self.poly[i] or {}
+
+							self.poly[i].x = vertex.pos[0]
+							self.poly[i].y = vertex.pos[1]
+
+							self.poly[i].u = vertex.uv[0]
+							self.poly[i].v = vertex.uv[1]
+						end
+					end
+					]]
+				end
+
+				local MATERIAL_TRIANGLE_STRIP = MATERIAL_TRIANGLE_STRIP
+				local mesh = mesh
+				local surface_DrawPoly = surface.DrawPoly
+				local mesh_Begin = mesh.Begin
+				local mesh_End = mesh.End
+				local mesh_TexCoord = mesh.TexCoord
+				local mesh_Color = mesh.Color
+				local mesh_AdvanceVertex = mesh.AdvanceVertex
+				local mesh_Position = mesh.Position
+
+				function META:Draw()--[[
+					if env.VERTEX_BUFFER_TYPE == "imesh" then
+						if self.imesh then
+							cam_PushModelMatrix(get_world_matrix())
+							self.imesh:Draw()
+							cam_PopModelMatrix()
+						end
+					elseif env.VERTEX_BUFFER_TYPE == "mesh" then]]
+						cam_PushModelMatrix(get_world_matrix())
+						mesh_Begin(MATERIAL_TRIANGLE_STRIP, self.vertices_length)
+						for i = 1, self.vertices_length do
+							local vertex = self.Vertices.Pointer[i-1]
+
+							if vertex.pos[0] and vertex.pos[1] then
+								mesh_Position(Vector(vertex.pos[0], vertex.pos[1], 0))
+							end
+
+							if vertex.uv[0] and vertex.uv[1] then
+								mesh_TexCoord(0, vertex.uv[0], -vertex.uv[1]+1)
+							end
+
+							mesh_Color((vertex.color[0] or 1) * 255, (vertex.color[1] or 1) * 255, (vertex.color[2] or 1) * 255, (vertex.color[3] or 1) * 255)
+							mesh_AdvanceVertex()
+						end
+						mesh_End()
+						cam_PopModelMatrix()
+					--[[elseif env.VERTEX_BUFFER_TYPE == "poly" then
+						if self.poly then
+							cam_PushModelMatrix(get_world_matrix())
+							surface_DrawPoly(self.poly)
+							cam_PopModelMatrix()
+						end
+					end]]
+				end
+			end
+
 			local ScrW = ScrW
 			function render.GetWidth()
 				return ScrW()
@@ -1105,74 +1291,37 @@ function goluwa.CreateEnv()
 				hsv_mult = env.Vec3(1,1,1),
 			}
 
+			function render2d.shader:GetMeshLayout() end
+
 			local surface_SetDrawColor = surface.SetDrawColor
+			local render_SetMaterial = render.SetMaterial
 			local surface_SetMaterial = surface.SetMaterial
 			local surface_SetAlphaMultiplier = surface.SetAlphaMultiplier
 
 			function render2d.shader:Bind()
 				surface_SetDrawColor(self.global_color.r*255,self.global_color.g*255,self.global_color.b*255,self.global_color.a*255)
-				surface_SetMaterial(self.tex.mat)
+				--if env.VERTEX_BUFFER_TYPE == "poly" then
+					--surface_SetMaterial(self.tex.mat)
+				--else
+					render_SetMaterial(self.tex.mat)
+				--end
 				surface_SetAlphaMultiplier(self.alpha_multiplier)
 			end
 
-			do
-				render2d.rectangle = {}
+			render2d.rectangle = render2d.CreateMesh()
+			render2d.rectangle:SetBuffersFromTables({
+				{pos = {0, 1, 0}, uv = {0, 0}, color = {1,1,1,1}},
+				{pos = {0, 0, 0}, uv = {0, 1}, color = {1,1,1,1}},
+				{pos = {1, 1, 0}, uv = {1, 0}, color = {1,1,1,1}},
 
-				render2d.rectangle.Vertices = {}
+				{pos = {1, 0, 0}, uv = {1, 1}, color = {1,1,1,1}},
+				{pos = {1, 1, 0}, uv = {1, 0}, color = {1,1,1,1}},
+				{pos = {0, 0, 0}, uv = {0, 1}, color = {1,1,1,1}},
+			})
 
-				render2d.rectangle.Vertices[0] = {pos = {[0] = 0, [1] = 0}, uv = {}, color = {}}
-				render2d.rectangle.Vertices[1] = {pos = {[0] = 0, [1] = 1}, uv = {}, color = {}}
-				render2d.rectangle.Vertices[2] = {pos = {[0] = 1, [1] = 1}, uv = {}, color = {}}
+			render2d.SetRectUV()
+			render2d.SetRectColors()
 
-				render2d.rectangle.Vertices[3] = {pos = {[0] = 1, [1] = 1}, uv = {}, color = {}}
-				render2d.rectangle.Vertices[4] = {pos = {[0] = 1, [1] = 0}, uv = {}, color = {}}
-				render2d.rectangle.Vertices[5] = {pos = {[0] = 0, [1] = 0}, uv = {}, color = {}}
-
-				render2d.rectangle.poly = {{}, {}, {}, {}, {}, {}}
-
-				function render2d.rectangle:UpdateBuffer()
-					self.poly[5].x = self.Vertices[0].pos[0]
-					self.poly[5].y = self.Vertices[0].pos[1]
-					self.poly[5].u = self.Vertices[0].uv[0]
-					self.poly[5].v = self.Vertices[0].uv[1]
-
-					self.poly[4].x = self.Vertices[1].pos[0]
-					self.poly[4].y = self.Vertices[1].pos[1]
-					self.poly[4].u = self.Vertices[1].uv[0]
-					self.poly[4].v = self.Vertices[1].uv[1]
-
-					self.poly[6].x = self.Vertices[2].pos[0]
-					self.poly[6].y = self.Vertices[2].pos[1]
-					self.poly[6].u = self.Vertices[2].uv[0]
-					self.poly[6].v = self.Vertices[2].uv[1]
-
-					self.poly[3].x = self.Vertices[3].pos[0]
-					self.poly[3].y = self.Vertices[3].pos[1]
-					self.poly[3].u = self.Vertices[3].uv[0]
-					self.poly[3].v = self.Vertices[3].uv[1]
-
-					self.poly[1].x = self.Vertices[4].pos[0]
-					self.poly[1].y = self.Vertices[4].pos[1]
-					self.poly[1].u = self.Vertices[4].uv[0]
-					self.poly[1].v = self.Vertices[4].uv[1]
-
-					self.poly[2].x = self.Vertices[5].pos[0]
-					self.poly[2].y = self.Vertices[5].pos[1]
-					self.poly[2].u = self.Vertices[5].uv[0]
-					self.poly[2].v = self.Vertices[5].uv[1]
-				end
-
-				render2d.SetRectUV()
-				render2d.SetRectColors()
-
-				local surface_DrawPoly = surface.DrawPoly
-
-				function render2d.rectangle:Draw()
-					cam_PushModelMatrix(get_world_matrix())
-					surface_DrawPoly(self.poly)
-					cam_PopModelMatrix()
-				end
-			end
 
 			env.render2d = render2d
 		end
