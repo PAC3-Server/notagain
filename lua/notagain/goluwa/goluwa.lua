@@ -231,7 +231,7 @@ function goluwa.CreateEnv()
 				end
 
 				local function uncache(path)
-					print("uncaching " .. path)
+					dprint("uncaching " .. path)
 					env.fs.find_cache[path:match("(.+/)")] = nil
 					env.fs.get_attributes_cache[path] = nil
 				end
