@@ -80,7 +80,7 @@ function goluwa.Update(cb)
 	local prev_commit = file.Read("goluwa/prev_commit.txt", "DATA")
 
 	if not prev_commit then
-		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/git/trees/master?recursive=1", function(body)
+		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/git/trees/master?recursive=1", function(body, _,_, code)
 			if code ~= 200 then
 				ErrorNoHalt("goluwa: " .. body)
 				return
@@ -89,7 +89,7 @@ function goluwa.Update(cb)
 			file.CreateDir("goluwa/")
 			dprint("downloading files for first time")
 
-			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body)
+			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body, _,_, code)
 				if code ~= 200 then
 					ErrorNoHalt("goluwa: " .. body)
 					return
@@ -128,7 +128,13 @@ function goluwa.Update(cb)
 				return
 			end
 
-			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/compare/" .. prev_commit .. "..." .. head, function(body)
+			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/compare/" .. prev_commit .. "..." .. head, function(body, _,_, code)
+				if code ~= 200 then
+					dprint(body)
+					cb()
+					return
+				end
+
 				local paths = {}
 
 				for path in body:gmatch('"filename":%s-"(src/lua/libraries/.-)"') do
