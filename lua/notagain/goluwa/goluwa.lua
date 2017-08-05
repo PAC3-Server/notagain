@@ -230,6 +230,12 @@ function goluwa.CreateEnv()
 					end
 				end
 
+				local function uncache(path)
+					print("uncaching " .. path)
+					env.fs.find_cache[path:match("(.+/)")] = nil
+					env.fs.get_attributes_cache[path] = nil
+				end
+
 				local allowed = {
 					[".txt"] = true,
 					[".jpg"] = true,
@@ -279,6 +285,9 @@ function goluwa.CreateEnv()
 
 				local fs = {}
 
+				fs.find_cache = {}
+				fs.get_attributes_cache = {}
+
 				function fs.find(path)
 					dprint("fs.find: ", path)
 
@@ -286,26 +295,46 @@ function goluwa.CreateEnv()
 						path = path:sub(2)
 					end
 
+					local original_path = path
+
+					dprint("fs.find: is " .. path .. " cached?")
+
+					if fs.find_cache[path] then
+						dprint("yes!")
+						return fs.find_cache[path]
+					end
+
 					if path:endswith("/") then
 						path = path .. "*"
 					end
 
+					local where = "GAME"
+
+					if path:StartWith("data/") then
+						path = path:sub(6)
+						where = "DATA"
+					end
+
 					local out
 
-					local files, dirs = file.Find(path, "GAME")
+					local files, dirs = file.Find(path, where)
 
 					if files then
-						if path:StartWith("data/") then
+						if where == "DATA" then
 							for i, name in ipairs(files) do
 								local new_name, count = name:gsub("%^", "%.")
+
 								if count > 0 then
-									files[i] = new_name:sub(-4)
+									files[i] = new_name:sub(0, -5)
 								end
 							end
 						end
 
 						out = table.Add(files, dirs)
 					end
+
+					fs.find_cache[original_path] = out
+					dprint("fs.find: caching results for dir " .. path)
 
 					return out or {}
 				end
@@ -329,6 +358,12 @@ function goluwa.CreateEnv()
 
 				function fs.getattributes(path)
 					dprint("fs.getattributes: ", path)
+					local original_path = path
+
+					if fs.get_attributes_cache[path] ~= nil then
+						return fs.get_attributes_cache[path]
+					end
+
 					local path, where = get_path(path, false, true)
 
 					if file.Exists(path, where) then
@@ -340,7 +375,7 @@ function goluwa.CreateEnv()
 						dprint("\t", time)
 						dprint("\t", type)
 
-						return {
+						local res = {
 							creation_time = time,
 							last_accessed = time,
 							last_modified = time,
@@ -348,9 +383,15 @@ function goluwa.CreateEnv()
 							size = size,
 							type = type,
 						}
+
+						fs.get_attributes_cache[original_path] = res
+
+						return res
 					else
 						dprint("\t" .. path .. " " .. where .. " does not exist")
 					end
+
+					fs.get_attributes_cache[original_path] = false
 
 					return false
 				end
@@ -360,6 +401,8 @@ function goluwa.CreateEnv()
 				fs.createdir("data/goluwa")
 
 				function env.os.remove(path)
+					uncache(path)
+
 					local path, where = get_path(path)
 
 					if file.Exists(path, where) then
@@ -371,8 +414,12 @@ function goluwa.CreateEnv()
 				end
 
 				function env.os.rename(a, b)
+					uncache(a)
+					uncache(b)
+
 					local a, where_a = get_path(a)
 					local b, where_b = get_path(b)
+
 
 					dprint("os.rename: " .. a .. " >> " .. b)
 
@@ -485,6 +532,8 @@ function goluwa.CreateEnv()
 				function io.open(path, mode)
 					mode = mode or "r"
 
+					local original_path = path
+
 					local self = setmetatable({}, META)
 
 					local path, where = get_path(path, false, not mode:find("w"))
@@ -494,6 +543,10 @@ function goluwa.CreateEnv()
 
 					if not f then
 						return nil, path .. " " .. mode .. " " .. where .. ": No such file", 2
+					end
+
+					if mode:find("w") then
+						uncache(original_path)
 					end
 
 					self.__file = f
@@ -854,8 +907,6 @@ function goluwa.CreateEnv()
 	env.pvars = env.runfile("lua/libraries/pvars.lua")
 	env.commands = env.runfile("lua/libraries/commands.lua")
 
-	concommand.Add("goluwa", function(ply, cmd, args, line) env.commands.RunString(line, false, false, true) end)
-
 	env.profiler = env.runfile("lua/libraries/profiler.lua")
 	env.P = env.profiler.ToggleTimer
 	env.I = env.profiler.ToggleInstrumental
@@ -1015,7 +1066,7 @@ function goluwa.CreateEnv()
 		env.sockets = sockets
 	end
 
-	env.resource = env.runfile("lua/libraries/network/resource.lua")
+	env.resource = env.runfile("lua/libraries/sockets/resource.lua")
 
 	do
 		local backend = CreateClientConVar("goluwa_audio_backend", "webaudio")
@@ -1639,6 +1690,10 @@ function goluwa.Initialize()
 	local time = SysTime()
 	goluwa.env = goluwa.CreateEnv()
 	_G.goluwa = goluwa
+
+	concommand.Add("goluwa", function(ply, cmd, args, line)
+		goluwa.env.commands.RunString(line, false, false, true)
+	end)
 
 	notagain.AutorunDirectory("goluwa")
 	dprint("initializing goluwa took " .. (SysTime() - time) .. " seconds")
