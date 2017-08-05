@@ -128,10 +128,6 @@ function goluwa.Update(cb)
 				return
 			end
 
-			print(body, code)
-
-			do return end
-
 			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/compare/" .. prev_commit .. "..." .. head, function(body)
 				local paths = {}
 
