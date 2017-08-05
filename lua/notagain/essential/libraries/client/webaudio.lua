@@ -817,11 +817,11 @@ do
 		end
 	end
 
-	function META:SetSourceEntity(sourceEntity, doNotRemove)
-		self.SourceEntity = sourceEntity
+	function META:SetSourceEntity(ent, dont_remove)
+		self.SourceEntity = ent
 
-		if not doNotRemove then
-			sourceEntity:CallOnRemove("webaudio_remove_stream_" .. tostring(self), function()
+		if not dont_remove and ent:IsValid() then
+			ent:CallOnRemove("webaudio_remove_stream_" .. tostring(self), function()
 				if self:IsValid() then
 					self:Remove()
 				end
