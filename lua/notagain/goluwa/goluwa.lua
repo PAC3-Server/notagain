@@ -1012,7 +1012,7 @@ function goluwa.CreateEnv()
 	do
 		local sockets = {}
 		env.SOCKETS = true
-		env.runfile("lua/libraries/network/sockets/http.lua", sockets)
+		env.runfile("lua/libraries/sockets/http.lua", sockets)
 
 		function sockets.Request(tbl)
 			tbl.callback = tbl.callback or env.table.print
