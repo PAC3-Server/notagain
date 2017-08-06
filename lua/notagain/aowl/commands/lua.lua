@@ -54,7 +54,6 @@ do -- self
 			return false, "sv_allowcslua is 0"
 		end
 
-		script = "requirex('easylua').PrintOnServer(" .. script .. ")"
 		local valid,err = luadev.ValidScript(script, "lm")
 		if not valid then return false, err end
 
