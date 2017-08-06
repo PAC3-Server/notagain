@@ -6,34 +6,39 @@ end
 local Surface = _G.surface
 
 Surface.CreateFont("scoreboard_title_b",{
-	font = "DermaDefaultBold",
+	font = "Square721 BT",
 	size = 30,
 	outline = true,
 	additive = false,
 	weight = 700,
+	antialias = true,
 })
 
 Surface.CreateFont("scoreboard_title_m",{
-	font = "DermaDefaultBold",
+	font = "Square721 BT",
 	size = 20,
 	outline = true,
 	additive = false,
 	weight = 700,
+	antialias = true,
 })
 
 Surface.CreateFont("scoreboard_desc",{
-	font = "DermaDefaultBold",
+	font = "Square721 BT",
 	size = 15,
 	outline = true,
 	additive = false,
 	weight = 700,
+	antialias = true,
 })
 
 Surface.CreateFont("scoreboard_line",{
-	font = "Roboto",
+	font = "Square721 BT",
 	size = 18,
 	additive = false,
 	weight = 600,
+	outline = true,
+	antialias = true,
 })
 
 local ScrW = _G.ScrW()
@@ -46,6 +51,14 @@ local gr_up_id = Surface.GetTextureID("gui/gradient_up")
 local gr_id = Surface.GetTextureID("gui/gradient")
 local gr_ct_id = Surface.GetTextureID("gui/center_gradient")
 --models/props_combine/portalball001_sheet maybe for selected line?
+--models/weapons/flare/shellside
+
+local metal = CreateMaterial(tostring({}), "UnlitGeneric", {
+	["$BaseTextureTransform"] = "center .2 0 scale .5 1 rotate 150 translate 0 0",
+	["$BaseTexture"] = "models/weapons/flare/shellside",
+	["$VertexAlpha"] = 1,
+	["$VertexColor"] = 1,
+})
 
 local text_color = Color(200,200,200,255)
 local scale_coef = 8
@@ -215,10 +228,18 @@ local player_line = {
 			Surface.DrawText(time..unit)
 
 			Surface.SetTextPos(w-w/scale_coef,5)
+			local ping = parent.Player:Ping()
+			if ping >= 100 then
+				Surface.SetTextColor(220,140,0)
+			end
+			if ping >= 200 then
+				Surface.SetTextColor(255,127,127)
+			end
 			Surface.DrawText(parent.Player:Ping())
 
 			if parent.Selected then
-			Surface.SetTextPos(1.75,5)
+				Surface.SetTextPos(0,-5)
+				Surface.SetFont("DermaLarge")
 				Surface.DrawText("⮞")
 			end
 		end
@@ -260,7 +281,7 @@ local scoreboard = {
 		local title = self:Add("DPanel")
 		title:Dock(TOP)
 		title:SetTall(50)
-		title:DockMargin(100,-30,100,10)
+		title:DockMargin(100,-25,100,10)
 		title.Paint = function(self,w,h)
 			Surface.SetDrawColor(0,0,0,0)
 			Surface.DrawRect(0,0,w,h)
@@ -384,21 +405,21 @@ local scoreboard = {
 
 				local mana_y = h/20 + 30
 				local mana = clamp(selected_player:GetMana(),0,selected_player:GetMaxMana())
-				jhud.DrawBar(dsr_margin+b_x,mana_y,b_max_wide*0.75,15,mana,selected_player:GetMaxMana(),3,50,50,160)
+				jhud.DrawBar(dsr_margin+b_x,mana_y,b_max_wide*0.85,15,mana,selected_player:GetMaxMana(),3,50,50,160)
 				Surface.SetFont("scoreboard_desc")
 				Surface.SetTextPos(b_x+txt_offset,mana_y-10)
 				Surface.DrawText("MP\t"..clamp(selected_player:GetMana(),0).."/"..selected_player:GetMaxMana())
 
 				local stamina_y = h/20 + 50
 				local stamina = clamp(selected_player:GetStamina(),0,selected_player:GetMaxStamina())
-				jhud.DrawBar(dsr_margin+b_x,stamina_y,b_max_wide*0.75,15,stamina,selected_player:GetMaxStamina(),3,160,160,50)
+				jhud.DrawBar(dsr_margin+b_x,stamina_y,b_max_wide*0.85,15,stamina,selected_player:GetMaxStamina(),3,160,160,50)
 				Surface.SetFont("scoreboard_desc")
 				Surface.SetTextPos(b_x+txt_offset,stamina_y-10)
 				Surface.DrawText("SP\t"..clamp(selected_player:GetStamina(),0).."/"..selected_player:GetMaxStamina())
 
 				local experience_y = h/20 + 75
 				local xp = clamp(selected_player:GetXP(),0,selected_player:GetXPToNextLevel())
-				jhud.DrawBar(dsr_margin+b_x,experience_y,b_max_wide,10,xp,selected_player:GetXPToNextLevel(),1,100,0,255)
+				jhud.DrawBar(dsr_margin+b_x,experience_y,b_max_wide*0.75,10,xp,selected_player:GetXPToNextLevel(),2,100,0,255)
 				Surface.SetFont("scoreboard_desc")
 				Surface.SetTextPos(b_x+txt_offset,experience_y-10)
 				Surface.DrawText("XP\t"..math.ceil(clamp(selected_player:GetXP(),0)).."/"..math.ceil(selected_player:GetXPToNextLevel()))
@@ -409,9 +430,15 @@ local scoreboard = {
 	end,
 
 	Paint = function(self,w,h)
-		Surface.SetDrawColor(0,0,0,173)
-		Surface.DrawRect(0,0,w,h)
-		Derma_DrawBackgroundBlur(self,0)
+		Surface.SetMaterial(metal)
+		Surface.SetDrawColor(75,75,75,255)
+		Surface.DrawTexturedRect(0,0,w,h)
+		Surface.SetDrawColor(0,0,0)
+		Surface.SetTexture(gr_up_id)
+		Surface.DrawTexturedRect(0,0,w,10)
+		Surface.SetTexture(gr_dw_id)
+		Surface.DrawTexturedRect(0,h-10,w,10)
+		--Derma_DrawBackgroundBlur(self,0)
 	end,
 }
 
