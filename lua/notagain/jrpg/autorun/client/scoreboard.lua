@@ -240,6 +240,7 @@ local player_line = {
 			if parent.Selected then
 				Surface.SetTextPos(0,-5)
 				Surface.SetFont("DermaLarge")
+				Surface.SetTextColor(255,255,255)
 				Surface.DrawText("⮞")
 			end
 		end
