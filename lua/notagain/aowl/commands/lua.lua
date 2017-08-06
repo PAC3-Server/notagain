@@ -60,6 +60,18 @@ do -- self
 		luadev.RunOnClient(script, ply, luadev.GetPlayerIdentifier(ply, "cmd:lm"), {sender = ply})
 	end, "players")
 
+	aowl.AddCommand("gl", function(ply, script)
+		if not ply:IsAdmin() and not GetConVar("sv_allowcslua"):GetBool() then
+			return false, "sv_allowcslua is 0"
+		end
+
+		script = "requirex('goluwa').SetEnv() " .. script
+		local valid,err = luadev.ValidScript(script, "lm")
+		if not valid then return false, err end
+
+		luadev.RunOnClient(script, ply, luadev.GetPlayerIdentifier(ply, "cmd:lm"), {sender = ply})
+	end, "players")
+
 	aowl.AddCommand("printm", function(ply, script)
 		if not ply:IsAdmin() and not GetConVar("sv_allowcslua"):GetBool() then
 			return false, "sv_allowcslua is 0"
