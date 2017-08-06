@@ -34,7 +34,6 @@ Surface.CreateFont("scoreboard_line",{
 	size = 18,
 	additive = false,
 	weight = 600,
-	--shadow = true,
 })
 
 local ScrW = _G.ScrW()
@@ -44,6 +43,8 @@ local ply_lines = {}
 
 local gr_dw_id = Surface.GetTextureID("gui/gradient_down")
 local gr_up_id = Surface.GetTextureID("gui/gradient_up")
+local gr_id = Surface.GetTextureID("gui/gradient")
+local gr_ct_id = Surface.GetTextureID("gui/center_gradient")
 --models/props_combine/portalball001_sheet maybe for selected line?
 
 local text_color = Color(200,200,200,255)
@@ -62,7 +63,7 @@ local colorstring = function(str,x,y)
 	for tag,values in string.gmatch(str,pattern) do
 		Surface.DrawText(parts[index])
 		index = index + 1
-		if tag == "color" then -- maybe more tags to support but heh
+		if tag == "color" then
 			local r,g,b
 			string.gsub(values,"(%d+),(%d+),(%d+)",function(sr,sg,sb)
 				r = tonumber(sr)
@@ -77,6 +78,15 @@ local colorstring = function(str,x,y)
 	end
 	Surface.DrawText(parts[#parts])
 	Surface.SetTextColor(255,255,255)
+end
+
+local clamp = function(input,min,max)
+	if max and input >= max then
+		input = max
+	elseif min and input <= min then
+		input = min
+	end
+	return input
 end
 
 local player_line = {
@@ -338,21 +348,62 @@ local scoreboard = {
 		local infos = self:Add("DPanel")
 		infos:SetPos(dplayers:GetWide()+40,90)
 		infos:SetSize(info_scale-60,self:GetTall()-190)
-		local ix,iy = infos:LocalToScreen(dplayers:GetWide()+40,ScrH/2-self:GetTall()/2+90)
+
+		local pacx,pacy = infos:LocalToScreen(dplayers:GetWide()+40,ScrH/2-self:GetTall()/2+90)
 		infos.Paint = function(self,w,h)
 			if not IsValid(selected_player) then return end
+
 			Surface.SetTexture(gr_up_id)
 			Surface.SetDrawColor(30,30,30,200)
 			Surface.DrawTexturedRect(0,0,w/3,h)
 			Surface.SetDrawColor(100,100,100,200)
 			Surface.DrawOutlinedRect(0,0,w/3,h)
+
 			if pac then
-				pac.DrawEntity2D(selected_player,ix,iy,w/3,h,nil,nil,40)
+				pac.DrawEntity2D(selected_player,pacx,pacy,w/3,h,nil,nil,40)
 			end
-			--[[local health_max_wide = w*2/3-20
-			draw.RoundedBox(10,w/3+10,12.5,health_max_wide,15,Color(120,120,120))
-			draw.RoundedBox(5,w/3+15,15,health_max_wide*(selected_player:Health() >= selected_player:GetMaxHealth() and selected_player:GetMaxHealth() or selected_player:Health()/selected_player:GetMaxHealth())-10,10,Color(127,255,127))
-			]]--
+
+			local b_max_wide = w*2/3-80
+			local b_x = w/3+10
+			local txt_offset = w*0.25/3
+
+			local dsr_margin = clamp(w*0.95/3,nil,200)
+
+			local jhud = _G.jhud
+			if jhud then
+				draw.NoTexture()
+				Surface.DisableClipping(true)
+				Surface.SetTextColor(text_color)
+
+				local health_y = h/20
+				local health = clamp(selected_player:Health(),0,selected_player:GetMaxHealth())
+				jhud.DrawBar(dsr_margin+b_x,health_y,b_max_wide,25,health,selected_player:GetMaxHealth(),5,50,160,50)
+				Surface.SetFont("scoreboard_title_m")
+				Surface.SetTextPos(b_x+txt_offset,health_y-15)
+				Surface.DrawText("HP\t"..clamp(selected_player:Health(),0).."/"..selected_player:GetMaxHealth())
+
+				local mana_y = h/20 + 30
+				local mana = clamp(selected_player:GetMana(),0,selected_player:GetMaxMana())
+				jhud.DrawBar(dsr_margin+b_x,mana_y,b_max_wide*0.75,15,mana,selected_player:GetMaxMana(),3,50,50,160)
+				Surface.SetFont("scoreboard_desc")
+				Surface.SetTextPos(b_x+txt_offset,mana_y-10)
+				Surface.DrawText("MP\t"..clamp(selected_player:GetMana(),0).."/"..selected_player:GetMaxMana())
+
+				local stamina_y = h/20 + 50
+				local stamina = clamp(selected_player:GetStamina(),0,selected_player:GetMaxStamina())
+				jhud.DrawBar(dsr_margin+b_x,stamina_y,b_max_wide*0.75,15,stamina,selected_player:GetMaxStamina(),3,160,160,50)
+				Surface.SetFont("scoreboard_desc")
+				Surface.SetTextPos(b_x+txt_offset,stamina_y-10)
+				Surface.DrawText("SP\t"..clamp(selected_player:GetStamina(),0).."/"..selected_player:GetMaxStamina())
+
+				local experience_y = h/20 + 75
+				local xp = clamp(selected_player:GetXP(),0,selected_player:GetXPToNextLevel())
+				jhud.DrawBar(dsr_margin+b_x,experience_y,b_max_wide,10,xp,selected_player:GetXPToNextLevel(),1,100,0,255)
+				Surface.SetFont("scoreboard_desc")
+				Surface.SetTextPos(b_x+txt_offset,experience_y-10)
+				Surface.DrawText("XP\t"..math.ceil(clamp(selected_player:GetXP(),0)).."/"..math.ceil(selected_player:GetXPToNextLevel()))
+			end
+
 		end
 
 	end,
