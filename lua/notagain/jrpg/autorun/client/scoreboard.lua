@@ -36,8 +36,17 @@ Surface.CreateFont("scoreboard_line",{
 	font = "Square721 BT",
 	size = 18,
 	additive = false,
-	weight = 600,
-	outline = true,
+	weight = 700,
+	--outline = true,
+	antialias = true,
+})
+
+Surface.CreateFont("scoreboard_achiev",{
+	font = "Square721 BT",
+	size = 15,
+	additive = false,
+	weight = 700,
+	--outline = true,
 	antialias = true,
 })
 
@@ -51,7 +60,6 @@ local gr_up_id = Surface.GetTextureID("gui/gradient_up")
 local gr_id = Surface.GetTextureID("gui/gradient")
 local gr_ct_id = Surface.GetTextureID("gui/center_gradient")
 --models/props_combine/portalball001_sheet maybe for selected line?
---models/weapons/flare/shellside
 
 local metal = CreateMaterial(tostring({}), "UnlitGeneric", {
 	["$BaseTextureTransform"] = "center .2 0 scale .5 1 rotate 150 translate 0 0",
@@ -74,7 +82,7 @@ local colorstring = function(str,x,y)
 	local index = 1
 	local x,y = (x or 0),(y or 0)
 	for tag,values in string.gmatch(str,pattern) do
-		Surface.DrawText(parts[index])
+		Surface.DrawText(string.upper(parts[index]))
 		index = index + 1
 		if tag == "color" then
 			local r,g,b
@@ -89,17 +97,62 @@ local colorstring = function(str,x,y)
 			end
 		end
 	end
-	Surface.DrawText(parts[#parts])
+	Surface.DrawText(string.upper(parts[#parts]))
 	Surface.SetTextColor(255,255,255)
 end
 
-local clamp = function(input,min,max)
+local clamp = function(input,min,max) --fuck math clamp i guess lol
 	if max and input >= max then
 		input = max
 	elseif min and input <= min then
 		input = min
 	end
 	return input
+end
+
+local function cinputs(command,mode)
+    local main = vgui.Create("DFrame")
+	main:SetSize(300,150)
+	main:SetPos(_G.ScrW()/2-main:GetWide()/2,_G.ScrH()/2-main:GetTall()/2)
+	main:SetTitle("BANNI")
+	print(main.btnMaxim)
+	main.btnMaxim:Hide()
+	main.btnMinim:Hide()
+	main.lblTitle:SetFont("scoreboard_line")
+	main:SetDraggable(true)
+	main:ShowCloseButton(true)
+	main:MakePopup()
+	main.Paint = function(self,w,h)
+		Surface.SetMaterial(metal)
+		Surface.SetDrawColor(75,75,75,255)
+		Surface.DrawTexturedRect(0,0,w,h)
+		Surface.SetDrawColor(0,0,0)
+		Surface.DrawOutlinedRect(0,0,w,h)
+		Surface.DrawRect(0,0,w,25)
+	end
+
+    local textentry = vgui.Create("DTextEntry",main)
+	textentry:SetText("reason")
+	textentry:SetPos(main:GetWide()/20,main:GetTall()/2.75)
+	textentry:SetSize(main:GetWide()/2,22)
+
+    local wang = vgui.Create("DNumberWang",main)
+	wang:SetMinMax( 0, 99999 )
+	wang:SetDecimals( 0 )
+	wang:SetPos(main:GetWide()/1.625,main:GetTall()/2.75)
+	wang:SetSize(main:GetWide()/3,22)
+    if mode == 1 then wang:SetVisible( false ) end
+
+    local button = vgui.Create("DButton",main)
+	button:SetText("Go")
+	button:SetPos(main:GetWide()/4,main:GetTall()/1.35)
+	button:SetSize(main:GetWide()/2-8,22)
+	button.DoClick = function()
+		if mode == 2 then command = command..[[ "]]..wang:GetValue()..[[" ]] end
+		command = command..[[ "]]..textentry:GetValue()..[[" ]]
+		LocalPlayer():ConCommand(command)
+		main:Remove()
+	end
 end
 
 local player_line = {
@@ -113,7 +166,7 @@ local player_line = {
 
 		self.av = self:Add("AvatarImage")
 		self.av:SetSize(60,60)
-		self.av:SetPos(15,-15)
+		self.av:SetPos(20,-15)
 		self.av:SetZPos(10)
 
 		local btnav = self:Add("DButton")
@@ -238,7 +291,7 @@ local player_line = {
 			Surface.DrawText(parent.Player:Ping())
 
 			if parent.Selected then
-				Surface.SetTextPos(0,-5)
+				Surface.SetTextPos(2,-5)
 				Surface.SetFont("DermaLarge")
 				Surface.SetTextColor(255,255,255)
 				Surface.DrawText("⮞")
@@ -273,6 +326,7 @@ local scoreboard = {
 		self:SetTitle("")
 		self:SetSize(ScrW,ScrH-ScrH*1.2/3)
 		self:SetPos(ScrW/2-self:GetWide()/2,ScrH/2-self:GetTall()/2)
+		self:SetDraggable(false)
 		self.btnClose:SetZPos(999)
 		self.btnClose:Hide()
 		self.btnMaxim:Hide()
@@ -333,7 +387,7 @@ local scoreboard = {
 
 		local players = self:Add("DScrollPanel")
 		players:SetPos(20,110)
-		players:SetSize(ply_scale,self:GetTall()-210)
+		players:SetSize(ply_scale,self:GetTall()-150)
 		players.Think = function(self)
 			for k,v in pairs(player.GetAll()) do
 				if not ply_lines[v:SteamID()] then
@@ -347,10 +401,6 @@ local scoreboard = {
 				ply_lines[selected_player:SteamID()].Selected = true
 			end
 		end
-		--[[players.Paint = function(self,w,h)
-			Surface.SetDrawColor(100,100,100,200)
-			Surface.DrawOutlinedRect(0,0,w,h)
-		end]]--
 
 		--selected players jrpg infos
 		local info_scale = self:GetWide()*3/scale_coef
@@ -369,7 +419,7 @@ local scoreboard = {
 
 		local infos = self:Add("DPanel")
 		infos:SetPos(dplayers:GetWide()+40,90)
-		infos:SetSize(info_scale-60,self:GetTall()-190)
+		infos:SetSize(info_scale-60,self:GetTall()-130)
 
 		local pacx,pacy = infos:LocalToScreen(dplayers:GetWide()+40,ScrH/2-self:GetTall()/2+90)
 		infos.Paint = function(self,w,h)
@@ -426,20 +476,61 @@ local scoreboard = {
 				Surface.DrawText("XP\t"..math.ceil(clamp(selected_player:GetXP(),0)).."/"..math.ceil(selected_player:GetXPToNextLevel()))
 			end
 
+			Surface.SetFont("scoreboard_title_m")
+			Surface.SetTextColor(text_color)
+			Surface.SetTextPos(b_x+txt_offset,h/20+100)
+			Surface.DrawText("Achievements Completed")
 		end
 
+		local achievs = self:Add("DListView")
+		local a_margin_top = infos:GetTall()/20+130
+		achievs:SetPos(dplayers:GetWide()+60+infos:GetWide()/3+10,90+a_margin_top)
+		achievs:SetSize(infos:GetWide()*2/3-40,infos:GetTall()-(a_margin_top))
+		achievs:AddColumn("Achievement")
+		achievs:SetHideHeaders(true)
+		achievs.Paint = function() end
+
+		achievs.Think = function(self)
+			if not PCTasks then return end
+			if selected_player ~= self.Player then
+				self.Player = selected_player
+				self:Clear()
+				for k,v in pairs(PCTasks.GetCompleted(self.Player)) do
+					local line = self:AddLine("")
+					local str = string.upper(k)
+					line.Paint = function(self,w,h)
+						Surface.SetTexture(gr_ct_id)
+						Surface.SetDrawColor(100,100,100,175)
+						Surface.DrawTexturedRect(0,2,w,h-4)
+						Surface.SetFont("scoreboard_achiev")
+						local ach_x,ach_y = Surface.GetTextSize(str)
+						Surface.SetTextColor(text_color)
+						Surface.SetTextPos(w/2-ach_x/2,h/2-ach_y/2)
+						Surface.DrawText(str)
+					end
+				end
+			end
+		end
 	end,
 
 	Paint = function(self,w,h)
 		Surface.SetMaterial(metal)
-		Surface.SetDrawColor(75,75,75,255)
+		Surface.SetDrawColor(75,75,75,253)
 		Surface.DrawTexturedRect(0,0,w,h)
 		Surface.SetDrawColor(0,0,0)
 		Surface.SetTexture(gr_up_id)
 		Surface.DrawTexturedRect(0,0,w,10)
 		Surface.SetTexture(gr_dw_id)
 		Surface.DrawTexturedRect(0,h-10,w,10)
-		--Derma_DrawBackgroundBlur(self,0)
+
+		Surface.SetTexture(gr_id)
+		Surface.SetDrawColor(30,30,30,255)
+		Surface.DrawTexturedRect(0,h-35,700,20)
+		Surface.SetFont("scoreboard_achiev")
+		Surface.SetTextColor(text_color)
+		local str = "TIME: "..os.date("%H:%M:%S").."\tUPTIME: "..string.NiceTime(CurTime()).."\tFPS: "..math.floor(1/FrameTime())
+		Surface.SetTextPos(20,h-32.5)
+		Surface.DrawText(str)
 	end,
 }
 
