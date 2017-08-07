@@ -4,7 +4,7 @@ local JAlert = {}
 _G.JAlert = JAlert
 
 surface.CreateFont("JAlertFont",{
-    font      = "Roboto",
+    font      = "Square721 BT",
     extended  = true,
     size      = 17,
     weight    = 500,

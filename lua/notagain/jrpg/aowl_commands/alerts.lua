@@ -10,7 +10,7 @@ if SERVER then
 			net.WriteString(message)
 			net.WriteInt(delay,32)
 		net.Broadcast()
-	end, "developers")
+	end, "developers",true)
 end
 
 if CLIENT then

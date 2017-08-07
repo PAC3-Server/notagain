@@ -382,7 +382,7 @@ do -- view
 		local y = 0
 
 		if not jchat.wrapped_message then
-			prettytext.GetTextSize("", "arial", font_size, font_weight, 3, 31)
+			prettytext.GetTextSize("", "Square721 BT", font_size, font_weight, 3, 31)
 			jchat.wrapped_message = string_wrapwords(jchat.message, ScrW() - 350)
 		end
 
@@ -396,7 +396,7 @@ do -- view
 
 		do
 			local y = y
-			local w = prettytext.Draw(name, x, y, "arial", font_size, font_weight, 3, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 31)
+			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 3, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 31)
 
 			surface.SetDrawColor(0, 0, 0, 255)
 			surface.DrawRect(0 - 3, y - 3 + 5, w + x + 10 + 6, 3 + 6)
@@ -407,7 +407,7 @@ do -- view
 
 		local y = y
 		for _, str in ipairs(jchat.wrapped_message) do
-			prettytext.Draw(str, ScrW() / 2, y + 25, "arial", font_size, font_weight, 3, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 31)
+			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 3, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 31)
 			y = y + font_size
 		end
 	end

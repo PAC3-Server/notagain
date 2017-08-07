@@ -1,5 +1,5 @@
 surface.CreateFont( "NoticeFont", {
-    font      = "Roboto",
+    font      = "Square721 BT",
     extended  = true,
     size      = 17,
     weight    = 500,
