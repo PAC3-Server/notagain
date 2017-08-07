@@ -76,7 +76,7 @@ if CLIENT then
 	local roundness = 15
 
 	local prettytext = requirex("pretty_text")
-	local font = "arial"
+	local font = "Square721 BT"
 	local size = 500
 	local bold = 0
 	local blursize = 6
