@@ -66,6 +66,7 @@ if SERVER then
 			ply:ChatPrint("RPG: Enabled")
 		else
 			jattributes.Disable(ply)
+			ply:SetHealth(100) -- fix to no health after removing rpg
 			ply:SendLua([[if battlecam and battlecam.IsEnabled() then battlecam.Disable() end]])
 			ply:ChatPrint("RPG: Disabled")
 		end
