@@ -434,7 +434,9 @@ local scoreboard = {
 			if pac then
 				local ang = selected_player:EyeAngles()
 				ang = Angle(0,ang.y+180,ang.r)
+				pac.ForceRendering(true)
 				pac.DrawEntity2D(selected_player,pacx,pacy,w/3,h,nil,ang,30)
+				pac.ForceRendering(false)
 			end
 
 			local b_max_wide = w*2/3-80
