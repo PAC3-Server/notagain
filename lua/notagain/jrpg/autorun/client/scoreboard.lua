@@ -432,7 +432,9 @@ local scoreboard = {
 			Surface.DrawOutlinedRect(0,0,w/3,h)
 
 			if pac then
-				pac.DrawEntity2D(selected_player,pacx,pacy,w/3,h,nil,nil,40)
+				local ang = selected_player:EyeAngles()
+				ang = Angle(0,ang.y+180,ang.r)
+				pac.DrawEntity2D(selected_player,pacx,pacy,w/3,h,nil,ang,40)
 			end
 
 			local b_max_wide = w*2/3-80
