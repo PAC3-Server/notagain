@@ -18,6 +18,17 @@ PCTasks.IsCompleted = function(ply,name)
     return ply:GetNWBool("PCTask_"..name,false)
 end
 
+PCTasks.GetCompleted = function(ply) 
+    local results = {} 
+    if not IsValid(ply) then return results end
+    for k,v in pairs(PCTasks.Store) do 
+        if ply:GetNWBool("PCTask_"..k) then 
+            results[k] = v 
+        end 
+    end 
+    return results 
+end
+
 if SERVER then
 
     util.AddNetworkString(PCTasksSend)
