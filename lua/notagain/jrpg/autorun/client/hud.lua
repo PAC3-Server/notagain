@@ -263,8 +263,10 @@ hook.Add("HUDPaint", "jhud", function()
 			x = x + math.Rand(-1,1) * (lost-1)
 			y = y + math.Rand(-1,1) * (lost-1)
 			surface.SetDrawColor(255,critical*255/lost,critical*255/lost,255)
-
-			avatar.Draw(LocalPlayer(), x,y, height)
+			
+			if avatar.Draw then -- this is sometimes nil
+				avatar.Draw(LocalPlayer(), x,y, height)
+			end
 		end
 
 		do
