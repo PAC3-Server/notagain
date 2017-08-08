@@ -23,6 +23,11 @@ local CreatePanel = function(area)
             { x = w*0.8, y = h },
             { x = 0, y = h },
         })
+        surface.SetDrawColor(text_color)
+        surface.DrawLine(w*0.2,1,w,1)
+        surface.DrawLine(w,1,w*0.8,h-2)
+        surface.DrawLine(w*0.8,h-2,0,h-2)
+        surface.DrawLine(0,h-2,w*0.2,1)
         surface.SetFont("area_font")
         local x,y = surface.GetTextSize(area)
         surface.SetTextColor(text_color)
