@@ -1,4 +1,4 @@
-aowl.AddCommand("settod", function(player, line, val)
+aowl.AddCommand("settod|tod=number[10]", function(player, line, val)
 	local val = val or "realtime"
 	local time24 = tonumber(val)
 
