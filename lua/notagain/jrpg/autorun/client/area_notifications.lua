@@ -15,6 +15,7 @@ local CreatePanel = function(area)
     panel:SetSize(500,70)
     panel:SetPos(ScrW(),y_pos)
     panel.Paint = function(self,w,h)
+		draw.NoTexture()
         surface.SetDrawColor(30,30,30,255)
         surface.DrawPoly({
             { x = w*0.2, y = 0 },
