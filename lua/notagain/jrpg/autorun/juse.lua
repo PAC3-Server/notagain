@@ -111,7 +111,7 @@ if CLIENT then
 		local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
 		local str = ent:IsValid() and (ent.GetActiveWeapon and "TALK" or "EXAMINE") or last_str
 		last_str = str
-		local w,h = prettytext.GetTextSize(str, "Square721 BT", txt_size, 0, 3)
+		local w,h = prettytext.GetTextSize(str, "gabriola", txt_size, 0, 3)
 		local key_width, key_height = prettytext.GetTextSize(key or "E", "gabriola", txt_size, 0, 3)
 		local bg_width = w + 100
 
@@ -121,9 +121,9 @@ if CLIENT then
 
 		surface.SetDrawColor(255,255,255,255*fade_out)
 		draw.RoundedBox(4, x - key_width*2 - w/2 - key_width*0.25, y + border, key_width*1.5, key_height/2.2, Color(25,25,25,255*fade_out))
-		prettytext.Draw(str, x - w / 2, y, "Square721 BT", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
+		prettytext.Draw(str, x - w / 2, y, "gabriola", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
 
-		prettytext.Draw(key, x - key_width*2 - w/2, y, "arial", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
+		prettytext.Draw(key, x - key_width*2 - w/2, y, "gabriola", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
 
 	end)
 end
