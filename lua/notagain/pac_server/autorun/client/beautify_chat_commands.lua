@@ -17,6 +17,7 @@ local commands = {
 	["cmd"]     	= {text = "Console",         color = red    },
 	["rcon"]    	= {text = "Server Console",  color = blue   },
 	["settod"]  	= {text = "Tod",             color = blue   },
+	["tod"]  	= {text = "Tod",             color = blue   },
 	["sudo"]    	= {text = "Sudo",            color = blue   },
 	["map"]			= {text = "Map",             color = blue   },
 	["restart"]		= {text = "Server Restart",  color = blue   },
