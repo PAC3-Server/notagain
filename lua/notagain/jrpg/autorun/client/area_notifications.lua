@@ -6,12 +6,12 @@ surface.CreateFont("area_font",{
 	antialias = true,
 })
 
-local cur_area = "OverWorld"
+local cur_area = "Overworld"
 local cur_panel
 local text_color = Color(200,200,200,255)
 local y_pos = 100
 local CreatePanel = function(area)
-    local area = area or "OtherWorld"
+    local area = area or "Overworld"
     local panel = vgui.Create("DPanel")
     panel:SetSize(500,70)
     panel:SetPos(ScrW(),y_pos)
@@ -38,10 +38,10 @@ local CreatePanel = function(area)
 end
 
 local Handle = function(ent,area)
-    local area = area or "OverWorld"
+    local area = area or "Overworld"
     if ent == LocalPlayer() then
         timer.Simple(0.5,function()
-            if cur_area ~= area and LocalPlayer():IsInArea(area) or (area == "OverWorld" and table.Count(LocalPlayer():GetCurrentAreas()) == 0) then
+            if cur_area ~= area and LocalPlayer():IsInArea(area) or (area == "Overworld" and table.Count(LocalPlayer():GetCurrentAreas()) == 0) then
                 cur_area = area
                 if IsValid(cur_panel) then
                     cur_panel:MoveTo(-cur_panel:GetWide(),y_pos,0.35,0,7,function(_,pa) pa:Remove() end)
