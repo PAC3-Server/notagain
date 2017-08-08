@@ -23,7 +23,7 @@ local noAFKEntities = {
 	gmod_playx_proximity = true,
 }
 hook.Add("CalcView", "afk_camera", function(ply, basePos, baseAng, baseFov, nearZ, farZ)
-	if not afkmera_enable:GetBool() or spawned > CurTime() or not (pace and pace.Editor:IsValid()) then return end
+	if not afkmera_enable:GetBool() or spawned > CurTime() or (pace and IsValid(pace.Editor)) then return end
 
 	local IsAFK = false
 	local simulate = afkmera_simulate:GetBool() or false
