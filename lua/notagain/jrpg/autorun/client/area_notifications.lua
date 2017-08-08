@@ -11,7 +11,6 @@ local cur_panel
 local text_color = Color(200,200,200,255)
 local y_pos = 100
 local CreatePanel = function(area)
-    local area = area or "Overworld"
     local panel = vgui.Create("DPanel")
     panel:SetSize(500,70)
     panel:SetPos(ScrW(),y_pos)
