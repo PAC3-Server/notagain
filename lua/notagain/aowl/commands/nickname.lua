@@ -25,7 +25,7 @@ if SERVER then
 		if cd and cd > CurTime() then
 			return false, "You're changing nicks too quickly!"
 		end
-		if string.len(line) >= 15 then
+		if string.len(string.gsub(line,"<.->","")) >= 15 then
 			return false, "Your name is too long"
 		end
 
