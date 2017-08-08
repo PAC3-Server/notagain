@@ -19,11 +19,14 @@ if SERVER then
 	local nextChange = {}
 	local nick
 
-    aowl.AddCommand("name|nick=string[ ]", function(caller, line)
+    aowl.AddCommand("name|nick=string[]", function(caller, line)
 		if not IsValid(caller) or not caller.SetNick then return end
 		local cd = nextChange[caller:UserID()]
 		if cd and cd > CurTime() then
 			return false, "You're changing nicks too quickly!"
+		end
+		if string.len(line) >= 15 then
+			return false, "Your name is too long"
 		end
 
 		local oldNick = caller:Nick()
@@ -34,6 +37,6 @@ if SERVER then
 		net.WriteString(caller:Nick())
 		net.Broadcast()
 		nextChange[caller:UserID()] = CurTime() + 2
-	end)
+	end,"players",true)
 
 end
