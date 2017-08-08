@@ -323,20 +323,14 @@ vgui.Register("ScoreboardPlayerLine",player_line,"DPanel")
 
 local scoreboard = {
 	Init = function(self)
-		self:SetTitle("")
 		self:SetSize(ScrW,ScrH-ScrH*1.2/3)
 		self:SetPos(ScrW/2-self:GetWide()/2,ScrH/2-self:GetTall()/2)
-		self:SetDraggable(false)
-		self.btnClose:SetZPos(999)
-		self.btnClose:Hide()
-		self.btnMaxim:Hide()
-		self.btnMinim:Hide()
 
 		-- title
 		local title = self:Add("DPanel")
 		title:Dock(TOP)
 		title:SetTall(50)
-		title:DockMargin(100,-25,100,10)
+		title:DockMargin(100,0,100,10)
 		title.Paint = function(self,w,h)
 			Surface.SetDrawColor(0,0,0,0)
 			Surface.DrawRect(0,0,w,h)
@@ -354,7 +348,7 @@ local scoreboard = {
 		local ply_scale = self:GetWide()*5/scale_coef
 		local dplayers = self:Add("DPanel")
 		dplayers:SetPos(20,60)
-		dplayers:SetSize(ply_scale,50)
+		dplayers:SetSize(ply_scale,20)
 		dplayers.Paint = function(self,w,h)
 			Surface.SetTextColor(text_color)
 
@@ -363,26 +357,177 @@ local scoreboard = {
 			Surface.DrawText("Players - "..player.GetCount())
 			Surface.SetDrawColor(text_color)
 			Surface.DrawLine(0,19,w*2/scale_coef,19)
+		end
 
+		local playersort = self:Add("DPanel")
+		playersort:SetPos(20,90)
+		playersort:SetSize(ply_scale,20)
+		playersort.Paint = function(self,w,h)
 			Surface.SetTexture(gr_dw_id)
 			Surface.SetDrawColor(0,0,0,255)
-			Surface.DrawTexturedRect(0,30,w,20)
+			Surface.DrawTexturedRect(0,0,w,20)
 			Surface.SetDrawColor(100,100,100,200)
-			Surface.DrawOutlinedRect(0,30,w,20)
+			Surface.DrawOutlinedRect(0,0,w,20)
+		end
 
+		local namesort = playersort:Add("DButton")
+		namesort:SetPos(ply_scale/scale_coef,2)
+		namesort:SetSize(40,20)
+		namesort.Paint = function(self,w,h)
 			Surface.SetFont("scoreboard_desc")
 
-			Surface.SetTextPos(w/scale_coef,32)
+			Surface.SetTextPos(0,0)
+			if self:IsHovered() then
+				if self.Depressed then
+					Surface.SetTextColor(64,64,164)
+				else
+					Surface.SetTextColor(64,92,192)
+				end
+			end
 			Surface.DrawText("Name")
+			Surface.SetTextColor(text_color)
 
-			Surface.SetTextPos(w-w*2/scale_coef,32)
+			return true
+		end
+		namesort.DoClick = function(self)
+			local tbl = {}
+			for k, v in pairs(ply_lines) do
+				tbl[#tbl + 1] = {k = k, v = v.Player:Nick():gsub("(<color=[%d,]+>)", "")}
+			end
+			if not self.counter then
+				table.sort(tbl, function(a, b)
+					return a.v < b.v
+				end)
+			else
+				table.sort(tbl, function(a, b)
+					return a.v > b.v
+				end)
+			end
+			for k, v in pairs(tbl) do
+				local ply = ply_lines[v.k].Player
+				ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
+			end
+			self.counter = not self.counter
+		end
+
+		local lvlsort = playersort:Add("DButton")
+		lvlsort:SetPos(ply_scale*3/scale_coef - 6,2)
+		lvlsort:SetSize(40,20)
+		lvlsort.Paint = function(self,w,h)
+			Surface.SetFont("scoreboard_desc")
+
+			Surface.SetTextPos(0,0)
+			if self:IsHovered() then
+				if self.Depressed then
+					Surface.SetTextColor(64,64,164)
+				else
+					Surface.SetTextColor(64,92,192)
+				end
+			end
+			Surface.DrawText("LVL")
+			Surface.SetTextColor(text_color)
+
+			return true
+		end
+		lvlsort.DoClick = function(self)
+			local tbl = {}
+			for k, v in pairs(ply_lines) do
+				tbl[#tbl + 1] = {k = k, v = jlevel.GetStats(v.Player).level}
+			end
+			if self.counter then
+				table.sort(tbl, function(a, b)
+					return a.v < b.v
+				end)
+			else
+				table.sort(tbl, function(a, b)
+					return a.v > b.v
+				end)
+			end
+			for k, v in pairs(tbl) do
+				local ply = ply_lines[v.k].Player
+				ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
+			end
+			self.counter = not self.counter
+		end
+
+		local timesort = playersort:Add("DButton")
+		timesort:SetPos(ply_scale-ply_scale*2/scale_coef - 12,2)
+		timesort:SetSize(80,20)
+		timesort.Paint = function(self,w,h)
+			Surface.SetFont("scoreboard_desc")
+
+			Surface.SetTextPos(0,0)
+			if self:IsHovered() then
+				if self.Depressed then
+					Surface.SetTextColor(64,64,164)
+				else
+					Surface.SetTextColor(64,92,192)
+				end
+			end
 			Surface.DrawText("Playtime")
+			Surface.SetTextColor(text_color)
 
-			Surface.SetTextPos(w*3/scale_coef,32)
-			Surface.DrawText(".LVL")
+			return true
+		end
+		timesort.DoClick = function(self)
+			local tbl = {}
+			for k, v in pairs(ply_lines) do
+				tbl[#tbl + 1] = {k = k, v = v.Player:GetTotalTime()}
+			end
+			if self.counter then
+				table.sort(tbl, function(a, b)
+					return a.v < b.v
+				end)
+			else
+				table.sort(tbl, function(a, b)
+					return a.v > b.v
+				end)
+			end
+			for k, v in pairs(tbl) do
+				local ply = ply_lines[v.k].Player
+				ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
+			end
+			self.counter = not self.counter
+		end
 
-			Surface.SetTextPos(w-w/scale_coef,32)
+		local pingsort = playersort:Add("DButton")
+		pingsort:SetPos(ply_scale-ply_scale/scale_coef - 12,2)
+		pingsort:SetSize(40,20)
+		pingsort.Paint = function(self,w,h)
+			Surface.SetFont("scoreboard_desc")
+
+			Surface.SetTextPos(0,0)
+			if self:IsHovered() then
+				if self.Depressed then
+					Surface.SetTextColor(64,64,164)
+				else
+					Surface.SetTextColor(64,92,192)
+				end
+			end
 			Surface.DrawText("Ping")
+			Surface.SetTextColor(text_color)
+
+			return true
+		end
+		pingsort.DoClick = function(self)
+			local tbl = {}
+			for k, v in pairs(ply_lines) do
+				tbl[#tbl + 1] = {k = k, v = v.Player:Ping()}
+			end
+			if self.counter then
+				table.sort(tbl, function(a, b)
+					return a.v < b.v
+				end)
+			else
+				table.sort(tbl, function(a, b)
+					return a.v > b.v
+				end)
+			end
+			for k, v in pairs(tbl) do
+				local ply = ply_lines[v.k].Player
+				ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
+			end
+			self.counter = not self.counter
 		end
 
 		local players = self:Add("DScrollPanel")
@@ -538,7 +683,7 @@ local scoreboard = {
 	end,
 }
 
-vgui.Register("Scoreboard",scoreboard,"DFrame")
+vgui.Register("Scoreboard",scoreboard,"EditablePanel")
 
 local cv_scoreboard = CreateConVar("rpg_scoreboard","1",FCVAR_ARCHIVE,"Enable or disable the rpg scoreboard")
 local cv_scoreboard_mouse = CreateConVar("rpg_scoreboard_mouse_on_open","1",FCVAR_ARCHIVE,"Enables cursor on scoreboard opening or not")
