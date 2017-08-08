@@ -61,7 +61,8 @@ if CLIENT then
 		x = x + 16
 		y = y + 5
 		if is_health then
-			for i, status in ipairs(jdmg.GetStatuses(ent)) do
+			local statuses = jdmg.GetStatuses(ent) or {}
+			for i, status in ipairs(statuses) do
 				if status.negative then
 					surface.SetDrawColor(150, 0, 0, 255*fade)
 				elseif status.positive then
