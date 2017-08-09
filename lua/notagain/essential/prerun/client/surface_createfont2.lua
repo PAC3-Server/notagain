@@ -211,7 +211,11 @@ concommand.Add("dump_fonts", function()
 	end
 end)
 
-local created = {}
+local name_translation = {
+	helvetica = "dejavu sans",
+}
+
+surface.created_fonts = surface.created_fonts or {}
 
 surface.old_CreateFont = surface.old_CreateFont or surface.CreateFont
 function surface.CreateFont(name, tbl, ...)
@@ -225,6 +229,10 @@ function surface.CreateFont(name, tbl, ...)
 
 	if font_name then
 		local font_name = font_name:lower()
+
+		if name_translation[font_name] then
+			font_name = name_translation[font_name]
+		end
 
 		local font
 
@@ -252,6 +260,7 @@ function surface.CreateFont(name, tbl, ...)
 					tbl.font = font.full_name
 				end
 			end
+			tbl.real_font = tbl.font
 		end
 
 		tbl.weight = 0
@@ -263,19 +272,21 @@ function surface.CreateFont(name, tbl, ...)
 		debug.Trace()
 	end
 
-	if tbl.font and system.IsLinux() then
-		created[name] = tbl
-	end
+	surface.created_fonts[name] = tbl
 
 	return surface.old_CreateFont(name, tbl, ...)
 end
+
+concommand.Add("dump_fonts_created", function()
+	PrintTable(surface.created_fonts)
+end)
 
 if system.IsLinux() then
 	local current_font
 
 	surface.old_SetFont = surface.old_SetFont or surface.SetFont
 	function surface.SetFont(name, ...)
-		current_font = created[name]
+		current_font = surface.created_fonts[name]
 		return surface.old_SetFont(name, ...)
 	end
 
