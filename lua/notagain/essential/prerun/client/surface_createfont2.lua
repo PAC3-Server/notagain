@@ -260,7 +260,7 @@ function surface.CreateFont(name, tbl, ...)
 					tbl.font = font.full_name
 				end
 			end
-			tbl.real_font = tbl.font
+			tbl.real_font = font
 		end
 
 		tbl.weight = 0
