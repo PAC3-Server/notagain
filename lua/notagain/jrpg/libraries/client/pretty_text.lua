@@ -1,7 +1,5 @@
 local fonts = {}
 
-local linux_offset = system.IsLinux() and 1 or 0
-
 local function create_fonts(font, size, weight, blursize)
 	local id = "_" .. font .. "_" .. size .. "_" .. weight .. "_" .. blursize
 	local main = "pretty_text" .. id
@@ -15,7 +13,7 @@ local function create_fonts(font, size, weight, blursize)
 	})
 	surface.CreateFont(blur, {
 		font = font,
-		size = size + (linux_offset * 2.5),
+		size = size,
 		weight = weight,
 		blursize = blursize / 2,
 		outline = true,
@@ -232,7 +230,7 @@ function prettytext.DrawText(tbl)
 	surface_SetTextColor(background_color)
 
 	for _ = 1, tbl.blur_overdraw or 2 do
-		surface_SetTextPos(x + linux_offset, y)
+		surface_SetTextPos(x, y)
 		surface_DrawText(text)
 	end
 
