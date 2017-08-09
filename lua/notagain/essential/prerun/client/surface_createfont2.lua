@@ -140,6 +140,11 @@ for k,v in pairs(weight_names) do
 	weight_translate[v] = v
 end
 
+local blacklist = {
+	italic = true,
+	roman = true,
+}
+
 local function font_from_family(family, weight, italic, extended)
 	weight = weight or 0
 
@@ -149,14 +154,8 @@ local function font_from_family(family, weight, italic, extended)
 	for _, name in ipairs(weight_names) do
 		for sub_family, info in pairs(family) do
 			for _, name2 in ipairs(sub_family:Split(" ")) do
-
-				if name2 ~= "italic" then
-					if not weight_translate[name2] then
-						print(name2 .. " is not a recognizable flag (" .. sub_family .. ")")
-						name2 = "regular"
-					else
-						name2 = weight_translate[name2]
-					end
+				if weight_translate[name2] then
+					name2 = weight_translate[name2]
 				end
 
 				if name == name2 and not done[sub_family] then
@@ -166,6 +165,16 @@ local function font_from_family(family, weight, italic, extended)
 				end
 			end
 		end
+	end
+
+	-- if nothing was found just return the first
+	if #weights == 0 then
+		if table.Count(family) == 1 then
+			local _, font = next(family)
+			return font
+		end
+
+		return
 	end
 
 	for i = #weights, 1, -1 do
@@ -184,7 +193,7 @@ local function font_from_family(family, weight, italic, extended)
 end
 
 
-concommand.Add("surfacex_dump_fonts", function()
+concommand.Add("dump_fonts", function()
 	for k,v in pairs(family_lookup) do
 		MsgN(k)
 
@@ -197,7 +206,10 @@ concommand.Add("surfacex_dump_fonts", function()
 	end
 end)
 
-function surface.CreateFont2(name, tbl, ...)
+local created = {}
+
+surface.old_CreateFont = surface.old_CreateFont or surface.CreateFont
+function surface.CreateFont(name, tbl, ...)
 	local copy = {}
 	for k,v in pairs(tbl) do copy[k] = v end
 	tbl = copy
@@ -207,14 +219,18 @@ function surface.CreateFont2(name, tbl, ...)
 	tbl.font = nil
 
 	if font_name then
-		font_name = font_name:lower()
+		local font_name = font_name:lower()
 
 		local font
 
 		if full_name_lookup[font_name] then
 			font = full_name_lookup[font_name]
-		else
+		elseif family_lookup[font_name] then
 			font = font_from_family(family_lookup[font_name], tbl.weight, tbl.italic)
+			if not font then
+				ErrorNoHalt("font " .. font_name .. " was recognized as a font family but no font in the family could be found\n")
+				PrintTable(tbl)
+			end
 		end
 
 		if tbl.outline and system.IsLinux() then
@@ -234,57 +250,31 @@ function surface.CreateFont2(name, tbl, ...)
 	end
 
 	if not tbl.font then
-		error("font " .. font_name .. " could not be found", 2)
+		ErrorNoHalt("font " .. font_name .. " could not be found\n")
+		debug.Trace()
 	end
 
-	return surface.CreateFont(name, tbl, ...)
+	if tbl.font and system.IsLinux() then
+		created[name] = tbl
+	end
+
+	return surface.old_CreateFont(name, tbl, ...)
 end
 
-if LocalPlayer() == me or LocalPlayer() == server then
-	for i = 0, 10 do
-		local weight = i
-		surface.CreateFont2("bold_test_" .. i, {
-			font = "Roboto Bold",
-			size = 10,
-			antialias = false,
-			--weight = i*100,
-			outline = i > 5,
-			--antialias = true,
-			--extended = true,
-			--additive = true,
-			--outline = true,
-			--blursize = 1,
+if system.IsLinux() then
+	local current_font
 
-			--[[
-			extended = false,
-			blursize = 0,
-			scanlines = 0,
-			antialias = true,
-			underline = false,
-			italic = false,
-			strikeout = false,
-			symbol = false,
-			rotary = false,
-			shadow = false,
-			additive = false,
-			outline = false,
-			]]
-
-			scanlines = false,
-		})
+	surface.old_SetFont = surface.old_SetFont or surface.SetFont
+	function surface.SetFont(name, ...)
+		current_font = created[name]
+		return surface.old_SetFont(name, ...)
 	end
 
-	hook.Add("HUDPaint", "", function()
-		surface.SetDrawColor(255,0,0,255)
-		surface.DrawRect(0,0,500,350)
-		surface.SetTextColor(255, 255, 255, 255)
-		for i = 0 , 10 do
-			surface.SetFont("bold_test_" .. i)
-			local _, h = surface.GetTextSize("|")
-			for _ = 1, 1 do
-			surface.SetTextPos(50, 50 + (i*h))
-			surface.DrawText("The quick brown fox jumps over the lazy dog")
-			end
+	surface.old_SetTextPos = surface.old_SetTextPos or surface.SetTextPos
+	function surface.SetTextPos(x, ...)
+		if current_font and current_font.outline then
+			x = x + 1
 		end
-	end)
+		return surface.old_SetTextPos(x, ...)
+	end
 end
