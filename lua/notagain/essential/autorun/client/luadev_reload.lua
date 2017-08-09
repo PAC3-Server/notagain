@@ -91,6 +91,10 @@ concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 				check_dir(addon_dir .. dir .. "/autorun/client/", callback, "clients")
 				check_dir(addon_dir .. dir .. "/autorun/server/", callback, "server")
 
+				check_dir(addon_dir .. dir .. "/prerun/", callback, "shared")
+				check_dir(addon_dir .. dir .. "/prerun/client/", callback, "clients")
+				check_dir(addon_dir .. dir .. "/prerun/server/", callback, "server")
+
 				check_dir(addon_dir .. dir .. "/libraries/", callback, "shared", true)
 				check_dir(addon_dir .. dir .. "/libraries/client/", callback, "clients", true)
 				check_dir(addon_dir .. dir .. "/libraries/server/", callback, "server", true)
