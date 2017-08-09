@@ -577,10 +577,16 @@ local scoreboard = {
 			Surface.DrawOutlinedRect(0,0,w/3,h)
 
 			if pac then
-				local ang = selected_player:EyeAngles()
-				ang = Angle(0,ang.y+180,ang.r)
+				local ent = selected_player
+				local head_pos = jrpg.FindHeadPos(ent)
+				local eye_ang = ent:EyeAngles()
+
+				eye_ang = Angle(0, eye_ang.y + 180, eye_ang.r)
+				local pos = LocalToWorld(head_pos, ent:GetAngles(), Vector(0,0,-ent:BoundingRadius()/4), Angle())
+				pos = pos - eye_ang:Forward() * ent:BoundingRadius() * 35
+
 				pac.ForceRendering(true)
-				pac.DrawEntity2D(selected_player,pacx,pacy,w/3,h,nil,ang,30)
+				pac.DrawEntity2D(ent, pacx, pacy, w/3, h, pos, eye_ang, 1, 500)
 				pac.ForceRendering(false)
 			end
 
