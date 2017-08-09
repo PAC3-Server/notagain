@@ -1729,7 +1729,7 @@ function RagdollFight.SpawnRagdoll( pl, cmd, args )
 	ent.IsRagdollFighter = true
 	pl.pac_owner_override = ent
 	do
-		local id = pl:EntIndex() 
+		local id = pl:EntIndex()
 		BroadcastLua([[Entity(]]..id..[[):SetNoDraw(true)]])
 	end
 	if pl:HasGodMode() then
@@ -2116,7 +2116,7 @@ function RagdollFight.RemoveRagdoll( pl )
 		pl.Ragdoll:Remove()
 		pl.pac_owner_override = nil
 		do
-			local id = pl:EntIndex() 
+			local id = pl:EntIndex()
 			BroadcastLua([[Entity(]]..id..[[):SetNoDraw(false)]])
 		end
 		if not pl.rfwasgoded then
@@ -3079,43 +3079,43 @@ end
 if CLIENT then
 
 surface.CreateFont( "RagdollFightDefault", {
-	font	= "Helvetica",
+	font	= "Dejavu Sans",
 	size	= 22,
 	weight	= 800
 } )
 
 surface.CreateFont( "RagdollFightDefaultTitle", {
-	font	= "Helvetica",
+	font	= "Dejavu Sans",
 	size	= 32,
 	weight	= 800
 } )
 
 surface.CreateFont( "RagdollFightRoundNumber", {
-	font	= "Helvetica",
+	font	= "Dejavu Sans",
 	size	= 52,
 	weight	= 800
 } )
 
 surface.CreateFont( "RagdollFightBigMessage", {
-	font	= "Helvetica",
+	font	= "Dejavu Sans",
 	size	= 150,
 	weight	= 800
 } )
 
 surface.CreateFont( "RagdollFightMedMessage", {
-	font	= "Helvetica",
+	font	= "Dejavu Sans",
 	size	= 65,
 	weight	= 800
 } )
 
 surface.CreateFont( "RagdollFightSmallMessage", {
-	font	= "Helvetica",
+	font	= "Dejavu Sans",
 	size	= 50,
 	weight	= 800
 } )
 
 surface.CreateFont( "RagdollFightChargeDesc", {
-	font	= "Helvetica",
+	font	= "Dejavu Sans",
 	size	= 18,
 	weight	= 800
 } )
