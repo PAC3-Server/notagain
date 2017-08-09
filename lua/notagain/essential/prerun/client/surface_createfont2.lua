@@ -27,21 +27,7 @@ do
 		return swap_endian(f:ReadLong() + ULONG_MAX + 1, 32)
 	end
 
-	local temp = file.Find("resource/fonts/*", "GAME")
-
-	local files = {}
-	local done = {}
-	for k,v in ipairs(temp) do
-		if v:EndsWith(".ttf") then
-			if not done[v:lower()] then
-				table.insert(files, v)
-				done[v:lower()] = true
-			end
-		end
-	end
-
-	for _, file_name in ipairs(files) do
-		local f = file.Open("resource/fonts/" .. file_name, "rb", "GAME")
+	local function parse_file(f, file_name)
 		local offset_table = {}
 
 		offset_table.major_version = read_unsigned_short(f)
@@ -105,8 +91,27 @@ do
 				end
 			end
 		end
+	end
 
-		f:Close()
+	for _, dir in ipairs({"resource/fonts/", "resource/"}) do
+		local temp = file.Find(dir .. "*.ttf", "GAME")
+
+		local files = {}
+		local done = {}
+		for k,v in ipairs(temp) do
+			if v:EndsWith(".ttf") then
+				if not done[v:lower()] then
+					table.insert(files, v)
+					done[v:lower()] = true
+				end
+			end
+		end
+
+		for _, file_name in ipairs(files) do
+			local f = file.Open(dir .. file_name, "rb", "GAME")
+			parse_file(f, dir .. file_name)
+			f:Close()
+		end
 	end
 end
 
@@ -241,7 +246,11 @@ function surface.CreateFont(name, tbl, ...)
 			if system.IsWindows() then
 				tbl.font = font.full_name
 			else
-				tbl.font = font.path
+				if font.path:StartWith("resource/fonts/") then
+					tbl.font = font.path:match(".+/(.+)")
+				else
+					tbl.font = font.full_name
+				end
 			end
 		end
 
