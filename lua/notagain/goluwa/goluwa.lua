@@ -1709,7 +1709,12 @@ end
 
 if game.IsDedicated() or CLIENT then
 	concommand.Add("goluwa_reload", function()
-		notagain.loaded_libraries.goluwa = CompileString(file.Read(notagain.addon_dir .. "lua/notagain/goluwa/goluwa.lua", "MOD"), "lua/notagain/goluwa/goluwa.lua")()
+		local str = file.Read(notagain.addon_dir .. "lua/notagain/goluwa/goluwa.lua", "MOD")
+		if str then
+			notagain.loaded_libraries.goluwa = CompileString(str, "lua/notagain/goluwa/goluwa.lua")()
+		else
+			include("notagain/goluwa/goluwa.lua")
+		end
 	end)
 end
 
