@@ -272,6 +272,8 @@ function surface.CreateFont(name, tbl, ...)
 		debug.Trace()
 	end
 
+	tbl.original_font_name = font_name
+
 	surface.created_fonts[name] = tbl
 
 	return surface.old_CreateFont(name, tbl, ...)
