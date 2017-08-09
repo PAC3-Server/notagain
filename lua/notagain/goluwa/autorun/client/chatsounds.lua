@@ -1,7 +1,7 @@
 local env = requirex("goluwa").env
 
 local autocomplete_font = env.fonts.CreateFont({
-	font = "Roboto-Black.ttf",
+	font = "Roboto Black",
 	size = 18,
 	weight = 600,
 	blur_size = 3,
