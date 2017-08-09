@@ -237,6 +237,12 @@ function notagain.Autorun()
 
 	-- pre autorun
 	for addon_name, addon_dir in pairs(notagain.directories) do
+		local lib = notagain.loaded_libraries[addon_name]
+		run_dir(addon_name, addon_dir .. "/prerun/", lib and lib.notagain_autorun == false)
+	end
+
+	-- load foo/foo.lua
+	for addon_name, addon_dir in pairs(notagain.directories) do
 		if not notagain.loaded_libraries[addon_name] then
 			local path = addon_dir .. "/" .. addon_name .. ".lua"
 			if file.Exists(path, "LUA") then
@@ -252,11 +258,6 @@ function notagain.Autorun()
 				end
 			end
 		end
-	end
-
-	for addon_name, addon_dir in pairs(notagain.directories) do
-		local lib = notagain.loaded_libraries[addon_name]
-		run_dir(addon_name, addon_dir .. "/prerun/", lib and lib.notagain_autorun == false)
 	end
 
 	-- autorun
