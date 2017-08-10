@@ -46,11 +46,13 @@ do
 
 		function PUKE:Init(data)
 			self.ply = data:GetEntity()
-			self.force = data:GetScale()
-			self.duration = data:GetRadius()
+			if self.ply:IsValid() then
+				self.force = data:GetScale()
+				self.duration = data:GetRadius()
 
-			self.emitter = ParticleEmitter(self.ply:GetPos())
-			self.ply.pukeactive = true
+				self.emitter = ParticleEmitter(self.ply:GetPos())
+				self.ply.pukeactive = true
+			end
 		end
 
 		function PUKE:Think()
