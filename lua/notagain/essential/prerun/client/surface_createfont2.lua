@@ -257,27 +257,112 @@ function surface.CreateFont(name, tbl, ...)
 	return surface.old_CreateFont(name, tbl, ...)
 end
 
-concommand.Add("dump_fonts", function()
+local function display_chunk(str, pattern)
+	if pattern then
+		local start, stop = str:find(pattern)
+		if start then
+			local str_start = str:sub(0, start-1)
+			local str_stop = str:sub(stop+1)
+			Msg(str_start) MsgC(Color(255, 100, 100, 255), pattern) Msg(str_stop)
+			MsgN(("="):rep(30))
+		end
+	else
+		Msg(str)
+		MsgN(("="):rep(30))
+	end
+end
+
+concommand.Add("dump_font_families", function(_,_,_,pattern)
 	for k,v in pairs(family_lookup) do
-		MsgN(k)
+		local str = ""
+		str = str .. k .. "\n"
 
 		for k,v in pairs(v) do
-			MsgN("\t" .. k)
+			str = str .. "\t" .. k .. "\n"
 			for k,v in pairs(v) do
-				MsgN("\t\t" .. k .. " = " .. v)
+				str = str .. "\t\t" .. k .. " = " .. v .. "\n"
 			end
+		end
+
+		display_chunk(str, pattern)
+	end
+end)
+
+concommand.Add("dump_font_names", function(_,_,_,pattern)
+	for k,v in pairs(full_name_lookup) do
+		local str = ""
+		str = str .. k .. "\n"
+
+		for k,v in pairs(v) do
+			str = str .. "\t" .. k .. " = " .. v .. "\n"
+		end
+
+		display_chunk(str, pattern)
+	end
+end)
+
+local defaults = {
+	extended = false,
+	size = 13,
+	weight = 500,
+	blursize = 0,
+	scanlines = 0,
+	antialias = true,
+	underline = false,
+	italic = false,
+	strikeout = false,
+	symbol = false,
+	rotary = false,
+	shadow = false,
+	additive = false,
+	outline = false,
+
+	italic = false,
+	weight = 0,
+}
+
+concommand.Add("dump_fonts_created", function(_,_,_,search)
+	for k,v in pairs(surface.created_fonts) do
+		if not v.invalid then
+			local str = ""
+
+			str = str .. k .. "\n"
+			for k,v in pairs(v) do
+				if k ~= "invalid" and k ~= "original_font_name" and v ~= defaults[k] and k ~= "real_font" and k ~= "font" then
+					str = str .. "\t" .. k .. " = " .. tostring(v) .. "\n"
+				end
+			end
+			str = str .. "\tfont = " .. v.real_font.full_name .. ":" .. "\n"
+			for k,v in pairs(v.real_font) do
+				if k ~= "full_name" then
+					str = str .. "\t\t" .. k .. " = " .. v .. "\n"
+				end
+			end
+
+			display_chunk(str, search)
 		end
 	end
 end)
 
-concommand.Add("dump_fonts_created", function()
-	PrintTable(surface.created_fonts)
-end)
-
-concommand.Add("dump_invalid_fonts", function()
-	for k,v in pairs(surface.created_fonts) do
+concommand.Add("dump_invalid_fonts", function(_,_,_,search)
+	for k, v in pairs(surface.created_fonts) do
 		if v.invalid then
-			PrintTable(v)
+			local str = ""
+			str = str .. k .. "\n"
+			str = str .. "\tinvalid_font = " ..  v.original_font_name .. "\n"
+			for k,v in pairs(v) do
+				if k ~= "stack_trace" and k ~= "invalid" and k ~= "original_font_name" and v ~= defaults[k] then
+					str = str .. "\t" .. k .. " = " .. tostring(v) .. "\n"
+				end
+			end
+			for i, line in ipairs(v.stack_trace:Split("\n"))  do
+				if i == 1 then
+					str = str .. "\t" .. line:Trim() .. "\n"
+				else
+					str = str .. "\t\t" .. line:Trim() .. "\n"
+				end
+			end
+			display_chunk(str, search)
 		end
 	end
 end)
