@@ -16,22 +16,23 @@ hook.Add("PlayerSwitchFlashlight", "flashlight-spam", function(ply, enabled)
 		key.times = key.times and key.times + 1 or 1
 		key.when = key.when or CurTime()
 
-		if key.when+0.55 < CurTime() then
-			if key.times > 3 then
-				ply:Ignite(3,0)
+		if key.times > 4 then
+			ply:Ignite(3,0)
 
-				local can = ply:CanUseFlashlight()
-				ply:AllowFlashlight(false)
-				ply:EmitSound('buttons/button10.wav')
+			local can = ply:CanUseFlashlight()
+			ply:AllowFlashlight(false)
+			ply:EmitSound('buttons/button10.wav')
 
-				timer.Simple(4, function()
-					if IsValid(ply) then
-						ply:AllowFlashlight(can)
-						spammers[tostring(ply:UserID())] = nil
-						complete(ply)
-					end
-				end)
-			end
+			timer.Simple(4, function()
+				if IsValid(ply) then
+					ply:AllowFlashlight(can)
+					spammers[tostring(ply:UserID())] = nil
+					complete(ply)
+				end
+			end)
+		end
+
+		if key.when+1 < CurTime() then
 			spammers[tostring(ply:UserID())] = nil
 		end
 	end
