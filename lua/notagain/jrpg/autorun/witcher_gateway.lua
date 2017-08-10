@@ -129,7 +129,7 @@ properties.Add("portal_persist", {
 		if (not IsValid(ent)) then return false end
 		if (not player:IsSuperAdmin()) then return false end
 		if (ent:GetClass() ~= "witcher_gateway") then return false end
-		if (SERVER and not IsValid(ent:GetOther())) then player:ChatPrint("This portal does not have an exitnot ") return false end
+		if (SERVER and not IsValid(ent:GetOther())) then player:ChatPrint("This portal does not have an exit!") return false end
 
 		return true
 	end,
@@ -390,7 +390,8 @@ effects.Register(EFFECT,"portal_inhale")
 
 
 local ENT = {}
-ENT.Base   			= "base_entity"
+DEFINE_BASECLASS("base_entity")
+
 ENT.Type			= "anim"
 ENT.PrintName		= "Witcher Gateway"
 ENT.Category		= "Portals"
@@ -428,7 +429,7 @@ local function InFront(posA, posB, normal)
 	return (normal:Dot(Vec1) >= 0)
 end
 
-if (SERVER) then
+if SERVER then
 
 	function ENT:SpawnFunction(player, trace, class)
 		if (not trace.Hit) then return end
@@ -832,7 +833,9 @@ if (SERVER) then
 		end
 	end
 
-elseif (CLIENT) then
+end
+
+if CLIENT then
 
 	local function DefineClipBuffer(ref)
 		render.ClearStencil()
