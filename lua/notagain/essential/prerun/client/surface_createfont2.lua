@@ -197,24 +197,6 @@ local function font_from_family(family, weight, italic, extended)
 	return family[weights[math.Clamp(math.ceil(weight/100), 1, #weights)]]
 end
 
-
-concommand.Add("dump_fonts", function()
-	for k,v in pairs(family_lookup) do
-		MsgN(k)
-
-		for k,v in pairs(v) do
-			MsgN("\t" .. k)
-			for k,v in pairs(v) do
-				MsgN("\t\t" .. k .. " = " .. v)
-			end
-		end
-	end
-end)
-
-local name_translation = {
-	helvetica = "dejavu sans",
-}
-
 surface.created_fonts = surface.created_fonts or {}
 
 surface.old_CreateFont = surface.old_CreateFont or surface.CreateFont
@@ -229,10 +211,6 @@ function surface.CreateFont(name, tbl, ...)
 
 	if font_name then
 		local font_name = font_name:lower()
-
-		if name_translation[font_name] then
-			font_name = name_translation[font_name]
-		end
 
 		local font
 
@@ -268,8 +246,8 @@ function surface.CreateFont(name, tbl, ...)
 	end
 
 	if not tbl.font then
-		ErrorNoHalt("font " .. font_name .. " could not be found\n")
-		debug.Trace()
+		tbl.invalid = true
+		tbl.stack_trace = debug.traceback()
 	end
 
 	tbl.original_font_name = font_name
@@ -279,8 +257,29 @@ function surface.CreateFont(name, tbl, ...)
 	return surface.old_CreateFont(name, tbl, ...)
 end
 
+concommand.Add("dump_fonts", function()
+	for k,v in pairs(family_lookup) do
+		MsgN(k)
+
+		for k,v in pairs(v) do
+			MsgN("\t" .. k)
+			for k,v in pairs(v) do
+				MsgN("\t\t" .. k .. " = " .. v)
+			end
+		end
+	end
+end)
+
 concommand.Add("dump_fonts_created", function()
 	PrintTable(surface.created_fonts)
+end)
+
+concommand.Add("dump_invalid_fonts", function()
+	for k,v in pairs(surface.created_fonts) do
+		if v.invalid then
+			PrintTable(v)
+		end
+	end
 end)
 
 if system.IsLinux() then
