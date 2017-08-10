@@ -150,8 +150,9 @@ local blacklist = {
 	roman = true,
 }
 
-local function font_from_family(family, weight, italic, extended)
-	weight = weight or 0
+local function font_from_family(family, options)
+	local weight = options.weight or 0
+	local italic = options.italic
 
 	local weights = {}
 	local done = {}
@@ -174,6 +175,14 @@ local function font_from_family(family, weight, italic, extended)
 
 	-- if nothing was found just return the first
 	if #weights == 0 then
+		if options.weight and options.weight > 550 then
+			table.insert(options.warnings, "weight is above 550 but no bold fonts were found")
+		end
+
+		if italic then
+			table.insert(options.warnings, "italic is set to true but no italic fonts were found")
+		end
+
 		if table.Count(family) == 1 then
 			local _, font = next(family)
 			return font
@@ -200,7 +209,7 @@ end
 surface.created_fonts = surface.created_fonts or {}
 
 surface.old_CreateFont = surface.old_CreateFont or surface.CreateFont
-function surface.CreateFont(name, tbl, ...)
+function surface.CreateFont(id, tbl, ...)
 	local copy = {}
 	for k,v in pairs(tbl) do copy[k] = v end
 	tbl = copy
@@ -208,6 +217,7 @@ function surface.CreateFont(name, tbl, ...)
 	local font_name = tbl.font
 
 	tbl.font = nil
+	tbl.warnings = {}
 
 	if font_name then
 		local font_name = font_name:lower()
@@ -217,11 +227,15 @@ function surface.CreateFont(name, tbl, ...)
 		if full_name_lookup[font_name] then
 			font = full_name_lookup[font_name]
 		elseif family_lookup[font_name] then
-			font = font_from_family(family_lookup[font_name], tbl.weight, tbl.italic)
+			font = font_from_family(family_lookup[font_name], tbl)
 			if not font then
 				ErrorNoHalt("font " .. font_name .. " was recognized as a font family but no font in the family could be found\n")
 				PrintTable(tbl)
 			end
+		end
+
+		if tbl.antialias == false then
+			table.insert(tbl.warnings, "tried to set antialias to false but this is not supported on linux")
 		end
 
 		if tbl.outline and system.IsLinux() then
@@ -240,9 +254,6 @@ function surface.CreateFont(name, tbl, ...)
 			end
 			tbl.real_font = font
 		end
-
-		tbl.weight = 0
-		tbl.italic = false
 	end
 
 	if not tbl.font then
@@ -252,9 +263,26 @@ function surface.CreateFont(name, tbl, ...)
 
 	tbl.original_font_name = font_name
 
-	surface.created_fonts[name] = tbl
+	surface.created_fonts[id] = tbl
 
-	return surface.old_CreateFont(name, tbl, ...)
+	return surface.old_CreateFont(id, {
+		font = tbl.font,
+		extended = tbl.extended,
+		size = tbl.size,
+		blursize = tbl.blursize,
+		scanlines = tbl.scanlines,
+		symbol = tbl.symbol,
+		rotary = tbl.rotary,
+		shadow = tbl.shadow,
+		additive = tbl.additive,
+		outline = tbl.outline,
+
+		antialias = true,
+		weight = 0,
+		underline = false,
+		italic = false,
+		strikeout = false,
+	}, ...)
 end
 
 local function display_chunk(str, pattern)
@@ -316,9 +344,6 @@ local defaults = {
 	shadow = false,
 	additive = false,
 	outline = false,
-
-	italic = false,
-	weight = 0,
 }
 
 concommand.Add("dump_fonts_created", function(_,_,_,search)
@@ -328,7 +353,7 @@ concommand.Add("dump_fonts_created", function(_,_,_,search)
 
 			str = str .. k .. "\n"
 			for k,v in pairs(v) do
-				if k ~= "invalid" and k ~= "original_font_name" and v ~= defaults[k] and k ~= "real_font" and k ~= "font" then
+				if k ~= "invalid" and k ~= "original_font_name" and k ~= "real_font" and k ~= "font" and k ~= "warnings" and v ~= defaults[k] then
 					str = str .. "\t" .. k .. " = " .. tostring(v) .. "\n"
 				end
 			end
@@ -336,6 +361,13 @@ concommand.Add("dump_fonts_created", function(_,_,_,search)
 			for k,v in pairs(v.real_font) do
 				if k ~= "full_name" then
 					str = str .. "\t\t" .. k .. " = " .. v .. "\n"
+				end
+			end
+
+			if v.warnings[1] then
+				str = str .. "\twarnings:\n"
+				for k,v in pairs(v.real_font) do
+					str = str .. v .. "\n"
 				end
 			end
 
