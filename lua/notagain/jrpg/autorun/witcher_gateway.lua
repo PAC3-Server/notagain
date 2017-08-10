@@ -34,10 +34,10 @@ local clamp = math.Clamp
 local abs = math.abs
 local min, max = math.min, math.max
 
-function HSLToColor(H, S, L)
-	H = clamp(H, 0, 360)
-	S = clamp(S, 0, 1)
-	L = clamp(L, 0, 1)
+local function HSLToColor(H,S,L)
+	local H = clamp(H, 0, 360)
+	local S = clamp(S, 0, 1)
+	local L = clamp(L, 0, 1)
 	local C = (1 - abs(2 * L - 1)) * S
 	local X = C * (1 - abs((H / 60) % 2 - 1))
 	local m = L - C / 2
@@ -60,7 +60,7 @@ function HSLToColor(H, S, L)
 	return Color((R1 + m) * 255, (G1 + m) * 255, (B1 + m) * 255)
 end
 
-function ColorToHSL(R, G, B)
+local function ColorToHSL(R,G,B)
 	if type(R) == "table" then
 		R, G, B = clamp(R.r, 0, 255) / 255, clamp(R.g, 0, 255) / 255, clamp(R.b, 0, 255) / 255
 	else
@@ -94,14 +94,14 @@ function ColorToHSL(R, G, B)
 	return H, S, L
 end
 
-function DistanceToPlane(object_pos, plane_pos, plane_forward)
+local function DistanceToPlane(object_pos, plane_pos, plane_forward)
 	local vec = object_pos - plane_pos
 	plane_forward:Normalize()
 
 	return plane_forward:Dot(vec)
 end
 
-function math.VectorAngles(forward, up)
+local function VectorAngles(forward, up)
 	local angles = Angle(0, 0, 0)
 	local left = up:Cross(forward)
 	left:Normalize()
@@ -703,7 +703,7 @@ if (SERVER) then
 		dot = up:Dot(normal)
 		up = up + (-2 * dot) * normal
 		-- convert to angles
-		angles = math.VectorAngles(forward, up)
+		angles = VectorAngles(forward, up)
 		local LocalAngles = self:WorldToLocalAngles(angles)
 		-- repair
 		LocalAngles.x = -LocalAngles.x
