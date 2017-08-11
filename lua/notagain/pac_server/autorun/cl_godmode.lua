@@ -236,6 +236,8 @@ if SERVER then
 		if suppress then return end
 
 		if IsPlayer(ply) and ply.GetInfo then
+			if ply.haltgodmode then return end
+
 			local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
 			if GodCheck(ply, dmginfo, actor) then
 				if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(actor) then
