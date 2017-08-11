@@ -316,8 +316,8 @@ if (SERVER) then
 			ErrorNoHalt("[WITCHERGATES] Something went wrong when saving portals! \n" .. msg)
 		end
 	end)
-
-	hook.Add("InitPostEntity", "witcher_LoadPortals", function()
+	
+	local SpawnPortals = function()
 		timer.Simple(5, function()
 			local win, msg = pcall(LoadPortals)
 
@@ -325,7 +325,10 @@ if (SERVER) then
 				ErrorNoHalt("[WITCHERGATES] Something went wrong when loading portals! \n" .. msg)
 			end
 		end)
-	end)
+	end
+
+	hook.Add("InitPostEntity","witcher_LoadPortals",SpawnPortals)
+	hook.Add("PostCleanupMap","witcher_LoadPortals",SpawnPortals)
 
 	hook.Add("ShouldCollide", "witcher_RPGFix", function(a, b)
 		local aClass = a:GetClass()
