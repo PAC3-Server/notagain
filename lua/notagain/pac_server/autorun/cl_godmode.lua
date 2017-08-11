@@ -158,6 +158,11 @@ if CLIENT then
 
 		AddButton(pnl, 'Disable Godmode', 'off')
 		AddButton(pnl, 'Enable Full Godmode', 'all')
+		
+		local b = AddButton(pnl, 'Refresh Values', 'update')
+		function b:DoClick()
+			update()
+		end
 
 		update()
 	end
