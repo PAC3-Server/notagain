@@ -7,7 +7,7 @@ local help = [[(o)ff = disable, (a)ll = godmode, (w)orld = no world damage, (e)n
  -- Note, that `off` disables everything, and `all` enables full godmode. (Both 0 and 1 work as well.)]]
 
 if CLIENT then
-	CreateClientConVar("cl_godmode", "1", true, true, help)
+	CreateClientConVar("cl_godmode", "w/e/n/s", true, true, help)
 	CreateClientConVar("cl_godmode_reflect", "1", true, true, help)
 end
 
