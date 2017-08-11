@@ -17,6 +17,7 @@ hook.Add("PlayerSwitchFlashlight", "flashlight-spam", function(ply, enabled)
 		key.when = key.when or CurTime()
 
 		if key.times > 4 then
+			ply.haltgodmode = true
 			ply:Ignite(3,0)
 
 			local can = ply:CanUseFlashlight()
@@ -25,6 +26,7 @@ hook.Add("PlayerSwitchFlashlight", "flashlight-spam", function(ply, enabled)
 
 			timer.Simple(4, function()
 				if IsValid(ply) then
+					ply.haltgodmode = nil
 					ply:AllowFlashlight(can)
 					spammers[tostring(ply:UserID())] = nil
 					complete(ply)
