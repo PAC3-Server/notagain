@@ -1,6 +1,7 @@
 AddCSLuaFile()
 
 local luadata = requirex("luadata")
+local easylua = requirex("easylua")
 
 local aowl = {}
 _G.aowl = aowl
@@ -265,35 +266,21 @@ do
 			return vec3(str, Angle)
 		end,
 		location = function(str, me)
-			local force_entities = false
-
-			if string.sub(str, 1, 1) == "#" then
-				str = string.sub(str, 2, #str)
-				force_entities = true
+			if str == "spawn" then
+				return table.Random(ents.FindByClass("info_player_start")):GetPos()
 			end
 
-			if not force_entities then
-				if compare(str, "spawn") or compare(str, "somewhere") then
-					return str
-				end
+			local pos = aowl.StringToType("vector", str, me)
 
-				local pos = aowl.StringToType("vector", str, me)
-
-				if pos then
-					return pos
-				end
-
-				local areas = MapDefine and MapDefine.Areas or {}
-				for area, data in next, areas do
-					if compare(area, str) then
-						return area
-					end
-				end
+			if pos then
+				return pos
 			end
 
-			local ent = find_player(str, me) or find_entity(str, me)
+			-- player also searches for entity but we want to prioritize players
+			local ent = aowl.StringToType("player", str, me) or aowl.StringToType("entity", str, me)
+
 			if ent then
-				return ent
+				return ent:GetPos()
 			end
 		end,
 		entity = function(str, me)
@@ -489,7 +476,6 @@ do -- commands
 	end
 
 	aowl.commands = aowl.commands or {}
-	aowl.help = aowl.help or {}
 
 	local capture_symbols = {
 		["\""] = "\"",
@@ -598,7 +584,7 @@ do -- commands
 			for i, types in ipairs(argtypes) do
 				for i2, arg in ipairs(types) do
 					if arg:find("[", nil, true) then
-						local temp, default = arg:match("(.+)(%b[])")
+						local temp, default = arg:match("(.+)%[(.+)%]")
 
 						if aowl.ArgumentTypes[temp] then
 							defaults = defaults or {}
@@ -627,23 +613,10 @@ do -- commands
 			group = group,
 			defaults = defaults
 		}
-
-		hook.Run("AowlCommandAdded", aowl.commands[aliases[1]])
+		--PrintTable(aowl.commands[aliases[1]])
 	end
-  
- 	function aowl.AddHelp(command, help)
-  		local commandFound, msg = aowl.FindCommand(command)
-  		if not commandFound then
-  			return false
-  		end
 
-  		for _, alias in next, commandFound.aliases do 
-			aowl.help[alias] = help
-		end
-  		return true
-  	end
-
-  	function aowl.FindCommand(str)
+	function aowl.FindCommand(str)
 		local found = {}
 
 		for _, command in pairs(aowl.commands) do
@@ -660,76 +633,19 @@ do -- commands
 		return nil, "could not find command " .. str .. ". did you mean " .. found[1].alias .. "?"
 	end
 
-	function aowl.GetHelpText(alias)
-		local command, msg = aowl.FindCommand(alias)
-		if not command then return false, msg end
-    
-		local str = aowl.help[command]
-    
-		if str then
-			return str
-		end
-
-		local params = {}
-
-		for i = 1, math.huge do
-			local key = debug.getlocal(command.callback, i)
-			if key then
-				table.insert(params, key)
-			else
-				break
-			end
-		end
-
-		str = "!" .. alias .. " "
-
-		if #params == 2 then
-			str = str .. params[2]
-		else
-			for i = 3, #params do
-				local arg_name = params[i]
-				local types = command.argtypes[i-2]
-				local default = command.defaults and command.defaults[i-2]
-
-				str = str .. arg_name .. ""
-
-				if types then
-					str = str .. "<"
-					for _, type in pairs(types) do
-						str = str .. type
-						if _ ~= #types then
-							str = str .. " or "
-						end
-					end
-					str = str .. ">"
-				end
-
-				if default then
-					str = str .. " = " .. tostring(default)
-				end
-
-				if i ~= #params then
-					str = str .. ", "
-				end
-			end
-		end
-
-		return "usage example: \n" .. str
-	end
-
 	function aowl.ParseString(str)
-		local symbol, alias, arg_line = parse_line(str)
+		local symbol, cmd, arg_line = parse_line(str)
 
 		local args = parse_args(arg_line)
-		local command, err = aowl.FindCommand(alias)
+		local command, err = aowl.FindCommand(cmd)
 
 		if not command then return command, err end
 
-		return command, alias, arg_line, args
+		return command, cmd, arg_line, args
 	end
 
 	function aowl.RunString(ply, str)
-		local command, alias, arg_line, args = assert(aowl.ParseString(str))
+		local command, cmd, arg_line, args = assert(aowl.ParseString(str))
 
 		if command.group then
 			local ok = false
@@ -763,7 +679,7 @@ do -- commands
 			end
 
 			if not ok then
-				error(name .. " is not allowed to execute " .. alias .. " because group is " .. command.group)
+				error(name .. " is not allowed to execute " .. cmd .. " because group is " .. command.group)
 			end
 		end
 
@@ -772,7 +688,7 @@ do -- commands
 				if command.argtypes[i] then
 					for _, arg_type in ipairs(command.argtypes[i]) do
 						if not aowl.ArgumentTypes[arg_type] then
-							log(alias .. ": no type information found for \"" .. arg_type .. "\"")
+							log(cmd .. ": no type information found for \"" .. arg_type .. "\"")
 						end
 					end
 				end
@@ -802,10 +718,8 @@ do -- commands
 					if val == nil and command.defaults and args[i] then
 
 					else
-						if val == nil then
-							local err = "unable to convert argument " .. (debug.getlocal(command.callback, i+2) or i) .. " >>|" .. (args[i] or "") .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", ") .. "\n"
-							err = err .. aowl.GetHelpText(alias) .. "\n"
-							error(err)
+						if val == nil and args[i] then
+							error("unable to convert argument >>|" .. args[i] .. "|<< to one of these types: " .. table.concat(command.argtypes[i], ", "))
 						end
 
 						args[i] = val
@@ -814,15 +728,13 @@ do -- commands
 			end
 		end
 
-		local ret, reason = hook.Run("AowlCommand", command, alias, ply, arg_line, unpack(args))
-
-		if ret == false then return ret, reason or "no reason" end
-
 		return command.callback(ply, arg_line, unpack(args))
 	end
 
 	function aowl.Execute(ply, str)
+		easylua.Start(ply)
 		local a, b, c = pcall(aowl.RunString, ply, str)
+		easylua.End(ply)
 
 		if a == false then
 			return false, b
@@ -861,20 +773,19 @@ do -- commands
 
 			timer.Simple(0, function()
 				if ply:IsValid() then
-					local msg = "aowl: " .. reason
-					if CLIENT and ply ~= LocalPlayer() then
-						MsgN(msg)
-					else
-						ply:ChatPrint(msg)
-					end
+					ply:ChatPrint("aowl: " .. reason)
 				end
 			end)
 		end
 	end
 
 	function aowl.ConsoleCommand(ply, cmd, args, line)
-		local cmd = table.remove(args, 1) or "Command Not Found"
+		local cmd = table.remove(args, 1)
 		local ok, reason = aowl.Execute(ply, cmd .. " " .. table.concat(args, ","))
+
+		if not a then
+			log(b)
+		end
 	end
 
 	if SERVER then
@@ -891,10 +802,6 @@ do -- commands
 	function aowl.TargetNotFound(target)
 		return string.format("could not find: %q", target or "<no target>")
 	end
-
-	aowl.AddCommand("help|usage=string", function(ply, line, cmd)
-		ply:ChatPrint(assert(aowl.GetHelpText(cmd)))
-	end)
 end
 
 do -- message
@@ -1267,11 +1174,7 @@ do -- groups
 	end
 
 	function META:IsSudo()
-		return self.aowl_sudo and true or false
-	end
-	
-	function META:SetSudo(b)
-		self.aowl_sudo = b
+		return self.aowl_sudo
 	end
 
 	function META.CanAlter(a, b)
@@ -1388,9 +1291,7 @@ do -- groups
 				file.CreateDir("aowl")
 				luadata.WriteFile(USERSFILE, users)
 
-				if not game.SinglePlayer() then
-					log("rank", string.format("Changing %s (%s) usergroup to %s",self:Nick(), self:SteamID(), name))
-				end
+				log("rank", string.format("Changing %s (%s) usergroup to %s",self:Nick(), self:SteamID(), name))
 			end
 		end
 
