@@ -51,12 +51,16 @@ if CLIENT then
 
 		if check(v,'off') then
 			for _,v in next, checkboxes do
-				v:SetChecked(false)
+				if v.SetChecked then
+					v:SetChecked(false)
+				end
 			end
 			return
 		elseif check(v,'all') then
 			for _,v in next, checkboxes do
-				v:SetChecked(true)
+				if v.SetChecked then
+					v:SetChecked(true)
+				end
 			end
 			return
 		end
@@ -71,15 +75,15 @@ if CLIENT then
 			for _,v in next, infoTable do
 				local v = string.sub(string.lower(v), 1, 1)
 
-				if check(v,'world') then
+				if IsValid(checkboxes.world) and check(v,'world') then
 					checkboxes.world:SetChecked(true)
-				elseif check(v,'enemy') then
+				elseif IsValid(checkboxes.enemy) and check(v,'enemy') then
 					checkboxes.enemy:SetChecked(true)
-				elseif check(v,'friend') then
+				elseif IsValid(checkboxes.friend) and check(v,'friend') then
 					checkboxes.friend:SetChecked(true)
-				elseif check(v,'npc') then
+				elseif IsValid(checkboxes.npc) and check(v,'npc') then
 					checkboxes.npc:SetChecked(true)
-				elseif check(v,'self') then
+				elseif IsValid(checkboxes.self) and check(v,'self') then
 					checkboxes.self:SetChecked(true)
 				end
 			end
