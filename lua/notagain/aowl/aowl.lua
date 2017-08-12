@@ -598,8 +598,7 @@ do -- commands
 			for i, types in ipairs(argtypes) do
 				for i2, arg in ipairs(types) do
 					if arg:find("[", nil, true) then
-						local temp, default = arg:match("(.+)%[(.+)%]")
-
+						local temp, default = arg:match("(.+)(%b[])")
 						if aowl.ArgumentTypes[temp] then
 							defaults = defaults or {}
 							default = default:sub(2, -2)
