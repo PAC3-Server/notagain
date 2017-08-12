@@ -904,13 +904,13 @@ do -- message
 		HINT	= 3,
 		CLEANUP	= 4,
 	}
-	function aowl.Message(ply, msg, type, duration)
+	function aowl.Message(ply, msg, msgtype, duration)
 		duration = duration or 5
 
 		local lua = string.format(
 			"local s=%q notification.AddLegacy(s,%u,%s) MsgN(s)",
 			"aowl: " .. msg,
-			NOTIFY[(type and type:upper())] or NOTIFY.GENERIC,
+			NOTIFY[(msgtype and msgtype:upper())] or NOTIFY.GENERIC,
 			duration
 		)
 
