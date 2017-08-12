@@ -69,11 +69,11 @@ if CLIENT then
 		send_text(text, true)
 	end)
 
-	local background_color = Color(255,255,255,255)
+	local background_color = Color(20,20,20,250)
 	local border_color = Color(150,150,150,255)
-	local border_size = 3
-	local text_width_border = 300
-	local roundness = 15
+	local border_size = 10
+	local text_width_border = 150
+	local roundness = 5
 
 	local prettytext = requirex("pretty_text")
 	local font = "Square721 BT"
@@ -128,7 +128,7 @@ if CLIENT then
 					draw.RoundedBox(roundness, x + border_size, y+h/2, w - border_size*2, h-h/2 - border_size, Color(0,0,0, 50))
 					border_size = border_size / 2
 
-					prettytext.Draw(text, x + text_width_border, y, font, size, bold, blursize, Color(0, 0, 0, 255), Color(200, 200, 200, 255))
+					prettytext.Draw(text, x + text_width_border, y, font, size, bold, blursize, Color(255,255,255,255), Color(200, 200, 200, 255))
 
 					if not data.entered and data.time ~= 0 then
 						surface.SetDrawColor(0, 0, 0, 230)
@@ -138,7 +138,7 @@ if CLIENT then
 					local width = 50
 					local xpos = math.min(w/2 - 400, w) + width * 3
 
-					if i == 1 then
+					--[[if i == 1 then
 						surface.SetDrawColor(0, 0, 0, 150)
 						draw.NoTexture()
 						surface.DrawPoly({
@@ -155,14 +155,14 @@ if CLIENT then
 							{ x = x + w - xpos - width - border_size, y = y + h}
 						})
 
-						surface.SetDrawColor(255,255,255,255)
+						surface.SetDrawColor(background_color)
 						draw.NoTexture()
 						surface.DrawPoly({
 							{ x = x + w - xpos, y = y + h },
 							{ x = x + w - xpos - width, y = y + h+100 },
 							{ x = x + w - xpos - width, y = y + h }
 						})
-					end
+					end]]--
 					--surface.SetDrawColor(255,255,255,255)
 					--surface.SetMaterial(gradient)
 					--draw_rect(x,y, w, h, 0, border_size, 5, 0, gradient:GetTexture("$BaseTexture"):Width())
