@@ -136,9 +136,7 @@ do
 
 		filter = filter or no_filter
 
-		if not isstring(str) then
-			error('String expected, got ' .. tostring(str))	
-		end
+		assert(isstring(str), 'String expected got ' .. type(str))
 
 		do
 			local ply = player.GetByUniqueID(str)
