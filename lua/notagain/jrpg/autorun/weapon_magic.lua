@@ -71,7 +71,7 @@ if CLIENT then
 			self.pixvis = util.GetPixelVisibleHandle()
 
 			self.color = self.color or Color(255, 217, 104, 255)
-			self.size = self.size or self.ent:BoundingRadius() / 70
+			self.size = self.size or (self.ent:IsValid() and (self.ent:BoundingRadius()/70) or 0.6)
 			self.something = self.something or 1
 
 		end
