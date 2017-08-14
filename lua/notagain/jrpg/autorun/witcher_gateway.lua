@@ -212,12 +212,12 @@ if (SERVER) then
 		local buffer = {}
 
 		for k, v in pairs(ents.FindByClass("witcher_gateway")) do
-			if (IsValid(v) and v:GetNWInt("SaveMode", 0) >= 1 and not v.saved) then
-				if (not IsValid(v:GetOther())) then continue end
+			if IsValid(v) and v:GetNWInt("SaveMode", 0) >= 1 and not v.saved then
+				if not IsValid(v:GetOther()) then continue end
 
 				local other = v:GetOther()
 
-				if (not IsValid(other)) then continue end
+				if not IsValid(other) then continue end
 
 				buffer[#buffer + 1] = {
 					portals = {
@@ -243,16 +243,14 @@ if (SERVER) then
 			end
 		end
 
-		if (buffer and table.Count(buffer) > 0) then
+		if table.Count(buffer) > 0 then
 			local JSON = util.TableToJSON(buffer)
 			file.CreateDir("witchergates")
 			file.Write("witchergates/" .. game.GetMap() .. ".txt", JSON)
-		else
-			file.Delete("witchergates/" .. game.GetMap() .. ".txt")
 		end
 
 		for k, v in pairs(ents.FindByClass("witcher_gateway")) do
-			if (v.saved) then
+			if v.saved then
 				v.saved = nil
 			end
 		end
