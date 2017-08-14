@@ -136,6 +136,10 @@ do
 
 		filter = filter or no_filter
 
+		if not isstring(str) then
+			error('String expected, got ' .. tostring(str))	
+		end
+
 		do
 			local ply = player.GetByUniqueID(str)
 
