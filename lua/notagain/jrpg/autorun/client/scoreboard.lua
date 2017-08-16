@@ -578,7 +578,7 @@ local scoreboard = {
 
 			if pac then
 				local ent = selected_player
-				local head_pos = jrpg.FindHeadPos(ent)
+				local head_pos = jrpg and jrpg.FindHeadPos(ent) or (ent:GetPos()+Vector(0,0,100))
 				local eye_ang = ent:EyeAngles()
 
 				eye_ang = Angle(0, eye_ang.y + 180, eye_ang.r)
@@ -597,7 +597,7 @@ local scoreboard = {
 			local dsr_margin = clamp(w*0.95/3,nil,200)
 
 			local jhud = _G.jhud
-			if jhud then
+			if jhud and jattributes then
 				draw.NoTexture()
 				Surface.DisableClipping(true)
 				Surface.SetTextColor(text_color)
