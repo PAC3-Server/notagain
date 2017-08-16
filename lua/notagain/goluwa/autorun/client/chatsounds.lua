@@ -108,6 +108,8 @@ local doit = function(ply, str)
 
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
 
+		hook.Run("ChatsoundsInitialized")
+
 		init = true
 	end
 
