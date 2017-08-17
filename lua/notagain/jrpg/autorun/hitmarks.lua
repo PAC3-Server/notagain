@@ -122,36 +122,36 @@ if CLIENT then
 			min = 0,
 			max = 0.25,
 			font = "Square721 BT",
-			blur_size = 4,
-			weight = 30,
-			size = 100,
+			blur_size = 8,
+			weight = 50,
+			size = 40,
 			color = Color(0, 0, 0, 255),
 		},
 		{
 			min = 0.25,
 			max = 0.5,
 			font = "Square721 BT",
-			blur_size = 4,
-			weight = 30,
-			size = 200,
+			blur_size = 8,
+			weight = 50,
+			size = 90,
 			color = Color(150, 150, 50, 255),
 		},
 		{
 			min = 0.5,
 			max = 1,
 			font = "Square721 BT",
-			blur_size = 4,
-			weight = 30,
-			size = 300,
+			blur_size = 8,
+			weight = 50,
+			size = 140,
 			color = Color(200, 50, 50, 255),
 		},
 		{
 			min = 1,
 			max = math.huge,
 			font = "Square721 BT",
-			blur_size = 4,
-			weight = 100,
-			size = 400,
+			blur_size = 8,
+			weight = 120,
+			size = 190,
 			--color = Color(200, 50, 50, 255),
 		},
 	}
@@ -177,10 +177,10 @@ if CLIENT then
 
 	local line_mat = Material("particle/Particle_Glow_04")
 
-	local line_width = 8
-	local line_height = -31
+	local line_width = 12
+	local line_height = -20
 	local max_bounce = 2
-	local bounce_plane_height = 5
+	local bounce_plane_height = 0
 
 	local life_time = 3
 	local hitmarks = {}
