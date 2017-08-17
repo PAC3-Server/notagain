@@ -121,7 +121,7 @@ if CLIENT then
 		{
 			min = 0,
 			max = 0.25,
-			font = "gabriola",
+			font = "Square721 BT",
 			blur_size = 4,
 			weight = 30,
 			size = 100,
@@ -130,7 +130,7 @@ if CLIENT then
 		{
 			min = 0.25,
 			max = 0.5,
-			font = "gabriola",
+			font = "Square721 BT",
 			blur_size = 4,
 			weight = 30,
 			size = 200,
@@ -139,7 +139,7 @@ if CLIENT then
 		{
 			min = 0.5,
 			max = 1,
-			font = "gabriola",
+			font = "Square721 BT",
 			blur_size = 4,
 			weight = 30,
 			size = 300,
@@ -148,7 +148,7 @@ if CLIENT then
 		{
 			min = 1,
 			max = math.huge,
-			font = "gabriola",
+			font = "Square721 BT",
 			blur_size = 4,
 			weight = 100,
 			size = 400,
