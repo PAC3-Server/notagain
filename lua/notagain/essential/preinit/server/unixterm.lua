@@ -1,4 +1,4 @@
-if not system.IsLinux() or XTERM_LOADED == true or game.IsDedicated() then 
+if XTERM_LOADED == true or not system.IsLinux() or not game.IsDedicated() then 
 	print("[XTERM]: Skipping XTERM") 
 	return 
 end
