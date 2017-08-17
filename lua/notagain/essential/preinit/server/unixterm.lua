@@ -1,11 +1,11 @@
-if not system.IsLinux() or XTERM_LOADED == true then 
-	print("[XTERM]: XTERM was already loaded or os is not linux") 
+if not system.IsLinux() or XTERM_LOADED == true or game.IsDedicated() then 
+	print("[XTERM]: Skipping XTERM") 
 	return 
 end
 
 local ok, err = pcall(require, "xterm")
 if not ok then 
-	print("[XTERM]: Failed to load XTERM module") 
+	print("[XTERM]: Failed to load XTERM module:",err) 
 	return
 end
 
