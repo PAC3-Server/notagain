@@ -26,7 +26,7 @@ local function download_path(path, cb)
 			for folder in dir:gmatch("(.-/)") do
 				folder_path = folder_path .. folder
 				if not done[folder_path] then
-					file.CreateDir("goluwa/" .. folder_path)
+					file.CreateDir("goluwa/goluwa/" .. folder_path)
 					done[folder_path] = true
 				end
 			end
@@ -36,7 +36,7 @@ local function download_path(path, cb)
 
 	local function download(lua, _,_, code)
 		if code == 200 then
-			file.Write("goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
+			file.Write("goluwa/goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
 			cb()
 		else
 			dprint(lua)
@@ -79,7 +79,7 @@ end
 function goluwa.Update(cb)
 	local prev_commit = file.Read("goluwa/prev_commit.txt", "DATA")
 
-	if not prev_commit then
+	if not prev_commit or not file.IsDir("goluwa/", "DATA") or not file.IsDir("goluwa/goluwa", "DATA") or not file.IsDir("goluwa/goluwa/src", "DATA") then
 		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/git/trees/master?recursive=1", function(body, _,_, code)
 			if code ~= 200 then
 				ErrorNoHalt("goluwa: " .. body)
@@ -87,6 +87,7 @@ function goluwa.Update(cb)
 			end
 
 			file.CreateDir("goluwa/")
+			file.CreateDir("goluwa/goluwa/")
 			dprint("downloading files for first time")
 
 			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body, _,_, code)
@@ -102,7 +103,7 @@ function goluwa.Update(cb)
 
 			local paths = {}
 
-			for path in body:gmatch('"path":%s-"(src/lua/libraries/.-)"') do
+			for path in body:gmatch('"path":%s-"(.-/lua/libraries/.-)"') do
 				if path:EndsWith(".lua") then
 					paths[path] = path
 				end
@@ -137,7 +138,7 @@ function goluwa.Update(cb)
 
 				local paths = {}
 
-				for path in body:gmatch('"filename":%s-"(src/lua/libraries/.-)"') do
+				for path in body:gmatch('"filename":%s-"(.-/lua/libraries/.-)"') do
 					if path:EndsWith(".lua") then
 						paths[path] = path
 					end
@@ -399,6 +400,7 @@ function goluwa.CreateEnv()
 				env.fs = fs
 
 				fs.createdir("data/goluwa")
+				fs.createdir("data/goluwa/goluwa")
 
 				function env.os.remove(path)
 					uncache(path)
@@ -832,55 +834,65 @@ function goluwa.CreateEnv()
 		env.von = false
 	end
 
+	local function execute(full_path, chunk_name, ...)
+		if chunk_name:EndsWith(".txt") then debug.Trace() end
+		local lua = file.Read(full_path, "DATA")
+		local func = CompileString(lua, chunk_name, false)
+		if type(func) == "function" then
+			setfenv(func, env)
+			return func(...)
+		else
+			MsgN(func)
+		end
+	end
+
 	function env.runfile(path, ...)
-		if path:EndsWith("*") then
-			if env.dont_include_multiple_files then return end
+		local original_path = path
 
-			local dir = path:sub(0, -2)
+		for _, addon_name in ipairs({"src", "fun"}) do
+			if path:EndsWith("*") then
+				if env.dont_include_multiple_files then return end
 
-			if not file.IsDir("goluwa/src/" .. dir, "DATA") then
+				local dir = path:sub(0, -2)
+
+				if not file.IsDir("goluwa/goluwa/"..addon_name.."/" .. dir, "DATA") then
+					local relative = debug.getinfo(2).source:match("@(.+)")
+
+					if relative then
+						dir = relative:match("(.+/).-%.lua") .. dir
+					end
+				end
+
+				local files = file.Find("goluwa/goluwa/"..addon_name.."/" .. dir .. "*", "DATA")
+
+				for _, name in pairs(files) do
+					execute("goluwa/goluwa/"..addon_name.."/" .. dir .. name, addon_name.."/" .. dir .. name:gsub("%^lua%.txt", ".lua"),  ...)
+				end
+
+				return
+			end
+
+			if not path:EndsWith(".txt") then
+				path = path:gsub("%.", "^") .. ".txt"
+			end
+
+			if file.Exists("goluwa/goluwa/"..addon_name.."/" .. path, "DATA") then
+				return execute("goluwa/goluwa/"..addon_name.."/" .. path, original_path,  ...)
+			else
 				local relative = debug.getinfo(2).source:match("@(.+)")
 
 				if relative then
-					dir = relative:match("(.+/).-%.lua") .. dir
-				end
-			end
-
-			local files = file.Find("goluwa/src/" .. dir .. "*", "DATA")
-
-			for _, name in pairs(files) do
-				env.runfile(dir .. name, ...)
-			end
-			return
-		end
-
-		local original_path = path
-
-		if not path:EndsWith(".txt") then
-			path = path:gsub("%.", "^") .. ".txt"
-		end
-
-		if file.Exists("goluwa/src/" .. path, "DATA") then
-			local lua = file.Read("goluwa/src/" .. path, "DATA")
-			local func = CompileString(lua, original_path, false)
-			if type(func) == "function" then
-				setfenv(func, env)
-				return func(...)
-			else
-				MsgN(func)
-			end
-		else
-			local relative = debug.getinfo(2).source:match("@(.+)")
-
-			if relative then
-				local dir = relative:match("(.+/).-%.lua")
-				local path = dir .. path
-				if file.Exists("goluwa/src/" .. path, "DATA") then
-					return env.runfile(path, ...)
+					local dir = relative:match("(.+/).-%.lua")
+					if file.Exists("goluwa/goluwa/" .. addon_name .. "/" .. dir .. path, "DATA") then
+						return execute("goluwa/goluwa/" .. addon_name .. "/" .. dir .. path, original_path, ...)
+					end
 				end
 			end
 		end
 	end
+
+	local commands_add_buffer = {}
+	env.commands = {Add = function(...) table.insert(commands_add_buffer, {...}) end}
 
 	env.runfile("lua/libraries/extensions/string.lua")
 	env.runfile("lua/libraries/extensions/globals.lua")
@@ -906,6 +918,7 @@ function goluwa.CreateEnv()
 
 	env.pvars = env.runfile("lua/libraries/pvars.lua")
 	env.commands = env.runfile("lua/libraries/commands.lua")
+	for i, args in ipairs(commands_add_buffer) do env.commands.Add(unpack(args)) end
 
 	env.profiler = env.runfile("lua/libraries/profiler.lua")
 	env.P = env.profiler.ToggleTimer
