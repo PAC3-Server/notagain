@@ -1,4 +1,4 @@
-if not system.IsLinux() or XTERM_LOADED or game.IsDedicated() then
+if not system.IsLinux() or XTERM_LOADED ~= false or game.IsDedicated() then
 	return
 end
 
