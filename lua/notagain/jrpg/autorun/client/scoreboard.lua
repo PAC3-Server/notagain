@@ -629,6 +629,8 @@ local scoreboard = {
 				Surface.SetFont("scoreboard_desc")
 				Surface.SetTextPos(b_x+txt_offset,experience_y-10)
 				Surface.DrawText("XP\t"..math.ceil(clamp(selected_player:GetXP(),0)).."/"..math.ceil(selected_player:GetXPToNextLevel()))
+				
+				Surface.DisableClipping(false)
 			end
 
 			Surface.SetFont("scoreboard_title_m")
