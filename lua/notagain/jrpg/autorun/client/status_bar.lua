@@ -4,7 +4,7 @@ surface.CreateFont("hud_status_font",{
 	font = "Square721 BT",
 	outline = true,
 	weight = 700,
-	size = 20,
+	size = 16,
 	additive = false,
 	extended = true,
 })
@@ -23,8 +23,8 @@ local status = {
 	ScrW = ScrW(),
 	ScrH = ScrH(),
 	Init = function(self)
-		self:SetSize(self.ScrW,40)
-		self:SetPos(0,self.ScrH-40)
+		self:SetSize(self.ScrW,30)
+		self:SetPos(0,self.ScrH-30)
         self:SetZPos(-999)
 	end,
 	Paint = function(self,w,h)
