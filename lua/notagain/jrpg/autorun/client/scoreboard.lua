@@ -689,7 +689,7 @@ local scoreboard = {
 		Surface.DrawTexturedRect(0,h-35,700,20)
 		Surface.SetFont("scoreboard_achiev")
 		Surface.SetTextColor(text_color)
-		local str = "TIME: "..os.date("%H:%M:%S").."\tUPTIME: "..string.NiceTime(CurTime()).."\tFPS: "..math.floor(1/FrameTime())
+		local str = "Server Uptime: "..string.NiceTime(CurTime())
 		Surface.SetTextPos(20,h-32.5)
 		Surface.DrawText(str)
 	end,
