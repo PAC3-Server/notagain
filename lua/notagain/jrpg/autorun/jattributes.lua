@@ -1,4 +1,10 @@
 jattributes = {}
+jattributes.Colors = {
+	Health = Color(50,160,50),
+	Mana = Color(50,90,255),
+	Stamina = Color(255,160,50),
+	XP = Color(100,0,255),
+}
 
 local game_script_damage = {}
 jattributes.game_script_damage = game_script_damage
