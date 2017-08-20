@@ -129,5 +129,3 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 	surface.DisableClipping(false)
 	render.SetStencilEnable(false)
 end
-
-return jhud
