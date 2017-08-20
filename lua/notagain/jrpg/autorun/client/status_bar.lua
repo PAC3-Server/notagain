@@ -24,6 +24,7 @@ local status = {
 	Init = function(self)
 		self:SetSize(ScrW(),ScrW())
 		self:SetPos(0,0)
+        self:SetZPos(-9999999)
 	end,
 	Paint = function(self,width,height)
 		local w,h = ScrW(),40 --update with res
