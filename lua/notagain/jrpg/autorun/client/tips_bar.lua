@@ -75,21 +75,16 @@ local tips = {
 
 vgui.Register("tips_panel",tips,"DPanel")
 
-local convar = CreateConVar("rpg_tips_bar","1",FCVAR_ARCHIVE,"Enable or disable the tips status bar")
-cvars.AddChangeCallback("rpg_tips_bar",function(name,old,new)
-	if convar:GetBool() then
-		if not IsValid(_G.TIPS) then
-			_G.TIPS = vgui.Create("tips_panel")
-		end
-	else
-		if IsValid(_G.TIPS) then
-			_G.TIPS:Remove()
-		end
+local convar = CreateConVar("rpg_scoreboard_tips","1",FCVAR_ARCHIVE,"Enable or disable the tips status bar")
+
+hook.Add("ScoreboardShow","ShowTipsPanel",function()
+	if convar:GetBool() and not IsValid(_G.TIPS) then
+		_G.TIPS = vgui.Create("tips_panel")
 	end
 end)
 
-hook.Add("InitPostEntity","ShowTipsPanel",function()
-	if convar:GetBool() then
-		_G.TIPS = vgui.Create("tips_panel")
+hook.Add("ScoreboardHide","HideTipsPanel",function()
+	if convar:GetBool() and IsValid(_G.TIPS) then
+		_G.TIPS:Remove()
 	end
 end)
