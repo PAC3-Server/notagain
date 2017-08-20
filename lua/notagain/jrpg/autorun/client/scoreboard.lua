@@ -602,34 +602,38 @@ local scoreboard = {
 				Surface.DisableClipping(true)
 				Surface.SetTextColor(text_color)
 
+				local chealth = jattributes.Colors.Health
 				local health_y = h/20
 				local health = clamp(selected_player:Health(),0,selected_player:GetMaxHealth())
-				jhud.DrawBar(dsr_margin+b_x,health_y,b_max_wide,25,health,selected_player:GetMaxHealth(),5,50,160,50)
+				jhud.DrawBar(dsr_margin+b_x,health_y,b_max_wide,25,health,selected_player:GetMaxHealth(),5,chealth.r,chealth.g,chealth.b)
 				Surface.SetFont("scoreboard_title_m")
 				Surface.SetTextPos(b_x+txt_offset,health_y-15)
 				Surface.DrawText("HP\t"..clamp(selected_player:Health(),0).."/"..selected_player:GetMaxHealth())
 
+				local cmana = jattributes.Colors.Mana
 				local mana_y = h/20 + 30
 				local mana = clamp(selected_player:GetMana(),0,selected_player:GetMaxMana())
-				jhud.DrawBar(dsr_margin+b_x,mana_y,b_max_wide*0.85,15,mana,selected_player:GetMaxMana(),3,50,50,160)
+				jhud.DrawBar(dsr_margin+b_x,mana_y,b_max_wide*0.85,15,mana,selected_player:GetMaxMana(),3,cmana.r,cmana.g,cmana.b)
 				Surface.SetFont("scoreboard_desc")
 				Surface.SetTextPos(b_x+txt_offset,mana_y-10)
 				Surface.DrawText("MP\t"..clamp(selected_player:GetMana(),0).."/"..selected_player:GetMaxMana())
 
+				local cstamina = jattributes.Colors.Stamina
 				local stamina_y = h/20 + 50
 				local stamina = clamp(selected_player:GetStamina(),0,selected_player:GetMaxStamina())
-				jhud.DrawBar(dsr_margin+b_x,stamina_y,b_max_wide*0.85,15,stamina,selected_player:GetMaxStamina(),3,160,160,50)
+				jhud.DrawBar(dsr_margin+b_x,stamina_y,b_max_wide*0.85,15,stamina,selected_player:GetMaxStamina(),3,cstamina.r,cstamina.g,cstamina.b)
 				Surface.SetFont("scoreboard_desc")
 				Surface.SetTextPos(b_x+txt_offset,stamina_y-10)
 				Surface.DrawText("SP\t"..clamp(selected_player:GetStamina(),0).."/"..selected_player:GetMaxStamina())
 
+				local cexpe = jattributes.Colors.XP
 				local experience_y = h/20 + 75
 				local xp = clamp(selected_player:GetXP(),0,selected_player:GetXPToNextLevel())
-				jhud.DrawBar(dsr_margin+b_x,experience_y,b_max_wide*0.75,10,xp,selected_player:GetXPToNextLevel(),2,100,0,255)
+				jhud.DrawBar(dsr_margin+b_x,experience_y,b_max_wide*0.75,10,xp,selected_player:GetXPToNextLevel(),2,cexpe.r,cexpe.g,cexpe.b)
 				Surface.SetFont("scoreboard_desc")
 				Surface.SetTextPos(b_x+txt_offset,experience_y-10)
 				Surface.DrawText("XP\t"..math.ceil(clamp(selected_player:GetXP(),0)).."/"..math.ceil(selected_player:GetXPToNextLevel()))
-				
+
 				Surface.DisableClipping(false)
 			end
 
