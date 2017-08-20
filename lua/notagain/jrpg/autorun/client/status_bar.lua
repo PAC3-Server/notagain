@@ -37,7 +37,7 @@ local status = {
 
 		--draw.NoTexture()
 		surface.SetFont("hud_status_font")
-		surface.SetDrawColor(200,200,200,255)
+		surface.SetTextColor(200,200,200,255) --omg i forgot that
 
 		--playtime
 		local formattedtime = ply.GetNiceTotalTime and ply:GetNiceTotalTime() or {h = 0,m = 0,s = 0}
