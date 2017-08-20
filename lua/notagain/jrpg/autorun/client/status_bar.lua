@@ -20,9 +20,11 @@ timer.Create("status_update_fps,",1,0,function()
 end)
 
 local status = {
+	ScrW = ScrW(),
+	ScrH = ScrH(),
 	Init = function(self)
-		self:SetSize(ScrW(),40)
-		self:SetPos(0,ScrH()-40)
+		self:SetSize(self.ScrW,40)
+		self:SetPos(0,self.ScrH-40)
         self:SetZPos(-999)
 	end,
 	Paint = function(self,w,h)
@@ -77,6 +79,13 @@ local status = {
 		text_x = w - spacing - time_w
 		surface.SetTextPos(text_x,text_y)
 		surface.DrawText(str)
+	end,
+	Think = function(self)
+		if self.ScrW ~= ScrW() or self.ScrH ~= ScrH() then
+			self.ScrH = ScrH()
+			self.ScrW = ScrW()
+			self:Init()
+		end
 	end,
 }
 
