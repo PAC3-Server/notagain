@@ -29,7 +29,7 @@ local status = {
 	end,
 	Paint = function(self,w,h)
 		local ply = LocalPlayer()
-		if not ply.IsRPG and ply:IsRPG() then return end
+		if ply.IsRPG and not ply:IsRPG() then return end
 
 		surface.SetDrawColor(0,0,0,255)
 		surface.DrawRect(0,0,w,h)
