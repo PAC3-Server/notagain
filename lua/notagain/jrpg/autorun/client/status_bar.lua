@@ -22,21 +22,19 @@ end)
 
 local status = {
 	Init = function(self)
-		self:SetSize(ScrW(),ScrW())
-		self:SetPos(0,0)
-        self:SetZPos(-9999999)
+		self:SetSize(ScrW(),40)
+		self:SetPos(0,ScrH()-40)
+        self:SetZPos(-999)
 	end,
-	Paint = function(self,width,height)
-		local w,h = ScrW(),40 --update with res
-		local x,y = 0,ScrH()-h
+	Paint = function(self,w,h)
 
 		surface.SetDrawColor(0,0,0,255)
-		surface.DrawRect(x,y,w,h)
+		surface.DrawRect(0,0,w,h)
 		surface.SetTexture(gr_dw_id)
 		surface.SetDrawColor(60,60,60,255)
-		surface.DrawTexturedRect(x,y,w,h)
+		surface.DrawTexturedRect(0,0,w,h)
 		surface.SetDrawColor(130,130,130,255)
-		surface.DrawLine(x,y,w,y)
+		surface.DrawLine(0,0,w,0)
 
 		--draw.NoTexture()
 		surface.SetFont("hud_status_font")
@@ -49,13 +47,13 @@ local status = {
 		local str = "⏰ "..time..unit
 
 		local play_w,play_h = surface.GetTextSize(str)
-		local text_y = y+h/2-play_h/2
+		local text_y = h/2-play_h/2
 		local text_x = spacing
 		surface.SetTextPos(text_x,text_y)
 		surface.DrawText(str)
 
 		--lvl
-		str = "~Lvl."..(ply:GetLevel() or 0)
+		str = "~Lvl."..(ply.GetLevel and ply:GetLevel() or 0)
 		text_x = text_x + play_w + spacing
 		surface.SetTextPos(text_x,text_y)
 		surface.DrawText(str)
@@ -85,6 +83,21 @@ local status = {
 
 vgui.Register("status_panel",status,"DPanel")
 
+local convar = CreateConVar("rpg_status_bar","1",FCVAR_ARCHIVE,"Enable or disable the rpg status bar")
+cvars.AddChangeCallback("rpg_status_bar",function(name,old,new)
+	if convar:GetBool() then
+		if not IsValid(_G.STATUS) then
+			_G.STATUS = vgui.Create("status_panel")
+		end
+	else
+		if IsValid(_G.STATUS) then
+			_G.STATUS:Remove()
+		end
+	end
+end)
+
 hook.Add("InitPostEntity","ShowStatusPanel",function()
-	_G.STATUS = vgui.Create("status_panel")
+	if convar:GetBool() then
+		_G.STATUS = vgui.Create("status_panel")
+	end
 end)
