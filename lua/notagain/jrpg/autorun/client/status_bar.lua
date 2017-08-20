@@ -29,6 +29,8 @@ local status = {
 	end,
 	Paint = function(self,w,h)
 		local ply = LocalPlayer()
+		if not ply.IsRPG and ply:IsRPG() then return end
+
 		surface.SetDrawColor(0,0,0,255)
 		surface.DrawRect(0,0,w,h)
 		surface.SetTexture(gr_dw_id)
@@ -91,15 +93,6 @@ local status = {
 
 vgui.Register("status_panel",status,"DPanel")
 
-local convar = CreateConVar("rpg_context_status_bar","1",FCVAR_ARCHIVE,"Enable or disable the rpg context status bar")
-hook.Add("OnContextMenuOpen","ShowStatusPanel",function()
-	if convar:GetBool() and not IsValid(_G.STATUS) then
-		_G.STATUS = vgui.Create("status_panel")
-	end
-end)
-
-hook.Add("OnContextMenuClose","HideStatusPanel",function()
-	if convar:GetBool() and IsValid(_G.STATUS) then
-		_G.STATUS:Remove()
-	end
+hook.Add("InitPostEntity","ShowStatusPanel",function()
+	_G.STATUS = vgui.Create("status_panel")
 end)
