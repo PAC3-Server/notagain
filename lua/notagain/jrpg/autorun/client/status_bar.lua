@@ -91,21 +91,15 @@ local status = {
 
 vgui.Register("status_panel",status,"DPanel")
 
-local convar = CreateConVar("rpg_status_bar","1",FCVAR_ARCHIVE,"Enable or disable the rpg status bar")
-cvars.AddChangeCallback("rpg_status_bar",function(name,old,new)
-	if convar:GetBool() then
-		if not IsValid(_G.STATUS) then
-			_G.STATUS = vgui.Create("status_panel")
-		end
-	else
-		if IsValid(_G.STATUS) then
-			_G.STATUS:Remove()
-		end
+local convar = CreateConVar("rpg_context_status_bar","1",FCVAR_ARCHIVE,"Enable or disable the rpg context status bar")
+hook.Add("OnContextMenuOpen","ShowStatusPanel",function()
+	if convar:GetBool() and not IsValid(_G.STATUS) then
+		_G.STATUS = vgui.Create("status_panel")
 	end
 end)
 
-hook.Add("InitPostEntity","ShowStatusPanel",function()
-	if convar:GetBool() then
-		_G.STATUS = vgui.Create("status_panel")
+hook.Add("OnContextMenuClose","HideStatusPanel",function()
+	if convar:GetBool() and IsValid(_G.STATUS) then
+		_G.STATUS:Remove()
 	end
 end)
