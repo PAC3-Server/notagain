@@ -13,7 +13,6 @@ if IsValid(_G.STATUS) then
 	_G.STATUS:Remove()
 end
 
-local ply = LocalPlayer()
 local spacing = 15
 local fps = 1
 timer.Create("status_update_fps,",1,0,function()
@@ -27,7 +26,7 @@ local status = {
         self:SetZPos(-999)
 	end,
 	Paint = function(self,w,h)
-
+		local ply = LocalPlayer()
 		surface.SetDrawColor(0,0,0,255)
 		surface.DrawRect(0,0,w,h)
 		surface.SetTexture(gr_dw_id)
