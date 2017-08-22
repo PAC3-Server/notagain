@@ -24,6 +24,7 @@ local tips = {
 		"If you want to contribute to the server check out, https://github.com/PAC3-Server",
 		"Check out the full list of commands by typing !menu",
 		"You can goto to someone by double clicking its status bar in the scoreboard",
+		"The voicechat is not global, get close to the persons you want to talk to for them to hear you!",
 	},
 	CurrentSentence = 1,
 	CurrentTextWidth = 0,
