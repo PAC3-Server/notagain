@@ -274,7 +274,7 @@ local player_line = {
 			local jlevel = _G.jlevel
 			Surface.DrawText(jlevel and jlevel.GetStats(parent.Player).level or 0)
 
-		 	local formattedtime = parent.Player:GetNiceTotalTime() or {h = 0,m = 0,s = 0}
+		 	local formattedtime = parent.Player.GetNiceTotalTime and parent.Player:GetNiceTotalTime() or {h = 0,m = 0,s = 0}
             local time = formattedtime.h >= 1 and formattedtime.h or formattedtime.m
             local unit = formattedtime.h >= 1 and "h" or "min"
 			Surface.SetTextPos(w-w*2/scale_coef,5)
@@ -578,7 +578,7 @@ local scoreboard = {
 
 			if pac then
 				local ent = selected_player
-				local head_pos = jrpg and jrpg.FindHeadPos(ent) or (ent:GetPos()+Vector(0,0,100))
+				local head_pos = jrpg and jrpg.FindHeadPos(ent) or (ent:GetPos()+Vector(0,0,60))
 				local eye_ang = ent:EyeAngles()
 
 				eye_ang = Angle(0, eye_ang.y + 180, eye_ang.r)
