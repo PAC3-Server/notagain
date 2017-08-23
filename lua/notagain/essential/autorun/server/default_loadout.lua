@@ -6,6 +6,7 @@ local weps = {
 	"gmod_tool",
 	"none",
 	"weapon_medkit",
+	"weapon_slap",
 }
 
 hook.Add("PlayerLoadout", "default_loadout", function(ply)

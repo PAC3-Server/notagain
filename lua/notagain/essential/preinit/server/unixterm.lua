@@ -1,9 +1,13 @@
-if not system.IsLinux() or XTERM_LOADED or game.IsDedicated() then
-	return
+if XTERM_LOADED == true or not system.IsLinux() or not game.IsDedicated() then 
+	print("[XTERM]: Skipping XTERM") 
+	return 
 end
 
 local ok, err = pcall(require, "xterm")
-if not ok then return end
+if not ok then 
+	print("[XTERM]: Failed to load XTERM module:",err) 
+	return
+end
 
 local white = Color and Color(255,255,255,255) or {r=255,g=255,b=255,a=255}
 

@@ -26,7 +26,7 @@ local function download_path(path, cb)
 			for folder in dir:gmatch("(.-/)") do
 				folder_path = folder_path .. folder
 				if not done[folder_path] then
-					file.CreateDir("goluwa/" .. folder_path)
+					file.CreateDir("goluwa/goluwa/" .. folder_path)
 					done[folder_path] = true
 				end
 			end
@@ -36,7 +36,7 @@ local function download_path(path, cb)
 
 	local function download(lua, _,_, code)
 		if code == 200 then
-			file.Write("goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
+			file.Write("goluwa/goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
 			cb()
 		else
 			dprint(lua)
@@ -57,6 +57,7 @@ local function download_paths(paths, cb)
 	local left = count
 
 	dprint("downloading " .. count .. " files")
+
 	if count < 10 then
 		for path in pairs(paths) do
 			print(path)
@@ -79,7 +80,7 @@ end
 function goluwa.Update(cb)
 	local prev_commit = file.Read("goluwa/prev_commit.txt", "DATA")
 
-	if not prev_commit then
+	if not prev_commit or not file.IsDir("goluwa/", "DATA") or not file.IsDir("goluwa/goluwa", "DATA") or not file.IsDir("goluwa/goluwa/core", "DATA") then
 		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/git/trees/master?recursive=1", function(body, _,_, code)
 			if code ~= 200 then
 				ErrorNoHalt("goluwa: " .. body)
@@ -87,6 +88,7 @@ function goluwa.Update(cb)
 			end
 
 			file.CreateDir("goluwa/")
+			file.CreateDir("goluwa/goluwa/")
 			dprint("downloading files for first time")
 
 			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body, _,_, code)
@@ -102,7 +104,7 @@ function goluwa.Update(cb)
 
 			local paths = {}
 
-			for path in body:gmatch('"path":%s-"(src/lua/libraries/.-)"') do
+			for path in body:gmatch('"path":%s-"(.-/lua/libraries/.-)"') do
 				if path:EndsWith(".lua") then
 					paths[path] = path
 				end
@@ -111,8 +113,8 @@ function goluwa.Update(cb)
 			download_paths(paths, cb)
 		end)
 	else
-		local head
-		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body, _,_, code)
+		local head = ""
+		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits/HEAD", function(body, _,_, code)
 			if code ~= 200 then
 				dprint(body)
 				cb()
@@ -128,6 +130,7 @@ function goluwa.Update(cb)
 				return
 			end
 
+
 			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/compare/" .. prev_commit .. "..." .. head, function(body, _,_, code)
 				if code ~= 200 then
 					dprint(body)
@@ -135,11 +138,20 @@ function goluwa.Update(cb)
 					return
 				end
 
+				local tbl = util.JSONToTable(body)
+
 				local paths = {}
 
-				for path in body:gmatch('"filename":%s-"(src/lua/libraries/.-)"') do
-					if path:EndsWith(".lua") then
-						paths[path] = path
+				for _, info in pairs(tbl.files) do
+					if info.filename:find("lua/libraries/", nil, true) then
+						if info.status == "modified" or info.status == "added" then
+							paths[info.filename] = info.filename
+							dprint(info.filename .. " was modified")
+						elseif info.status == "renamed" then
+							dprint(info.previous_filename .. " was renamed to " .. info.filename)
+
+							file.Delete("goluwa/goluwa/" .. info.previous_filename:gsub("%.", "^") .. ".txt")
+						end
 					end
 				end
 
@@ -399,6 +411,7 @@ function goluwa.CreateEnv()
 				env.fs = fs
 
 				fs.createdir("data/goluwa")
+				fs.createdir("data/goluwa/goluwa")
 
 				function env.os.remove(path)
 					uncache(path)
@@ -832,13 +845,27 @@ function goluwa.CreateEnv()
 		env.von = false
 	end
 
+	local function execute(full_path, chunk_name, ...)
+		if chunk_name:EndsWith(".txt") then debug.Trace() end
+		local lua = file.Read(full_path, "DATA")
+		local func = CompileString(lua, chunk_name, false)
+		if type(func) == "function" then
+			setfenv(func, env)
+			return func(...)
+		else
+			MsgN(func)
+		end
+	end
+
 	function env.runfile(path, ...)
+		local original_path = path
+
 		if path:EndsWith("*") then
 			if env.dont_include_multiple_files then return end
 
 			local dir = path:sub(0, -2)
 
-			if not file.IsDir("goluwa/src/" .. dir, "DATA") then
+			if not file.IsDir("goluwa/goluwa/" .. dir, "DATA") then
 				local relative = debug.getinfo(2).source:match("@(.+)")
 
 				if relative then
@@ -846,68 +873,65 @@ function goluwa.CreateEnv()
 				end
 			end
 
-			local files = file.Find("goluwa/src/" .. dir .. "*", "DATA")
+			local files = file.Find("goluwa/goluwa/" .. dir .. "*", "DATA")
 
 			for _, name in pairs(files) do
-				env.runfile(dir .. name, ...)
+				print(dir, relative, name, path)
+				execute("goluwa/goluwa/" .. dir .. name, dir .. name:gsub("%^lua%.txt", ".lua"),  ...)
 			end
+
 			return
 		end
-
-		local original_path = path
 
 		if not path:EndsWith(".txt") then
 			path = path:gsub("%.", "^") .. ".txt"
 		end
-
-		if file.Exists("goluwa/src/" .. path, "DATA") then
-			local lua = file.Read("goluwa/src/" .. path, "DATA")
-			local func = CompileString(lua, original_path, false)
-			if type(func) == "function" then
-				setfenv(func, env)
-				return func(...)
-			else
-				MsgN(func)
-			end
+		if file.Exists("goluwa/goluwa/" .. path, "DATA") then
+			return execute("goluwa/goluwa/" .. path, original_path,  ...)
 		else
 			local relative = debug.getinfo(2).source:match("@(.+)")
 
 			if relative then
 				local dir = relative:match("(.+/).-%.lua")
-				local path = dir .. path
-				if file.Exists("goluwa/src/" .. path, "DATA") then
-					return env.runfile(path, ...)
+
+				if file.Exists("goluwa/goluwa/" .. dir .. path, "DATA") then
+					return execute("goluwa/goluwa/" .. dir .. path, dir .. original_path, ...)
 				end
 			end
 		end
 	end
 
-	env.runfile("lua/libraries/extensions/string.lua")
-	env.runfile("lua/libraries/extensions/globals.lua")
-	env.runfile("lua/libraries/extensions/debug.lua")
-	env.runfile("lua/libraries/extensions/os.lua")
-	env.runfile("lua/libraries/extensions/table.lua")
-	env.runfile("lua/libraries/extensions/math.lua")
-	env.utf8 = env.runfile("lua/libraries/utf8.lua")
+	local commands_add_buffer = {}
+	env.commands = {Add = function(...) table.insert(commands_add_buffer, {...}) end}
+
+	env.runfile("core/lua/libraries/extensions/string.lua")
+	env.runfile("core/lua/libraries/extensions/globals.lua")
+	env.runfile("core/lua/libraries/extensions/debug.lua")
+	env.runfile("core/lua/libraries/extensions/os.lua")
+	env.runfile("core/lua/libraries/extensions/table.lua")
+	env.runfile("core/lua/libraries/extensions/math.lua")
+	env.utf8 = env.runfile("core/lua/libraries/utf8.lua")
 
 	for k,v in pairs(env.string) do _G.string[k] = _G.string[k] or v end -- :(
 
-	env.prototype = env.runfile("lua/libraries/prototype/prototype.lua")
-	env.serializer = env.runfile("lua/libraries/serializer.lua")
-	env.structs = env.runfile("lua/libraries/structs.lua")
+	env.prototype = env.runfile("core/lua/libraries/prototype/prototype.lua")
+	env.serializer = env.runfile("core/lua/libraries/serializer.lua")
+	env.structs = env.runfile("framework/lua/libraries/structs.lua")
 
-	env.utility = env.runfile("lua/libraries/utilities/utility.lua")
-	env.vfs = env.runfile("lua/libraries/filesystem/vfs.lua")
+	env.utility = env.runfile("core/lua/libraries/utility.lua")
+
+	env.vfs = env.runfile("core/lua/libraries/filesystem/vfs.lua")
 	env.vfs.Mount("os:/", "os:")
 	env.vfs.Mount("os:/data/goluwa/data/", "os:data/")
 	env.vfs.Mount("os:/data/goluwa/userdata/", "os:data/")
 	env.R = env.vfs.GetAbsolutePath -- a nice global for loading resources externally from current dir
-	env.crypto = env.runfile("lua/libraries/crypto.lua")
+	env.crypto = env.runfile("core/lua/libraries/crypto.lua")
 
-	env.pvars = env.runfile("lua/libraries/pvars.lua")
-	env.commands = env.runfile("lua/libraries/commands.lua")
+	env.pvars = env.runfile("engine/lua/libraries/pvars.lua")
+	env.commands = env.runfile("engine/lua/libraries/commands.lua")
+	for i, args in ipairs(commands_add_buffer) do env.commands.Add(unpack(args)) end
 
-	env.profiler = env.runfile("lua/libraries/profiler.lua")
+	env.profiler = env.runfile("engine/lua/libraries/profiler.lua")
 	env.P = env.profiler.ToggleTimer
 	env.I = env.profiler.ToggleInstrumental
 	env.S = env.profiler.ToggleStatistical
@@ -991,7 +1015,8 @@ function goluwa.CreateEnv()
 		env.system = system
 	end
 
-	env.event = env.runfile("lua/libraries/event.lua")
+	env.event = env.runfile("core/lua/libraries/event.lua")
+	env.runfile("framework/lua/libraries/extensions/event_timers.lua")
 
 	env.event.AddListener("EventAdded", "gmod", function(info)
 	--	print("goluwa event added: ", info.event_type, info.id)
@@ -1006,13 +1031,13 @@ function goluwa.CreateEnv()
 		env.event.Call("Update", FrameTime())
 	end)
 
-	env.expression = env.runfile("lua/libraries/expression.lua")
-	env.autocomplete = env.runfile("lua/libraries/autocomplete.lua")
+	env.expression = env.runfile("engine/lua/libraries/expression.lua")
+	env.autocomplete = env.runfile("engine/lua/libraries/autocomplete.lua")
 
 	do
 		local sockets = {}
 		env.SOCKETS = true
-		env.runfile("lua/libraries/sockets/http.lua", sockets)
+		env.runfile("framework/lua/libraries/sockets/http.lua", sockets)
 
 		function sockets.Request(tbl)
 			tbl.callback = tbl.callback or env.table.print
@@ -1066,7 +1091,7 @@ function goluwa.CreateEnv()
 		env.sockets = sockets
 	end
 
-	env.resource = env.runfile("lua/libraries/sockets/resource.lua")
+	env.resource = env.runfile("framework/lua/libraries/sockets/resource.lua")
 
 	do
 		local backend = CreateClientConVar("goluwa_audio_backend", "webaudio")
@@ -1094,7 +1119,7 @@ function goluwa.CreateEnv()
 		env.audio = audio
 	end
 
-	env.chatsounds = env.runfile("lua/libraries/audio/chatsounds/chatsounds.lua")
+	env.chatsounds = env.runfile("game/lua/libraries/audio/chatsounds/chatsounds.lua")
 
 	do
 		local steam = {}
@@ -1440,10 +1465,10 @@ function goluwa.CreateEnv()
 			env.render = render
 		end
 
-		env.camera = env.runfile("lua/libraries/graphics/camera.lua")
+		env.camera = env.runfile("framework/lua/libraries/graphics/camera.lua")
 
 		do
-			local render2d = env.runfile("lua/libraries/graphics/render2d/render2d.lua")
+			local render2d = env.runfile("framework/lua/libraries/graphics/render2d/render2d.lua")
 
 			render2d.shader = {
 				global_color = env.Color(1,1,1,1),
@@ -1572,7 +1597,8 @@ function goluwa.CreateEnv()
 			env.fonts = fonts
 		end
 
-		env.gfx = env.runfile("lua/libraries/graphics/gfx/gfx.lua")
+		env.gfx = env.runfile("framework/lua/libraries/graphics/gfx/gfx.lua")
+		env.runfile("engine/lua/libraries/graphics/gfx/markup.lua")
 		env.gfx.ninepatch_poly = env.gfx.CreatePolygon2D(9 * 6)
 		env.gfx.ninepatch_poly.vertex_buffer:SetDrawHint("dynamic")
 	end
@@ -1584,11 +1610,11 @@ end
 function goluwa.InitializeGUI()
 	local env = goluwa.env
 
-	env.input = env.runfile("lua/libraries/input.lua")
-	env.language = env.runfile("lua/libraries/language.lua")
+	env.input = env.runfile("framework/lua/libraries/input.lua")
+	env.language = env.runfile("engine/lua/libraries/language.lua")
 	env.L = env.language.LanguageString
 
-	env.gui = env.runfile("lua/libraries/graphics/gui/gui.lua")
+	env.gui = env.runfile("engine/lua/libraries/graphics/gui/gui.lua")
 	env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
 	env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
 	env.gui.Initialize()

@@ -1,6 +1,6 @@
 surface.CreateFont("area_font",{
 	font = "Square721 BT",
-	size = 50,
+	size = 25,
 	additive = false,
 	weight = 700,
 	antialias = true,
@@ -9,10 +9,10 @@ surface.CreateFont("area_font",{
 local cur_area = "Overworld"
 local cur_panel
 local text_color = Color(200,200,200,255)
-local y_pos = 100
+local y_pos = 50
 local CreatePanel = function(area)
     local panel = vgui.Create("DPanel")
-    panel:SetSize(500,70)
+    panel:SetSize(300,50)
     panel:SetPos(ScrW(),y_pos)
     panel.Paint = function(self,w,h)
 		draw.NoTexture()
