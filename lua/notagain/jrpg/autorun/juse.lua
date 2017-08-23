@@ -104,15 +104,15 @@ if CLIENT then
 		surface.SetMaterial(crosshair)
 		surface.DrawTexturedRectRotated(pos.x, pos.y, size,size, os.clock()*-90)
 
-		local txt_size = 70
+		local txt_size = 35
 		local border = 20
 		local x = ScrW()/2
 		local y = ScrH()/3
 		local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
 		local str = ent:IsValid() and (ent.GetActiveWeapon and "TALK" or "EXAMINE") or last_str
 		last_str = str
-		local w,h = prettytext.GetTextSize(str, "gabriola", txt_size, 0, 3)
-		local key_width, key_height = prettytext.GetTextSize(key or "E", "gabriola", txt_size, 0, 3)
+		local w,h = prettytext.GetTextSize(str, "Square721 BT", txt_size, 0, 3)
+		local key_width, key_height = prettytext.GetTextSize(key or "E", "Square721 BT", txt_size, 0, 3)
 		local bg_width = w + 100
 
 		surface.SetDrawColor(0,0,0,200*fade_out)
@@ -120,10 +120,10 @@ if CLIENT then
 		surface.DrawTexturedRect(x - bg_width, y + h/8, bg_width * 2, h/1.3)
 
 		surface.SetDrawColor(255,255,255,255*fade_out)
-		draw.RoundedBox(4, x - key_width*2 - w/2 - key_width*0.25, y + border, key_width*1.5, key_height/2.2, Color(25,25,25,255*fade_out))
-		prettytext.Draw(str, x - w / 2, y, "gabriola", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
+		draw.RoundedBox(4, x - key_width*2 - w/2 - key_width*0.25, y + border-16, key_width*1.5, key_height/1.3, Color(25,25,25,255*fade_out))
+		prettytext.Draw(str, x - w / 2, y, "Square721 BT", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
 
-		prettytext.Draw(key, x - key_width*2 - w/2, y, "gabriola", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
+		prettytext.Draw(key, x - key_width*2 - w/2, y, "Square721 BT", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
 
 	end)
 end

@@ -2138,7 +2138,7 @@ function RagdollFight.Think( )
 				v:Remove()
 				continue
 			end
-			if v and v:IsValid() and v:GetOwner() and v:GetOwner():IsValid() and v:GetOwner():Alive() then
+			if IsValid(v) and IsValid(v:GetOwner()) and v:GetOwner():Alive() then
 				local pl = v:GetOwner()
 
 				if #pl:GetWeapons() > 0 then pl:StripWeapons() end
@@ -2160,7 +2160,7 @@ function RagdollFight.Think( )
 				end
 
 				local reference_bonename = "ValveBiped.Bip01_Pelvis"
-				local reference_bone = pl:LookupBone( reference_bonename )
+				local reference_bone = pl:LookupBone( reference_bonename ) or 1
 
 				local reference_physbone_id = v:TranslateBoneToPhysBone( reference_bone )
 				local reference_physbone = v:GetPhysicsObjectNum( reference_physbone_id )
@@ -2354,7 +2354,7 @@ function RagdollFight.Think( )
 						end
 
 						local reference_bonename = "ValveBiped.Bip01_Pelvis"
-						local reference_bone = pl:LookupBone( reference_bonename )
+						local reference_bone = pl:LookupBone( reference_bonename ) or 1
 
 						if v.XRay == RAGDOLL_XRAY_VICTIM and attacker then
 							reference_bone = attacker:LookupBone( reference_bonename )
@@ -2930,7 +2930,7 @@ function RagdollFight.SaveStance( pl, cmd, args )
 	print( "override ", override )
 
 	local reference_bonename = "ValveBiped.Bip01_Pelvis"
-	local reference_bone = ent:LookupBone( reference_bonename )
+	local reference_bone = ent:LookupBone( reference_bonename ) or 1
 
 	if override then
 		reference_bone = override:LookupBone( reference_bonename )

@@ -108,6 +108,8 @@ local doit = function(ply, str)
 
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
 
+		hook.Run("ChatsoundsInitialized")
+
 		init = true
 	end
 
@@ -120,7 +122,7 @@ local doit = function(ply, str)
 end
 
 hookAdd("OnPlayerChat", "chatsounds",doit)
-concommand.Add("saysound",doit) --LEGACY
+concommand.Add("saysound",function(ply, _,_, str) doit(ply, str) end) --LEGACY
 
 if not chatsounds_enabled:GetBool() then
 	timer.Simple(0.05, function()

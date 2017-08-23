@@ -176,28 +176,28 @@ hook.Add("HUDPaint", "jrpg_items", function()
 				name = name:Replace("CLASSNAME", class_name)
 			end
 
-			local w,h = prettytext.GetTextSize(name, "Square721 BT", 40, 800, 3)
+			local w,h = prettytext.GetTextSize(name, "Square721 BT",40, 800, 3)
 			local bg_width = w + 100
-			surface.SetDrawColor(0,0,0,100)
+			surface.SetDrawColor(0,0,0,200)
 			surface.SetMaterial(gradient)
 			surface.DrawTexturedRect(pos.x - bg_width, pos.y, bg_width * 2, h)
 
-			prettytext.Draw(name, pos.x - w / 2, pos.y, "Square721 BT", 40, 800, 3, TempColor(color.r, color.g, color.b, 255), true)
+			prettytext.Draw(name, pos.x - w / 2, pos.y, "Square721 BT",40, 800, 3, TempColor(color.r, color.g, color.b, 255), true)
 
 			local border = 20
 			local x = pos.x
 			local y = pos.y + 40
 			local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
 			local str = key .. "  TAKE"
-			local w,h = prettytext.GetTextSize(str, "Square721 BT", 40, 800, 3)
-			local key_width = prettytext.GetTextSize(key or "E", "Square721 BT", 40, 800, 3)
+			local w,h = prettytext.GetTextSize(str, "Square721 BT",25, 800, 3)
+			local key_width = prettytext.GetTextSize(key or "E", "Square721 BT",25, 800, 3)
 			local bg_width = w + 100
 
 			surface.SetDrawColor(255,255,255,255)
-			draw.RoundedBox(4, x - 27 - border / 2, y + border / 2, border, border, TempColor(25,25,25,255))
-			prettytext.Draw(str, x - w / 2, y, "Square721 BT", 40, 800, 3)
+			draw.RoundedBox(4, x - 33 - border / 2, y + border / 2-7, border, border, TempColor(25,25,25,255))
+			prettytext.Draw(str, x - w / 2, y, "Square721 BT", 25, 800, 3)
 
-			surface.SetDrawColor(0,0,0,100)
+			surface.SetDrawColor(0,0,0,200)
 			surface.SetMaterial(gradient)
 			surface.DrawTexturedRect(x - bg_width, y, bg_width * 2, h)
 
