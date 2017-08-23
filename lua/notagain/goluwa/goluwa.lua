@@ -54,6 +54,12 @@ end
 
 local function download_paths(paths, cb)
 	local count = table.Count(paths)
+
+	if count == 0 then
+		cb()
+		return
+	end
+
 	local left = count
 
 	dprint("downloading " .. count .. " files")
@@ -80,7 +86,13 @@ end
 function goluwa.Update(cb)
 	local prev_commit = file.Read("goluwa/prev_commit.txt", "DATA")
 
-	if not prev_commit or not file.IsDir("goluwa/", "DATA") or not file.IsDir("goluwa/goluwa", "DATA") or not file.IsDir("goluwa/goluwa/core", "DATA") then
+	if
+		not prev_commit or
+		not file.IsDir("goluwa/", "DATA") or
+		not file.IsDir("goluwa/goluwa", "DATA") or
+		not file.IsDir("goluwa/goluwa/core", "DATA") or
+		not file.Exists("goluwa/goluwa/github_recursive.txt", "DATA")
+	then
 		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/git/trees/master?recursive=1", function(body, _,_, code)
 			if code ~= 200 then
 				ErrorNoHalt("goluwa: " .. body)
@@ -89,6 +101,9 @@ function goluwa.Update(cb)
 
 			file.CreateDir("goluwa/")
 			file.CreateDir("goluwa/goluwa/")
+
+			file.Write("goluwa/goluwa/github_recursive.txt", body)
+
 			dprint("downloading files for first time")
 
 			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body, _,_, code)
@@ -113,49 +128,63 @@ function goluwa.Update(cb)
 			download_paths(paths, cb)
 		end)
 	else
-		local head = ""
-		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits/HEAD", function(body, _,_, code)
-			if code ~= 200 then
-				dprint(body)
-				cb()
-				return
+		local tbl = util.JSONToTable(file.Read("goluwa/goluwa/github_recursive.txt", "DATA"))
+		local paths = {}
+
+		for _, info in pairs(tbl.tree) do
+			if info.path:find("lua/libraries/", nil, true) then
+				if info.path:EndsWith(".lua") and not file.Exists("goluwa/goluwa/" .. info.path:gsub("%.", "^") .. ".txt", "DATA") then
+					paths[info.path] = info.path
+					dprint("downloading " .. info.path .. " becasue it's missing")
+				end
 			end
+		end
 
-			head = body:match('^.-"sha":%s-"(.-)"')
-			file.Write("goluwa/prev_commit.txt", head)
-
-			if head == prev_commit then
-				dprint("everything is already up to date")
-				cb()
-				return
-			end
-
-
-			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/compare/" .. prev_commit .. "..." .. head, function(body, _,_, code)
+		download_paths(paths, function()
+			local head = ""
+			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits/HEAD", function(body, _,_, code)
 				if code ~= 200 then
 					dprint(body)
 					cb()
 					return
 				end
 
-				local tbl = util.JSONToTable(body)
+				head = body:match('^.-"sha":%s-"(.-)"')
+				file.Write("goluwa/prev_commit.txt", head)
 
-				local paths = {}
-
-				for _, info in pairs(tbl.files) do
-					if info.filename:find("lua/libraries/", nil, true) then
-						if info.status == "modified" or info.status == "added" then
-							paths[info.filename] = info.filename
-							dprint(info.filename .. " was modified")
-						elseif info.status == "renamed" then
-							dprint(info.previous_filename .. " was renamed to " .. info.filename)
-
-							file.Delete("goluwa/goluwa/" .. info.previous_filename:gsub("%.", "^") .. ".txt")
-						end
-					end
+				if head == prev_commit then
+					dprint("everything is already up to date")
+					cb()
+					return
 				end
 
-				download_paths(paths, cb)
+
+				http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/compare/" .. prev_commit .. "..." .. head, function(body, _,_, code)
+					if code ~= 200 then
+						dprint(body)
+						cb()
+						return
+					end
+
+					local tbl = util.JSONToTable(body)
+
+					local paths = {}
+
+					for _, info in pairs(tbl.files) do
+						if info.filename:find("lua/libraries/", nil, true) then
+							if info.status == "modified" or info.status == "added" then
+								paths[info.filename] = info.filename
+								dprint(info.filename .. " was modified")
+							elseif info.status == "renamed" then
+								dprint(info.previous_filename .. " was renamed to " .. info.filename)
+
+								file.Delete("goluwa/goluwa/" .. info.previous_filename:gsub("%.", "^") .. ".txt")
+							end
+						end
+					end
+
+					download_paths(paths, cb)
+				end)
 			end)
 		end)
 	end
@@ -876,7 +905,6 @@ function goluwa.CreateEnv()
 			local files = file.Find("goluwa/goluwa/" .. dir .. "*", "DATA")
 
 			for _, name in pairs(files) do
-				print(dir, relative, name, path)
 				execute("goluwa/goluwa/" .. dir .. name, dir .. name:gsub("%^lua%.txt", ".lua"),  ...)
 			end
 
