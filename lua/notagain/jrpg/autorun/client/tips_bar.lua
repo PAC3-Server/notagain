@@ -50,7 +50,7 @@ local tips = {
 		surface.SetDrawColor(130,130,130,255)
 		surface.DrawLine(0,29,w,29)
 
-		surface.SetDrawColor(200,200,200,255)
+		surface.SetTextColor(200,200,200,255)
 		surface.SetFont("hud_tips_font")
 
 		if self.LeftToSlide + self.CurrentTextWidth <= 0 then
