@@ -1,6 +1,5 @@
-AddCSLuaFile()
-
 SWEP = {}
+SWEP.Base = "weapon_base"
 SWEP.PrintName = "Slap"
 SWEP.Slot = 1
 SWEP.SlotPos = 4
