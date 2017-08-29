@@ -32,9 +32,10 @@ do
 	DEFINE_FUNCTION("Entity", NULL)
 	DEFINE_FUNCTION("Looping", false)
 
-	function META:SetPath(path)
+	function META:SetPath(pathm, where)
 		self.Path = path
-		self:OnLoad(path)
+		self.Where = where or "GAME"
+		self:OnLoad(path, where)
 	end
 
 	function META:GetPath()
@@ -133,9 +134,9 @@ do
 		end
 	end
 
-	function META:OnLoad(path)
-		if path:StartWith("data/") then
-			path = "../" .. path
+	function META:OnLoad(path, where)
+		if where ==  "DATA" then
+			path = "../data/" .. path
 		end
 
 		local function on_load(snd, err, no_3d)
@@ -245,7 +246,11 @@ do
 		return self.obj and self.obj:IsValid() and self.obj:IsReady()
 	end
 
-	function META:OnLoad(path)
+	function META:OnLoad(path, where)
+		if where == "DATA" then
+			path = "data/" .. path
+		end
+
 		local snd = webaudio.CreateStream(path)
 		snd.OnLoad = function()
 			self:SetSoundObject(snd)
@@ -293,8 +298,8 @@ do
 
 	function META:IsReady() return self.obj end
 
-	function META:OnLoad(path)
-		if path:StartWith("data/") then
+	function META:OnLoad(path, where)
+		if where == "DATA" then
 			self:OnError("CreateSound does not support reading from data folder: " .. path)
 			return
 		end

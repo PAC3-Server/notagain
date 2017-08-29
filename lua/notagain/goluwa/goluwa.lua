@@ -1128,10 +1128,9 @@ function goluwa.CreateEnv()
 		function audio.CreateSource(path)
 			local snd = common_audio.CreateSoundFromInterface(backend:GetString())
 			snd:SetEntity(audio.player_object)
-
 			env.resource.Download(path, function(path)
-				path = env.GoluwaToGmodPath(path)
-				snd:SetPath(path)
+				local path, where = env.GoluwaToGmodPath(path)
+				snd:SetPath(path, where)
 			end)
 
 			return snd
