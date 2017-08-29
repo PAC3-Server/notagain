@@ -32,7 +32,7 @@ do
 	DEFINE_FUNCTION("Entity", NULL)
 	DEFINE_FUNCTION("Looping", false)
 
-	function META:SetPath(pathm, where)
+	function META:SetPath(path, where)
 		self.Path = path
 		self.Where = where or "GAME"
 		self:OnLoad(path, where)
