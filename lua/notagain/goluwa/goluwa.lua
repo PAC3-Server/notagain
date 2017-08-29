@@ -284,7 +284,8 @@ function goluwa.CreateEnv()
 					[".vtf"] = true,
 					[".dat"] = true,
 				}
-				local function get_path(path, is_dir)
+
+				function env.GoluwaToGmodPath(path)
 					if path:StartWith("/") then
 						path = path:sub(2)
 					end
@@ -295,33 +296,24 @@ function goluwa.CreateEnv()
 						path = path:sub(6)
 						where = "DATA"
 
-						if not is_dir and not file.IsDir(path, where) then
-							if not allowed[path:sub(-4)] then
-								path = path:gsub("%.", "^") .. ".dat"
+						if not file.IsDir(path, where) then
+							local dir, file_name = path:match("(.+/)(.+)")
+
+							if not dir then
+								dir = ""
+								file_name = path
 							end
+
+							if not allowed[path:sub(-4)] then
+								file_name = file_name:gsub("%.", "%^")
+								file_name = file_name .. ".dat"
+							end
+
+							return dir .. file_name, where
 						end
 					end
 
 					return path, where
-				end
-
-				function env.GoluwaToGmodPath(path)
-					if path:StartWith("/") then
-						path = path:sub(2)
-					end
-
-					if path:StartWith("data/") then
-						local dir, file_name = path:match("(.+/)(.+)")
-
-						if not allowed[path:sub(-4)] then
-							file_name = file_name:gsub("%.", "%^")
-							file_name = file_name .. ".dat"
-						end
-
-						return dir .. file_name
-					end
-
-					return path
 				end
 
 				local fs = {}
@@ -392,7 +384,7 @@ function goluwa.CreateEnv()
 				function fs.createdir(path)
 					dprint("fs.createdir: ", path)
 
-					local path, where = get_path(path, true)
+					local path, where = env.GoluwaToGmodPath(path)
 
 					file.CreateDir(path, where)
 				end
@@ -405,7 +397,7 @@ function goluwa.CreateEnv()
 						return fs.get_attributes_cache[path]
 					end
 
-					local path, where = get_path(path, false, true)
+					local path, where = env.GoluwaToGmodPath(path)
 
 					if file.Exists(path, where) then
 						local size = file.Size(path, where)
@@ -445,7 +437,7 @@ function goluwa.CreateEnv()
 				function env.os.remove(path)
 					uncache(path)
 
-					local path, where = get_path(path)
+					local path, where = env.GoluwaToGmodPath(path)
 
 					if file.Exists(path, where) then
 						file.Delete(path, where)
@@ -459,8 +451,8 @@ function goluwa.CreateEnv()
 					uncache(a)
 					uncache(b)
 
-					local a, where_a = get_path(a)
-					local b, where_b = get_path(b)
+					local a, where_a = env.GoluwaToGmodPath(a)
+					local b, where_b = env.GoluwaToGmodPath(b)
 
 
 					dprint("os.rename: " .. a .. " >> " .. b)
@@ -504,6 +496,10 @@ function goluwa.CreateEnv()
 					dprint("file " .. self.__path .. ":write: ", #str)
 
 					self.__file:Write(str)
+
+					if self.uncache_on_write then
+						uncache(self.uncache_on_write)
+					end
 				end
 
 				local function read(self, format)
@@ -578,7 +574,7 @@ function goluwa.CreateEnv()
 
 					local self = setmetatable({}, META)
 
-					local path, where = get_path(path, false, not mode:find("w"))
+					local path, where = env.GoluwaToGmodPath(path)
 
 					local f = file.Open(path, mode, where)
 					dprint("file.Open: ", f, path, mode, where)
@@ -588,7 +584,7 @@ function goluwa.CreateEnv()
 					end
 
 					if mode:find("w") then
-						uncache(original_path)
+						self.uncache_on_write = original_path
 					end
 
 					self.__file = f
@@ -949,9 +945,10 @@ function goluwa.CreateEnv()
 	env.utility = env.runfile("core/lua/libraries/utility.lua")
 
 	env.vfs = env.runfile("core/lua/libraries/filesystem/vfs.lua")
-	env.vfs.Mount("os:/", "os:")
 	env.vfs.Mount("os:/data/goluwa/data/", "os:data/")
+	env.vfs.Mount("os:/data/goluwa/data/", "os:")
 	env.vfs.Mount("os:/data/goluwa/userdata/", "os:data/")
+	env.vfs.Mount("os:/", "os:")
 	env.R = env.vfs.GetAbsolutePath -- a nice global for loading resources externally from current dir
 	env.crypto = env.runfile("core/lua/libraries/crypto.lua")
 
