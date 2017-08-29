@@ -238,6 +238,11 @@ function surface.CreateFont(id, tbl, ...)
 			table.insert(tbl.warnings, "tried to set antialias to false but this is not supported on linux")
 		end
 
+		if tbl.size and tbl.size > 126 then
+			table.insert(tbl.warnings, "size is above 126. max size is 128 but because of outline size differences it needs to be 126")
+			tbl.size = 126
+		end
+
 		if tbl.outline and system.IsLinux() then
 			tbl.size = tbl.size + 2
 		end
