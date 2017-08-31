@@ -1,4 +1,4 @@
-local testing = ConVarExists("sv_testing") and GetConVar("sv_testing") or CreateConVar("sv_testing","0",{FCVAR_NOTIFY,FCVAR_ARCHIVE,FCVAR_REPLICATED},"testing mode")
+local testing = CreateConVar("sv_testing","0",{FCVAR_NOTIFY,FCVAR_ARCHIVE,FCVAR_REPLICATED},"testing mode")
 local hostname = "Official PAC3 Server"
 local extra = ""
 
