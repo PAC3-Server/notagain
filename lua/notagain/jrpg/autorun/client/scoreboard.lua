@@ -585,9 +585,7 @@ local scoreboard = {
 				local pos = LocalToWorld(head_pos, ent:GetAngles(), Vector(0,0,-ent:BoundingRadius()/4), Angle())
 				pos = pos - eye_ang:Forward() * ent:BoundingRadius() * 35
 
-				pac.ForceRendering(true)
 				pac.DrawEntity2D(ent, pacx, pacy, w/3, h, pos, eye_ang, 1, 500)
-				pac.ForceRendering(false)
 			end
 
 			local b_max_wide = w*2/3-80
