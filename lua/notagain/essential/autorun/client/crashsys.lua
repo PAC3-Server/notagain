@@ -112,16 +112,6 @@ hook.Add("ShutDown", "crashsys", function()
 	halt() -- Kill CrashSys, remove all active CrashSys hooks.
 end)
 
-gameevent.Listen('player_disconnect')
-hook.Add( "player_disconnect", "CrashSys", function( data )
-	local steamid = LocalPlayer():SteamID()
-	PrintTable(data)
-	print("WOAH WOAH WOAH!!!")
-	if data.networkid == steamid and data.reason ~= "Timed out!" then
-		halt()
-	end
-end )
-
 net.Receive("crashsys", function()
 	local shutdown = ( net.ReadBit() == 1 )
 	if shutdown then
