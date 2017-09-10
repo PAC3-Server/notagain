@@ -944,7 +944,7 @@ end
 local function add(ENT, url)
 	hook.Add("pac_Initialized", ENT.ClassName, function()
 		http.Fetch(url, function(str)
-			pac.AddEntityClassListener(ENT.ClassName, pac.luadata.Decode(str), nil, 1000)
+			pac.AddEntityClassListener(ENT.ClassName, pace.luadata.Decode(str), nil, 1000)
 		end)
 		hook.Remove("pac_Initialized", ENT.ClassName)
 	end)
