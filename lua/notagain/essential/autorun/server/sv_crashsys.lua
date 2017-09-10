@@ -5,7 +5,7 @@ local table = table
 
 local function ping(target, bit)
 	local bit = bit and true or false
-	if IsValid(target) or next(target) then
+	if target then
 		net.Start("crashsys", true)
 		net.WriteBit(bit)
 		net.Send(target)
@@ -24,7 +24,7 @@ hook.Add("PlayerDisconnected", "crashsys", function(ply)
 end)
 
 timer.Create("crashsys", 3, 0, function()
-	ping(ply, false)
+	ping(loaded, false)
 end)
 
 hook.Add("ShutDown", "crashsys", function()
