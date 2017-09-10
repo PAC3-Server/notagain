@@ -69,7 +69,7 @@ aowl.AddCommand("ban=player|string,number[0],string[no reason]", function(ply, l
 	end)
 end, "developers")
 
-aowl.AddCommand("unban=string", function(ply, line, id)
+aowl.AddCommand("unban=string,string[no reason]", function(ply, line, id, reason)
 	local t = {"removeid", id}
 	game.ConsoleCommand(table.concat(t, " ") .. "\n")
 	game.ConsoleCommand("writeid\n")
