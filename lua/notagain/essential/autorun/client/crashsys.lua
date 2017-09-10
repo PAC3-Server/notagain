@@ -33,8 +33,7 @@ local cl_timeout = GetConVar("cl_timeout"):GetInt()
 if cl_timeout < 80 then
 	local str = string.format("CRASHSYS: Your cl_timeout value, '%s' has been changed to '80'! (See Console for more info.)", cl_timeout)
 	RunConsoleCommand("cl_timeout", "80")
-	LocalPlayer():ChatPrint(str)
-	print("CrashSys has detected that your cl_timeout value was too low. Make sure it's set to atleast 80 as servers may sometimes recover after 30 seconds!")
+	print(str, "\nCrashSys has detected that your cl_timeout value was too low. Make sure it's set to atleast 80 as servers may sometimes recover after 30 seconds!")
 end
 
 cvars.AddChangeCallback( "cl_timeout", function(_, _, timeout)
@@ -112,6 +111,16 @@ end
 hook.Add("ShutDown", "crashsys", function()
 	halt() -- Kill CrashSys, remove all active CrashSys hooks.
 end)
+
+gameevent.Listen('player_disconnect')
+hook.Add( "player_disconnect", "CrashSys", function( data )
+	local steamid = LocalPlayer():SteamID()
+	PrintTable(data)
+	print("WOAH WOAH WOAH!!!")
+	if data.networkid == steamid and data.reason ~= "Timed out!" then
+		halt()
+	end
+end )
 
 net.Receive("crashsys", function()
 	local shutdown = ( net.ReadBit() == 1 )
