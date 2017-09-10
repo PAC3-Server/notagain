@@ -237,4 +237,7 @@ end)
 
 if LocalPlayer():IsValid() then
 	chathud.Initialize()
+	if not enabled:GetBool() then
+		unhook()
+	end
 end
