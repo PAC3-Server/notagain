@@ -1,14 +1,16 @@
 if game.SinglePlayer() then return end
 
 local GRACE_TIME = 3.5 -- How many seconds of lag should we have before showing the panel?
+local PING_MISS = 2 -- How many pings can we miss on join?
+
+local CHAT_LINK = "https://discord.gg/utpR3gJ" -- The link to copy, when requesting a chat link. (Set to nil if you don't have one!)
+local CHAT_PLATFORM = "Discord" -- The platform you use for chat. (Set to nil if you're not sure!)
 
 local API_RESPONSE = 0 -- Idle, not waiting for a response.
 local api_retry = 5
 local api_retry_delay = 12
 
-local lastPong = 0
-local pong = 0
-
+local lastPong = false
 local crash_status
 local crash_time
 
@@ -84,16 +86,27 @@ hook.Add("Tick", "crashsys", function()
 	end
 end)
 
-hook.Add("ShutDown", "crashsys", function()
-	lastPong = RealTime() -- If we are retrying stop CrashSys.
+local function halt()
+	lastPong = false
 	hook.Remove("Tick", "crashsys")
+	hook.Remove("Move", "crashsys")
+	hook.Remove("VehicleMove", "crashsys")
+end
+
+hook.Add("ShutDown", "crashsys", function()
+	halt() -- Kill CrashSys, remove all active CrashSys hooks.
 end)
 
 net.Receive("crashsys", function()
-	if pong < 5 then -- Allow 5 pings before actually starting crash systems. (Avoid bugs on join stutter.)
-		pong = pong + 1
+	local shutdown = ( net.ReadBit() == 1 )
+	if shutdown then
+		halt()
 	else
-		lastPong = RealTime()
+		if PING_MISS < 1 then -- Allow some pings before actually starting crash systems. (Avoid bugs on join stutter.)
+			PING_MISS = PING_MISS - 1
+		else
+			lastPong = RealTime()
+		end
 	end
 end)
 
@@ -185,17 +198,24 @@ do -- gui
 		local buttons = {
 			{
 				text = "RECONNECT",
+				enable = true,
 				call = function() RunConsoleCommand( "retry" ) end
 			},
 			{
-				text = "Copy Discord Link",
+				text = CHAT_LINK and ( "Copy " .. ( CHAT_PLATFORM or "Chat" ) .. " Link" ) or "",
+				enable = ( CHAT_LINK ~= nil ),
 				call = function()
-					SetClipboardText("https://discord.gg/utpR3gJ")
-					logs:AddLine( "https://discord.gg/utpR3gJ copied to clipboard!" )
+					if CHAT_LINK then
+						SetClipboardText( CHAT_LINK )
+						logs:AddLine( CHAT_LINK .. " copied to clipboard!" )
+					else
+						logs:AddLine( "No link is specified :(" )
+					end
 				end
 			},
 			{
 				text = "DISCONNECT",
+				enable = true,
 				call = function() RunConsoleCommand( "disconnect" ) end
 			},
 		}
@@ -206,6 +226,7 @@ do -- gui
 			pnl:SetSize( DermaPanel:GetWide()/#buttons, 20 )
 			pnl.DoClick = v.call
 			pnl:Dock(RIGHT)
+			pnl:SetEnabled( v.enable )
 		end
 	end
 
@@ -297,7 +318,7 @@ do -- gui
 
 				if fraction >= 1 then
 					DermaPanel:Close()
-					delaycall(0.01, function()
+					delaycall(0.03, function()
 						RunConsoleCommand("retry")
 					end)
 				end
