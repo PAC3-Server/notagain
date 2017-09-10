@@ -28,6 +28,22 @@ local function delaycall(time, callback)
 	end)
 end
 
+local cl_timeout = GetConVar("cl_timeout"):GetInt()
+
+if cl_timeout < 80 then
+	local str = string.format("CRASHSYS: Your cl_timeout value, '%s' has been changed to '80'! (See Console for more info.)", cl_timeout)
+	RunConsoleCommand("cl_timeout", "80")
+	LocalPlayer():ChatPrint(str)
+	print("CrashSys has detected that your cl_timeout value was too low. Make sure it's set to atleast 80 as servers may sometimes recover after 30 seconds!")
+end
+
+cvars.AddChangeCallback( "cl_timeout", function(_, _, timeout)
+	cl_timeout = tonumber( timeout )
+	if cl_timeout <= 0 then
+		cl_timeout = 120
+	end
+end )
+
 local function CrashTick(is_crashing, length, api_response)
 	if is_crashing then
 		crash_status = true
@@ -171,7 +187,7 @@ do -- gui
 		logs:SetMultiSelect( false )
 		logs:Dock(FILL)
 
-		logs:AddLine( "YOU HAVE TIMED OUT! - Reconnecting in 2 minutes!" )
+		logs:AddLine( "YOU HAVE TIMED OUT! - Reconnecting in " .. cl_timeout .. " seconds!" )
 
 		logs.OldAddLine = logs.OldAddLine or logs.AddLine
 		function logs:AddLine(...)
@@ -283,7 +299,7 @@ do -- gui
 				local prog = DermaPanel.prog
 				local logs = DermaPanel.logs
 
-				local timeout = 120
+				local timeout = cl_timeout
 				local fraction = length/timeout
 				local per = math.floor(fraction*100)
 
