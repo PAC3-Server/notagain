@@ -1,6 +1,6 @@
 local env = requirex("goluwa").env
 
-local enabled = CreateClientConVar("goluwa_chathud_enabled", "1", true, false, "Disable chatsounds")
+local enabled = CreateClientConVar("goluwa_chathud_enabled", "1", true, false, "Disable Chathud")
 
 local hooks = {}
 local function hookAdd(event, id, callback)
@@ -224,7 +224,7 @@ hookAdd("ChatHudDraw", "chathud", function(panel)
 	if not chathud.panel:IsValid() then return end
 	-- can't draw here cause PushModelMatrix behaves strange when called in panels
 
-	chathud.panel:SetPos(panel:LocalToScreen(0, -chathud.markup.height + panel:GetTall()/2))
+	chathud.panel:SetPos(panel:LocalToScreen(0, -chathud.markup.height + panel:GetTall()/4))
 	chathud.panel:SetSize(panel:GetSize())
 
 	return false
