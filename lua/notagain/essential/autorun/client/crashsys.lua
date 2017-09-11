@@ -331,7 +331,7 @@ do -- gui
 					end
 				end
 
-				if fraction >= 1 then
+				if per >= 99 then
 					DermaPanel:Close()
 					delaycall(0.03, function()
 						RunConsoleCommand("retry")
