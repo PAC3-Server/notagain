@@ -19,7 +19,7 @@ aowl.AddCommand("daytime|tod=number[12]",function(ply,line,time)
         if time > 24 or time < 0 then 
             return false,"Invalid day time"
         end
-        time = time*60*60
+        time = time*60
         StormFox.SetTime(time)
     end
 end,"developers")
