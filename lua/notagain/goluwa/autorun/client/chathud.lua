@@ -235,9 +235,9 @@ hookAdd("ChatHudAddText", "chathud", function(...)
 	return false
 end)
 
-if LocalPlayer():IsValid() then
+hook.Add("Initialize","chathud",function()
 	chathud.Initialize()
-	if not enabled:GetBool() then
+	if enabled:GetInt() == 0 then
 		unhook()
 	end
-end
+end)
