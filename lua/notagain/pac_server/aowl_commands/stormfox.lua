@@ -23,3 +23,9 @@ aowl.AddCommand("daytime|tod=number[12]",function(ply,line,time)
         StormFox.SetTime(time)
     end
 end,"developers")
+
+aowl.AddCommand("temp|temperature=number[15]",function(ply,line,temp)
+    if StormFox then
+        StormFox.SetData("Temperature",temp)
+    end
+end,"developers")
