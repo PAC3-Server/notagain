@@ -308,8 +308,21 @@ if CLIENT then
 					local text_x_offset = 15
 					local y = pos.y-height/2
 					local x = pos.x - width2
+                    local health_color
+                    local mana_color
+                    local stamina_color
+                    
+                    if jattributes then
+                        health_color  = jattributes.Colors.Health
+                        mana_color    = jattributes.Colors.Mana
+                        stamina_color = jattributes.Colors.Stamina
+                    else
+                        health_color  = Color(0,200,100)
+                        mana_color    = Color(0,0,255)
+                        stamina_color = Color(255,255,0)
+                    end
 
-					draw_health_bar(ent, x, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, -12, 0, 200, 100, true)
+					draw_health_bar(ent, x, pos.y-height/2, width, height, math.Clamp(cur / max, 0, 1), math.Clamp(last / max, 0, 1), fade, border_size, -12,health_color.r,health_color.g,health_color.b, true)
 
 					y = y + math.ceil(height + border_size / 2)
 
@@ -322,7 +335,7 @@ if CLIENT then
 							local max = ent:GetNWFloat("jattributes_max_mana", 100)
 							local width = math.Clamp(max*3, 0, 500)
 
-							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12, 0, 0, 255)
+							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12,mana_color.r,mana_color.g,mana_color.b,false)
 							y = y + height-border_size
 						end
 					end
@@ -334,7 +347,7 @@ if CLIENT then
 							local max = ent:GetNWFloat("jattributes_max_stamina", 100)
 							local width = math.Clamp(max*3, 0, 500)
 
-							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12, 255, 255, 0)
+							draw_health_bar(ent, x, y, width, height/2, math.Clamp(cur / max, 0, 1), 1, fade, border_size, -12,stamina_color.r,stamina_color.g,stamina_color.b,false)
 						end
 					end
 
