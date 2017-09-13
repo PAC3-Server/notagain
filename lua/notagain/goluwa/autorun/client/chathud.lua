@@ -153,6 +153,10 @@ function chathud.Initialize()
 			chathud.emote_shortcuts[v:gsub("(%.png)$","")] = "<texture=materials/icon16/" .. v .. ",16>"
 		end
 	end
+	
+	if enabled:GetInt() == 0 then
+		unhook()
+	end
 end
 
 function chathud.AddText(...)
@@ -237,7 +241,4 @@ end)
 
 hook.Add("Initialize","chathud",function()
 	chathud.Initialize()
-	if enabled:GetInt() == 0 then
-		unhook()
-	end
 end)
