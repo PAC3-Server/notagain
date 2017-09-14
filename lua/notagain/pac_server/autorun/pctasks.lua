@@ -244,15 +244,13 @@ if CLIENT then
         end)
     end
 
-    if not PCTasks.IsCompleted(LocalPlayer(),"Apple time") or not PCTasks.IsCompleted(LocalPlayer(),"Hipster") then
-        hook.Add("Initialize","pc_task_os",function()
-            if system_IsLinux() then
-                net.Start(tasklinux)
-                net.SendToServer()
-            elseif system_IsOSX() then
-                net.Start(taskosx)
-                net.SendToServer()
-            end
-        end)
-    end
+    hook.Add("InitPostEntity","pc_task_os",function()
+        if system_IsLinux() then
+            net.Start(tasklinux)
+            net.SendToServer()
+        elseif system_IsOSX() then
+            net.Start(taskosx)
+            net.SendToServer()
+        end
+    end)
 end
