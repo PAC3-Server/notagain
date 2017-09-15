@@ -22,7 +22,7 @@ timer.Create("auto_restart", 2, 0, function()
 
 		if afk then
 			if not players[1] then
-				file.Write("server_last_restart", tostring(os.time()))
+				file.Write("server_last_restart.txt", tostring(os.time()))
 				game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				return
 			end
@@ -30,7 +30,7 @@ timer.Create("auto_restart", 2, 0, function()
 			if not restarting then
 				restarting = true
 				aowl.CountDown(15, "RESTARTING SERVER BECAUSE EVERYONE IS AFK", function()
-					file.Write("server_last_restart", tostring(os.time()))
+					file.Write("server_last_restart.txt", tostring(os.time()))
 					game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				end)
 			end
