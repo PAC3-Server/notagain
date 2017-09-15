@@ -22,6 +22,7 @@ timer.Create("auto_restart", 2, 0, function()
 
 		if afk then
 			if not players[1] then
+				file.Write("server_last_restart", tostring(os.time()))
 				game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				return
 			end
