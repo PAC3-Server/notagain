@@ -2,11 +2,11 @@ local restarting = false
 local try_restart = false
 
 timer.Create("auto_restart", 2, 0, function()
-	local want_restart = os.time() - tonumber(file.Read("server_last_restart", "DATA") or 0) > (3*60*60)
+	local want_restart = os.time() - tonumber(file.Read("server_last_restart.txt", "DATA") or 0) > (3*60*60)
 
-	if file.Exists("server_want_restart", "DATA") then
+	if file.Exists("server_want_restart.txt", "DATA") then
 		try_restart = true
-		file.Delete("server_want_restart")
+		file.Delete("server_want_restart.txt")
 	end
 
 	if want_restart or try_restart then
