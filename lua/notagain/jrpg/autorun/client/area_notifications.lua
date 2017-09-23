@@ -1,10 +1,4 @@
-surface.CreateFont("area_font",{
-	font = "Square721 BT",
-	size = 25,
-	additive = false,
-	weight = 700,
-	antialias = true,
-})
+local prettytext = requirex("pretty_text")
 
 local cur_area = "Overworld"
 local cur_panel
@@ -12,34 +6,34 @@ local text_color = Color(200,200,200,255)
 local y_pos = 50
 local CreatePanel = function(area)
     local panel = vgui.Create("DPanel")
-    panel:SetSize(300,50)
+    panel:SetSize(200,55)
     panel:SetPos(ScrW(),y_pos)
     panel.Paint = function(self,w,h)
-		draw.NoTexture()
-        surface.SetDrawColor(30,30,30,255)
-        surface.DrawPoly({
-            { x = w*0.2, y = 0 },
-            { x = w, y = 0 },
-            { x = w*0.8, y = h },
-            { x = 0, y = h },
-        })
-        surface.SetDrawColor(text_color)
-        surface.DrawLine(w*0.2,0,w,0)
-        surface.DrawLine(w,0,w*0.8,h)
-        surface.DrawLine(w*0.8,h-1,0,h-1)
-        surface.DrawLine(0,h,w*0.2,0)
-        surface.SetFont("area_font")
-        local x,y = surface.GetTextSize(area)
-        surface.SetTextColor(text_color)
-        surface.SetTextPos(w/2-x/2,h/2-y/2)
-        surface.DrawText(area)
+		surface.DisableClipping(true)
+		jhud.DrawBar(h/2,0,w,h,1,1,5, 0, 0, 0)
+		local w, h = prettytext.DrawText({
+			text = area,
+			font = "Square721 BT",
+			weight = 1000,
+			size = 30,
+			x = w/2,
+			y = h/2,
+			blur_size = 8,
+			blur_overdraw = 4,
+			x_align = -0.5,
+			y_align = -0.5,
+			background_color = Color(50, 100, 150)
+		})
+		self:SetWide(w+50)
+		surface.DisableClipping(false)
     end
+	panel:Paint(panel:GetSize()) -- lol
     return panel
 end
 
 local Handle = function(ent,area)
     local area = area or "Overworld"
-    if ent == LocalPlayer() then
+    if ent == LocalPlayer() and ent:GetNWBool("rpg", false) then
         timer.Simple(0.5,function()
             if cur_area ~= area and LocalPlayer():IsInArea(area) or (area == "Overworld" and table.Count(LocalPlayer():GetCurrentAreas()) == 0) then
                 cur_area = area
@@ -58,7 +52,5 @@ local Handle = function(ent,area)
     end
 end
 
-hook.Add("InitPostEntity","MapDefineNotification",function()
-    hook.Add("MD_OnAreaEntered","MapDefineNotification",Handle)
-    hook.Add("MD_OnOverWorldEntered","MapDefineNotification",Handle)
-end)
+hook.Add("MD_OnAreaEntered","MapDefineNotification",Handle)
+hook.Add("MD_OnOverWorldEntered","MapDefineNotification",Handle)
