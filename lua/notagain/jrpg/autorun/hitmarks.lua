@@ -113,7 +113,7 @@ if CLIENT then
 		surface.SetMaterial(border)
 
 		for _ = 1, 2 do
-			draw_rect(x,y,w,h, skew, 3, 64,4, border:GetTexture("$BaseTexture"):Width(), true)
+			draw_rect(x,y,w,h, skew, 3, 64,3, border:GetTexture("$BaseTexture"):Width(), true)
 		end
 	end
 
@@ -121,7 +121,7 @@ if CLIENT then
 		{
 			min = 0,
 			max = 0.25,
-			font = "Square721 BT",
+			font = "korataki",
 			blur_size = 8,
 			weight = 50,
 			size = 40,
@@ -130,7 +130,7 @@ if CLIENT then
 		{
 			min = 0.25,
 			max = 0.5,
-			font = "Square721 BT",
+			font = "korataki",
 			blur_size = 8,
 			weight = 50,
 			size = 90,
@@ -139,7 +139,7 @@ if CLIENT then
 		{
 			min = 0.5,
 			max = 1,
-			font = "Square721 BT",
+			font = "korataki",
 			blur_size = 8,
 			weight = 50,
 			size = 140,
@@ -148,7 +148,7 @@ if CLIENT then
 		{
 			min = 1,
 			max = math.huge,
-			font = "Square721 BT",
+			font = "korataki",
 			blur_size = 8,
 			weight = 120,
 			size = 190,
@@ -311,7 +311,7 @@ if CLIENT then
                     local health_color
                     local mana_color
                     local stamina_color
-                    
+
                     if jattributes then
                         health_color  = jattributes.Colors.Health
                         mana_color    = jattributes.Colors.Mana
@@ -351,10 +351,10 @@ if CLIENT then
 						end
 					end
 
-					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "Square721 BT", 20, 800, 3, Color(230, 230, 230, 255 * fade), (ent:IsPlayer() and team.GetColor(ent:Team()) or nil), 0, -1)
+					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "korataki", 20, 800, 3, Color(230, 230, 230, 255 * fade), (ent:IsPlayer() and team.GetColor(ent:Team()) or nil), 0, -1)
 
 					if ent:GetNWBool("rpg") then
-						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "Square721 BT", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, -1, -1)
+						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "korataki", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, -1, -1)
 					end
 				end
 
@@ -382,7 +382,7 @@ if CLIENT then
 				if data.time > time then
 					local fade = math.min(((data.time - time) / data.length) + 0.75, 1)
 					fade = fade * vis
-					local w, h = prettytext.GetTextSize(data.name, "Square721 BT", 20, 800, 2)
+					local w, h = prettytext.GetTextSize(data.name, "Square721 BT", 25, 1000, 2)
 
 					local x, y = pos.x, pos.y
 					x = x - w / 2
@@ -399,13 +399,13 @@ if CLIENT then
 						bg = Color(200, 50, 25, 255)
 					end
 
-					local border = 13
-					local scale_h = 0.5
+					local border = 20
+					local scale_h = 0.25
 
 					local border = border
 					draw_weapon_info(x - border, y - border*scale_h, w + border*2, h + border*2*scale_h, bg, fade)
 
-					prettytext.Draw(data.name, x, y, "Square721 BT", 20, 600, 3, fg)
+					prettytext.Draw(data.name, x, y, "Square721 BT", 25, 1000, 3, fg, bg)
 				else
 					table.remove(weapon_info, i)
 				end

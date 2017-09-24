@@ -5,50 +5,11 @@ end
 local blur_size = 4
 blur_overdraw = 2
 
---micro opti?
-local Surface = _G.surface
-
 local prettytext = requirex("pretty_text")
 
-Surface.CreateFont("scoreboard_title_b",{
-	font = "Square721 BT",
-	size = 30,
-	outline = true,
-	additive = false,
-	weight = 700,
-	antialias = true,
-})
-
-Surface.CreateFont("scoreboard_title_m",{
-	font = "Square721 BT",
-	size = 20,
-	outline = true,
-	additive = false,
-	weight = 700,
-	antialias = true,
-})
-
-Surface.CreateFont("scoreboard_desc",{
-	font = "Square721 BT",
-	size = 15,
-	outline = true,
-	additive = false,
-	weight = 700,
-	antialias = true,
-})
-
-Surface.CreateFont("scoreboard_line",{
+surface.CreateFont("scoreboard_line",{
 	font = "Square721 BT",
 	size = 18,
-	additive = false,
-	weight = 700,
-	--outline = true,
-	antialias = true,
-})
-
-Surface.CreateFont("scoreboard_achiev",{
-	font = "Square721 BT",
-	size = 15,
 	additive = false,
 	weight = 700,
 	--outline = true,
@@ -60,10 +21,10 @@ local screen_height = _G.ScrH()
 local selected_player = LocalPlayer()
 local ply_lines = {}
 
-local gr_dw_id = Surface.GetTextureID("gui/gradient_down")
-local gr_up_id = Surface.GetTextureID("gui/gradient_up")
-local gr_id = Surface.GetTextureID("gui/gradient")
-local gr_ct_id = Surface.GetTextureID("gui/center_gradient")
+local gr_dw_id = surface.GetTextureID("gui/gradient_down")
+local gr_up_id = surface.GetTextureID("gui/gradient_up")
+local gr_id = surface.GetTextureID("gui/gradient")
+local gr_ct_id = surface.GetTextureID("gui/center_gradient")
 --models/props_combine/portalball001_sheet maybe for selected line?
 
 local metal = CreateMaterial(tostring({}), "UnlitGeneric", {
@@ -86,7 +47,7 @@ local colorstring = function(str,x,y)
 	local parts = string.Explode(pattern,str,true)
 	local index = 1
 	for tag,values in string.gmatch(str,pattern) do
-		Surface.DrawText(string.upper(parts[index]))
+		surface.DrawText(string.upper(parts[index]))
 		index = index + 1
 		if tag == "color" then
 			local r,g,b
@@ -97,7 +58,7 @@ local colorstring = function(str,x,y)
 				return ""
 			end)
 			if r and g and b then
-				Surface.SetTextColor(r,g,b,255)
+				surface.SetTextColor(r,g,b,255)
 			end
 		end
 	end
@@ -137,12 +98,12 @@ local function cinputs(command,mode)
 	main:ShowCloseButton(true)
 	main:MakePopup()
 	main.Paint = function(self,w,h)
-		Surface.SetMaterial(metal)
-		Surface.SetDrawColor(75,75,75,255)
-		Surface.DrawTexturedRect(0,0,w,h)
-		Surface.SetDrawColor(0,0,0)
-		Surface.DrawOutlinedRect(0,0,w,h)
-		Surface.DrawRect(0,0,w,25)
+		surface.SetMaterial(metal)
+		surface.SetDrawColor(75,75,75,255)
+		surface.DrawTexturedRect(0,0,w,h)
+		surface.SetDrawColor(0,0,0)
+		surface.DrawOutlinedRect(0,0,w,h)
+		surface.DrawRect(0,0,w,25)
 	end
 
     local textentry = vgui.Create("DTextEntry",main)
@@ -231,9 +192,9 @@ local player_line = {
 				if pac then
 					local SubPac,Image = self.Menu:AddSubMenu("PAC3")
 					Image.PaintOver = function(self,w,h) -- little bit hacky but cant resize images with setimage
-						Surface.SetMaterial(pacicon)
-						Surface.SetDrawColor(255,255,255,255)
-						Surface.DrawTexturedRect(2,1,20,20)
+						surface.SetMaterial(pacicon)
+						surface.SetDrawColor(255,255,255,255)
+						surface.DrawTexturedRect(2,1,20,20)
 					end
 
 					SubPac:AddOption(parent.Player.pac_ignored and "Unignore" or "Ignore",function() if parent.Player.pac_ignored then pac.UnIgnoreEntity(parent.Player) else pac.IgnoreEntity(parent.Player) end end):SetImage(parent.Player.pac_ignored and "icon16/accept.png" or "icon16/cancel.png")
@@ -264,20 +225,20 @@ local player_line = {
 			surface.SetDrawColor(50,50,50,255)
 			surface.DrawRect(0,0, w,h)
 
-			Surface.SetTexture(gr_up_id)
-			Surface.SetDrawColor(0,0,0,255)
-			Surface.DrawTexturedRect(0,0,w,h)
+			surface.SetTexture(gr_up_id)
+			surface.SetDrawColor(0,0,0,255)
+			surface.DrawTexturedRect(0,0,w,h)
 			if self:IsHovered() then
-				Surface.SetDrawColor(127,255,127)
+				surface.SetDrawColor(127,255,127)
 			elseif not parent.Player:Alive() then
-				Surface.SetDrawColor(255,127,127)
+				surface.SetDrawColor(255,127,127)
 			else
-				Surface.SetDrawColor(parent.Color)
+				surface.SetDrawColor(parent.Color)
 			end
-			Surface.DrawLine(0,0,w,0)
+			surface.DrawLine(0,0,w,0)
 			--Surface.DrawOutlinedRect(0,0,w,h)
 			--draw.NoTexture()
-			Surface.DrawPoly({
+			surface.DrawPoly({
 				{ x = 0,      y = 0 },
 				{ x = w*2/3,  y = 0 },
 				{ x = w*1.9/3,y = h },
@@ -330,10 +291,10 @@ local player_line = {
 			})
 
 			if parent.Selected then
-				Surface.SetTextPos(2,-5)
-				Surface.SetFont("DermaLarge")
-				Surface.SetTextColor(255,255,255)
-				Surface.DrawText("⮞")
+				surface.SetTextPos(2,-5)
+				surface.SetFont("DermaLarge")
+				surface.SetTextColor(255,255,255)
+				surface.DrawText("⮞")
 			end
 		end
 	end,
@@ -371,10 +332,10 @@ local scoreboard = {
 		title:SetTall(50)
 		title:DockMargin(100,0,100,10)
 		title.Paint = function(self,w,h)
-			Surface.SetDrawColor(0,0,0,0)
-			Surface.DrawRect(0,0,w,h)
-			Surface.SetDrawColor(text_color)
-			Surface.DrawLine(0,h-5,w,h-5)
+			surface.SetDrawColor(0,0,0,0)
+			surface.DrawRect(0,0,w,h)
+			surface.SetDrawColor(text_color)
+			surface.DrawLine(0,h-5,w,h-5)
 
 			prettytext.DrawText({
 				text = string.gsub(GetHostName(),"Official%sPAC3%sServer%s%-%s",""),
@@ -398,8 +359,8 @@ local scoreboard = {
 		dplayers:SetPos(20,60)
 		dplayers:SetSize(ply_scale,20)
 		dplayers.Paint = function(self,w,h)
-			Surface.SetDrawColor(text_color)
-			Surface.DrawLine(0,19,w*2/scale_coef,19)
+			surface.SetDrawColor(text_color)
+			surface.DrawLine(0,19,w*2/scale_coef,19)
 
 			prettytext.DrawText({
 				text = "Players - "..player.GetCount(),
@@ -439,112 +400,59 @@ local scoreboard = {
 			surface.SetDrawColor(50,50,50,255)
 			surface.DrawRect(0,0, w,20)
 
-			Surface.SetTexture(gr_dw_id)
-			Surface.SetDrawColor(0,0,0,255)
-			Surface.DrawTexturedRect(0,0,w,20)
-			Surface.SetDrawColor(100,100,100,255)
-			Surface.DrawOutlinedRect(0,0,w,20)
+			surface.SetTexture(gr_dw_id)
+			surface.SetDrawColor(0,0,0,255)
+			surface.DrawTexturedRect(0,0,w,20)
+			surface.SetDrawColor(100,100,100,255)
+			surface.DrawOutlinedRect(0,0,w,20)
+		end
+
+		local function sort_rows(val)
+			return function(self)
+				local tbl = {}
+				for k, v in pairs(ply_lines) do
+					tbl[#tbl + 1] = {k = k, v = val(v)}
+				end
+				if not self.counter then
+					table.sort(tbl, function(a, b)
+						return a.v < b.v
+					end)
+				else
+					table.sort(tbl, function(a, b)
+						return a.v > b.v
+					end)
+				end
+				for k, v in pairs(tbl) do
+					local ply = ply_lines[v.k].Player
+					ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
+				end
+				self.counter = not self.counter
+			end
 		end
 
 		local namesort = playersort:Add("DButton")
 		namesort:SetPos(ply_scale/scale_coef,2)
 		namesort:SetSize(40,20)
 		namesort.Paint = sort_paint("Name")
-		namesort.DoClick = function(self)
-			local tbl = {}
-			for k, v in pairs(ply_lines) do
-				tbl[#tbl + 1] = {k = k, v = v.Player:Nick():gsub("(<color=[%d,]+>)", "")}
-			end
-			if not self.counter then
-				table.sort(tbl, function(a, b)
-					return a.v < b.v
-				end)
-			else
-				table.sort(tbl, function(a, b)
-					return a.v > b.v
-				end)
-			end
-			for k, v in pairs(tbl) do
-				local ply = ply_lines[v.k].Player
-				ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
-			end
-			self.counter = not self.counter
-		end
+		namesort.DoClick = sort_rows(function(v) return v.Player:Nick():gsub("(<color=[%d,]+>)", "") end)
 
 		local lvlsort = playersort:Add("DButton")
 		lvlsort:SetPos(ply_scale*3/scale_coef - 6,2)
 		lvlsort:SetSize(40,20)
 		lvlsort.Paint = sort_paint("LVL")
-		lvlsort.DoClick = function(self)
-			local tbl = {}
-			for k, v in pairs(ply_lines) do
-				tbl[#tbl + 1] = {k = k, v = jlevel.GetStats(v.Player).level}
-			end
-			if self.counter then
-				table.sort(tbl, function(a, b)
-					return a.v < b.v
-				end)
-			else
-				table.sort(tbl, function(a, b)
-					return a.v > b.v
-				end)
-			end
-			for k, v in pairs(tbl) do
-				local ply = ply_lines[v.k].Player
-				ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
-			end
-			self.counter = not self.counter
-		end
+		lvlsort.DoClick = sort_rows(function(v) return jlevel.GetStats(v.Player).level end)
 
 		local timesort = playersort:Add("DButton")
 		timesort:SetPos(ply_scale-ply_scale*2/scale_coef - 12,2)
 		timesort:SetSize(80,20)
 		timesort.Paint = sort_paint("Playtime")
-		timesort.DoClick = function(self)
-			local tbl = {}
-			for k, v in pairs(ply_lines) do
-				tbl[#tbl + 1] = {k = k, v = v.Player:GetTotalTime()}
-			end
-			if self.counter then
-				table.sort(tbl, function(a, b)
-					return a.v < b.v
-				end)
-			else
-				table.sort(tbl, function(a, b)
-					return a.v > b.v
-				end)
-			end
-			for k, v in pairs(tbl) do
-				local ply = ply_lines[v.k].Player
-				ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
-			end
-			self.counter = not self.counter
-		end
+		timesort.DoClick = sort_rows(function(v) return v.Player:GetTotalTime() end)
 
 		local pingsort = playersort:Add("DButton")
 		pingsort:SetPos(ply_scale-ply_scale/scale_coef - 12,2)
 		pingsort:SetSize(40,20)
 		pingsort.Paint = sort_paint("Ping")
-		pingsort.DoClick = function(self)
-			local tbl = {}
-			for k, v in pairs(ply_lines) do
-				tbl[#tbl + 1] = {k = k, v = v.Player:Ping()}
-			end
-			if self.counter then
-				table.sort(tbl, function(a, b)
-					return a.v < b.v
-				end)
-			else
-				table.sort(tbl, function(a, b)
-					return a.v > b.v
-				end)
-			end
-			for k, v in pairs(tbl) do
-				local ply = ply_lines[v.k].Player
-				ply_lines[v.k]:SetZPos(k - (game.MaxPlayers() * (ply:Team() - 1)))
-			end
-			self.counter = not self.counter
-		end
+		pingsort.DoClick = sort_rows(function(v) return v.Player:Ping() end)
 
 		local players = self:Add("DScrollPanel")
 		players:SetPos(20,110)
@@ -592,9 +500,6 @@ do
 			self:SetZPos(-999)
 		end,
 		Paint = function(self,w,h)
-			local ply = LocalPlayer()
-			if ply.IsRPG and not ply:IsRPG() then return end
-
 			surface.SetDrawColor(0,0,0,255)
 			surface.DrawRect(0,0,w,h)
 			surface.SetTexture(gr_dw_id)
@@ -603,6 +508,7 @@ do
 			surface.SetDrawColor(130,130,130,255)
 			surface.DrawLine(0,0,w,0)
 
+			local ply = LocalPlayer()
 
 			--playtime
 			local formattedtime = ply.GetNiceTotalTime and ply:GetNiceTotalTime() or {h = 0,m = 0,s = 0}
@@ -704,6 +610,10 @@ hook.Add("ScoreboardShow","rpg_scoreboard",function()
 		_G.SCOREBOARD:Show()
 		if cv_scoreboard_mouse:GetBool() then
 			gui.EnableScreenClicker(true)
+		end
+
+		if _G.STATUS and _G.STATUS:IsValid() then
+			_G.STATUS:Remove()
 		end
 
 		_G.STATUS = vgui.Create("scoreboard_status_panel")
