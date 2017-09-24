@@ -172,7 +172,7 @@ jattributes.types = {
 		reset = function(ent, stats)
 			if ent:IsPlayer() then
 				if not ent.jattributes_base_jump_power then return end
-				ent:SetMaxHealth(ent.jattributes_base_jump_power)
+				ent:SetJumpPower(ent.jattributes_base_jump_power)
 				ent.jattributes_base_jump_power = nil
 			end
 		end,
@@ -345,7 +345,7 @@ if SERVER then
 		function jattributes.SetMana(ent, num)
 			ent:SetNWFloat("jattributes_mana", num)
 		end
-		
+
 		PLAYER.SetMaxMana = jattributes.SetMaxMana
 		PLAYER.SetMana = jattributes.SetMana
 
@@ -376,7 +376,7 @@ if SERVER then
 			end
 			ent:SetNWFloat("jattributes_stamina", num)
 		end
-		
+
 		PLAYER.SetMaxStamina = jattributes.SetMaxStamina
 		PLAYER.SetStamina = jattributes.SetStamina
 
