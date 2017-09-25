@@ -231,6 +231,20 @@ do -- view
 		return ply:NearestPoint(ply:EyePos() + Vector(0,0,100)), ply:EyeAngles()
 	end
 
+	local function get_center()
+		local middle = vector_origin
+		local players = jchat.GetPlayers()
+
+		for ply in pairs(jchat.GetPlayers()) do
+			middle = middle + jchat.GetEyePos(ply)
+		end
+
+		if middle ~= vector_origin then
+			middle = middle / table.Count(players)
+		end
+		return middle
+	end
+
 	function jchat.ChooseRandomCameraPos(ply)
 		local prev = jchat.GetActivePlayer()
 
@@ -241,6 +255,10 @@ do -- view
 				jchat.local_camera_pos = Vector(jchat.RandomSeed(-1,1)*0.2, jchat.RandomSeed(-1,1)*0.2, jchat.RandomSeed(-1,0.5)*0.5)
 				jchat.angle_offset = Angle(jchat.RandomSeed(-1,1)*2, jchat.RandomSeed(-1,1)*8, jchat.RandomSeed(-1,1))
 				jchat.fov_target = jchat.RandomSeed(20, 50)
+
+				if table.Count(jchat.GetPlayers()) > 1 then
+					jchat.local_camera_pos = jchat.local_camera_pos + (ply:EyePos() - get_center()):Angle():Right() * ((jchat.RandomSeed(-1, 1) > 0 and 1 or -1) * jchat.RandomSeed(0.5, 1))
+				end
 
 				jchat.new_angle = true
 				jchat.panning_dir = Angle(0,0,0)
@@ -261,17 +279,7 @@ do -- view
 	end
 
 	function jchat.GetWorldCameraPos()
-		local middle = vector_origin
-		local players = jchat.GetPlayers()
-
-		for ply in pairs(jchat.GetPlayers()) do
-			middle = middle + jchat.GetEyePos(ply)
-		end
-
-		if middle ~= vector_origin then
-			middle = middle / table.Count(players)
-		end
-
+		local middle = get_center()
 		local ply = jchat.GetActivePlayer()
 
 		return LerpVector(0.2, jchat.GetEyePos(ply) + (jchat.GetLocalCameraPos() * (jchat.cam_distance * 0.5)), middle)
@@ -398,7 +406,7 @@ do -- view
 
 		do
 			local y = y
-			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 3, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 31)
+			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 4, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 31)
 
 			surface.SetDrawColor(0, 0, 0, 255)
 			surface.DrawRect(0 - 3, y - 3 + 5, w + x + 10 + 6, 3 + 6)
@@ -409,7 +417,7 @@ do -- view
 
 		local y = y
 		for _, str in ipairs(jchat.wrapped_message) do
-			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 3, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 31)
+			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 4, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 31)
 			y = y + font_size
 		end
 	end
@@ -455,10 +463,12 @@ do
 
 	hook.Add("FinishChat", "jchat", function()
 		if not jchat.IsActive() then return end
-
 		if not self_chat then return end
+
 		jchat.Stop()
 		jchat.show_chat = nil
+
+		self_chat = false
 	end)
 end
 
