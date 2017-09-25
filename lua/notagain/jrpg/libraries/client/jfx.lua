@@ -33,9 +33,10 @@ function jfx.CreateMaterial(data)
 			hook.Add("Think", v, function()
 				local m,w,h = urlimage.GetURLImage(v)
 				if m == nil then
-					print(m,w,h)
 					hook.Remove("Think", v)
 				elseif m then
+					mat:SetInt("$glowx", w)
+					mat:SetInt("$glowy", h)
 					mat:SetTexture("$" .. k, m:GetTexture("$BaseTexture"))
 					hook.Remove("Think", v)
 				end
