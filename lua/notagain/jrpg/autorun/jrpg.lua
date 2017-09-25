@@ -42,12 +42,12 @@ if SERVER then
 
 		return a:IsFriend(b)
 	end
-	
+
 	local function loadout(ply)
 		ply:Give("weapon_shield_scanner")
 		ply:Give("magic")
 	end
-	
+
 	function jrpg.SetRPG(ply, b, cheat)
 		ply:SetNWBool("rpg", b)
 		if b then
@@ -94,7 +94,7 @@ function jrpg.FindHeadPos(ent)
 		if m then
 			local pos = m:GetTranslation()
 			if pos ~= ent:GetPos() then
-				return pos
+				return pos, m:GetAngles()
 			end
 		end
 	end
