@@ -155,7 +155,7 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 
 	surface.SetDrawColor(r,g,b,255)
 	surface.SetMaterial(gradient)
-	draw_rect(x,y,w * (cur/max),h, skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
+	draw_rect(x,y,w * math.min(cur/max, 1),h, skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
 
 	surface.SetMaterial(border)
 	surface.SetDrawColor(255,255,255,255)
