@@ -215,7 +215,7 @@ hook.Add("HUDPaint", "jhud", function()
 	local width = 100000
 	local height = 100
 
-	local x = 100
+	local x = 110
 	local y = ScrH() - 140
 
 	do
@@ -242,7 +242,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 		surface.SetMaterial(background_wing)
 		surface.SetDrawColor(255,255,255,255)
-		surface.DrawTexturedRect(x-160,y-130,background_wing:Width()*0.8,background_wing:Height()*0.8)
+		surface.DrawTexturedRect(x-130,y-150,background_wing:GetInt("$realwidth"),background_wing:GetInt("$realheight"))
 
 
 		if true then
@@ -392,7 +392,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 	surface.SetMaterial(foreground_line)
 	surface.SetDrawColor(255,255,255,255)
-	surface.DrawTexturedRect(x-70,y+68,foreground_line:Width()*0.25,foreground_line:Height()*0.3)
+	surface.DrawTexturedRect(x-90,y+65,foreground_line:GetInt("$realwidth"),foreground_line:GetInt("$realheight"))
 
 	local i = 0
 

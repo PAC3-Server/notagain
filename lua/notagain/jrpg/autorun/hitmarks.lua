@@ -124,7 +124,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 40,
+			size = 30,
 			color = Color(0, 0, 0, 255),
 		},
 		{
@@ -133,7 +133,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 90,
+			size = 40,
 			color = Color(150, 150, 50, 255),
 		},
 		{
@@ -142,7 +142,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 140,
+			size = 50,
 			color = Color(200, 50, 50, 255),
 		},
 		{
@@ -151,7 +151,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 120,
-			size = 190,
+			size = 60,
 			--color = Color(200, 50, 50, 255),
 		},
 	}
@@ -178,7 +178,7 @@ if CLIENT then
 	local line_mat = Material("particle/Particle_Glow_04")
 
 	local line_width = 12
-	local line_height = -20
+	local line_height = -10
 	local max_bounce = 2
 	local bounce_plane_height = 0
 
@@ -351,10 +351,10 @@ if CLIENT then
 						end
 					end
 
-					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "korataki", 20, 800, 3, Color(230, 230, 230, 255 * fade), (ent:IsPlayer() and team.GetColor(ent:Team()) or nil), 0, -1)
+					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "Square721 BT", 24, 1, 5, Color(230, 230, 230, 255 * fade), (ent:IsPlayer() and team.GetColor(ent:Team()) or nil), 0, -1)
 
 					if ent:GetNWBool("rpg") then
-						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "korataki", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, -1, -1)
+						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "Square721 BT", 20, 1000, 5, Color(230, 230, 230, 255 * fade), nil, -1, -1)
 					end
 				end
 
@@ -502,7 +502,7 @@ if CLIENT then
 
 
 					local w, h = prettytext.GetTextSize(txt, font_info.font, font_info.size, font_info.weight, font_info.blur_size)
-					local hoffset = data.height_offset * -h * 0.5
+					local hoffset = data.height_offset * -h
 
 					if data.xp then
 						surface.SetDrawColor(100, 0, 255, 255)
