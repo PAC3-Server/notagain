@@ -1,56 +1,53 @@
 local prettytext = requirex("pretty_text")
 
-local cur_area = "Overworld"
-local cur_panel
-local text_color = Color(200,200,200,255)
-local y_pos = 50
-local CreatePanel = function(area)
-    local panel = vgui.Create("DPanel")
-    panel:SetSize(200,55)
-    panel:SetPos(ScrW(),y_pos)
-    panel.Paint = function(self,w,h)
-		surface.DisableClipping(true)
-		jhud.DrawBar(h/2,0,w,h,1,1,5, 0, 0, 0)
+local function show_name(area_name)
+	local duration = 5
+	local time = RealTime() + duration
+	hook.Remove("HUDPaint", "")
+	hook.Add("HUDPaint", "newarea", function()
+		local f = (time - RealTime()) / duration
+		local x, y = ScrW()/2, ScrH()/2
+
+		local brightness = 230
+		local alpha = math.max((f^0.15)*255, 1)
 		local w, h = prettytext.DrawText({
-			text = area,
+			text = area_name,
 			font = "Square721 BT",
-			weight = 1000,
-			size = 30,
-			x = w/2,
-			y = h/2,
-			blur_size = 8,
+			weight = 0,
+			size = 130,
+			x = x,
+			y = y,
+			blur_size = 15,
 			blur_overdraw = 4,
 			x_align = -0.5,
 			y_align = -0.5,
-			background_color = Color(50, 100, 150)
+			foreground_color = Color(brightness, brightness, brightness, alpha)
 		})
-		self:SetWide(w+50)
-		surface.DisableClipping(false)
-    end
-	panel:Paint(panel:GetSize()) -- lol
-    return panel
+
+		local border = 6
+		local height = 3
+		surface.SetDrawColor(0, 0, 0, alpha)
+		surface.DrawRect(x - w - border/2, y + h/2.75 - border/2, w*2 + border, height+border)
+
+		surface.SetDrawColor(170, 170, 170, alpha)
+		surface.DrawRect(x - w, y + h/2.75, w*2, height)
+
+		if f <= 0 then
+			hook.Remove("HUDPaint", "newarea")
+		end
+
+	end)
 end
 
-local Handle = function(ent,area)
-    local area = area or "Overworld"
-    if ent == LocalPlayer() and ent:GetNWBool("rpg", false) then
-        timer.Simple(0.5,function()
-            if cur_area ~= area and LocalPlayer():IsInArea(area) or (area == "Overworld" and table.Count(LocalPlayer():GetCurrentAreas()) == 0) then
-                cur_area = area
-                if IsValid(cur_panel) then
-                    cur_panel:MoveTo(-cur_panel:GetWide(),y_pos,0.35,0,7,function(_,pa) pa:Remove() end)
-                end
-                local panel = CreatePanel(area)
-                cur_panel = panel
-                panel:MoveTo(ScrW()/2-panel:GetWide()/2,y_pos,0.35,0,7)
-                timer.Simple(3,function()
-                    if not IsValid(panel) then return end
-                    panel:MoveTo(-panel:GetWide(),y_pos,0.35,0,7,function(_,pa) pa:Remove() end)
-                end)
-            end
-        end)
-    end
+local function handle(ent, area_name)
+	if ent == LocalPlayer() and ent:GetNWBool("rpg") then
+		show_name(area_name or "OverWorld")
+	end
 end
 
-hook.Add("MD_OnAreaEntered","MapDefineNotification",Handle)
-hook.Add("MD_OnOverWorldEntered","MapDefineNotification",Handle)
+hook.Add("MD_OnAreaEntered","area_notification", handle)
+hook.Add("MD_OnOverWorldEntered","area_notification", handle)
+
+if LocalPlayer():IsValid() then
+	show_name("Ash Lake")
+end
