@@ -28,6 +28,8 @@ function jchat.Start(stop_cb)
 	end)
 
 	hook.Add("HUDShouldDraw", "jchat", function(str)
+		if jchat.show_chat then return end
+
 		if str ~= "CHudWeaponSelection" and str ~= "CHudGMod" then
 			return false
 		end
@@ -435,13 +437,37 @@ do -- view
 	end
 end
 
+do
+	local self_chat = false
+
+	hook.Add("ChatTextChanged", "jchat", function()
+		if jchat.IsActive() then return end
+		if not battlecam.IsEnabled() then return end
+
+		jchat.Start(function() battlecam.Enable() end)
+		jchat.AddPlayer(LocalPlayer())
+		jchat.PlayerSay(LocalPlayer(), "")
+
+		battlecam.Disable()
+		self_chat = true
+		jchat.show_chat = true
+	end)
+
+	hook.Add("FinishChat", "jchat", function()
+		if not jchat.IsActive() then return end
+
+		if not self_chat then return end
+		jchat.Stop()
+		jchat.show_chat = nil
+	end)
+end
+
+
 hook.Add("PlayerUsedEntity", "jchat", function(ply, ent)
 	if not battlecam.IsEnabled() then return end
 
 	if ply == LocalPlayer() and (ent:IsNPC() or ent:IsPlayer()) then
-		jchat.Start(function()
-			battlecam.Enable()
-		end)
+		jchat.Start(function() battlecam.Enable() end)
 		jchat.AddPlayer(ply)
 		jchat.AddPlayer(ent)
 		jchat.PlayerSay(ent, "")
