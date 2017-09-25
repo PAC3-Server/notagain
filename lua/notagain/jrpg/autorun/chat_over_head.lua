@@ -93,6 +93,7 @@ if CLIENT then
 					local data = ply.coh_text_history[i]
 					local text = data.str
 					if text == "" then text = ("."):rep(math.ceil(os.clock()%3)) end
+
 					local f = data.time == 0 and 1 or -math.min(RealTime() - data.time, 0)
 
 					local alpha = math.min(f * 4, 1)
@@ -101,7 +102,15 @@ if CLIENT then
 						table.remove(ply.coh_text_history, i)
 					end
 
+					if ply == LocalPlayer() and ply:ShouldDrawLocalPlayer() then
+						local dot = math.max(-EyeVector():Dot(ply:GetAimVector()), 0)*2
+
+						alpha = alpha * dot
+					end
+
 					surface.SetAlphaMultiplier(alpha)
+
+					local pos, ang = jrpg.FindHeadPos(ply)
 
 					local ang = ply:EyeAngles()
 					ang.p = 0
@@ -109,14 +118,13 @@ if CLIENT then
 					ang.r = ang.r + 90
 
 					render.PushFilterMag(TEXFILTER.ANISOTROPIC)
-					cam.Start3D2D(ply:NearestPoint(ply:WorldSpaceCenter() + Vector(0,0,1000)) + Vector(0,0,10), ang, 0.025)
+					cam.Start3D2D(pos + ang:Right() * - 12, ang, 0.025)
 					local w, h = prettytext.GetTextSize(text, font, size, bold, blursize)
 					w = w + text_width_border*2
 
 					local x = -w/2
 					local y = (i - 1) * -h/1.1
 					x = x + i * 50
-
 
 					draw.RoundedBox(roundness, x - border_size + shadow_size, y + -border_size + shadow_size, w + border_size*2, h + border_size*2, Color(0,0,0,150))
 					draw.RoundedBox(roundness, x - border_size, y + -border_size, w + border_size*2, h + border_size*2, border_color)
@@ -131,7 +139,7 @@ if CLIENT then
 					prettytext.Draw(text, x + text_width_border, y, font, size, bold, blursize, Color(255,255,255,255), Color(200, 200, 200, 255))
 
 					if not data.entered and data.time ~= 0 then
-						surface.SetDrawColor(0, 0, 0, 230)
+						surface.SetDrawColor(0, 0, 0, 230*alpha)
 						surface.DrawRect(x + text_width_border,y+h/2, w-text_width_border*2, 10)
 					end
 
