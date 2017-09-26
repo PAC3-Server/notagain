@@ -784,7 +784,7 @@ hook.Add("OnEntityCreated", "wepstats_bugbait", function(ent)
 	end
 end)
 
-if me then
+if me or game.SinglePlayer() then
 	local blacklist = {
 		weapon_physgun = true,
 	}
