@@ -144,9 +144,9 @@ if CLIENT then
 					end
 
 					local width = 50
-					local xpos = math.min(w/2 - 400, w) + width * 3
+					local xpos = x + math.min(w/2 - 100, w) + width * 3
 
-					--[[if i == 1 then
+					if i == 1 then
 						surface.SetDrawColor(0, 0, 0, 150)
 						draw.NoTexture()
 						surface.DrawPoly({
@@ -170,7 +170,7 @@ if CLIENT then
 							{ x = x + w - xpos - width, y = y + h+100 },
 							{ x = x + w - xpos - width, y = y + h }
 						})
-					end]]--
+					end
 					--surface.SetDrawColor(255,255,255,255)
 					--surface.SetMaterial(gradient)
 					--draw_rect(x,y, w, h, 0, border_size, 5, 0, gradient:GetTexture("$BaseTexture"):Width())
