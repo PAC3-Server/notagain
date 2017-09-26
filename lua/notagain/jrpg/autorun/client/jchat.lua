@@ -20,8 +20,11 @@ function jchat.Start(stop_cb)
 	hook.Add("CalcView", "jchat", jchat.CalcView)
 	hook.Add("RenderScreenspaceEffects", "jchat", jchat.RenderScreenspaceEffects)
 
+	local ok = os.clock() + 0.25
+
 	hook.Add("KeyPress", "jchat", function(ply, key)
 		if key == IN_USE and jchat.HasPlayer(LocalPlayer()) then
+			if ok > os.clock() then return end
 			jchat.Stop()
 			hook.Remove("KeyPress", "jchat")
 		end
