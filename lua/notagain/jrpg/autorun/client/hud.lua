@@ -126,6 +126,8 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 	render.SetStencilEnable(false)
 end
 
+local S = 1
+
 local background_glow = CreateMaterial(tostring({}), "UnlitGeneric", {
 	["$BaseTexture"] = "particle/particle_glow_01",
 	["$VertexAlpha"] = 1,
@@ -167,7 +169,7 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 			x = center_number and x+w/2 or (x + w),
 			y = center_number and y+h/2 or y,
 			font = "korataki",
-			size = health_height*1.25 * (center_number and 0.7 or 1),
+			size = health_height*1.25 * (center_number and 0.7 or 1)*S,
 			weight = 1000,
 			blur_size = 4,
 			blur_overdraw = 3,
@@ -184,7 +186,7 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 			x = x,
 			y = y,
 			font = "korataki",
-			size = health_height*1.25,
+			size = health_height*1.25*S,
 			weight = 0,
 			blur_size = 4,
 			blur_overdraw = 3,
@@ -196,10 +198,10 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	end
 end
 
-
-
 hook.Add("HUDPaint", "jhud", function()
 	if hook.Run("HUDShouldDraw", "JHUD") == false then return end
+
+	S = ScrW() / 1920
 
 	local ply = LocalPlayer()
 
@@ -213,10 +215,10 @@ hook.Add("HUDPaint", "jhud", function()
 	end
 
 	local width = 100000
-	local height = 100
+	local height = 100*S
 
-	local x = 110
-	local y = ScrH() - 140
+	local x = 110*S
+	local y = ScrH() - 140*S
 
 	do
 		local x = x
@@ -242,14 +244,14 @@ hook.Add("HUDPaint", "jhud", function()
 
 		surface.SetMaterial(background_wing)
 		surface.SetDrawColor(255,255,255,255)
-		surface.DrawTexturedRect(x-130,y-150,background_wing:GetInt("$realwidth"),background_wing:GetInt("$realheight"))
+		surface.DrawTexturedRect(x-130*S,y-150*S,background_wing:GetInt("$realwidth")*S,background_wing:GetInt("$realheight")*S)
 
 
 		if true then
-			local x = x + 125
-			local y = y + 25
-			local w = 500
-			local h = 500
+			local x = x + 125*S
+			local y = y + 25*S
+			local w = 500*S
+			local h = 500*S
 			surface.SetMaterial(background_glow)
 			surface.SetDrawColor(0,0,0,50)
 			surface.DrawTexturedRect(x-w/2,y-h/2,w,h)
@@ -284,9 +286,9 @@ hook.Add("HUDPaint", "jhud", function()
 		if true then
 			surface.SetMaterial(background_glow)
 			surface.SetDrawColor(0,0,0,200)
-			local size = 300
+			local size = 300*S
 			local x = x + 120
-			local y = y + height + 20
+			local y = y + height + 20*S
 			surface.DrawTexturedRect(x-size*2/2,y-size/2,size*2,size)
 		end
 
@@ -299,10 +301,10 @@ hook.Add("HUDPaint", "jhud", function()
 		if true then
 			local name_width = prettytext.DrawText({
 				text = (jrpg and jrpg.GetFriendlyName(ply) or ply:Nick()),
-				x = x + 200,
-				y = y - offset - 8,
+				x = x + 200*S,
+				y = y - offset*S - 8*S,
 				font = "Square721 BT",
-				size = 40,
+				size = 40*S,
 				blur_size = 4,
 				blur_overdraw = 3,
 				weight = 1000,
@@ -311,15 +313,15 @@ hook.Add("HUDPaint", "jhud", function()
 				y_align = 0.5,
 			})
 
-			x = x + 200
+			x = x + 200*S
 
 			if ply:GetNWBool("rpg") then
 				prettytext.DrawText({
 					text = "Lv. " .. ply:GetNWInt("jlevel_level", 0),
-					x = x + math.Clamp(70 + name_width, 50, ScrW()/3),
-					y = y - offset + 4,
+					x = x + math.Clamp(70*S + name_width, 50, ScrW()/3),
+					y = y - offset*S + 4*S,
 					font = "Square721 BT",
-					size = 30,
+					size = 30*S,
 					blur_size = 4,
 					blur_overdraw = 3,
 					weight = 1000,
@@ -332,14 +334,17 @@ hook.Add("HUDPaint", "jhud", function()
 			end
 		end
 
-		y = y + height / 2 - offset
+		local health_height = health_height * S
+		local border_size = border_size * S
+
+		y = y + height / 2 - (offset*S)
 
 		do
 			local real_cur = ply:Health()
 			local cur = smooth(math.max(real_cur, 0), "health")
 			local max = ply:GetMaxHealth()
 
-			local w = math.Clamp(max*2, 50, ScrW()/3)
+			local w = math.Clamp(max*2, 50, ScrW()/3)*S
 
 			DrawBar(x,y,w,health_height,cur,max,border_size, 50,160,50, "HP", real_cur)
 
@@ -352,7 +357,7 @@ hook.Add("HUDPaint", "jhud", function()
 			local cur = smooth(real_cur, "mana")
 			local max = jattributes.GetMaxMana(ply)
 
-			local w = math.Clamp(max*2, 50, ScrW()/3)
+			local w = math.Clamp(max*2, 50, ScrW()/3)*S
 
 			DrawBar(x,y,w,health_height,cur,max,border_size, 50,50,175, "MP", real_cur)
 
@@ -367,7 +372,7 @@ hook.Add("HUDPaint", "jhud", function()
 			local cur = smooth(real_cur, "stamina")
 			local max = jattributes.GetMaxStamina(ply)
 
-			local w = math.Clamp(max*2, 50, ScrW()/3)
+			local w = math.Clamp(max*2, 50, ScrW()/3)*S
 
 			DrawBar(x,y,w,health_height,cur,max,border_size, 150,150,50, "SP", math.Round(real_cur))
 
@@ -383,7 +388,7 @@ hook.Add("HUDPaint", "jhud", function()
 			local max = ply:GetNWInt("jlevel_next_level", 0)
 			local w = math.Clamp(jattributes.GetMaxStamina(ply)*2, 50, ScrW()/3)
 
-			DrawBar(x, y, w, 8, cur, max, 1, 100,0,255, "XP", real_cur, true)
+			DrawBar(x, y, w*S, 8*S, cur, max, 1, 100,0,255, "XP", real_cur, true)
 		end
 	end
 
@@ -392,7 +397,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 	surface.SetMaterial(foreground_line)
 	surface.SetDrawColor(255,255,255,255)
-	surface.DrawTexturedRect(x-90,y+65,foreground_line:GetInt("$realwidth"),foreground_line:GetInt("$realheight"))
+	surface.DrawTexturedRect(x-90*S,y+65*S,foreground_line:GetInt("$realwidth")*S,foreground_line:GetInt("$realheight")*S)
 
 	local i = 0
 
