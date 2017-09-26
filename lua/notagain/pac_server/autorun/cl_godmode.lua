@@ -145,7 +145,7 @@ if CLIENT then
 		return button
 	end
 
-	local function GodmodeUI(pnl)		
+	local function GodmodeUI(pnl)
 		pnl:AddControl("Header", { Description = "Godmode Settings" })
 
 		checkboxes = {
@@ -158,7 +158,7 @@ if CLIENT then
 
 		AddButton(pnl, 'Disable Godmode', 'off')
 		AddButton(pnl, 'Enable Full Godmode', 'all')
-		
+
 		local b = AddButton(pnl, 'Refresh Values', 'update')
 		function b:DoClick()
 			update()
@@ -241,14 +241,14 @@ if SERVER then
 		if suppress then return end
 
 		if IsPlayer(ply) and ply.GetInfo then
-			if ply.haltgodmode then return end
+			if ply.haltgodmode or ply:GetNWBool("rpg") then return end
 
 			local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
 			if GodCheck(ply, dmginfo, actor) then
 				if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(actor) then
 					suppress = true
 					local mirror = ents.FindByClass('god_reflect_damage')[1]
-					
+
 					dmginfo:SetAttacker(ply)
 					dmginfo:SetInflictor(mirror or actor)
 
