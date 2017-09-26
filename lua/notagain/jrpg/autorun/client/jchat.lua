@@ -484,6 +484,13 @@ hook.Add("PlayerUsedEntity", "jchat", function(ply, ent)
 		jchat.AddPlayer(ply)
 		jchat.AddPlayer(ent)
 		jchat.PlayerSay(ent, "")
+
+		for i,v in ipairs(ents.FindInSphere(ply:EyePos(), 800)) do
+			if v:IsNPC() or v:IsPlayer() then
+				jchat.AddPlayer(v)
+			end
+		end
+
 		battlecam.Disable()
 	end
 end)
