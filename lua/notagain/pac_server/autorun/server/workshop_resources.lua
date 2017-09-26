@@ -1,11 +1,14 @@
-resource.AddWorkshop("546392647") -- Media Player
-resource.AddWorkshop("104482086") -- Precision Tool (Not on Server).
-resource.AddWorkshop("1132466603") -- StormFox.
-
 -- wos custom animations
 resource.AddWorkshop("757604550")
 resource.AddWorkshop("848953359")
 resource.AddWorkshop("873302121")
+
+if game.SinglePlayer() then return end
+
+resource.AddWorkshop("546392647") -- Media Player
+resource.AddWorkshop("104482086") -- Precision Tool (Not on Server).
+resource.AddWorkshop("1132466603") -- StormFox.
+
 -- resource.AddWorkshop("848953609") age of chivalry causes issues
 
 
