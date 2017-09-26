@@ -139,9 +139,9 @@ do
 							sphere:SetDamageTypes(self:GetDamageTypes())
 							sphere:Spawn()
 							local phys = sphere:GetPhysicsObject()
-							phys:SetVelocity(self.old_vel*5)
+							phys:SetVelocity(self.old_vel*1)
 							phys:SetMaterial("gmod_bouncy")
-							phys:SetMass(500)
+							phys:SetMass(5)
 
 							sphere:SetLifeTime(2)
 							SafeRemoveEntityDelayed(sphere, 2.1)
