@@ -224,7 +224,7 @@ if CLIENT then
 		function META:DrawTranslucent(time, f, f2)
 			self.trails = self.trails or {}
 			for i = 1, 3 do
-				self.trails[i] = self.trails[i] or {data = {}}
+				self.trails[i] = self.trails[i] or {}
 				self.trails[i].vec = self.trails[i].vec or VectorRand()
 				self.trails[i].vec2 = self.trails[i].vec2 or VectorRand()
 				local v = self.trails[i].vec
