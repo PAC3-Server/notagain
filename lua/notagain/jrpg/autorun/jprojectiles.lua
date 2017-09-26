@@ -108,12 +108,12 @@ do
 						if ent:IsValid() then
 							ent:TakeDamageInfo(d)
 						else
-							for i = 1, math.random(20) do
+							for i = 1, math.random(3, 6) do
 								local temp = ents.Create("prop_physics")
 								temp:SetModel("models/props_junk/rock001a.mdl")
 								temp:SetPos(pos)
 								temp:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
-								temp:SetModelScale(math.Rand(0.5, 3))
+								temp:SetModelScale(math.Rand(0.25, 1))
 								temp:SetAngles(VectorRand():Angle())
 								temp:SetColor(Color(1,1,1,1))
 								temp:SetRenderMode(RENDERMODE_TRANSALPHA)
@@ -122,10 +122,9 @@ do
 								if i < 2 then
 									temp:PhysicsInit(SOLID_NONE)
 								else
-									temp:GetPhysicsObject():SetVelocity((VectorRand()-normal)*150 - self.old_vel*math.Rand(1,2))
+									temp:GetPhysicsObject():SetVelocity((VectorRand()-normal)*50 - self.old_vel*math.Rand(0.25,0.5))
 								end
 								SafeRemoveEntityDelayed(temp, 2)
-
 
 								local d = DamageInfo()
 								d:SetDamage(100)
@@ -139,7 +138,10 @@ do
 							sphere:SetPos(pos)
 							sphere:SetDamageTypes(self:GetDamageTypes())
 							sphere:Spawn()
-							sphere:GetPhysicsObject():SetVelocity(self.old_vel*5)
+							local phys = sphere:GetPhysicsObject()
+							phys:SetVelocity(self.old_vel*5)
+							phys:SetMaterial("gmod_bouncy")
+							phys:SetMass(500)
 
 							sphere:SetLifeTime(2)
 							SafeRemoveEntityDelayed(sphere, 2.1)
