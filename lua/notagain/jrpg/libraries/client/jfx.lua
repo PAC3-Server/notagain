@@ -91,8 +91,10 @@ do
 
 		local time = RealTime()
 
-		if not self.trail_points[1] or self.trail_points[#self.trail_points].pos:Distance(pos) > spc then
-			table.insert(self.trail_points, {pos = pos, life_time = time + len})
+		if self.last_frame ~= FrameNumber() then
+			if not self.trail_points[1] or self.trail_points[#self.trail_points].pos:Distance(pos) > spc then
+				table.insert(self.trail_points, {pos = pos, life_time = time + len})
+			end
 		end
 
 		local count = #self.trail_points
@@ -123,18 +125,22 @@ do
 			end
 		render.EndBeam()
 
-		local center = Vector(0,0,0)
-		for i, data in ipairs(self.trail_points) do
-			center:Zero()
-			for _, data in ipairs(self.trail_points) do
-				center:Add(data.pos)
-			end
-			center:Mul(1 / #self.trail_points)
-			center:Sub(data.pos)
-			center:Mul(-FrameTime())
+		if self.last_frame ~= FrameNumber() then
+			local center = Vector(0,0,0)
+			for i, data in ipairs(self.trail_points) do
+				center:Zero()
+				for _, data in ipairs(self.trail_points) do
+					center:Add(data.pos)
+				end
+				center:Mul(1 / #self.trail_points)
+				center:Sub(data.pos)
+				center:Mul(-FrameTime())
 
-			data.pos:Add(center)
+				data.pos:Add(center)
+			end
 		end
+
+		self.last_frame = FrameNumber()
 	end
 end
 
