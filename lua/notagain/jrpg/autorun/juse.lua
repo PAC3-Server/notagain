@@ -47,6 +47,7 @@ if CLIENT then
 	net.Receive("juse", function()
 		local ply = net.ReadEntity()
 		local ent = net.ReadEntity()
+
 		if ply:IsValid() and ent:IsValid() then
 			hook.Run("PlayerUsedEntity", ply, ent)
 		end
@@ -73,6 +74,9 @@ if CLIENT then
 	hook.Add("HUDPaint", "juse", function()
 		local ent = LocalPlayer():GetNWEntity("juse_ent")
 
+		if ent:IsPlayer() or ent:IsNPC() then
+			hitmarkers.ShowHealth(ent)
+		end
 
 		if not ent:IsValid() then
 			fade_in_time = nil
