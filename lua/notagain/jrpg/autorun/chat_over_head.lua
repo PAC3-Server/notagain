@@ -87,7 +87,7 @@ if CLIENT then
 
 		cam.Start3D()
 		for _, ply in ipairs(player.GetAll()) do
-			if ply.coh_text_history and ply.coh_text_history[1] then
+			if ply.coh_text_history and ply.coh_text_history[1] and (ply ~= LocalPlayer() or ply:ShouldDrawLocalPlayer()) then
 				--for i, data in ipairs(ply.coh_text_history) do
 				for i = #ply.coh_text_history, 1, -1 do
 					local data = ply.coh_text_history[i]
