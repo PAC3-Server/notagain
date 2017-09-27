@@ -5,11 +5,12 @@ local function show_name(area_name)
 	local time = RealTime() + duration
 	hook.Remove("HUDPaint", "")
 	hook.Add("HUDPaint", "newarea", function()
-		local f = (time - RealTime()) / duration
-		local x, y = ScrW()/2, ScrH()/2
+		local f = math.max((time - RealTime()) / duration, 0)
+		local x, y = ScrW()/2, ScrH()/4
 
-		local brightness = 230
-		local alpha = math.max((f^0.15)*255, 1)
+		local brightness = 255
+		local alpha = (f^0.15)*255*1.2
+
 		local w, h = prettytext.DrawText({
 			text = area_name,
 			font = "Square721 BT",
@@ -29,7 +30,7 @@ local function show_name(area_name)
 		surface.SetDrawColor(0, 0, 0, alpha)
 		surface.DrawRect(x - w - border/2, y + h/2.75 - border/2, w*2 + border, height+border)
 
-		surface.SetDrawColor(170, 170, 170, alpha)
+		surface.SetDrawColor(brightness, brightness, brightness, alpha)
 		surface.DrawRect(x - w, y + h/2.75, w*2, height)
 
 		if f <= 0 then
