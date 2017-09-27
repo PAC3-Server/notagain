@@ -64,7 +64,7 @@ if CLIENT then
 end
 
 local function can_roll(ply)
-	return ply:IsValid() and ply:GetNWBool("rpg") and not is_rolling(ply) and ply:Alive() and ply:OnGround() and ply:GetMoveType() == MOVETYPE_WALK and not ply:InVehicle()
+	return (ply:IsValid() and ply:GetNWBool("rpg") and not is_rolling(ply) and ply:Alive() and ply:OnGround() and ply:GetMoveType() == MOVETYPE_WALK and not ply:InVehicle()) or ply.roll_landed
 end
 
 hook.Add("UpdateAnimation", "roll", function(ply, velocity)
@@ -97,6 +97,12 @@ hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 		return true
 	else
 		ply.roll_back_cycle = nil
+	end
+end)
+
+hook.Add("OnPlayerHitGround", "roll", function(ply)
+	if ply:KeyDown(IN_DUCK)	then
+		ply.roll_landed = true
 	end
 end)
 
@@ -143,7 +149,9 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 	]]
 
 	if can_roll(ply) then
-		if mv:KeyPressed(IN_DUCK) then
+		if mv:KeyPressed(IN_DUCK) or ply.roll_landed then
+
+			ply.roll_landed = nil
 
 			local stamina = jattributes.GetStamina(ply)
 			if stamina < 30 then return end
