@@ -1,5 +1,8 @@
-local roll_time = 0.75
-local roll_speed = 1
+local speed = 0.5
+local threshold = 30
+
+local roll_time = 0.75/speed
+local roll_speed = 1*speed
 local function is_rolling(ply)
 	if CLIENT and ply ~= LocalPlayer() then
 		return ply:GetNW2Float("roll_time", CurTime()) > CurTime()
@@ -10,9 +13,9 @@ end
 local function vel_to_dir(ang, vel)
 	ang.p = 0
 	local dot = ang:Forward():Dot(vel)
-	if dot > 100 then
+	if dot > 100*roll_speed then
 		return "forward"
-	elseif dot < -100 then
+	elseif dot < -100*roll_speed then
 		return "backward"
 	end
 
@@ -65,6 +68,11 @@ local function can_roll(ply)
 end
 
 hook.Add("UpdateAnimation", "roll", function(ply, velocity)
+	if velocity:Length2D() < threshold then
+		ply.roll_time = nil
+		return
+	end
+
 	if is_rolling(ply) then
 		local dir = vel_to_dir(ply:EyeAngles(), velocity)
 
@@ -74,10 +82,10 @@ hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 			ply.roll_back_cycle = (ply.roll_back_cycle or 0) + (ply:GetVelocity():Length() * FrameTime() / 275)
 		end
 
-		local f = math.Clamp(ply.roll_back_cycle*(1/roll_time),0,1)
+		local f = math.Clamp(ply.roll_back_cycle*(1/roll_time)/roll_speed,0,1)
 
 		if dir == "forward" then
-			ply:SetCycle(Lerp(f, 0.1, 1))
+			ply:SetCycle(Lerp(f, 0.1, 0.9))
 		elseif dir == "backward" then
 			ply:SetCycle(Lerp(f, 0.9, 0))
 		elseif dir == "left" or dir == "right" then
@@ -93,6 +101,10 @@ hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 end)
 
 hook.Add("CalcMainActivity", "roll", function(ply)
+	if ply:GetVelocity():Length2D() < threshold then
+		return
+	end
+
 	if is_rolling(ply) then
 		local dir = vel_to_dir(ply:EyeAngles(), ply:GetVelocity())
 
@@ -171,7 +183,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 		end
 	end
 
-	if is_rolling(ply) then
+	if is_rolling(ply) and mv:GetVelocity():Length2D() > 30 then
 		local dir
 
 		local ang = ply.roll_ang * 1
@@ -180,21 +192,23 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 		local dir = ply.roll_dir
 		local f = math.Clamp((ply.roll_time - CurTime()) * (1/roll_time), 0, 1)
 
+		local mult = (math.sin(f*math.pi) + 0.5) * roll_speed
+
+		mv:SetMaxSpeed(200*mult)
+		mv:SetMaxClientSpeed(200*mult)
+
 		if dir == "forward" then
-			dir = ang:Forward()*300
+			mv:SetForwardSpeed(10000)
 		elseif dir == "backward" then
-			dir = ang:Forward()*-300
+			mv:SetForwardSpeed(-10000)
 		elseif dir == "left" then
-			dir = ang:Right()*-300
+			mv:SetSideSpeed(-10000)
 		elseif dir == "right" then
-			dir = ang:Right()*300
+			mv:SetSideSpeed(10000)
 		end
-		local mult = (math.sin(f*math.pi) + 0.5)
-
-		dir = dir * mult * 0.75
-
-		--ply:SetEyeAngles(ply.roll_ang)
-		mv:SetVelocity(dir + physenv.GetGravity() * 0.5)
+	else
+		ply.roll_forward_speed = nil
+		ply.roll_side_speed = nil
 	end
 end)
 
