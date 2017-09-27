@@ -8,6 +8,11 @@ if SERVER then
 		ply:SetNoDraw(true)
 		ply:SetVelocity(ply:GetVelocity() * -0.01) -- this is wrong and bad and might feel awful with high ping
 
+		if aowl then
+			ply.aowl_predeathpos = ply:GetPos()
+			ply.aowl_predeathangles = ply:GetAngles()
+		end
+
 		if not ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_JUMP) then
 			ply:SetMoveType(MOVETYPE_WALK)
 			ply:SetNoDraw(false)
