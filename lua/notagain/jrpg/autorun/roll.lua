@@ -1,4 +1,4 @@
-local speed = 0.5
+local speed = 1
 local threshold = 30
 
 local roll_time = 0.75/speed
