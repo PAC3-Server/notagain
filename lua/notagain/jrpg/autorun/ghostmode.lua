@@ -66,21 +66,24 @@ if CLIENT then
 
 	hook.Add("CalcView", Tag, function(ply)
 		if ply:GetNWBool("rpg") and not ply:Alive() then
-			timer.Simple(0.1,function()
-				if ctp and battlecam then
-					ctp:Disable()
-					battlecam.Disable()
-				end
-			end)
 			return {
 				origin = ply:EyePos() + ply:GetAimVector() * -200,
 			}
 		end
 	end)
 
+	local ctp_enabled
+	local battlecam_enabled
+
     hook.Add("PostDrawTranslucentRenderables",Tag,function()
         for _,v in ipairs(player.GetAll()) do
             if v:GetNWBool("rpg") and not v:Alive() then
+
+				if v == LocalPlayer() then
+					if ctp and ctp:IsEnabled() then ctp:Disable() ctp_enabled = true end
+					if battlecam and battlecam.IsEnabled() then battlecam.Disable() battlecam_enabled = true end
+				end
+
                 local color
                 if v:GetFriendStatus() == "friend" or v == LocalPlayer() then
                     color = Friend
@@ -146,6 +149,18 @@ if CLIENT then
                 render.MaterialOverride()
             end
         end
+
+		if LocalPlayer():Alive() then
+			if battlecam_enabled then
+				battlecam.Enable()
+				battlecam_enabled = false
+			end
+
+			if ctp_enabled then
+				ctp:Enable()
+				ctp_enabled = false
+			end
+		end
     end)
 
     hook.Add("OnPlayerChat",Tag,function(ply, txt)
