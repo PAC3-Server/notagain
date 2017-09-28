@@ -153,41 +153,27 @@ if CLIENT then
 	ENT.SizePulse = 1
 
 	local function CreateEntity(mdl)
-		local ent = ents.CreateClientProp()
-
-		ent:SetModel("error.mdl")
+		local ent = ClientsideModel(mdl)
 
 		function ent:RenderOverride()
-			if not ENT.ObjWing then return end
-
-			local matrix = Matrix()
-
-			matrix:SetAngles(self:GetAngles())
-			matrix:SetTranslation(self:GetPos())
-			matrix:Scale(self.scale)
+			if self.scale then
+				local matrix = Matrix()
+				matrix:Scale(self.scale)
+				self:EnableMatrix("RenderMultiply", matrix)
+			end
 
 			render.SetMaterial(wing_mat)
 
-			cam.PushModelMatrix(matrix)
-				render.CullMode(1)
-				ENT.ObjWing:Draw()
-				render.CullMode(0)
-				ENT.ObjWing:Draw()
-			cam.PopModelMatrix()
+			render.CullMode(1)
+			self:DrawModel()
+			render.CullMode(0)
+			self:DrawModel()
 		end
 
 		return ent
 	end
 
 	function ENT:Initialize()
-		if pac and pac.urlobj then
-			pac.urlobj.GetObjFromURL("http://dl.dropbox.com/u/244444/wing.obj", function(meshes)
-				if self:IsValid() then
-					ENT.ObjWing = select(2, next(meshes))
-				end
-			end)
-		end
-
 		self.SoundQueue = {}
 
 		self.Emitter = ParticleEmitter(vector_origin)
@@ -196,6 +182,8 @@ if CLIENT then
 		self:InitWings()
 
 		self.light = DynamicLight(self:EntIndex())
+		self.light.Decay = -0
+		self.light.DieTime = 9999999
 
 		self.flap = CreateSound(self, "alan/flap.wav")
         self.float = CreateSound(self, "alan/float.wav")
@@ -424,8 +412,6 @@ if CLIENT then
 
 			self.light.Brightness = self.Size * 1
 			self.light.Size = math.Clamp(self.Size * 512, 0, 1000)
-			self.light.Decay = self.Size * 32 * 5
-			self.light.DieTime = CurTime() + 1
 		end
 	end
 
@@ -562,14 +548,13 @@ if CLIENT then
 		self.Emitter:Draw()
 	end
 
-
 	function ENT:DrawWings(offset)
 		if not self.leftwing:IsValid() then
 			self:InitWings()
 		return end
 
-		local size = self.Size * self.WingSize * 0.75
-		local ang = self:GetAngles()
+		local size = self.Size * self.WingSize * 0.4
+		local ang = self:GetAngles() + Angle(0,-90,0)
 
 		offset = offset or 0
 		self.WingSpeed = 6.3 * (self.Hurting and 0 or 1)
@@ -596,11 +581,11 @@ if CLIENT then
 		render.SuppressEngineLighting(true)
 		render.SetColorModulation(self.Color.r/200, self.Color.g/200, self.Color.b/200)
 
-		self.leftwing.scale = Vector(0.75,1.25,1)*size
-		self.rightwing.scale = Vector(0.75,1.25,1)*size
+		self.leftwing.scale = Vector(0.75,1.25,2.5)*size
+		self.rightwing.scale = Vector(0.75,1.25,2.5)*size
 
-		self.bleftwing.scale = Vector(0.5,1,1)*size
-		self.brightwing.scale = Vector(0.5,1,1)*size
+		self.bleftwing.scale = Vector(0.5,1,2)*size
+		self.brightwing.scale = Vector(0.5,1,2)*size
 
 		self.leftwing:SetupBones()
 		self.rightwing:SetupBones()
@@ -812,4 +797,4 @@ if SERVER then
 
 end
 
-scripted_ents.Register(ENT, ENT.ClassName, true)
+scripted_ents.Register(ENT, ENT.ClassName)
