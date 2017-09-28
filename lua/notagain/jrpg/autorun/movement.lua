@@ -11,6 +11,7 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 		end
 	else
 		ply.m_bJumping = true
+		ply.m_flJumpStartTime = 0
 		ply.m_fGroundTime = 0
 
 		if ply:Crouching() then
