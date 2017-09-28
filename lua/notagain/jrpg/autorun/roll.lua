@@ -77,26 +77,35 @@ hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 		local dir = vel_to_dir(ply:EyeAngles(), velocity)
 
 		if dir == "forward" or dir == "backward" then
-			ply.roll_back_cycle = (ply.roll_back_cycle or 0) + (ply:GetVelocity():Length() * FrameTime() / 275)
+			ply.roll_back_cycle = (ply.roll_back_cycle or 0) + (ply:GetVelocity():Length2D() * FrameTime() / 200)
 		else
-			ply.roll_back_cycle = (ply.roll_back_cycle or 0) + (ply:GetVelocity():Length() * FrameTime() / 275)
+			ply.roll_back_cycle = (ply.roll_back_cycle or 0) + (ply:GetVelocity():Length2D() * FrameTime() / 200)
 		end
 
-		local f = math.Clamp(ply.roll_back_cycle*(1/roll_time)/roll_speed,0,1)
+		ply.roll_fraction = math.Clamp(ply.roll_back_cycle,0,1)
 
-		if dir == "forward" then
-			ply:SetCycle(Lerp(f, 0.1, 0.9))
-		elseif dir == "backward" then
-			ply:SetCycle(Lerp(f, 0.9, 0))
-		elseif dir == "left" or dir == "right" then
-			ply:SetCycle(Lerp(f, 0.25, 1))
+		if ply.roll_fraction < 1 then
+
+			local f = ply.roll_fraction
+			--f = math.EaseInOut(f, 1, 2)
+
+			if dir == "forward" then
+				ply:SetCycle(Lerp(f, 0.1, 0.9))
+			elseif dir == "backward" then
+				local cycle = Lerp(f, 0.9, 0)
+				if cycle < 0.05 then cycle = 1 end
+				ply:SetCycle(cycle)
+			elseif dir == "left" or dir == "right" then
+				ply:SetCycle(Lerp(f, 0.25, 1))
+			end
+
+			ply:SetPlaybackRate(0)
+
+			return true
 		end
-
-		ply:SetPlaybackRate(0)
-
-		return true
 	else
 		ply.roll_back_cycle = nil
+		ply.roll_fraction = nil
 	end
 end)
 
@@ -112,7 +121,7 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 		return
 	end
 
-	if is_rolling(ply) then
+	if is_rolling(ply) and ply.roll_fraction and ply.roll_fraction < 1 then
 		local dir = vel_to_dir(ply:EyeAngles(), ply:GetVelocity())
 
 		local seq = ""
@@ -172,7 +181,9 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 
 			if mv:KeyDown(IN_BACK) or mv:KeyDown(IN_MOVELEFT) or mv:KeyDown(IN_MOVERIGHT) or mv:KeyDown(IN_FORWARD) or ply.roll_landed then
 				ply.roll_ang = mv:GetAngles()
-				ply.roll_time = CurTime() + roll_time
+
+				ply.roll_time2 = roll_time / math.Clamp(mv:GetVelocity():Length2D() / 200, 0.75, 1.25)
+				ply.roll_time = CurTime() + ply.roll_time2
 			end
 
 			ply.roll_landed = nil
@@ -196,6 +207,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 
 				if SERVER then
 					ply:SetNW2Float("roll_time", ply.roll_time)
+					ply:SetNW2Float("roll_time2", ply.roll_time2)
 
 					jattributes.SetStamina(ply, stamina - 15)
 				end
@@ -203,6 +215,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 		else
 			ply.roll_ang = nil
 			ply.roll_time = nil
+			ply.roll_time2 = nil
 			ply.roll_dir = nil
 		end
 	end
@@ -214,7 +227,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 		ang.p = 0
 
 		local dir = ply.roll_dir
-		local f = math.Clamp((ply.roll_time - CurTime()) * (1/roll_time), 0, 1)
+		local f = math.Clamp((ply.roll_time - CurTime()) * (1/ply:GetNW2Float("roll_time2")), 0, 1)
 
 		local mult = (math.sin(f*math.pi) + 0.5) * roll_speed
 
