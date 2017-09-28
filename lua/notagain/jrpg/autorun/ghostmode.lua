@@ -1,8 +1,17 @@
 local Tag = "GhostMode"
+local ghost_time = 8
 
 if SERVER then
+	hook.Add("PlayerDeath", Tag, function(ply)
+		ply:SetNW2Float("ghost_timer", CurTime() + ghost_time)
+		ply.ghost_spawn_pos = ply:GetPos()
+	end)
 	hook.Add("PlayerDeathThink", Tag, function(ply)
 		if not ply:GetNWBool("rpg") then return end
+
+		if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
+			return
+		end
 
 		ply:SetMoveType(MOVETYPE_NOCLIP)
 		ply:SetNoDraw(true)
@@ -11,6 +20,11 @@ if SERVER then
 		if aowl then
 			ply.aowl_predeathpos = ply:GetPos()
 			ply.aowl_predeathangles = ply:GetAngles()
+		end
+
+		if ply.ghost_spawn_pos then
+			ply:SetPos(ply.ghost_spawn_pos)
+			ply.ghost_spawn_pos = nil
 		end
 
 		if not ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_JUMP) then
@@ -22,17 +36,6 @@ if SERVER then
 end
 
 if CLIENT then
-    local Settings = {
-        [ "$pp_colour_addr" ]       = 0,
-        [ "$pp_colour_addg" ]       = 0,
-        [ "$pp_colour_addb" ]       = 0,
-        [ "$pp_colour_brightness" ] = 0.1,
-        [ "$pp_colour_contrast" ]   = 0.8,
-        [ "$pp_colour_colour" ]     = 0,
-        [ "$pp_colour_mulr" ]       = 0,
-        [ "$pp_colour_mulg" ]       = 0.2,
-        [ "$pp_colour_mulb" ]       = 0.5,
-    }
     local r,g,b      = 0,0.1,0
 	local GlareMat   = Material("sprites/light_ignorez")
 	local WarpMat    = Material("particle/warp2_warp")
@@ -71,6 +74,10 @@ if CLIENT then
 
 	hook.Add("CalcView", Tag, function(ply)
 		if ply:GetNWBool("rpg") and not ply:Alive() then
+			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
+				return
+			end
+
 			return {
 				origin = ply:EyePos() + ply:GetAimVector() * -200,
 			}
@@ -83,6 +90,12 @@ if CLIENT then
     hook.Add("PostDrawTranslucentRenderables",Tag,function()
         for _,v in ipairs(player.GetAll()) do
             if v:GetNWBool("rpg") and not v:Alive() then
+
+				local f = v:GetNW2Float("ghost_timer", 0) - CurTime()
+				f = -math.Clamp(f / ghost_time, 0, 1)+1
+				f = f ^ 50
+
+				if f < 0.05 then continue end
 
 				if v == LocalPlayer() then
 					if ctp and ctp:IsEnabled() then ctp:Disable() ctp_enabled = true end
@@ -101,7 +114,7 @@ if CLIENT then
                 v.PixelVisible = v.PixelVisible or util.GetPixelVisibleHandle()
                 v.PixelVisible2 = v.PixelVisible2 or util.GetPixelVisibleHandle()
                 local Radius = v:BoundingRadius()
-                local Visi = util.PixelVisible(Pos, Radius*0.5, v.PixelVisible)
+                local Visi = util.PixelVisible(Pos, Radius*0.5, v.PixelVisible) * f
                 local Time = RealTime()
                 local Glow = math.abs(math.sin(Time))
                 local r = Radius/8
@@ -122,7 +135,7 @@ if CLIENT then
                     p:SetStartSize(math.Rand(16,32))
                     p:SetEndSize(0)
                     p:SetStartAlpha(0)
-                    p:SetEndAlpha(255)
+                    p:SetEndAlpha(255*f)
                     p:SetColor(color.medium.r, color.medium.g, color.medium.b)
                     p:SetVelocity(VectorRand()*5)
                     p:SetGravity(Vector(0,0,3))
@@ -134,8 +147,8 @@ if CLIENT then
                         p:SetLifeTime(1)
                         p:SetStartSize(math.Rand(16,32))
                         p:SetEndSize(0)
-                        p:SetStartAlpha(255)
-                        p:SetEndAlpha(255)
+                        p:SetStartAlpha(255*f)
+                        p:SetEndAlpha(255*f)
                         p:SetVelocity(VectorRand()*3)
                         p:SetGravity(Vector(0,0,math.Rand(3,5)))
                         p:SetAirResistance(30)
@@ -177,8 +190,24 @@ if CLIENT then
 
     hook.Add("RenderScreenspaceEffects",Tag,function()
 		if LocalPlayer():GetNWBool("rpg") and not LocalPlayer():Alive() then
+			local f = LocalPlayer():GetNW2Float("ghost_timer", 0) - CurTime()
+			f = -math.Clamp(f / ghost_time, 0, 1)+1
+			f = f ^ 50
+
+			local Settings = {
+				[ "$pp_colour_addr" ]       = 0,
+				[ "$pp_colour_addg" ]       = 0,
+				[ "$pp_colour_addb" ]       = 0,
+				[ "$pp_colour_brightness" ] = 0.1*f,
+				[ "$pp_colour_contrast" ]   = Lerp(f, 1, 0.8),
+				[ "$pp_colour_colour" ]     = -f+1,
+				[ "$pp_colour_mulr" ]       = 0,
+				[ "$pp_colour_mulg" ]       = 0.2*f,
+				[ "$pp_colour_mulb" ]       = 0.5*f,
+			}
+
             DrawColorModify(Settings)
-			DrawBloom( 0.25, 5, 9, 9, 1, 1, 1, 1, 1 )
+			DrawBloom( 0.8*f, 5*f, 9*f, 9*f, 1, 1, 1, 1, 1 )
         end
     end)
 
