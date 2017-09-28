@@ -2,27 +2,49 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 	if not ply:GetNWBool("rpg") then return end
 	local vel = ply:GetVelocity()
 
-	if ply:IsOnGround() and vel:Length() > 300 then
-		local seq = ply:LookupSequence("run_all_02")
-		if seq > 1 then
-			return seq, seq
+	if ply:IsOnGround() then
+		if vel:Length() > 300 then
+			local seq = ply:LookupSequence("run_all_02")
+			if seq > 1 then
+				return seq, seq
+			end
 		end
-	end
+	else
+		ply.m_bJumping = true
+		ply.m_fGroundTime = 0
 
-	if not ply:IsOnGround() and ply:Crouching() then
-		local holdtype = "all"
-		local wep = ply:GetActiveWeapon()
+		if ply:Crouching() then
+			local holdtype = "all"
+			local wep = ply:GetActiveWeapon()
 
-		if wep:IsValid() then
-			holdtype = wep:GetHoldType()
-		end
+			if wep:IsValid() then
+				holdtype = wep:GetHoldType()
+			end
 
-		-- airduck
-		local seq = ply:LookupSequence("cidle_" .. holdtype)
-		if seq < 1 then seq = ply:LookupSequence("cidle_all") end
+			-- airduck
+			local seq = ply:LookupSequence("cidle_" .. holdtype)
+			if seq < 1 then seq = ply:LookupSequence("cidle_all") end
 
-		if seq > 1 then
-			return seq, seq
+			if seq > 1 then
+				return seq, seq
+			end
+		elseif vel:Length() > 750 then
+			ply:SetCycle(0.57)
+
+			local holdtype = "all"
+			local wep = ply:GetActiveWeapon()
+
+			if wep:IsValid() then
+				holdtype = wep:GetHoldType()
+			end
+
+			local seq = ply:LookupSequence("swimming_" .. holdtype)
+
+			if seq < 1 then
+				seq = ply:LookupSequence("swimming_all")
+			end
+
+			return -1, seq
 		end
 	end
 end)
@@ -107,11 +129,14 @@ if CLIENT then
 	end
 
 	local function manip_pos(ply, id, pos)
-		if pac then
-			pac.ManipulateBonePosition(ply, id, pos)
-		else
-			ply:ManipulateBonePosition(id, pos)
+		if pos:IsZero() then
+			ply:DisableMatrix("RenderMultiply")
+			return
 		end
+
+		local m = Matrix()
+		m:Translate(pos)
+		ply:EnableMatrix("RenderMultiply", m)
 	end
 
 	local function calc_duck(ply)
@@ -187,6 +212,13 @@ if CLIENT then
 			end
 		else
 			manip_angles(ply, 0, Angle(0,0,0))
+		end
+
+
+		local vel = ply:GetVelocity()
+		if not ply:IsOnGround() and vel:Length() > 750 then
+			ply:SetPoseParameter("move_x", vel:Dot(ply:GetForward())/1000)
+			ply:SetPoseParameter("move_y", vel:Dot(ply:GetRight())/1000)
 		end
 
 		return calc_duck(ply)
