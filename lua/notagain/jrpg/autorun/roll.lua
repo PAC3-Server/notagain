@@ -103,6 +103,7 @@ end)
 hook.Add("OnPlayerHitGround", "roll", function(ply)
 	if ply:KeyDown(IN_DUCK)	then
 		ply.roll_landed = true
+		ply.roll_ang = ply:GetVelocity():Angle()
 	end
 end)
 
@@ -151,15 +152,30 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 	if can_roll(ply) then
 		if mv:KeyPressed(IN_DUCK) or ply.roll_landed then
 
-			ply.roll_landed = nil
-
 			local stamina = jattributes.GetStamina(ply)
 			if stamina < 30 then return end
 
-			if mv:KeyDown(IN_BACK) or mv:KeyDown(IN_MOVELEFT) or mv:KeyDown(IN_MOVERIGHT) or mv:KeyDown(IN_FORWARD) then
+			if ply.roll_landed then
+				local vel = mv:GetVelocity()
+				local forward = ply:GetForward():Dot(vel)
+				local right = ply:GetRight():Dot(vel)
+
+				if math.abs(right) > math.abs(forward) then
+					forward = 0
+				else
+					right = 0
+				end
+
+				mv:SetForwardSpeed(forward)
+				mv:SetSideSpeed(right)
+			end
+
+			if mv:KeyDown(IN_BACK) or mv:KeyDown(IN_MOVELEFT) or mv:KeyDown(IN_MOVERIGHT) or mv:KeyDown(IN_FORWARD) or ply.roll_landed then
 				ply.roll_ang = mv:GetAngles()
 				ply.roll_time = CurTime() + roll_time
 			end
+
+			ply.roll_landed = nil
 
 			if ply.roll_time then
 				if mv:GetForwardSpeed() > 0 then
