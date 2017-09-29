@@ -171,8 +171,10 @@ if CLIENT then
 				ply.realistic_footsteps[which] = ply.realistic_footsteps[which] or {}
 
 				ply:SetupBones()
+				local toes = true
 				local id = ply:LookupBone(which == "right" and "valvebiped.bip01_r_toe0" or "valvebiped.bip01_l_toe0")
 				if not id then
+					toes = false
 					id = ply:LookupBone(which == "right" and "valvebiped.bip01_r_foot" or "valvebiped.bip01_l_foot")
 				end
 
@@ -205,13 +207,18 @@ if CLIENT then
 				end
 
 				-- if dir is -50 this is required to check if the foot is actualy above player pos
-				if pos.z - ply:GetPos().z > 0.5*scale then
-					trace.Hit = false
+				if toes then
+					if pos.z - ply:GetPos().z > scale*2 then
+						trace.Hit = false
+					end
+				else
+					if pos.z - ply:GetPos().z > scale*7.5 then
+						trace.Hit = false
+					end
 				end
-
 				local volume = math.Clamp(vel:Length()*0.5, 0, 1)
 
-				-- debugoverlay.Line(pos, pos + dir * volume, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
+--				debugoverlay.Line(pos, pos + dir * volume, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
 
 				if trace.Hit then
 
