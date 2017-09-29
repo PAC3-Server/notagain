@@ -45,6 +45,10 @@ function jchat.Start(stop_cb)
 	end)
 
 	hook.Add("NPCSpeak", "jchat", function(npc, str)
+		if jchat.CanChat(npc) and not jchat.HasPlayer(npc) then
+			jchat.AddPlayer(npc)
+		end
+
 		if jchat.HasPlayer(npc) then
 			local str = language.GetPhrase(str)
 			if str then
@@ -181,7 +185,7 @@ do -- players
 			return false
 		end
 
-		if a:EyeAngles():Forward():Dot((apos - bpos):GetNormalized()) > 0.9 then
+		if a:IsPlayer() and a:EyeAngles():Forward():Dot((apos - bpos):GetNormalized()) > 0.9 then
 			return false
 		end
 
@@ -338,6 +342,19 @@ do -- view
 				jchat.fov_smooth = jchat.fov_target
 
 				jchat.new_angle = false
+			end
+
+			do -- trace block
+				local data = util.TraceLine({
+					start = ply:NearestPoint(jchat.pos_smooth),
+					endpos = jchat.pos_smooth,
+					filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
+					mask =  MASK_VISIBLE,
+				})
+
+				if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
+					jchat.pos_smooth = data.HitPos--Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
+				end
 			end
 
 			params.origin = jchat.pos_smooth
