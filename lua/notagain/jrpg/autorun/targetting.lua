@@ -203,18 +203,25 @@ function jtarget.SetEntity(ply, ent)
 		jtarget.select_timer = RealTime() + 1
 	end
 
-	ply:SetNW2Entity("jtarget", ent)
-
 	if CLIENT then
 		if ent:IsValid() then
 			RunConsoleCommand("jtarget_select", ent:EntIndex())
 		else
 			RunConsoleCommand("jtarget_select")
 		end
+		ply.jtarget_ent = ent
+		--ply:SetNW2Entity("jtarget", ent)
+	end
+
+	if SERVER then
+		ply:SetNW2Entity("jtarget", ent)
 	end
 end
 
 function jtarget.GetEntity(ply)
+	if LocalPlayer() == ply and ply.jtarget_ent and ply.jtarget_ent:IsValid() then
+		return ply.jtarget_ent
+	end
 	return ply:GetNW2Entity("jtarget")
 end
 

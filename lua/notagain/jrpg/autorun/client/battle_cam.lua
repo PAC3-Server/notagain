@@ -37,11 +37,13 @@ end
 
 function battlecam.IsKeyDown(key)
 	if key == "target" then
-		return input.IsButtonDown(KEY_XBUTTON_STICK2) or input.IsMouseDown(MOUSE_MIDDLE)
+		return input.IsButtonDown(KEY_XBUTTON_STICK2) or input.IsMouseDown(MOUSE_MIDDLE) or (input.IsShiftDown() and input.IsKeyDown(KEY_E))
+	elseif key == "simple_target" then
+		return input.IsKeyDown(KEY_E)
 	elseif key == "select_target_left" then
-		return input.IsButtonDown(KEY_XBUTTON_LEFT)
+		return input.IsButtonDown(KEY_XBUTTON_LEFT) or input.IsKeyDown(KEY_LEFT)
 	elseif key == "select_target_right" then
-		return input.IsButtonDown(KEY_XBUTTON_RIGHT)
+		return input.IsButtonDown(KEY_XBUTTON_RIGHT) or input.IsKeyDown(KEY_RIGHT)
 	elseif key == "select_prev_weapon" then
 		if battlecam.select_prev_weapon then
 			return true
@@ -53,7 +55,7 @@ function battlecam.IsKeyDown(key)
 		end
 		return input.IsKeyDown(KEY_DOWN) or input.IsButtonDown(KEY_XBUTTON_DOWN)
 	elseif key == "attack" then
-		return input.IsButtonDown(KEY_XBUTTON_RTRIGGER) or input.IsButtonDown(KEY_XBUTTON_LTRIGGER)
+		return input.IsButtonDown(KEY_XBUTTON_RTRIGGER) or input.IsButtonDown(KEY_XBUTTON_LTRIGGER) or input.IsKeyDown(KEY_ENTER)
 	elseif key == "shield" then
 		return input.IsButtonDown(KEY_XBUTTON_LTRIGGER) or input.IsKeyDown(KEY_LALT) or LocalPlayer():KeyDown(IN_WALK)
 	end
@@ -189,7 +191,7 @@ do -- view
 		end
 
 		-- do a more usefull and less cinematic view if we're holding ctrl
-		if battlecam.IsKeyDown("target") then
+		if battlecam.IsKeyDown("target") and not LocalPlayer():GetNWEntity("juse_ent"):IsValid() then
 			battlecam.aim_dir = ply:GetAimVector()
 			target_dir = battlecam.aim_dir * 1
 			target_pos = target_pos + battlecam.aim_dir * - 175
@@ -200,6 +202,22 @@ do -- view
 				jtarget.StartSelection()
 			end
 		else
+
+			if battlecam.IsKeyDown("simple_target") then
+				if jtarget then
+					if battlecam.last_target_select < RealTime() then
+						if jtarget.GetEntity(ply):IsValid() then
+							jtarget.SetEntity(ply, NULL)
+						else
+							jtarget.StartSelection()
+							jtarget.StopSelection()
+						end
+						battlecam.last_target_select = RealTime() + 0.15
+					end
+				end
+			end
+
+
 			if jtarget then
 				jtarget.StopSelection()
 			end
@@ -233,6 +251,7 @@ do -- view
 				smooth_visible = smooth_visible + ((-visible - smooth_visible) * delta)
 
 				target_fov = target_fov + math.Clamp(smooth_visible*50, -40, 20) - 30
+				battlecam.reset_dir = true
 			else
 				local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 240), 0, 1) ^ 10 - 0.05, 0)
 				target_pos = Lerp(inside_sphere, smooth_pos, ply:EyePos())
@@ -271,6 +290,13 @@ do -- view
 						battlecam.flip_walk = true
 						battlecam.last_flip_walk = RealTime() + 0.1
 					end
+				end
+
+
+				if battlecam.reset_dir then
+					smooth_dir = target_dir
+					print(smooth_dir)
+					battlecam.reset_dir = false
 				end
 			end
 		end
