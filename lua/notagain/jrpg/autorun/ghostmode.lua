@@ -107,11 +107,9 @@ if SERVER then
 		end
 
 		ply:SetDSP(130)
-		ply:SetNoDraw(true)
 
 		if not ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_JUMP) then
 			ply:SetMoveType(MOVETYPE_WALK)
-			--ply:SetNoDraw(false)
 			return false
 		end
 	end)
@@ -170,6 +168,12 @@ if CLIENT then
 
 	local sound
 	local windup_sound
+
+    hook.Add("PrePlayerDraw",Tag,function(ply)
+		if ply:GetNWBool("rpg") and not ply:Alive() then
+			return true
+		end
+	end)
 
     hook.Add("RenderScreenspaceEffects",Tag,function()
 
