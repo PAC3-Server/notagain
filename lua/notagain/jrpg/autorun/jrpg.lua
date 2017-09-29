@@ -49,8 +49,10 @@ if SERVER then
 	end
 
 	local function loadout(ply)
-		ply:Give("weapon_shield_scanner")
-		ply:Give("magic")
+		if gmod.GetGamemode().Name == "Sandbox" then
+			ply:Give("weapon_shield_scanner")
+			ply:Give("magic")
+		end
 	end
 
 	function jrpg.SetRPG(ply, b, cheat)

@@ -230,7 +230,7 @@ if SERVER then
 	hook.Add("PlayerLoadout", "movement", function(ply)
 		if not ply:GetNWBool("rpg") then return end
 		ply:SetRunSpeed(300)
-		ply:SetDuckTime(0.5)
-		ply:SetUnDuckTime(0.5)
+		ply:SetDuckSpeed(0.5)
+		ply:SetUnDuckSpeed(0.5)
 	end)
 end

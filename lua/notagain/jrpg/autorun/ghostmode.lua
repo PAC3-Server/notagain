@@ -80,7 +80,7 @@ if SERVER then
 			})
 
 			local rag = ply:GetRagdollEntity()
-			rag = rag:IsValid() and rag or nil
+			rag = rag and rag:IsValid() and rag or nil
 
 			if rag then
 				for i = 0, rag:GetPhysicsObjectCount() - 1 do
@@ -108,7 +108,7 @@ if SERVER then
 
 		if ply.ghost_spawn_pos then
 			local rag = ply:GetRagdollEntity()
-			rag = rag:IsValid() and rag or nil
+			rag = rag and rag:IsValid() and rag or nil
 
 			local pos =  rag and rag:GetPos() or ply.ghost_spawn_pos
 
