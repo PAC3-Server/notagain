@@ -191,7 +191,6 @@ if CLIENT then
 			end
         end
     end)
-	if LocalPlayer() ~= me then return end
 
 	local emitter = ParticleEmitter(EyePos())
 	emitter:SetNoDraw(true)
