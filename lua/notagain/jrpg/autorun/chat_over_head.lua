@@ -82,7 +82,8 @@ if CLIENT then
 	local blursize = 6
 	local shadow_size = 10
 
-	hook.Add("RenderScreenspaceEffects", "coh", function()
+	hook.Remove("RenderScreenspaceEffects", "coh")
+	hook.Add("PostDrawOpaqueRenderables", "coh", function()
 		if hook.Run("HUDShouldDraw", "ChatOverHead") == false then return end
 
 		cam.Start3D()
