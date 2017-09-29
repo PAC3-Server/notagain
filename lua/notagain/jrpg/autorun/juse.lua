@@ -6,9 +6,11 @@ if SERVER then
 			if (ply:GetInfoNum("ctp_enabled", 0) == 1 or ply:GetInfoNum("battlecam_enabled", 0) == 1) and ply:GetNWBool("rpg") then
 				local found = {}
 				for _, ent in pairs(ents.FindInSphere(ply:EyePos(), 70)) do
-					local name = ent:GetClass()
-					if (ent:IsNPC() and IsFriendEntityName(name)) or (ent:IsPlayer() and ent ~= ply) or name:find("button") or name == "func_movelinear" then
-						table.insert(found, {ent = ent, dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())})
+					if ent ~= ply then
+						local name = ent:GetClass()
+						if jrpg.IsFriend(ply, ent) or (ent:IsPlayer() and ent ~= ply) or name:find("button") or name == "func_movelinear" then
+							table.insert(found, {ent = ent, dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())})
+						end
 					end
 				end
 				if found[1] then
