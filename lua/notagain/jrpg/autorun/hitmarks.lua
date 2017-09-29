@@ -374,7 +374,7 @@ if CLIENT then
 			end
 
 			local pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2)):ToScreen()
-			local vis = ent.hm_pixvis_vis or 1
+			local vis = ent.hm_pixvis_vis or 0
 
 			if pos.visible then
 				local time = RealTime()
