@@ -155,6 +155,9 @@ do -- view
 
 	function battlecam.CalcView()
 		local ply = LocalPlayer()
+
+		if not ply:Alive() then return end
+
 		battlecam.aim_pos = ply:GetShootPos()
 		battlecam.aim_dir = (ply:EyePos() - battlecam.cam_pos):GetNormalized()
 
@@ -357,6 +360,8 @@ do
 	local last_select = 0
 
 	function battlecam.InputMouseApply(ucmd, x, y, ang)
+		if not LocalPlayer():Alive() then return end
+
 		smooth_x = smooth_x + ((x - smooth_x) * FrameTime() * 10)
 		smooth_y = smooth_y + ((y - smooth_y) * FrameTime() * 10)
 
