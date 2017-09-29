@@ -317,10 +317,12 @@ if CLIENT then
 			table.insert( tbl, "*DEAD* " )
 		end
 
-		local time = os.date("*t")
-
-		table.insert(tbl, self.Color)
-		table.insert(tbl, "Alan")
+		if self.player then
+			table.insert(tbl, self.player)
+		else
+			table.insert(tbl, self.Color)
+			table.insert(tbl, "Alan")
+		end
 		table.insert(tbl, color_white)
 		table.insert(tbl, ": " .. txt)
 
@@ -459,7 +461,7 @@ if CLIENT then
 				self.Color
 			)
 
-		local fade_mult = math.Clamp(-self:GetForward():Dot((self:GetPos() - LocalPlayer():EyePos()):GetNormalized()), 0, 1)
+		local fade_mult = math.Clamp(-self:GetForward():Dot((self:GetPos() - EyePos()):GetNormalized()), 0, 1)
 
 		if fade_mult ~= 0 then
 
@@ -554,7 +556,10 @@ if CLIENT then
 		return end
 
 		local size = self.Size * self.WingSize * 0.4
-		local ang = self:GetAngles() + Angle(0,-90,0)
+		local ang = self:GetAngles()
+		ang:RotateAroundAxis(self:GetUp(), -90)
+		--ang:RotateAroundAxis(Vector(0,0,1), -90)
+		--ang:RotateAroundAxis(Vector(1,0,0), -90)
 
 		offset = offset or 0
 		self.WingSpeed = 6.3 * (self.Hurting and 0 or 1)
@@ -677,10 +682,10 @@ if CLIENT then
 		end
 	end)
 
-	usermessage.Hook("fairy_func_call", function(umr)
-		local ent = umr:ReadEntity()
-		local func = umr:ReadString()
-		local args = glon.decode(umr:ReadString())
+	net.Receive("fairy_func_call", function()
+		local ent = net.ReadEntity()
+		local func = net.ReadString()
+		local args = net.ReadTable()
 
 		if ent:IsValid() then
 			ent[func](ent, unpack(args))
@@ -697,6 +702,7 @@ if SERVER then
 
 		self:StartMotionController()
 
+		self:GetPhysicsObject():SetMass(0.1)
 		self:GetPhysicsObject():EnableGravity(false)
 	end
 
@@ -715,9 +721,6 @@ if SERVER then
 			phys:AddVelocity(self.MovePos - phys:GetPos())
 			phys:AddVelocity(self:GetVelocity() * -0.4)
 			self.MovePos = nil
-		else
-			phys:AddVelocity(math.random() > 0.995 and VectorRand() * 100 or (phys:GetVelocity()*0.01))
-			phys:AddVelocity(self:GetVelocity() * -0.05)
 		end
 	end
 
@@ -738,12 +741,14 @@ if SERVER then
 		end)
 	end
 
+	util.AddNetworkString("fairy_func_call")
+
 	function ENT:CallClientFunction(func, ...)
-		umsg.Start("fairy_func_call")
-			umsg.Entity(self)
-			umsg.String(func)
-			umsg.String(glon.encode({...})) -- lol
-		umsg.End()
+		net.Start("fairy_func_call")
+			net.WriteEntity(self)
+			net.WriteString(func)
+			net.WriteTable({...})
+		net.Broadcast()
 	end
 
 	function ENT:OnTakeDamage(dmg)
