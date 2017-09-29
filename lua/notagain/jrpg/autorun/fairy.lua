@@ -144,7 +144,6 @@ if CLIENT then
 	end
 
 	local wing_mdl = Model("models/python1320/wing.mdl")
-	local wing_mat = Material("alan/wing")
 
 	ENT.WingSpeed = 6.3
 	ENT.FlapLength = 30
@@ -155,14 +154,14 @@ if CLIENT then
 	local function CreateEntity(mdl)
 		local ent = ClientsideModel(mdl)
 
+		ent:SetMaterial("alan/wing")
+
 		function ent:RenderOverride()
 			if self.scale then
 				local matrix = Matrix()
 				matrix:Scale(self.scale)
 				self:EnableMatrix("RenderMultiply", matrix)
 			end
-
-			render.SetMaterial(wing_mat)
 
 			render.CullMode(1)
 			self:DrawModel()
@@ -212,11 +211,6 @@ if CLIENT then
 		self.rightwing:SetNoDraw(true)
 		self.bleftwing:SetNoDraw(true)
 		self.brightwing:SetNoDraw(true)
-
-		self.leftwing:SetMaterial(wing_mat)
-		self.rightwing:SetMaterial(wing_mat)
-		self.bleftwing:SetMaterial(wing_mat)
-		self.brightwing:SetMaterial(wing_mat)
 	end
 
 	-- draw after transparent stuff
@@ -408,12 +402,12 @@ if CLIENT then
 		if self.light then
 			self.light.Pos = self:GetPos()
 
-			self.light.r = self.Color.r
-			self.light.g = self.Color.g
-			self.light.b = self.Color.b
+			self.light.r = self.Color.r/5
+			self.light.g = self.Color.g/5
+			self.light.b = self.Color.b/5
 
 			self.light.Brightness = self.Size * 1
-			self.light.Size = math.Clamp(self.Size * 512, 0, 1000)
+			self.light.Size = math.Clamp(self.Size * 512*2, 0, 1000)
 		end
 	end
 
@@ -510,7 +504,7 @@ if CLIENT then
 			local spos = pos:ToScreen()
 			DrawSunbeams(
 				0.25,
-				math.Clamp(mult * (math.Clamp(ply:GetAimVector():DotProduct((pos - eye):GetNormalized()) - 0.5, 0, 1) * 2) ^ 5, 0, 1),
+				math.Clamp(mult * (math.Clamp(EyeVector():DotProduct((pos - eye):GetNormalized()) - 0.5, 0, 1) * 2) ^ 5, 0, 1),
 				siz,
 				spos.x / ScrW(),
 				spos.y / ScrH()
@@ -564,8 +558,8 @@ if CLIENT then
 		offset = offset or 0
 		self.WingSpeed = 6.3 * (self.Hurting and 0 or 1)
 
-		local leftposition, leftangles = LocalToWorld(Vector(0, 0, 0), Angle(0,TimedSin(self.WingSpeed,self.FlapLength,0,offset), 0), self:GetPos(), ang)
-		local rightposition, rightangles = LocalToWorld(Vector(0, 0, 0), Angle(0, -TimedSin(self.WingSpeed,self.FlapLength,0,offset), 0), self:GetPos(), ang)
+		local leftposition, leftangles = LocalToWorld(Vector(0, 0, 0), Angle(0,TimedSin(self.WingSpeed,self.FlapLength*2,0,offset), 0), self:GetPos(), ang)
+		local rightposition, rightangles = LocalToWorld(Vector(0, 0, 0), Angle(0, -TimedSin(self.WingSpeed,self.FlapLength*2,0,offset), 0), self:GetPos(), ang)
 
 
 		self.leftwing:SetPos(leftposition)
@@ -574,8 +568,8 @@ if CLIENT then
 		self.leftwing:SetAngles(leftangles)
 		self.rightwing:SetAngles(rightangles)
 
-		local bleftposition, bleftangles = LocalToWorld(Vector(0, 0, -0.5), Angle(-40, TimedSin(self.WingSpeed,self.FlapLength,0,offset+math.pi)/2, 0), self:GetPos(), ang)
-		local brightposition, brightangles = LocalToWorld(Vector(0, 0, -0.5), Angle(-40, -TimedSin(self.WingSpeed,self.FlapLength,0,offset+math.pi)/2, 0), self:GetPos(), ang)
+		local bleftposition, bleftangles = LocalToWorld(Vector(0, 0, -0.5), Angle(30, TimedSin(self.WingSpeed,self.FlapLength,0,offset+math.pi)/2, 50), self:GetPos(), ang)
+		local brightposition, brightangles = LocalToWorld(Vector(0, 0, -0.5), Angle(-30, -TimedSin(self.WingSpeed,self.FlapLength,0,offset+math.pi)/2, 50), self:GetPos(), ang)
 
 		self.bleftwing:SetPos(bleftposition)
 		self.brightwing:SetPos(brightposition)
@@ -589,8 +583,8 @@ if CLIENT then
 		self.leftwing.scale = Vector(0.75,1.25,2.5)*size
 		self.rightwing.scale = Vector(0.75,1.25,2.5)*size
 
-		self.bleftwing.scale = Vector(0.5,1,2)*size
-		self.brightwing.scale = Vector(0.5,1,2)*size
+		self.bleftwing.scale = Vector(0.25,0.75,2)*size
+		self.brightwing.scale = Vector(0.25,0.75,2)*size
 
 		self.leftwing:SetupBones()
 		self.rightwing:SetupBones()
@@ -614,6 +608,9 @@ if CLIENT then
 
 		self.flap:Stop()
 		self.float:Stop()
+
+		self.light.Decay = 0
+		self.light.DieTime = 0
 	end
 
 	local B = 1
