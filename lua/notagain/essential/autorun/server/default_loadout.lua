@@ -1,3 +1,5 @@
+if gmod.GetGamemode().Name ~= "Sandbox" then return end
+
 local weps = {
 	"weapon_crowbar",
 	"weapon_physgun",
