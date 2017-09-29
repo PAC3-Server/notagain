@@ -28,17 +28,22 @@ if SERVER then
 		mv:SetVelocity(Vector(0,0,0))
 
 		if not ent.Hurting then
+			local ang = ply:EyeAngles()
+			ang.y = -ang.y
+			local aim = ang:Forward()
+
+
 			local vel = Vector(0,0,0)
 			if ply:KeyDown(IN_FORWARD) then
-				vel = ply:GetAimVector()*1
+				vel = aim*1
 			elseif ply:KeyDown(IN_BACK) then
-				vel = ply:GetAimVector()*-1
+				vel = aim*-1
 			end
 
 			if ply:KeyDown(IN_MOVELEFT) then
-				vel = ply:GetRight()*-1
+				vel = ang:Right()*1
 			elseif ply:KeyDown(IN_MOVERIGHT) then
-				vel = ply:GetRight()*1
+				vel = ang:Right()*-1
 			end
 
 			if ply:KeyDown(IN_JUMP) then
@@ -74,6 +79,16 @@ if SERVER then
 				deltatime = FrameTime(),
 			})
 
+			local rag = ply:GetRagdollEntity()
+			rag = rag:IsValid() and rag or nil
+
+			if rag then
+				for i = 0, rag:GetPhysicsObjectCount() - 1 do
+					local phys = rag:GetPhysicsObjectNum(i)
+					phys:AddVelocity((ply:GetPos() - phys:GetPos()):GetNormalized() * 0.1)
+				end
+			end
+
 		end
 
 		return true
@@ -92,11 +107,22 @@ if SERVER then
 		end
 
 		if ply.ghost_spawn_pos then
-			ply:SetPos(ply.ghost_spawn_pos)
+			local rag = ply:GetRagdollEntity()
+			rag = rag:IsValid() and rag or nil
+
+			local pos =  rag and rag:GetPos() or ply.ghost_spawn_pos
+
+			if rag then
+				for i = 0, rag:GetPhysicsObjectCount() - 1 do
+					local phys = rag:GetPhysicsObjectNum(i)
+					phys:EnableGravity(false)
+				end
+			end
 
 			local fairy = ents.Create("fairy")
-			fairy:SetPos(ply.ghost_spawn_pos)
+			fairy:SetPos(pos)
 			fairy:Spawn()
+			if fairy.CPPISetOwner then fairy:CPPISetOwner(ply) end
 
 			ply:CallOnRemove("ghost_fairy", function() SafeRemoveEntity(fairy) end)
 
@@ -143,10 +169,14 @@ if CLIENT then
 
 			if ent:IsValid() then
 				rand_ang = rand_ang + ((((VectorRand()*math.random()^5)*10) - rand_ang) * FrameTime()*0.1)
+				local ang = ply:EyeAngles()
+				ang.y = -ang.y
+				local aim = ang:Forward()
+
 				return {
-					origin = ent:EyePos() + ply:GetAimVector() * -100,
+					origin = ent:EyePos() + aim * -100,
 					fov = 50,
-					angles = ply:EyeAngles() + Angle(rand_ang.x, rand_ang.y, rand_ang.z)*5,
+					angles = ang + Angle(rand_ang.x, rand_ang.y, rand_ang.z)*5,
 				}
 			end
 		end
@@ -154,15 +184,15 @@ if CLIENT then
 
     hook.Add("OnPlayerChat",Tag,function(ply, txt)
         if ply:GetNWBool("rpg") and not ply:Alive() then
-            --chat.AddText(Color(130, 162, 214),"[Ghost-",ply,Color(130, 162, 214),"]",Color(255,255,255),": "..txt)
 			local ent = ply:GetNW2Entity("ghost_fairy")
 			if ent:IsValid() then
 				ent.player = ply
 				ent:PlayPhrase(txt)
 			end
-            --return true
         end
     end)
+	if LocalPlayer() ~= me then return end
+
 	local emitter = ParticleEmitter(EyePos())
 	emitter:SetNoDraw(true)
 
@@ -175,8 +205,39 @@ if CLIENT then
 		end
 	end)
 
-    hook.Add("RenderScreenspaceEffects",Tag,function()
 
+	local temp_mat = CreateMaterial("fairy_mirror" .. os.clock(), "UnlitGeneric", {
+		["$BaseTexture"] = render.GetScreenEffectTexture(),
+		["$VertexAlpha"] = 0,
+		["$VertexColor"] = 0,
+	})
+
+    hook.Add("RenderScene",Tag,function(pos, ang, fov)
+		local ply = LocalPlayer()
+		if ply:GetNWBool("rpg") and not ply:Alive() then
+			local ent = ply:GetNW2Entity("ghost_fairy")
+			if ent:IsValid() then
+
+				render.RenderView({
+					drawhud = false,
+					drawmonitors = true,
+					dopostprocess = true,
+					drawviewmodel = true,
+				})
+
+				cam.Start2D()
+					temp_mat:SetTexture("$basetexture", render.GetScreenEffectTexture())
+					surface.SetMaterial(temp_mat)
+					surface.DrawTexturedRectUV(0,0,ScrW(),ScrH(),1,0,0,1)
+					hook.GetTable().RenderScreenspaceEffects.fairy_sunbeams() -- :(
+				cam.End2D()
+
+				return true
+			end
+		end
+	end)
+
+    hook.Add("RenderScreenspaceEffects",Tag,function()
 		for _, ply in ipairs(player.GetAll()) do
 			if not ply:GetNWBool("rpg") then continue end
 
@@ -206,12 +267,18 @@ if CLIENT then
 
 			sound:ChangeVolume(f^5)
 
+			if f == 1 then
+				cam.Start3D()
+					emitter:Draw()
+				cam.End3D()
+			end
+
 			DrawToyTown(2*f, 500)
 
 			windup_sound = windup_sound or CreateSound(LocalPlayer(), "ambient/levels/labs/teleport_mechanism_windup5.wav")
 			windup_sound:PlayEx(1, 255)
 			windup_sound:ChangeVolume(f)
-			windup_sound:ChangePitch(100 + f*255)
+			windup_sound:ChangePitch(math.min(100 + f*255, 255))
 
 			if f == 1 then
 				windup_sound:Stop()
@@ -238,8 +305,8 @@ if CLIENT then
 
 			DrawSharpen( math.sin(RealTime()*5+math.random()*0.1)*10*f, 0.1*f )
 
-			for i = 1, 25 do
-				local particle = emitter:Add("particle/Particle_Glow_05", LocalPlayer():EyePos() + VectorRand() * 500)
+			for i = 1, 5 do
+				local particle = emitter:Add("particle/Particle_Glow_05", EyePos() + VectorRand() * 500)
 				if particle then
 					local col = HSVToColor(math.random()*30, 0.1, 1)
 					particle:SetColor(col.r, col.g, col.b, 266)
@@ -247,6 +314,7 @@ if CLIENT then
 					particle:SetVelocity(VectorRand() )
 
 					particle:SetDieTime((math.random()+4)*3)
+					--particle:SetDieTime(0.5)
 					particle:SetLifeTime(0)
 
 					local size = 1
@@ -259,7 +327,7 @@ if CLIENT then
 					particle:SetEndAlpha(255)
 
 					particle:SetStartLength(particle:GetStartSize())
-					particle:SetEndLength(50)
+					particle:SetEndLength(math.random(50,250))
 
 					--particle:SetRollDelta(math.Rand(-1,1)*20)
 					particle:SetAirResistance(500)
@@ -267,9 +335,8 @@ if CLIENT then
 				end
 			end
 
-			emitter:Draw()
-
 			DrawBloom( 0.6, 1.2*f, 11.21, 9, 2, 1.96, 1, 1, 1)
+			DrawMotionBlur(math.sin(RealTime()*10)*0.2 + 0.4, 0.5*f, 0)
 		else
 			if sound then
 				sound:Stop()
