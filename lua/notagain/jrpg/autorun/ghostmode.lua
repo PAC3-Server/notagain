@@ -318,7 +318,7 @@ if CLIENT then
 			DrawSharpen( math.sin(RealTime()*5+math.random()*0.1)*10*f, 0.1*f )
 
 			for i = 1, 5 do
-				local particle = emitter:Add("particle/Particle_Glow_05", EyePos() + VectorRand() * 500)
+				local particle = emitter:Add("particle/fire", EyePos() + VectorRand() * 500)
 				if particle then
 					local col = HSVToColor(math.random()*30, 0.1, 1)
 					particle:SetColor(col.r, col.g, col.b, 266)
@@ -332,7 +332,7 @@ if CLIENT then
 					local size = 1
 
 					particle:SetAngles(AngleRand())
-					particle:SetStartSize((math.random()+1)*8)
+					particle:SetStartSize(1)
 					particle:SetEndSize(0)
 
 					particle:SetStartAlpha(0)
