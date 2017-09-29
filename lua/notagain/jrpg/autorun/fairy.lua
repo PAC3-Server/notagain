@@ -119,7 +119,9 @@ if CLIENT then
 			self.Laughing = true
 		end
 
-		function ENT:Ouch()
+		function ENT:Ouch(time)
+			time = time or 0
+
 			local path = "alan/nymph/NymphHit_0"..math.random(4)..".wav"
 			local pitch = math.random(95,105)
 
@@ -128,7 +130,7 @@ if CLIENT then
 			-- make the fairy hurt for about 1-2 seconds
 			self.Hurting = true
 
-			timer.Simple(math.Rand(1,2), function()
+			timer.Simple(time, function()
 				if self:IsValid() then
 					self.Hurting = false
 				end
@@ -749,8 +751,17 @@ if SERVER then
 	end
 
 	function ENT:OnTakeDamage(dmg)
-		self:EnableGravity(math.Rand(1,2))
-		self:CallClientFunction("Ouch")
+		local time = math.Rand(1,2)
+		self:EnableGravity(time)
+		self:CallClientFunction("Ouch", time)
+
+		self.Hurting = true
+
+		timer.Simple(time, function()
+			if self:IsValid() then
+				self.Hurting = false
+			end
+		end)
 
 		local phys = self:GetPhysicsObject()
 		phys:AddVelocity(dmg:GetDamageForce())
@@ -773,8 +784,9 @@ if SERVER then
 		end
 
 		if data.Speed > 50 and data.DeltaTime > 0.2 then
-			self:EnableGravity(math.Rand(0.5,1))
-			self:CallClientFunction("Ouch")
+			local time = math.Rand(0.5,1)
+			self:EnableGravity(time)
+			self:CallClientFunction("Ouch", time)
 			self:CallClientFunction("Bounce")
 			self.follow_ent = NULL
 		end
