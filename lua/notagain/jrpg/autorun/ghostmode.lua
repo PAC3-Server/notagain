@@ -27,7 +27,7 @@ if SERVER then
 		mv:SetOrigin(ent:GetPos())
 		mv:SetVelocity(Vector(0,0,0))
 
-		if not ent.Hurting then
+		if not ent.GravityOn then
 			local ang = ply:EyeAngles()
 			ang.y = -ang.y
 			local aim = ang:Forward()
@@ -51,7 +51,7 @@ if SERVER then
 			end
 
 			if ply:KeyDown(IN_SPEED) then
-				vel = vel * 2
+				vel = vel * 5
 			end
 
 			if ply:KeyDown(IN_DUCK) then
