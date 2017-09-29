@@ -126,8 +126,19 @@ do -- players
 			end
 
 			jchat.players[ply] = nil
+			ply.jchat_was_active = nil
 
-			if ply == LocalPlayer() or (table.Count(jchat.players) == 1 and next(jchat.players) == LocalPlayer()) then
+			local anyone_active = false
+
+			for ply in pairs(jchat.GetPlayers()) do
+				if ply.jchat_was_active then
+					jchat.SetActivePlayer(ply)
+					anyone_active = true
+					break
+				end
+			end
+
+			if not anyone_active or ply == LocalPlayer() or (table.Count(jchat.players) == 1 and next(jchat.players) == LocalPlayer()) then
 				jchat.Stop()
 			end
 		end
@@ -136,6 +147,7 @@ do -- players
 	function jchat.SetActivePlayer(ply)
 		if jchat.HasPlayer(ply) then
 			jchat.active_player = ply
+			ply.jchat_was_active = true
 		end
 	end
 
