@@ -173,8 +173,21 @@ if CLIENT then
 				ang.y = -ang.y
 				local aim = ang:Forward()
 
+				local pos = ent:GetPos() + aim * -100
+
+				local data = util.TraceLine({
+					start = ent:GetPos(),
+					endpos = pos,
+					filter = ents.FindInSphere(ent:GetPos(), ent:BoundingRadius()),
+					mask =  MASK_VISIBLE,
+				})
+
+				if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
+					pos = data.HitPos + aim * 5
+				end
+
 				return {
-					origin = ent:EyePos() + aim * -100,
+					origin = pos,
 					fov = 50,
 					angles = ang + Angle(rand_ang.x, rand_ang.y, rand_ang.z)*5,
 				}
