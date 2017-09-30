@@ -404,12 +404,12 @@ if CLIENT then
 		if self.light then
 			self.light.Pos = self:GetPos()
 
-			self.light.r = self.Color.r/5
-			self.light.g = self.Color.g/5
-			self.light.b = self.Color.b/5
+			self.light.r = self.Color.r/8
+			self.light.g = self.Color.g/8
+			self.light.b = self.Color.b/8
 
-			self.light.Brightness = self.Size * 1
-			self.light.Size = math.Clamp(self.Size * 512*2, 0, 1000)
+			self.light.Brightness = self.Size * 0.5
+			self.light.Size = math.Clamp(self.Size * 512/2, 0, 1000)
 		end
 	end
 
