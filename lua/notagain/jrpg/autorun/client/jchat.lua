@@ -420,12 +420,13 @@ do -- view
 			name = (jrpg and jrpg.GetFriendlyName(ent) or ent:Nick())
 		end
 
-		local font_size = 60
+		local mult = ScrW() / 1920
+		local font_size = 60*mult
 		local font_weight = 100
 		local y = 0
 
 		if not jchat.wrapped_message then
-			prettytext.GetTextSize("", "Square721 BT", font_size, font_weight, 3, 31)
+			prettytext.GetTextSize("", "Square721 BT", font_size, font_weight, 4*mult, 31*mult)
 			jchat.wrapped_message = string_wrapwords(jchat.message, ScrW() - 350)
 		end
 
@@ -439,18 +440,18 @@ do -- view
 
 		do
 			local y = y
-			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 4, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 31)
+			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 4*mult, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 31*mult)
 
 			surface.SetDrawColor(0, 0, 0, 255)
-			surface.DrawRect(0 - 3, y - 3 + 5, w + x + 10 + 6, 3 + 6)
+			surface.DrawRect(0 - 3 * mult, y - (3 + 5) * mult, w + x + (10 + 6) * mult, (3 + 6) * mult )
 
 			surface.SetDrawColor(170, 170, 170, 255)
-			surface.DrawRect(0, y + 5, w + x + 10, 3)
+			surface.DrawRect(0, y - 5 * mult, w + x + (10 * mult), 3 * mult)
 		end
 
 		local y = y
 		for _, str in ipairs(jchat.wrapped_message) do
-			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 4, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 31)
+			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 4*mult, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 31*mult)
 			y = y + font_size
 		end
 	end
@@ -482,6 +483,8 @@ do
 	local self_chat = false
 
 	hook.Add("ChatTextChanged", "jchat", function()
+		jchat.show_chat = true
+
 		if jchat.IsActive() then return end
 		if not battlecam.IsEnabled() then return end
 
@@ -491,15 +494,17 @@ do
 
 		battlecam.Disable()
 		self_chat = true
-		jchat.show_chat = true
 	end)
 
 	hook.Add("FinishChat", "jchat", function()
+		timer.Simple(0, function()
+			jchat.show_chat = nil
+		end)
+
 		if not jchat.IsActive() then return end
 		if not self_chat then return end
 
 		jchat.Stop()
-		jchat.show_chat = nil
 
 		self_chat = false
 	end)
