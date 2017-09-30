@@ -165,6 +165,10 @@ do -- players
 			return false
 		end
 
+		if not jrpg.IsFriend(a) then
+			return false
+		end
+
 		local b = LocalPlayer()
 
 		if b:GetVelocity():Length() > 300 then
