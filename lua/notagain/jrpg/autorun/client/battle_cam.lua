@@ -36,7 +36,9 @@ for i = 1, 256 do
 end
 
 function battlecam.IsKeyDown(key)
-	if key == "target_selection" then
+	if key == "correct_cam" then
+		return input.IsKeyDown(KEY_C)
+	elseif key == "target_selection" then
 		return input.IsShiftDown() and input.IsKeyDown(KEY_E)
 	elseif key == "simple_target" then
 		return input.IsButtonDown(KEY_XBUTTON_STICK2) or input.IsMouseDown(MOUSE_MIDDLE) or input.IsKeyDown(KEY_E)
@@ -190,7 +192,6 @@ do -- view
 			end
 		end
 
-
 		if battlecam.IsKeyDown("simple_target") and not LocalPlayer():GetNWEntity("juse_ent"):IsValid() then
 			if jtarget then
 				if battlecam.last_target_select < RealTime() then
@@ -202,17 +203,9 @@ do -- view
 					end
 					battlecam.last_target_select = RealTime() + 0.15
 				end
-
-				if not jtarget.GetEntity(ply):IsValid() then
-					battlecam.aim_dir = ply:GetAimVector()
-					target_dir = battlecam.aim_dir * 1
-					target_pos = target_pos + battlecam.aim_dir * - 175
-
-					delta = delta * 2
-				end
 			end
-		else
-
+		end
+		if true then
 			-- do a more usefull and less cinematic view if we're holding ctrl
 			if battlecam.IsKeyDown("target_selection") then
 				if jtarget then
@@ -272,7 +265,9 @@ do -- view
 
 
 					do -- trace block
-						local data = util.TraceLine({
+						local data = util.TraceHull({
+							mins = Vector(1,1.1)*-10,
+							maxs = Vector(1,1.1)*10,
 							start = ply:NearestPoint(smooth_pos),
 							endpos = smooth_pos,
 							filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
@@ -300,6 +295,17 @@ do -- view
 						battlecam.reset_dir = false
 					end
 				end
+			end
+		end
+
+
+		if battlecam.IsKeyDown("correct_cam") then
+			if not jtarget.GetEntity(ply):IsValid() then
+				battlecam.aim_dir = ply:GetAimVector()
+				target_dir = battlecam.aim_dir * 1
+				target_pos = target_pos + battlecam.aim_dir * - 175
+
+				delta = delta * 2
 			end
 		end
 
@@ -492,7 +498,7 @@ do
 
 		local ent = jtarget.GetEntity(ply)
 
-		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and (not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) then
+		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and (not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) and not battlecam.IsKeyDown("correct_cam") then
 
 			local dir = Vector()
 			local pos = ply:GetPos()
