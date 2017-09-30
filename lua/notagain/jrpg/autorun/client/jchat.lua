@@ -59,6 +59,7 @@ function jchat.Start(stop_cb)
 	end)
 
 	hook.Add("OnPlayerChat", "jchat", function(ply, str)
+		if not ply:IsValid() then return end
 		if jchat.HasPlayer(ply) then
 			jchat.PlayerSay(ply, str)
 		end
