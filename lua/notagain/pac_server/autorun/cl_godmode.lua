@@ -241,7 +241,7 @@ if SERVER then
 		if suppress then return end
 
 		if IsPlayer(ply) and ply.GetInfo then
-			if ply.haltgodmode or ply:GetNWBool("rpg") then return end
+			if ply.haltgodmode or (ply:GetNWBool("rpg") and not ply.rpg_cheat) then return end
 
 			local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
 			if GodCheck(ply, dmginfo, actor) then
