@@ -2,7 +2,7 @@ jtarget = jtarget or {}
 jtarget.scroll_dir = 0
 
 if CLIENT then
-	function jtarget.GetTargetsOnScreen(prev_target, friends_only)
+	function jtarget.GetTargetsOnScreen(prev_target)
 		local ply = LocalPlayer()
 		local found_left = {}
 		local found_right = {}
@@ -13,7 +13,7 @@ if CLIENT then
 			if
 				(not val.Alive or (val:Alive() and not val.jtarget_probably_dead)) and
 				(val:IsNPC() or (val:IsPlayer() and val ~= ply)) and
-				((friends_only and jrpg.IsFriend(val)) or (not friends_only and not jrpg.IsFriend(val))) and
+				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
 				val ~= prev_target and
 				not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
 			then
@@ -44,7 +44,7 @@ if CLIENT then
 		local ply = LocalPlayer()
 		local prev_target = jtarget.GetEntity(ply)
 		jtarget.prev_target = prev_target
-		local targets = jtarget.GetTargetsOnScreen(prev_target:IsValid() and prev_target, input.IsKeyDown(KEY_LSHIFT))
+		local targets = jtarget.GetTargetsOnScreen(prev_target:IsValid() and prev_target)
 
 		if delta > 0 then
 			if delta > #targets.right then
@@ -147,7 +147,7 @@ if CLIENT then
 --				offset = f*180*-jtarget.scroll_dir
 			end
 
-			local targets = jtarget.GetTargetsOnScreen(current_target, input.IsKeyDown(KEY_LSHIFT))
+			local targets = jtarget.GetTargetsOnScreen(current_target)
 
 			local pos = current_target:NearestPoint(current_target:WorldSpaceCenter() + Vector(0,0,100))
 			pos = pos:ToScreen()
@@ -177,12 +177,14 @@ if CLIENT then
 		end
 	end
 
-	function jtarget.StartSelection()
+	function jtarget.StartSelection(friends_only)
 		if jtarget.selecting then return end
 
 		jtarget.selecting = true
 		jtarget.Scroll(1)
 		jtarget.Scroll(-1)
+		jtarget.friends_only = friends_only
+
 		hook.Add("HUDShouldDraw", "jtarget", function(what)
 			if what == "JHitmarkers" and jtarget.GetEntity(LocalPlayer()):IsValid() then
 				return false
@@ -193,6 +195,10 @@ if CLIENT then
 	function jtarget.StopSelection()
 		jtarget.selecting = false
 		hook.Remove("HUDShouldDraw", "jtarget")
+	end
+
+	function jtarget.IsSelecting()
+		return jtarget.selecting
 	end
 
 	hook.Add("HUDPaint", "jtarget", jtarget.DrawSelection)
