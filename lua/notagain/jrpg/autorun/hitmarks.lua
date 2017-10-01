@@ -88,7 +88,7 @@ if CLIENT then
 	end
 
 
-	local gradient = Material("gui/gradient_up")
+	local gradient = Material("gui/gradient_down")
 	local border = CreateMaterial(tostring({}), "UnlitGeneric", {
 		["$BaseTexture"] = "props/metalduct001a",
 		["$VertexAlpha"] = 1,
@@ -104,7 +104,7 @@ if CLIENT then
 
 		surface.SetMaterial(gradient)
 
-		surface.SetDrawColor(color.r, color.g, color.b, 255*fade)
+		surface.SetDrawColor(color.r, color.g, color.b, color.a * fade)
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew)
 		end
@@ -257,8 +257,14 @@ if CLIENT then
 				ent.hm_pixvis = ent.hm_pixvis or util.GetPixelVisibleHandle()
 				ent.hm_pixvis_vis = util.PixelVisible(world_pos, ent:BoundingRadius(), ent.hm_pixvis)
 				local vis = ent.hm_pixvis_vis
+				local selected_target = jtarget.GetEntity(LocalPlayer()) == ent
 
-				if pos.visible and dist < max_distance and fraction > 0 then
+				if selected_target then
+					vis = 1
+					fraction = 1
+				end
+
+				if pos.visible and dist < max_distance and fraction > 0 or selected_target then
 					local cur = ent.hm_cur_health or ent:Health()
 					local max = ent.hm_max_health or ent:GetMaxHealth()
 					local last = ent.hm_last_health or max
@@ -374,9 +380,12 @@ if CLIENT then
 			end
 
 			local pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2)):ToScreen()
-			local vis = ent.hm_pixvis_vis or 0
+			local vis = ent.hm_pixvis_vis or ent == LocalPlayer() and 1 or 0
 
 			if pos.visible then
+				local y_offset = 0
+				if ent == LocalPlayer() then y_offset = 50 end
+
 				local time = RealTime()
 
 				if data.time > time then
@@ -392,20 +401,20 @@ if CLIENT then
 					local fg
 
 					if ent == ply or jrpg.IsFriend(ent) then
-						fg = Color(200, 220, 255, 255 * fade)
-						bg = Color(25, 75, 150, 255 * fade)
+						fg = Color(255, 255, 255, 220 * fade)
+						bg = Color(25, 100, 130, 50 * fade)
 					else
-						fg = Color(255, 220, 200, 255 * fade)
-						bg = Color(200, 50, 25, 255)
+						fg = Color(255, 255, 255, 220 * fade)
+						bg = Color(150, 50, 50, 50)
 					end
 
-					local border = 20
-					local scale_h = 0.25
+					local border = 15
+					local scale_h = 0.2
 
 					local border = border
-					draw_weapon_info(x - border, y - border*scale_h, w + border*2, h + border*2*scale_h, bg, fade)
+					draw_weapon_info(x - border, y - border*scale_h + y_offset, w + border*2, h + border*2*scale_h, bg, fade)
 
-					prettytext.Draw(data.name, x, y, "Square721 BT", 25, 1000, 3, fg, bg)
+					prettytext.Draw(data.name, x, y + y_offset + 1, "Square721 BT", 25, 1000, 3, fg, bg)
 				else
 					table.remove(weapon_info, i)
 				end
@@ -616,7 +625,7 @@ if CLIENT then
 		end
 
 		for _, ent in pairs(ents.FindInSphere(ply:GetPos(), 1000)) do
-			if ent:IsNPC() then
+			if ent:IsNPC() or ent:IsPlayer() then
 				local wep = ent:GetActiveWeapon()
 				local name
 
@@ -811,5 +820,7 @@ if SERVER then
 		end
 	end)
 end
+
+if LocalPlayer():IsValid() then hitmarkers.ShowAttack(me, "Blitz") end
 
 return hitmarkers
