@@ -39,7 +39,21 @@ function battlecam.IsKeyDown(key)
 	if key == "correct_cam" then
 		return input.IsKeyDown(KEY_C)
 	elseif key == "target_selection" then
-		return input.IsShiftDown() and input.IsKeyDown(KEY_E)
+		if input.IsKeyDown(KEY_E) then
+			if not battlecam.target_select then
+
+				if battlecam.last_target_selection and battlecam.last_target_selection > RealTime() then
+					return true
+				end
+
+				battlecam.last_target_selection = RealTime() + 0.25
+
+				battlecam.target_select = true
+			end
+		else
+			battlecam.target_select = false
+		end
+		return false
 	elseif key == "simple_target" then
 		return input.IsButtonDown(KEY_XBUTTON_STICK2) or input.IsMouseDown(MOUSE_MIDDLE) or input.IsKeyDown(KEY_E)
 	elseif key == "select_target_left" then
@@ -209,13 +223,13 @@ do -- view
 		if true then
 			-- do a more usefull and less cinematic view if we're holding ctrl
 			if battlecam.IsKeyDown("target_selection") then
-				if jtarget then
-					jtarget.StartSelection()
-				end
+				print("start selection", os.clock())
+				jtarget.StartSelection()
 			else
-				if jtarget then
-					jtarget.StopSelection()
-				end
+				--jtarget.StopSelection()
+			end
+
+			if true then
 
 				local ent = jtarget.GetEntity(ply)
 
