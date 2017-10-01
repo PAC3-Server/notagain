@@ -206,24 +206,24 @@ do -- view
 			end
 		end
 
-		if battlecam.IsKeyDown("simple_target") and not LocalPlayer():GetNWEntity("juse_ent"):IsValid() then
-			if jtarget then
-				if battlecam.last_target_select < RealTime() then
-					if jtarget.GetEntity(ply):IsValid() then
-						jtarget.SetEntity(ply, NULL)
-					else
-						jtarget.StartSelection()
-						jtarget.StopSelection()
-					end
-					battlecam.last_target_select = RealTime() + 0.15
+		if battlecam.IsKeyDown("simple_target") and not LocalPlayer():GetNWEntity("juse_ent"):IsValid() or (jtarget.IsSelecting() and input.IsKeyDown(KEY_ENTER)) then
+			if jtarget.IsSelecting() then
+				jtarget.StopSelection()
+				battlecam.last_target_select = RealTime() + 0.15
+			elseif battlecam.last_target_select < RealTime() then
+				if jtarget.GetEntity(ply):IsValid() then
+					jtarget.SetEntity(ply, NULL)
+				else
+					jtarget.StartSelection(input.IsKeyDown(KEY_LSHIFT))
+					jtarget.StopSelection()
 				end
+				battlecam.last_target_select = RealTime() + 0.15
 			end
 		end
 
 		if true then
 			-- do a more usefull and less cinematic view if we're holding ctrl
 			if battlecam.IsKeyDown("target_selection") then
-				print("start selection", os.clock())
 				jtarget.StartSelection()
 			else
 				--jtarget.StopSelection()

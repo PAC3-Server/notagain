@@ -74,6 +74,8 @@ if CLIENT then
 	local last_str
 
 	hook.Add("HUDPaint", "juse", function()
+		if jtarget.GetEntity(LocalPlayer()):IsValid() then return end
+
 		local ent = LocalPlayer():GetNWEntity("juse_ent")
 
 		if ent:IsPlayer() or ent:IsNPC() then
