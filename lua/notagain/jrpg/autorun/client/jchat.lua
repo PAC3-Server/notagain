@@ -122,6 +122,8 @@ do -- players
 				return
 			end
 
+			ply:CallOnRemove("jchat", function() jchat.RemovePlayer(ply) end)
+
 			jchat.players[ply] = ply
 		end
 

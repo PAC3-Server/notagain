@@ -8,7 +8,7 @@ if SERVER then
 				for _, ent in pairs(ents.FindInSphere(ply:EyePos(), 70)) do
 					if ent ~= ply then
 						local name = ent:GetClass()
-						if jrpg.IsFriend(ply, ent) or (ent:IsPlayer() and ent ~= ply) or name:find("button") or name == "func_movelinear" then
+						if jrpg.IsFriend(ply, ent) and ent ~= ply and (ent:IsPlayer() or ent:IsNPC() or name:find("button") or name == "func_movelinear") then
 							table.insert(found, {ent = ent, dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())})
 						end
 					end
