@@ -205,6 +205,7 @@ do -- view
 				end
 			end
 		end
+
 		if true then
 			-- do a more usefull and less cinematic view if we're holding ctrl
 			if battlecam.IsKeyDown("target_selection") then
@@ -220,7 +221,6 @@ do -- view
 
 				if ent:IsValid() then
 					local enemy_size = math.min(ent:BoundingRadius() * (ent:GetModelScale() or 1), 200)
-
 					local ply_pos = ply:EyePos()
 
 					local dist = math.min((enemy_size/4)/ent:NearestPoint(ply:GetPos()):Distance(ply:NearestPoint(ent:GetPos())), 1)
@@ -235,10 +235,10 @@ do -- view
 					offset.z = p
 
 
-					target_pos = (LerpVector(0.5, ply_pos, ent_pos) - offset/2) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-500))
+					target_pos = (LerpVector(0 or 0.5, ply_pos, ent_pos) - offset/2) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-500))
 
 					lerp_thing = (((target_pos:Distance(ent_pos) - target_pos:Distance(ply_pos)) / offset:Length()) / 1.5) * 0.5 + 0.5
-					target_dir = (LerpVector(lerp_thing, ent_pos, ply_pos) - target_pos)
+					target_dir = (LerpVector(0 or lerp_thing, ent_pos, ply_pos) - target_pos)
 
 					local visible = (battlecam.player_visibility * battlecam.enemy_visibility) * 2 - 1
 
@@ -247,6 +247,9 @@ do -- view
 					target_fov = target_fov + math.Clamp(smooth_visible*50, -40, 20) - 30
 					battlecam.reset_dir = true
 				else
+					battlecam.active_target_dist = nil
+					battlecam.active_target_campos = nil
+
 					local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 240), 0, 1) ^ 10 - 0.05, 0)
 					target_pos = Lerp(inside_sphere, smooth_pos, ply:EyePos())
 
@@ -290,22 +293,12 @@ do -- view
 
 
 					if battlecam.reset_dir then
-						smooth_dir = target_dir
-						print(smooth_dir)
+						battlecam.aim_dir = ply:EyeAngles():Forward()
+						smooth_dir = battlecam.aim_dir * 1
+						smooth_pos = ply:EyePos() + battlecam.aim_dir * - 175
 						battlecam.reset_dir = false
 					end
 				end
-			end
-		end
-
-
-		if battlecam.IsKeyDown("correct_cam") then
-			if not jtarget.GetEntity(ply):IsValid() then
-				battlecam.aim_dir = ply:GetAimVector()
-				target_dir = battlecam.aim_dir * 1
-				target_pos = target_pos + battlecam.aim_dir * - 175
-
-				delta = delta * 2
 			end
 		end
 
@@ -315,9 +308,18 @@ do -- view
 		smooth_fov = smooth_fov + ((target_fov - smooth_fov) * delta * battlecam.cam_speed)
 		smooth_roll = smooth_roll + ((target_roll - smooth_roll) * delta * battlecam.cam_speed)
 
-		if jtarget.GetEntity(ply):IsValid() then
+
+		if battlecam.IsKeyDown("correct_cam") or battlecam.reset_dir then
+			if not jtarget.GetEntity(ply):IsValid() then
+				battlecam.aim_dir = ply:EyeAngles():Forward()
+				smooth_dir = battlecam.aim_dir * 1
+				smooth_pos = ply:EyePos() + battlecam.aim_dir * - 175
+			end
+		end
+
+		if not jtarget.GetEntity(ply):IsValid() then
 			local data = util.TraceLine({
-				start = ply:NearestPoint(smooth_pos),
+				start = ply:EyePos(),
 				endpos = smooth_pos,
 				filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
 				mask =  MASK_VISIBLE,
