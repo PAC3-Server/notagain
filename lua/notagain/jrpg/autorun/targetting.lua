@@ -11,7 +11,7 @@ if CLIENT then
 		local ents = ents.FindInSphere(EyePos(), 1000)
 		for _, val in ipairs(ents) do
 			if
-				(not val:IsNPC() or not val.jtarget_probably_dead) and
+				(not val.Alive or (val:Alive() and not val.jtarget_probably_dead)) and
 				(val:IsNPC() or (val:IsPlayer() and val ~= ply)) and
 				((friends_only and jrpg.IsFriend(val)) or (not friends_only and not jrpg.IsFriend(val))) and
 				val ~= prev_target and
@@ -116,7 +116,12 @@ if CLIENT then
 				local pos = current_target:WorldSpaceCenter()
 				pos = pos:ToScreen()
 				if true or pos.Visible then
-					surface.SetDrawColor(255, 255, 255, 255)
+
+					if jrpg.IsFriend(current_target) then
+						surface.SetDrawColor(team.GetColor(TEAM_FRIENDS))
+					else
+						surface.SetDrawColor(team.GetColor(TEAM_PLAYERS))
+					end
 					surface.SetMaterial(ring_mat)
 					surface.DrawTexturedRectRotated(pos.x, pos.y, size, size, os.clock()*10)
 				end
@@ -264,7 +269,7 @@ if CLIENT then
 			local ent = jtarget.GetEntity(LocalPlayer())
 
 			for _, val in ipairs(ents.FindInSphere(ent:GetPos(), 500)) do
-				if val:GetRagdollOwner() == ent then
+				if val:IsNPC() and val:GetRagdollOwner() == ent then
 					jtarget.SetEntity(LocalPlayer())
 					jtarget.StartSelection()
 					ent.jtarget_probably_dead = true
