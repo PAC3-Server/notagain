@@ -4,7 +4,7 @@ aowl.AddCommand("weather=string,number[1]",function(ply,line,weather,intensity)
     if StormFox then
         local valids = {}
         for _,type in ipairs(StormFox.GetWeathers()) do
-            valids[string.lower(type)] = true
+            valids[type] = true
         end
         weather = string.lower(weather)
         if valids[weather] then
