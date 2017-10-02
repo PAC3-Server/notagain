@@ -446,7 +446,7 @@ do -- view
 
 		do
 			local y = y
-			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 4*mult, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 31*mult)
+			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 4*mult, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 10*mult)
 
 			surface.SetDrawColor(0, 0, 0, 255)
 			surface.DrawRect(0 - 3 * mult, y - (3 + 5) * mult, w + x + (10 + 6) * mult, (3 + 6) * mult )
@@ -457,7 +457,7 @@ do -- view
 
 		local y = y
 		for _, str in ipairs(jchat.wrapped_message) do
-			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 4*mult, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 31*mult)
+			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 4*mult, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 5*mult)
 			y = y + font_size
 		end
 	end
