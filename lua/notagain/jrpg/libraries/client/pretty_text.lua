@@ -63,13 +63,13 @@ local ColorToHSV = ColorToHSV
 local HSVToColor = HSVToColor
 local TEXFILTER_LINEAR = TEXFILTER.LINEAR
 
-local cam_PushModelMatrix = cam_PushModelMatrix
-local render_PushFilterMag = render_PushFilterMag
-local render_PushFilterMin = render_PushFilterMin
+local cam_PushModelMatrix = cam.PushModelMatrix
+local render_PushFilterMag = render.PushFilterMag
+local render_PushFilterMin = render.PushFilterMin
 
-local cam_PopModelMatrix = cam_PopModelMatrix
-local render_PopFilterMag = render_PopFilterMag
-local render_PopFilterMin = render_PopFilterMin
+local cam_PopModelMatrix = cam.PopModelMatrix
+local render_PopFilterMag = render.PopFilterMag
+local render_PopFilterMin = render.PopFilterMin
 
 local hsv_cache = {}
 
@@ -216,7 +216,11 @@ function prettytext.DrawText(tbl)
 	end
 
 	if tbl.shadow_x or tbl.shadow_y then
-		surface_SetTextColor(0, 0, 0, 255)
+		if tbl.shadow_color then
+			surface_SetTextColor(tbl.shadow_color)
+		else
+			surface_SetTextColor(0, 0, 0, 255)
+		end
 
 		local shadow_x = x + (tbl.shadow_x or tbl.shadow_y)
 		local shadow_y = y + (tbl.shadow_y or tbl.shadow_x)
