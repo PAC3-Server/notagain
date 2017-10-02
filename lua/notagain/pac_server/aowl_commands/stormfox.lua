@@ -1,13 +1,14 @@
+if not StormFox or StormFox.Version < 1.1 then return end
+
 aowl.AddCommand("weather=string,number[1]",function(ply,line,weather,intensity)
     if StormFox then
         local valids = {}
-        for _,type in pairs(StormFox.GetWeathers()) do
-            valids[string.lower(type)] = true
+        for _,type in ipairs(StormFox.GetWeathers()) do
+            valids[type] = true
         end
         weather = string.lower(weather)
         if valids[weather] then
-            weather = string.SetChar(weather,1,string.upper(weather[1]))
-            StormFox.SetWeather(weather,intensity)
+            StormFox.SetWeather(weather,intensity or 1)
         else
             return false,"Not a valid weather type"
         end
@@ -26,6 +27,6 @@ end,"developers")
 
 aowl.AddCommand("temp|temperature=number[15]",function(ply,line,temp)
     if StormFox then
-        StormFox.SetData("Temperature",temp)
+        StormFox.SetNetworkData("Temperature",temp)
     end
 end,"developers")
