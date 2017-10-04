@@ -1,6 +1,8 @@
 local function loadout(ply)
-	ply:Give("weapon_shield_scanner")
-	ply:Give("magic")
+	if gmod.GetGamemode().Name == "Sandbox" then
+		ply:Give("weapon_shield_scanner")
+		ply:Give("magic")
+	end
 end
 
 aowl.AddCommand("rpg=boolean", function(ply, _, cheat)

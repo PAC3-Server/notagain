@@ -114,7 +114,7 @@ function chathud.Initialize()
 	end
 
 	hookAdd("HUDPaint", "chathud", function()
-		if chathud.panel:IsVisible() then
+		if chathud.panel:IsVisible() and EasyChat.ChatHUD.Frame:IsVisible() then
 			surface.DisableClipping(true)
 			env.render2d.PushMatrix(chathud.panel:GetPos())
 			chathud.panel:PaintX(chathud.panel:GetSize())
@@ -153,7 +153,7 @@ function chathud.Initialize()
 			chathud.emote_shortcuts[v:gsub("(%.png)$","")] = "<texture=materials/icon16/" .. v .. ",16>"
 		end
 	end
-	
+
 	if enabled:GetInt() == 0 then
 		unhook()
 	end

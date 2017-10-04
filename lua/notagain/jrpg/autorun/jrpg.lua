@@ -28,26 +28,33 @@ function jrpg.GetFriendlyName(ent)
 	return name
 end
 
+local friendly_npcs = {
+	monster_scientist = true,
+	monster_barney = true,
+}
+
 if CLIENT then
 	function jrpg.IsFriend(ent)
-		return ent == LocalPlayer() or ent:IsPlayer() and ent:GetFriendStatus() == "friend" or IsFriendEntityName(ent:GetClass())
+		return ent == LocalPlayer() or ent:IsPlayer() and (ent:GetFriendStatus() == "friend" or ent.CanAlter and LocalPlayer():CanAlter(ent)) or IsFriendEntityName(ent:GetClass()) or friendly_npcs[ent:GetClass()]
 	end
 end
 
 if SERVER then
 	function jrpg.IsFriend(a, b)
-		if b:IsNPC() and IsFriendEntityName(b:GetClass()) then
+		if b:IsNPC() and (IsFriendEntityName(b:GetClass()) or friendly_npcs[b:GetClass()]) then
 			return true
 		end
 
 		return a:IsFriend(b)
 	end
-	
+
 	local function loadout(ply)
-		ply:Give("weapon_shield_scanner")
-		ply:Give("magic")
+		if gmod.GetGamemode().Name == "Sandbox" then
+			ply:Give("weapon_shield_scanner")
+			ply:Give("magic")
+		end
 	end
-	
+
 	function jrpg.SetRPG(ply, b, cheat)
 		ply:SetNWBool("rpg", b)
 		if b then
@@ -94,7 +101,7 @@ function jrpg.FindHeadPos(ent)
 		if m then
 			local pos = m:GetTranslation()
 			if pos ~= ent:GetPos() then
-				return pos
+				return pos, m:GetAngles()
 			end
 		end
 	end

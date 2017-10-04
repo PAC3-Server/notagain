@@ -2,18 +2,54 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 	if not ply:GetNWBool("rpg") then return end
 	local vel = ply:GetVelocity()
 
-	if ply:IsOnGround() and vel:Length() > 300 then
-		local seq = ply:LookupSequence("run_all_02")
-		if seq > 1 then
-			return seq, seq
+	if ply:IsOnGround() then
+		if vel:Length() > 300 then
+			local seq = ply:LookupSequence("run_all_02")
+			if seq > 1 then
+				return seq, seq
+			end
+		end
+	else
+		ply.m_bJumping = true
+		ply.m_flJumpStartTime = 0
+		ply.m_fGroundTime = 0
+
+		if ply:Crouching() then
+			local holdtype = "all"
+			local wep = ply:GetActiveWeapon()
+
+			if wep:IsValid() then
+				holdtype = wep:GetHoldType()
+			end
+
+			-- airduck
+			local seq = ply:LookupSequence("cidle_" .. holdtype)
+			if seq < 1 then seq = ply:LookupSequence("cidle_all") end
+
+			if seq > 1 then
+				return seq, seq
+			end
+		elseif vel:Length() > 750 then
+			ply:SetCycle(0.57)
+
+			local holdtype = "all"
+			local wep = ply:GetActiveWeapon()
+
+			if wep:IsValid() then
+				holdtype = wep:GetHoldType()
+			end
+
+			local seq = ply:LookupSequence("swimming_" .. holdtype)
+
+			if seq < 1 then
+				seq = ply:LookupSequence("swimming_all")
+			end
+
+			return -1, seq
 		end
 	end
 end)
 
-hook.Remove("Move", "movement")
-hook.Remove("SetupMove", "movement")
-hook.Remove("FinishMove", "movement")
-hook.Remove("PlayerTick", "movement")
 hook.Add("Move", "movement", function(ply, mv)
 	if not ply:GetNWBool("rpg") then return end
 
@@ -26,7 +62,7 @@ hook.Add("Move", "movement", function(ply, mv)
 	side = math.Clamp(side, -500, 500)
 	forward = math.Clamp(forward, -500, 500)
 
-	do
+	do -- drunk
 		local hp = ply:GetNWFloat("hp_overload", 0)
 		local mp = ply:GetNWFloat("mp_overload", 0)
 		local sp = ply:GetNWFloat("sp_overload", 0)
@@ -93,6 +129,74 @@ if CLIENT then
 		end
 	end
 
+	local function manip_pos(ply, id, pos)
+		if pos:IsZero() then
+			ply:DisableMatrix("RenderMultiply")
+			return
+		end
+
+		local m = Matrix()
+		m:Translate(pos)
+		ply:EnableMatrix("RenderMultiply", m)
+	end
+
+	local function calc_duck(ply)
+		if ply:Crouching() then
+			if not ply.airduck_crouched then
+				ply.airduck_duck_time = CurTime() + ply:GetDuckSpeed()
+				ply.airduck_crouched = true
+				ply.airduck_reset_duck = false
+			end
+		else
+			if ply.airduck_crouched then
+				ply.airduck_unduck_time = CurTime() + ply:GetUnDuckSpeed()
+				ply.airduck_crouched = false
+				ply.airduck_reset_unduck = false
+			end
+		end
+
+		local duck_lerp
+		local unduck_lerp
+
+		if ply.airduck_duck_time then
+			local f = ply.airduck_duck_time - CurTime()
+			if f >= 0 then
+				duck_lerp = f * (1/ply:GetDuckSpeed())
+			end
+		end
+
+		if ply.airduck_unduck_time then
+			local f = ply.airduck_unduck_time - CurTime()
+			if f >= 0 then
+				unduck_lerp = f * (1/ply:GetUnDuckSpeed())
+			end
+		end
+
+		if not ply:IsOnGround() then
+			if duck_lerp and ply:Crouching() then
+				local _, max = ply:GetHullDuck()
+				manip_pos(ply, 0, Vector(0,0,max.z*-duck_lerp+1))
+			elseif unduck_lerp and not ply:Crouching() then
+				local _, max = ply:GetHullDuck()
+				manip_pos(ply, 0, Vector(0,0,max.z*unduck_lerp))
+			end
+		end
+
+		if not duck_lerp then
+			if not ply.airduck_reset_duck then
+				manip_pos(ply, 0, Vector(0,0,0))
+				ply.airduck_reset_duck = true
+			end
+		end
+
+		if not unduck_lerp then
+			if not ply.airduck_reset_unduck then
+				manip_pos(ply, 0, Vector(0,0,0))
+				ply.airduck_reset_unduck = true
+			end
+		end
+	end
+
 	hook.Add("UpdateAnimation", "movement", function(ply)
 		if not ply:GetNWBool("rpg") then return end
 
@@ -110,6 +214,15 @@ if CLIENT then
 		else
 			manip_angles(ply, 0, Angle(0,0,0))
 		end
+
+
+		local vel = ply:GetVelocity()
+		if not ply:IsOnGround() and vel:Length() > 750 then
+			ply:SetPoseParameter("move_x", vel:Dot(ply:GetForward())/1000)
+			ply:SetPoseParameter("move_y", vel:Dot(ply:GetRight())/1000)
+		end
+
+		return calc_duck(ply)
 	end)
 end
 
@@ -117,5 +230,7 @@ if SERVER then
 	hook.Add("PlayerLoadout", "movement", function(ply)
 		if not ply:GetNWBool("rpg") then return end
 		ply:SetRunSpeed(300)
+		ply:SetDuckSpeed(0.5)
+		ply:SetUnDuckSpeed(0.5)
 	end)
 end

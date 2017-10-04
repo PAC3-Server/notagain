@@ -1,165 +1,362 @@
 local Tag = "GhostMode"
+local ghost_time = 8
 
 if SERVER then
+	hook.Add("PlayerDeath", Tag, function(ply)
+		ply:SetNW2Float("ghost_timer", CurTime() + ghost_time)
+		ply.ghost_spawn_pos = ply:GetPos()
+		ply:SetDSP(0)
+		SafeRemoveEntity(ply:GetNW2Entity("ghost_fairy"))
+	end)
+
+	hook.Add("PlayerSpawn", Tag, function(ply)
+		SafeRemoveEntity(ply:GetNW2Entity("ghost_fairy"))
+	end)
+
+	hook.Add("Move", Tag, function(ply, mv)
+		if not ply:GetNWBool("rpg") then return end
+
+		if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
+			return
+		end
+
+		local ent = ply:GetNW2Entity("ghost_fairy")
+
+		if not ent:IsValid() then return end
+
+		mv:SetOrigin(ent:GetPos())
+		mv:SetVelocity(Vector(0,0,0))
+
+		if not ent.GravityOn then
+			local ang = ply:EyeAngles()
+			ang.y = -ang.y
+			local aim = ang:Forward()
+
+
+			local vel = Vector(0,0,0)
+			if ply:KeyDown(IN_FORWARD) then
+				vel = aim*1
+			elseif ply:KeyDown(IN_BACK) then
+				vel = aim*-1
+			end
+
+			if ply:KeyDown(IN_MOVELEFT) then
+				vel = ang:Right()*1
+			elseif ply:KeyDown(IN_MOVERIGHT) then
+				vel = ang:Right()*-1
+			end
+
+			if ply:KeyDown(IN_JUMP) then
+				vel = vel + ply:GetUp()*1
+			end
+
+			if ply:KeyDown(IN_SPEED) then
+				vel = vel * 5
+			end
+
+			if ply:KeyDown(IN_DUCK) then
+				vel = vel * 0.25
+			end
+
+			if ply:KeyDown(IN_WALK) then
+				vel = vel * 0.5
+			end
+
+			vel = vel * 5
+
+			local phys = ent:GetPhysicsObject()
+
+			phys:ComputeShadowControl({
+				secondstoarrive = 0.9,
+				pos = phys:GetPos() + vel,
+				angle = ply:EyeAngles(),
+				maxangular = 5000,
+				maxangulardamp = 10000,
+				maxspeed = 1000000,
+				maxspeeddamp = 10000,
+				dampfactor = 0.05,
+				teleportdistance = 200,
+				deltatime = FrameTime(),
+			})
+
+			local rag = ply:GetRagdollEntity()
+			rag = rag and rag:IsValid() and rag or nil
+
+			if rag then
+				for i = 0, rag:GetPhysicsObjectCount() - 1 do
+					local phys = rag:GetPhysicsObjectNum(i)
+					phys:AddVelocity((ply:GetPos() - phys:GetPos()):GetNormalized() * 0.1)
+				end
+			end
+
+		end
+
+		return true
+	end)
+
 	hook.Add("PlayerDeathThink", Tag, function(ply)
 		if not ply:GetNWBool("rpg") then return end
 
-		ply:SetMoveType(MOVETYPE_NOCLIP)
-		ply:SetNoDraw(true)
-		ply:SetVelocity(ply:GetVelocity() * -0.01) -- this is wrong and bad and might feel awful with high ping
+		if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
+			return
+		end
+
+		if aowl then
+			ply.aowl_predeathpos = ply:GetPos()
+			ply.aowl_predeathangles = ply:GetAngles()
+		end
+
+		if ply.ghost_spawn_pos then
+			local rag = ply:GetRagdollEntity()
+			rag = rag and rag:IsValid() and rag or nil
+
+			local pos =  rag and rag:GetPos() or ply.ghost_spawn_pos
+
+			if rag then
+				for i = 0, rag:GetPhysicsObjectCount() - 1 do
+					local phys = rag:GetPhysicsObjectNum(i)
+					phys:EnableGravity(false)
+				end
+			end
+
+			local fairy = ents.Create("fairy")
+			fairy:SetPos(pos)
+			fairy:Spawn()
+			if fairy.CPPISetOwner then fairy:CPPISetOwner(ply) end
+
+			ply:CallOnRemove("ghost_fairy", function() SafeRemoveEntity(fairy) end)
+
+			ply:SetOwner(fairy)
+
+			ply:SetNW2Entity("ghost_fairy", fairy)
+			ply.ghost_spawn_pos = nil
+		end
+
+		ply:SetDSP(130)
 
 		if not ply:KeyDown(IN_ATTACK) or ply:KeyDown(IN_JUMP) then
 			ply:SetMoveType(MOVETYPE_WALK)
-			ply:SetNoDraw(false)
 			return false
 		end
 	end)
 end
 
 if CLIENT then
-    local Settings = {
-        [ "$pp_colour_addr" ]       = 0,
-        [ "$pp_colour_addg" ]       = 0,
-        [ "$pp_colour_addb" ]       = 0,
-        [ "$pp_colour_brightness" ] = 0.1,
-        [ "$pp_colour_contrast" ]   = 0.8,
-        [ "$pp_colour_colour" ]     = 0,
-        [ "$pp_colour_mulr" ]       = 0,
-        [ "$pp_colour_mulg" ]       = 0.2,
-        [ "$pp_colour_mulb" ]       = 0.5,
-    }
-    local r,g,b      = 0,0.1,0
-	local GlareMat   = Material("sprites/light_ignorez")
-	local WarpMat    = Material("particle/warp2_warp")
-	local Emitter2D  = ParticleEmitter(vector_origin)
-	Emitter2D:SetNoDraw(true)
-	local Shiny = CreateMaterial(tostring({}) .. os.clock(), "VertexLitGeneric", {
-		["$Additive"]          = 1,
-		["$Translucent"]       = 1,
-		["$Phong"]             = 1,
-		["$PhongBoost"]        = 10,
-		["$PhongExponent"]     = 5,
-		["$PhongFresnelRange"] = Vector(0,0.5,1),
-		["$PhongTint"]         = Vector(1,1,1),
-		["$Rimlight"]          = 1,
-		["$RimlightBoost"]     = 50,
-		["$RimlightExponent"]  = 5,
-		["$BaseTexture"]       = "models/debug/debugwhite",
-		["$BumpMap"]           = "dev/bump_normal",
-	})
-	local Glare2Mat = CreateMaterial(tostring{}, "UnlitGeneric", {
-		["$BaseTexture"] = "particle/fire",
-		["$Additive"]    = 1,
-		["$VertexColor"] = 1,
-		["$VertexAlpha"] = 1,
-	})
-    local Friend = {
-        strong = { r = 50, g = 200, b = 200},
-        medium = { r = 75, g = 150, b = 255},
-        light  = { r = 100, g = 200, b = 255},
-    }
-    local NotFriend = {
-        strong = { r = 200, g = 200, b = 50},
-        medium = { r = 255, g = 150, b = 75},
-        light  = { r = 255, g = 200, b = 100},
-    }
-
-	hook.Add("CalcView", Tag, function(ply)
+	hook.Add("EntityEmitSound", Tag, function(data)
+		local ply = LocalPlayer()
 		if ply:GetNWBool("rpg") and not ply:Alive() then
-			timer.Simple(0.1,function()
-				if ctp and battlecam then
-					ctp:Disable()
-					battlecam.Disable()
-				end
-			end)
-			return {
-				origin = ply:EyePos() + ply:GetAimVector() * -200,
-			}
+			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
+				return
+			end
+
+			local ent = ply:GetNW2Entity("ghost_fairy")
+
+			if ent:IsValid() then
+				data.Pitch = data.Pitch * 0.5
+				return true
+			end
 		end
 	end)
 
-    hook.Add("PostDrawTranslucentRenderables",Tag,function()
-        for _,v in ipairs(player.GetAll()) do
-            if v:GetNWBool("rpg") and not v:Alive() then
-                local color
-                if v:GetFriendStatus() == "friend" or v == LocalPlayer() then
-                    color = Friend
-                else
-                    color = NotFriend
-                end
-                render.SetColorModulation(r, g, b)
-                render.MaterialOverride(Shiny)
-                local Pos = v:WorldSpaceCenter()
-                v.PixelVisible = v.PixelVisible or util.GetPixelVisibleHandle()
-                v.PixelVisible2 = v.PixelVisible2 or util.GetPixelVisibleHandle()
-                local Radius = v:BoundingRadius()
-                local Visi = util.PixelVisible(Pos, Radius*0.5, v.PixelVisible)
-                local Time = RealTime()
-                local Glow = math.abs(math.sin(Time))
-                local r = Radius/8
-                cam.IgnoreZ(true)
-                render.SetMaterial(WarpMat)
-                render.DrawSprite(Pos, 25, 25, Color(r*255*2, g*255*2, b*255*2, Visi*20))
-                render.SetMaterial(Glare2Mat)
-                render.DrawSprite(Pos, r*10, r*10, Color(color.light.r, color.light.g, color.light.b, Visi*255*Glow+3))
-                render.DrawSprite(Pos, r*15, r*15, Color(color.medium.r, color.medium.g, color.medium.b, Visi*255*(Glow+3.25)))
-                render.DrawSprite(Pos, r*20, r*20, Color(color.strong.r, color.strong.g, color.strong.b, Visi*150*(Glow+3.50)))
-                render.SetMaterial(GlareMat)
-                cam.IgnoreZ(false)
-                --v:DrawModel()
-                if not v.NextEmit2 or v.NextEmit2 < Time then
-                    local p = Emitter2D:Add(Glare2Mat, Pos + (VectorRand()*Radius*0.5))
-                    p:SetDieTime(math.Rand(2,4))
-                    p:SetLifeTime(1)
-                    p:SetStartSize(math.Rand(16,32))
-                    p:SetEndSize(0)
-                    p:SetStartAlpha(0)
-                    p:SetEndAlpha(255)
-                    p:SetColor(color.medium.r, color.medium.g, color.medium.b)
-                    p:SetVelocity(VectorRand()*5)
-                    p:SetGravity(Vector(0,0,3))
-                    p:SetAirResistance(30)
-                    v.NextEmit2 = Time + 0.1
-                    if math.random() > 0.2 then
-                        local p = Emitter2D:Add(Glare2Mat, Pos + (VectorRand()*Radius*0.5))
-                        p:SetDieTime(math.Rand(1,3))
-                        p:SetLifeTime(1)
-                        p:SetStartSize(math.Rand(16,32))
-                        p:SetEndSize(0)
-                        p:SetStartAlpha(255)
-                        p:SetEndAlpha(255)
-                        p:SetVelocity(VectorRand()*3)
-                        p:SetGravity(Vector(0,0,math.Rand(3,5)))
-                        p:SetAirResistance(30)
-                        p:SetNextThink(CurTime())
-                        local Seed = math.random()
-                        local Seed2 = math.Rand(-4,4)
-                        p:SetThinkFunction(function(p)
-                            p:SetStartSize(math.abs(math.sin(Seed+Time*Seed2)*3+math.Rand(0,2)))
-                            p:SetColor(math.Rand(200, 255), math.Rand(200, 255), math.Rand(200, 255))
-                            p:SetNextThink(CurTime())
-                        end)
-                    end
-                end
-                Emitter2D:Draw()
-                render.SetColorModulation(1,1,1)
-                render.MaterialOverride()
-            end
-        end
-    end)
+	local rand_ang = Vector()
+	hook.Add("CalcView", Tag, function(ply)
+		if ply:GetNWBool("rpg") and not ply:Alive() then
+			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
+				return
+			end
+
+			local ent = ply:GetNW2Entity("ghost_fairy")
+
+			if ent:IsValid() then
+				rand_ang = rand_ang + ((((VectorRand()*math.random()^5)*10) - rand_ang) * FrameTime()*0.1)
+				local ang = ply:EyeAngles()
+				ang.y = -ang.y
+				local aim = ang:Forward()
+
+				local pos = ent:GetPos() + aim * -100
+
+				local data = util.TraceLine({
+					start = ent:GetPos(),
+					endpos = pos,
+					filter = ents.FindInSphere(ent:GetPos(), ent:BoundingRadius()),
+					mask =  MASK_VISIBLE,
+				})
+
+				if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
+					pos = data.HitPos + aim * 5
+				end
+
+				return {
+					origin = pos,
+					fov = 50,
+					angles = ang + Angle(rand_ang.x, rand_ang.y, rand_ang.z)*5,
+				}
+			end
+		end
+	end)
 
     hook.Add("OnPlayerChat",Tag,function(ply, txt)
         if ply:GetNWBool("rpg") and not ply:Alive() then
-            chat.AddText(Color(130, 162, 214),"[Ghost-",ply,Color(130, 162, 214),"]",Color(255,255,255),": "..txt)
-            return true
+			local ent = ply:GetNW2Entity("ghost_fairy")
+			if ent:IsValid() then
+				ent.player = ply
+				ent:PlayPhrase(txt)
+			end
         end
     end)
 
+	local emitter = ParticleEmitter(EyePos())
+	emitter:SetNoDraw(true)
+
+	local sound
+	local windup_sound
+
+    hook.Add("PrePlayerDraw",Tag,function(ply)
+		if ply:GetNWBool("rpg") and not ply:Alive() then
+			return true
+		end
+	end)
+
+
+	local temp_mat = CreateMaterial("fairy_mirror" .. os.clock(), "UnlitGeneric", {
+		["$BaseTexture"] = render.GetScreenEffectTexture(),
+		["$VertexAlpha"] = 0,
+		["$VertexColor"] = 0,
+	})
+
+    hook.Add("RenderScene",Tag,function(pos, ang, fov)
+		local ply = LocalPlayer()
+		if ply:GetNWBool("rpg") and not ply:Alive() then
+			local ent = ply:GetNW2Entity("ghost_fairy")
+			if ent:IsValid() then
+
+				render.RenderView({
+					drawhud = false,
+					drawmonitors = true,
+					dopostprocess = true,
+					drawviewmodel = true,
+				})
+
+				cam.Start2D()
+					temp_mat:SetTexture("$basetexture", render.GetScreenEffectTexture())
+					surface.SetMaterial(temp_mat)
+					surface.DrawTexturedRectUV(0,0,ScrW(),ScrH(),1,0,0,1)
+					hook.GetTable().RenderScreenspaceEffects.fairy_sunbeams() -- :(
+				cam.End2D()
+
+				return true
+			end
+		end
+	end)
+
     hook.Add("RenderScreenspaceEffects",Tag,function()
+		for _, ply in ipairs(player.GetAll()) do
+			if not ply:GetNWBool("rpg") then continue end
+
+			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
+				continue
+			end
+
+			local ent = ply:GetNW2Entity("ghost_fairy")
+
+			if not ent:IsValid() then continue end
+
+			ply:SetPos(ent:GetPos() - Vector(0,0,ply:BoundingRadius()+15))
+			ply:SetupBones()
+		end
+
 		if LocalPlayer():GetNWBool("rpg") and not LocalPlayer():Alive() then
-            DrawColorModify(Settings)
-			DrawBloom( 0.25, 5, 9, 9, 1, 1, 1, 1, 1 )
-        end
+
+			sound = sound or CreateSound(LocalPlayer(), "ambient/levels/citadel/citadel_hub_ambience1.mp3")
+			sound:Play()
+			sound:SetDSP(1)
+			sound:ChangePitch(100 + math.sin(RealTime()/5)*5)
+
+			local time = LocalPlayer():GetNW2Float("ghost_timer", 0) - CurTime()
+			local f = time
+			f = -math.Clamp(f / ghost_time, 0, 1)+1
+			f = f ^ 5
+
+			sound:ChangeVolume(f^5)
+
+			if f == 1 then
+				cam.Start3D()
+					emitter:Draw()
+				cam.End3D()
+			end
+
+			DrawToyTown(2*f, 500)
+
+			windup_sound = windup_sound or CreateSound(LocalPlayer(), "ambient/levels/labs/teleport_mechanism_windup5.wav")
+			windup_sound:PlayEx(1, 255)
+			windup_sound:ChangeVolume(f)
+			windup_sound:ChangePitch(math.min(100 + f*255, 255))
+
+			if f == 1 then
+				windup_sound:Stop()
+			end
+
+			if f < 0.99 then
+				DrawColorModify({
+					[ "$pp_colour_brightness" ] = f*0.5,
+					[ "$pp_colour_contrast" ] = 1 + f*1,
+				})
+			end
+
+			local tbl = {}
+			tbl[ "$pp_colour_addr" ] = 0.08*f
+			tbl[ "$pp_colour_addg" ] = 0.05*f
+			tbl[ "$pp_colour_addb" ] = 0.13*f
+			tbl[ "$pp_colour_brightness" ] = -0.2*f
+			tbl[ "$pp_colour_contrast" ] = Lerp(f, 1, 0.9)
+			tbl[ "$pp_colour_colour" ] = Lerp(f, 1, -1)
+			tbl[ "$pp_colour_mulr" ] = 0
+			tbl[ "$pp_colour_mulg" ] = 0
+			tbl[ "$pp_colour_mulb" ] = 0
+			DrawColorModify( tbl )
+
+			DrawSharpen( math.sin(RealTime()*5+math.random()*0.1)*10*f, 0.1*f )
+
+			for i = 1, 5 do
+				local particle = emitter:Add("particle/fire", EyePos() + VectorRand() * 500)
+				if particle then
+					local col = HSVToColor(math.random()*30, 0.1, 1)
+					particle:SetColor(col.r, col.g, col.b, 266)
+
+					particle:SetVelocity(VectorRand() )
+
+					particle:SetDieTime((math.random()+4)*3)
+					--particle:SetDieTime(0.5)
+					particle:SetLifeTime(0)
+
+					local size = 1
+
+					particle:SetAngles(AngleRand())
+					particle:SetStartSize(1)
+					particle:SetEndSize(0)
+
+					particle:SetStartAlpha(0)
+					particle:SetEndAlpha(255)
+
+					particle:SetStartLength(particle:GetStartSize())
+					particle:SetEndLength(math.random(50,250))
+
+					--particle:SetRollDelta(math.Rand(-1,1)*20)
+					particle:SetAirResistance(500)
+					particle:SetGravity(VectorRand() * 10 + Vector(0,0,200))
+				end
+			end
+
+			DrawBloom( 0.6, 1.2*f, 11.21, 9, 2, 1.96, 1, 1, 1)
+			DrawMotionBlur(math.sin(RealTime()*10)*0.2 + 0.4, 0.5*f, 0)
+		else
+			if sound then
+				sound:Stop()
+			end
+			if windup_sound then
+				windup_sound:Stop()
+			end
+		end
     end)
 
     hook.Add("HUDShouldDraw",Tag,function(name)
