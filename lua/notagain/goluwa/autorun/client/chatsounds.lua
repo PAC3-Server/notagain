@@ -65,6 +65,12 @@ do
 	end)
 
 	hookAdd("ChatTextChanged", "chatsounds_autocomplete", function(str)
+		if str == "" then
+			random_mode = true
+			hook.Remove("PostRenderVGUI", "chatsounds_autocomplete")
+			return
+		end
+
 		random_mode = false
 		query(str, 0)
 
@@ -79,7 +85,11 @@ do
 	end)
 
 	hookAdd("FinishChat", "chatsounds_autocomplete", function()
+		-- in some cases ChatTextChanged is called on FinishChat which adds the hook again
 		hook.Remove("PostRenderVGUI", "chatsounds_autocomplete")
+		timer.Simple(0, function()
+
+		end)
 	end)
 end
 

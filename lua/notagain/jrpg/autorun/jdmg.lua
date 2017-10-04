@@ -762,7 +762,7 @@ do
 			end
 		end
 
-		local color = Color(50, 200, 255)
+		local color = Color(150, 200, 255)
 		jdmg.types.water.color = color
 
 		jdmg.types.water.draw = function(ent, f, s, t)
@@ -786,7 +786,7 @@ do
 			end
 
 			render.ModelMaterialOverride(mat)
-			render.SetColorModulation(0.5,0.75,1*s)
+			render.SetColorModulation(color.r/255,color.g/255,color.b/255)
 			render.SetBlend(f)
 
 			local m = mat:GetMatrix("$BaseTextureTransform")
@@ -951,7 +951,7 @@ do
 			CloakPassEnabled = 1,
 			RefractAmount = 1,
 		})
-		local color = Color(100, 200, 255)
+		local color = Color(255, 255, 255)
 		jdmg.types.ice.color = color
 		jdmg.types.ice.draw = function(ent, f, s, t)
 			local pos = ent:NearestPoint(ent:WorldSpaceCenter()+VectorRand()*100)
@@ -973,10 +973,10 @@ do
 
 			local c = Vector(color.r/255, color.g/255, color.b/255)*5*(f^0.15)
 			ice_mat:SetVector("$CloakColorTint", c)
-			ice_mat:SetFloat("$CloakFactor", 0.5*(f))
+			ice_mat:SetFloat("$CloakFactor", f^0.15)
 			ice_mat:SetFloat("$RefractAmount", -f+1)
 			render.ModelMaterialOverride(ice_mat)
-			render.SetColorModulation(0.5,0.75, 1*s)
+			render.SetColorModulation(c.r,c.g, c.b)
 			render.SetBlend(f)
 			draw_model(ent)
 		end

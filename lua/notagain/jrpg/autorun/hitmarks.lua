@@ -88,7 +88,7 @@ if CLIENT then
 	end
 
 
-	local gradient = Material("gui/gradient_up")
+	local gradient = Material("gui/gradient_down")
 	local border = CreateMaterial(tostring({}), "UnlitGeneric", {
 		["$BaseTexture"] = "props/metalduct001a",
 		["$VertexAlpha"] = 1,
@@ -104,7 +104,7 @@ if CLIENT then
 
 		surface.SetMaterial(gradient)
 
-		surface.SetDrawColor(color.r, color.g, color.b, 255*fade)
+		surface.SetDrawColor(color.r, color.g, color.b, color.a * fade)
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew)
 		end
@@ -113,7 +113,7 @@ if CLIENT then
 		surface.SetMaterial(border)
 
 		for _ = 1, 2 do
-			draw_rect(x,y,w,h, skew, 3, 64,4, border:GetTexture("$BaseTexture"):Width(), true)
+			draw_rect(x,y,w,h, skew, 3, 64,3, border:GetTexture("$BaseTexture"):Width(), true)
 		end
 	end
 
@@ -121,37 +121,37 @@ if CLIENT then
 		{
 			min = 0,
 			max = 0.25,
-			font = "Square721 BT",
+			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 40,
+			size = 30,
 			color = Color(0, 0, 0, 255),
 		},
 		{
 			min = 0.25,
 			max = 0.5,
-			font = "Square721 BT",
+			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 90,
+			size = 40,
 			color = Color(150, 150, 50, 255),
 		},
 		{
 			min = 0.5,
 			max = 1,
-			font = "Square721 BT",
+			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 140,
+			size = 50,
 			color = Color(200, 50, 50, 255),
 		},
 		{
 			min = 1,
 			max = math.huge,
-			font = "Square721 BT",
+			font = "korataki",
 			blur_size = 8,
 			weight = 120,
-			size = 190,
+			size = 60,
 			--color = Color(200, 50, 50, 255),
 		},
 	}
@@ -178,7 +178,7 @@ if CLIENT then
 	local line_mat = Material("particle/Particle_Glow_04")
 
 	local line_width = 12
-	local line_height = -20
+	local line_height = -10
 	local max_bounce = 2
 	local bounce_plane_height = 0
 
@@ -257,8 +257,14 @@ if CLIENT then
 				ent.hm_pixvis = ent.hm_pixvis or util.GetPixelVisibleHandle()
 				ent.hm_pixvis_vis = util.PixelVisible(world_pos, ent:BoundingRadius(), ent.hm_pixvis)
 				local vis = ent.hm_pixvis_vis
+				local selected_target = jtarget.GetEntity(LocalPlayer()) == ent
 
-				if pos.visible and dist < max_distance and fraction > 0 then
+				if selected_target then
+					vis = 1
+					fraction = 1
+				end
+
+				if pos.visible and dist < max_distance and fraction > 0 or selected_target then
 					local cur = ent.hm_cur_health or ent:Health()
 					local max = ent.hm_max_health or ent:GetMaxHealth()
 					local last = ent.hm_last_health or max
@@ -351,10 +357,10 @@ if CLIENT then
 						end
 					end
 
-					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "Square721 BT", 20, 800, 3, Color(230, 230, 230, 255 * fade), (ent:IsPlayer() and team.GetColor(ent:Team()) or nil), 0, -1)
+					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "Square721 BT", 24, 1, 5, Color(230, 230, 230, 255 * fade), (ent:IsPlayer() and team.GetColor(ent:Team()) or nil), 0, -1)
 
 					if ent:GetNWBool("rpg") then
-						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "Square721 BT", 20, 800, 3, Color(230, 230, 230, 255 * fade), nil, -1, -1)
+						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "Square721 BT", 20, 1000, 5, Color(230, 230, 230, 255 * fade), nil, -1, -1)
 					end
 				end
 
@@ -374,15 +380,18 @@ if CLIENT then
 			end
 
 			local pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2)):ToScreen()
-			local vis = ent.hm_pixvis_vis or 1
+			local vis = ent.hm_pixvis_vis or ent == LocalPlayer() and 1 or 0
 
 			if pos.visible then
+				local y_offset = 0
+				if ent == LocalPlayer() then y_offset = 50 end
+
 				local time = RealTime()
 
 				if data.time > time then
 					local fade = math.min(((data.time - time) / data.length) + 0.75, 1)
 					fade = fade * vis
-					local w, h = prettytext.GetTextSize(data.name, "Square721 BT", 20, 800, 2)
+					local w, h = prettytext.GetTextSize(data.name, "Square721 BT", 25, 1000, 2)
 
 					local x, y = pos.x, pos.y
 					x = x - w / 2
@@ -392,20 +401,20 @@ if CLIENT then
 					local fg
 
 					if ent == ply or jrpg.IsFriend(ent) then
-						fg = Color(200, 220, 255, 255 * fade)
-						bg = Color(25, 75, 150, 255 * fade)
+						fg = Color(255, 255, 255, 220 * fade)
+						bg = Color(25, 100, 130, 50 * fade)
 					else
-						fg = Color(255, 220, 200, 255 * fade)
-						bg = Color(200, 50, 25, 255)
+						fg = Color(255, 255, 255, 220 * fade)
+						bg = Color(150, 50, 50, 50)
 					end
 
-					local border = 13
-					local scale_h = 0.5
+					local border = 15
+					local scale_h = 0.2
 
 					local border = border
-					draw_weapon_info(x - border, y - border*scale_h, w + border*2, h + border*2*scale_h, bg, fade)
+					draw_weapon_info(x - border, y - border*scale_h + y_offset, w + border*2, h + border*2*scale_h, bg, fade)
 
-					prettytext.Draw(data.name, x, y, "Square721 BT", 20, 600, 3, fg)
+					prettytext.Draw(data.name, x, y + y_offset + 1, "Square721 BT", 25, 1000, 3, fg, bg)
 				else
 					table.remove(weapon_info, i)
 				end
@@ -502,7 +511,7 @@ if CLIENT then
 
 
 					local w, h = prettytext.GetTextSize(txt, font_info.font, font_info.size, font_info.weight, font_info.blur_size)
-					local hoffset = data.height_offset * -h * 0.5
+					local hoffset = data.height_offset * -h
 
 					if data.xp then
 						surface.SetDrawColor(100, 0, 255, 255)
@@ -616,7 +625,7 @@ if CLIENT then
 		end
 
 		for _, ent in pairs(ents.FindInSphere(ply:GetPos(), 1000)) do
-			if ent:IsNPC() then
+			if ent:IsNPC() or ent:IsPlayer() then
 				local wep = ent:GetActiveWeapon()
 				local name
 
@@ -813,5 +822,7 @@ if SERVER then
 		end
 	end)
 end
+
+if LocalPlayer():IsValid() then hitmarkers.ShowAttack(me, "Blitz") end
 
 return hitmarkers

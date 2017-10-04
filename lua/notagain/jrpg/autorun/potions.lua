@@ -265,8 +265,8 @@ do
 		local suppress_player_draw = false
 
 		hook.Add("PrePlayerDraw", "potion", function(ply)
-			if suppress_player_draw then
-			--	return true
+			if suppress_player_draw and ply == LocalPlayer() then
+				return true
 			end
 		end)
 
@@ -292,7 +292,8 @@ do
 			self:DrawModel()
 			suppress_player_draw = false
 
-			render.SetColorModulation(self.Color.x, self.Color.y, self.Color.z)
+			--render.SetColorModulation()
+			shiny:SetVector("$color2", self.Color)
 			render.ModelMaterialOverride(shiny)
 
 			suppress_player_draw = true

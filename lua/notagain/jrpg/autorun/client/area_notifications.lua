@@ -1,64 +1,54 @@
-surface.CreateFont("area_font",{
-	font = "Square721 BT",
-	size = 25,
-	additive = false,
-	weight = 700,
-	antialias = true,
-})
+local prettytext = requirex("pretty_text")
 
-local cur_area = "Overworld"
-local cur_panel
-local text_color = Color(200,200,200,255)
-local y_pos = 50
-local CreatePanel = function(area)
-    local panel = vgui.Create("DPanel")
-    panel:SetSize(300,50)
-    panel:SetPos(ScrW(),y_pos)
-    panel.Paint = function(self,w,h)
-		draw.NoTexture()
-        surface.SetDrawColor(30,30,30,255)
-        surface.DrawPoly({
-            { x = w*0.2, y = 0 },
-            { x = w, y = 0 },
-            { x = w*0.8, y = h },
-            { x = 0, y = h },
-        })
-        surface.SetDrawColor(text_color)
-        surface.DrawLine(w*0.2,0,w,0)
-        surface.DrawLine(w,0,w*0.8,h)
-        surface.DrawLine(w*0.8,h-1,0,h-1)
-        surface.DrawLine(0,h,w*0.2,0)
-        surface.SetFont("area_font")
-        local x,y = surface.GetTextSize(area)
-        surface.SetTextColor(text_color)
-        surface.SetTextPos(w/2-x/2,h/2-y/2)
-        surface.DrawText(area)
-    end
-    return panel
+local function show_name(area_name)
+	local duration = 5
+	local time = RealTime() + duration
+	hook.Remove("HUDPaint", "")
+	hook.Add("HUDPaint", "newarea", function()
+		local f = math.max((time - RealTime()) / duration, 0)
+		local x, y = ScrW()/2, ScrH()/4
+
+		local brightness = 255
+		local alpha = (f^0.15)*255*1.2
+
+		local w, h = prettytext.DrawText({
+			text = area_name,
+			font = "Square721 BT",
+			weight = 0,
+			size = 130,
+			x = x,
+			y = y,
+			blur_size = 15,
+			blur_overdraw = 4,
+			x_align = -0.5,
+			y_align = -0.5,
+			foreground_color = Color(brightness, brightness, brightness, alpha)
+		})
+
+		local border = 6
+		local height = 3
+		surface.SetDrawColor(0, 0, 0, alpha)
+		surface.DrawRect(x - w - border/2, y + h/2.75 - border/2, w*2 + border, height+border)
+
+		surface.SetDrawColor(brightness, brightness, brightness, alpha)
+		surface.DrawRect(x - w, y + h/2.75, w*2, height)
+
+		if f <= 0 then
+			hook.Remove("HUDPaint", "newarea")
+		end
+
+	end)
 end
 
-local Handle = function(ent,area)
-    local area = area or "Overworld"
-    if ent == LocalPlayer() then
-        timer.Simple(0.5,function()
-            if cur_area ~= area and LocalPlayer():IsInArea(area) or (area == "Overworld" and table.Count(LocalPlayer():GetCurrentAreas()) == 0) then
-                cur_area = area
-                if IsValid(cur_panel) then
-                    cur_panel:MoveTo(-cur_panel:GetWide(),y_pos,0.35,0,7,function(_,pa) pa:Remove() end)
-                end
-                local panel = CreatePanel(area)
-                cur_panel = panel
-                panel:MoveTo(ScrW()/2-panel:GetWide()/2,y_pos,0.35,0,7)
-                timer.Simple(3,function()
-                    if not IsValid(panel) then return end
-                    panel:MoveTo(-panel:GetWide(),y_pos,0.35,0,7,function(_,pa) pa:Remove() end)
-                end)
-            end
-        end)
-    end
+local function handle(ent, area_name)
+	if ent == LocalPlayer() and ent:GetNWBool("rpg") then
+		show_name(area_name or "OverWorld")
+	end
 end
 
-hook.Add("InitPostEntity","MapDefineNotification",function()
-    hook.Add("MD_OnAreaEntered","MapDefineNotification",Handle)
-    hook.Add("MD_OnOverWorldEntered","MapDefineNotification",Handle)
-end)
+hook.Add("MD_OnAreaEntered","area_notification", handle)
+hook.Add("MD_OnOverWorldEntered","area_notification", handle)
+
+if LocalPlayer():IsValid() then
+	show_name("Ash Lake")
+end

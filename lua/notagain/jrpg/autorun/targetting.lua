@@ -2,7 +2,7 @@ jtarget = jtarget or {}
 jtarget.scroll_dir = 0
 
 if CLIENT then
-	function jtarget.GetTargetsOnScreen(prev_target, friends_only)
+	function jtarget.GetTargetsOnScreen(prev_target)
 		local ply = LocalPlayer()
 		local found_left = {}
 		local found_right = {}
@@ -11,9 +11,9 @@ if CLIENT then
 		local ents = ents.FindInSphere(EyePos(), 1000)
 		for _, val in ipairs(ents) do
 			if
-				(not val:IsNPC() or not val.jtarget_probably_dead) and
+				(not val.Alive or (val:Alive() and not val.jtarget_probably_dead)) and
 				(val:IsNPC() or (val:IsPlayer() and val ~= ply)) and
-				((friends_only and jrpg.IsFriend(val)) or (not friends_only and not jrpg.IsFriend(val))) and
+				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
 				val ~= prev_target and
 				not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
 			then
@@ -44,7 +44,7 @@ if CLIENT then
 		local ply = LocalPlayer()
 		local prev_target = jtarget.GetEntity(ply)
 		jtarget.prev_target = prev_target
-		local targets = jtarget.GetTargetsOnScreen(prev_target:IsValid() and prev_target, input.IsKeyDown(KEY_LSHIFT))
+		local targets = jtarget.GetTargetsOnScreen(prev_target:IsValid() and prev_target)
 
 		if delta > 0 then
 			if delta > #targets.right then
@@ -116,7 +116,12 @@ if CLIENT then
 				local pos = current_target:WorldSpaceCenter()
 				pos = pos:ToScreen()
 				if true or pos.Visible then
-					surface.SetDrawColor(255, 255, 255, 255)
+
+					if jrpg.IsFriend(current_target) then
+						surface.SetDrawColor(team.GetColor(TEAM_FRIENDS))
+					else
+						surface.SetDrawColor(team.GetColor(TEAM_PLAYERS))
+					end
 					surface.SetMaterial(ring_mat)
 					surface.DrawTexturedRectRotated(pos.x, pos.y, size, size, os.clock()*10)
 				end
@@ -142,7 +147,7 @@ if CLIENT then
 --				offset = f*180*-jtarget.scroll_dir
 			end
 
-			local targets = jtarget.GetTargetsOnScreen(current_target, input.IsKeyDown(KEY_LSHIFT))
+			local targets = jtarget.GetTargetsOnScreen(current_target)
 
 			local pos = current_target:NearestPoint(current_target:WorldSpaceCenter() + Vector(0,0,100))
 			pos = pos:ToScreen()
@@ -172,12 +177,14 @@ if CLIENT then
 		end
 	end
 
-	function jtarget.StartSelection()
+	function jtarget.StartSelection(friends_only)
 		if jtarget.selecting then return end
 
 		jtarget.selecting = true
 		jtarget.Scroll(1)
 		jtarget.Scroll(-1)
+		jtarget.friends_only = friends_only
+
 		hook.Add("HUDShouldDraw", "jtarget", function(what)
 			if what == "JHitmarkers" and jtarget.GetEntity(LocalPlayer()):IsValid() then
 				return false
@@ -188,6 +195,10 @@ if CLIENT then
 	function jtarget.StopSelection()
 		jtarget.selecting = false
 		hook.Remove("HUDShouldDraw", "jtarget")
+	end
+
+	function jtarget.IsSelecting()
+		return jtarget.selecting
 	end
 
 	hook.Add("HUDPaint", "jtarget", jtarget.DrawSelection)
@@ -203,18 +214,25 @@ function jtarget.SetEntity(ply, ent)
 		jtarget.select_timer = RealTime() + 1
 	end
 
-	ply:SetNW2Entity("jtarget", ent)
-
 	if CLIENT then
 		if ent:IsValid() then
 			RunConsoleCommand("jtarget_select", ent:EntIndex())
 		else
 			RunConsoleCommand("jtarget_select")
 		end
+		ply.jtarget_ent = ent
+		--ply:SetNW2Entity("jtarget", ent)
+	end
+
+	if SERVER then
+		ply:SetNW2Entity("jtarget", ent)
 	end
 end
 
 function jtarget.GetEntity(ply)
+	if LocalPlayer() == ply and ply.jtarget_ent and ply.jtarget_ent:IsValid() then
+		return ply.jtarget_ent
+	end
 	return ply:GetNW2Entity("jtarget")
 end
 
@@ -257,7 +275,7 @@ if CLIENT then
 			local ent = jtarget.GetEntity(LocalPlayer())
 
 			for _, val in ipairs(ents.FindInSphere(ent:GetPos(), 500)) do
-				if val:GetRagdollOwner() == ent then
+				if val:IsNPC() and val:GetRagdollOwner() == ent then
 					jtarget.SetEntity(LocalPlayer())
 					jtarget.StartSelection()
 					ent.jtarget_probably_dead = true

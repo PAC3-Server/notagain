@@ -12,27 +12,32 @@ do
 		self:NetworkVar("String", 0, "DamageTypes")
 
 		self:NetworkVar("Float", 0, "Damage")
+		self:NetworkVar("Float", 1, "LifeTime")
 	end
 
 	function ENT:Initialize()
 		self:SetCollisionPoint(Vector(0,0,0))
 		self:SetCollisionEntity(NULL)
 
+		self.life_time = RealTime() + self:GetLifeTime()
+
 		if SERVER then
 			self:SetModel("models/props_junk/PopCan01a.mdl")
 			self:PhysicsInitSphere(5)
 			local phys = self:GetPhysicsObject()
-			phys:EnableGravity(false)
 
 			self:StartMotionController()
 
 			self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
 
-			self.rand_dir = (self.dir - self:GetOwner():GetAimVector())
-			self.start_time = RealTime() + 1
-			self.damp = math.random()
-			if self.damage then self:SetDamage(self.damage) end
-			SafeRemoveEntityDelayed(self, 30)
+			if self:GetOwner():IsValid() then
+				self.rand_dir = (self.dir - self:GetOwner():GetAimVector())
+				self.start_time = RealTime() + 1
+				self.damp = math.random()
+				if self.damage then self:SetDamage(self.damage) end
+				SafeRemoveEntityDelayed(self, 30)
+				phys:EnableGravity(false)
+			end
 		end
 
 		if CLIENT then
@@ -90,15 +95,59 @@ do
 				suppress = true
 				self:FireBullets(data)
 				suppress = false
-			elseif ent:IsValid() then
+			else
 				for _, name in ipairs(self:GetDamageTypes():Split(",")) do
 					if jdmg.enums[name] then
+
 						local d = DamageInfo()
 						d:SetDamage(50)
 						d:SetDamageCustom(jdmg.enums[name])
 						d:SetAttacker(self:GetOwner())
 						d:SetInflictor(self:GetOwner())
-						ent:TakeDamageInfo(d)
+
+						if ent:IsValid() then
+							ent:TakeDamageInfo(d)
+						else
+							for i = 1, math.random(3, 6) do
+								local temp = ents.Create("prop_physics")
+								temp:SetModel("models/props_junk/rock001a.mdl")
+								temp:SetPos(pos)
+								temp:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
+								temp:SetModelScale(math.Rand(0.25, 1))
+								temp:SetAngles(VectorRand():Angle())
+								temp:SetColor(Color(1,1,1,1))
+								temp:SetRenderMode(RENDERMODE_TRANSALPHA)
+								temp:SetMaterial("models/debug/debugwhite")
+								temp:Spawn()
+								if i < 2 then
+									temp:PhysicsInit(SOLID_NONE)
+								else
+									temp:GetPhysicsObject():SetVelocity((VectorRand()-normal)*50 - self.old_vel*math.Rand(0.25,0.5))
+								end
+								SafeRemoveEntityDelayed(temp, 2)
+
+								local d = DamageInfo()
+								d:SetDamage(100)
+								d:SetDamageCustom(jdmg.enums[name])
+								d:SetAttacker(self:GetOwner())
+								d:SetInflictor(self:GetOwner())
+								temp:TakeDamageInfo(d)
+							end
+
+							local sphere = ents.Create("jprojectile_bullet")
+							sphere:SetPos(pos)
+							sphere:SetDamageTypes(self:GetDamageTypes())
+							sphere:Spawn()
+							local phys = sphere:GetPhysicsObject()
+							phys:SetVelocity(self.old_vel*1)
+							phys:SetMaterial("gmod_bouncy")
+							phys:SetMass(5)
+
+							sphere:SetLifeTime(2)
+							SafeRemoveEntityDelayed(sphere, 2.1)
+
+							sphere:TakeDamageInfo(d)
+						end
 					else
 						print("invalid damage type", name, "!?")
 						print(self:GetDamageTypes())
@@ -150,10 +199,14 @@ do
 			end
 			]]
 
+			local f = (self.life_time - RealTime()) / self:GetLifeTime()
+			if self:GetLifeTime() == 0 then f = 1 end
+			f = f ^ 0.25
+
 			for _, name in ipairs(self.damage_types) do
 				if jdmg.types[name] and jdmg.types[name].draw_projectile then
 					local rad = math.max(self:GetDamage(), 50) + math.Rand(0.75,1.25)
-					jdmg.types[name].draw_projectile(self, rad, nil, util.PixelVisible(self:GetPos(), rad, self.pixvis))
+					jdmg.types[name].draw_projectile(self, rad*f, nil, util.PixelVisible(self:GetPos(), rad, self.pixvis))
 				end
 			end
 		end
@@ -221,6 +274,8 @@ do
 		end
 
 		function ENT:PhysicsCollide(data, phys)
+			if not self:GetOwner():IsValid() then return end
+
 			if self.damaged or self:GetParent():IsValid() then return end
 			self.damaged = true
 
@@ -229,6 +284,7 @@ do
 			self:SetCollisionEntity(data.HitEntity)
 
 			timer.Simple(0, function()
+				self.old_vel = data.OurOldVelocity
 				self:StopMotionController()
 				phys:Sleep()
 				phys:SetVelocity(Vector(0,0,0))

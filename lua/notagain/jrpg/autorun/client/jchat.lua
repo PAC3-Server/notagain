@@ -20,14 +20,19 @@ function jchat.Start(stop_cb)
 	hook.Add("CalcView", "jchat", jchat.CalcView)
 	hook.Add("RenderScreenspaceEffects", "jchat", jchat.RenderScreenspaceEffects)
 
+	local ok = os.clock() + 0.25
+
 	hook.Add("KeyPress", "jchat", function(ply, key)
 		if key == IN_USE and jchat.HasPlayer(LocalPlayer()) then
+			if ok > os.clock() then return end
 			jchat.Stop()
 			hook.Remove("KeyPress", "jchat")
 		end
 	end)
 
 	hook.Add("HUDShouldDraw", "jchat", function(str)
+		if jchat.show_chat then return end
+
 		if str ~= "CHudWeaponSelection" and str ~= "CHudGMod" then
 			return false
 		end
@@ -40,6 +45,10 @@ function jchat.Start(stop_cb)
 	end)
 
 	hook.Add("NPCSpeak", "jchat", function(npc, str)
+		if jchat.CanChat(npc) and not jchat.HasPlayer(npc) then
+			jchat.AddPlayer(npc)
+		end
+
 		if jchat.HasPlayer(npc) then
 			local str = language.GetPhrase(str)
 			if str then
@@ -50,6 +59,7 @@ function jchat.Start(stop_cb)
 	end)
 
 	hook.Add("OnPlayerChat", "jchat", function(ply, str)
+		if not ply:IsValid() then return end
 		if jchat.HasPlayer(ply) then
 			jchat.PlayerSay(ply, str)
 		end
@@ -112,6 +122,8 @@ do -- players
 				return
 			end
 
+			ply:CallOnRemove("jchat", function() jchat.RemovePlayer(ply) end)
+
 			jchat.players[ply] = ply
 		end
 
@@ -121,8 +133,19 @@ do -- players
 			end
 
 			jchat.players[ply] = nil
+			ply.jchat_was_active = nil
 
-			if ply == LocalPlayer() or (table.Count(jchat.players) == 1 and next(jchat.players) == LocalPlayer()) then
+			local anyone_active = false
+
+			for ply in pairs(jchat.GetPlayers()) do
+				if ply.jchat_was_active then
+					jchat.SetActivePlayer(ply)
+					anyone_active = true
+					break
+				end
+			end
+
+			if not anyone_active or ply == LocalPlayer() or (table.Count(jchat.players) == 1 and next(jchat.players) == LocalPlayer()) then
 				jchat.Stop()
 			end
 		end
@@ -131,6 +154,7 @@ do -- players
 	function jchat.SetActivePlayer(ply)
 		if jchat.HasPlayer(ply) then
 			jchat.active_player = ply
+			ply.jchat_was_active = true
 		end
 	end
 
@@ -140,6 +164,10 @@ do -- players
 
 	function jchat.CanChat(a)
 		if not a:IsValid() then
+			return false
+		end
+
+		if not jrpg.IsFriend(a) then
 			return false
 		end
 
@@ -164,7 +192,7 @@ do -- players
 			return false
 		end
 
-		if a:EyeAngles():Forward():Dot((apos - bpos):GetNormalized()) > 0.9 then
+		if a:IsPlayer() and a:EyeAngles():Forward():Dot((apos - bpos):GetNormalized()) > 0.9 then
 			return false
 		end
 
@@ -229,6 +257,20 @@ do -- view
 		return ply:NearestPoint(ply:EyePos() + Vector(0,0,100)), ply:EyeAngles()
 	end
 
+	local function get_center()
+		local middle = vector_origin
+		local players = jchat.GetPlayers()
+
+		for ply in pairs(jchat.GetPlayers()) do
+			middle = middle + jchat.GetEyePos(ply)
+		end
+
+		if middle ~= vector_origin then
+			middle = middle / table.Count(players)
+		end
+		return middle
+	end
+
 	function jchat.ChooseRandomCameraPos(ply)
 		local prev = jchat.GetActivePlayer()
 
@@ -239,6 +281,10 @@ do -- view
 				jchat.local_camera_pos = Vector(jchat.RandomSeed(-1,1)*0.2, jchat.RandomSeed(-1,1)*0.2, jchat.RandomSeed(-1,0.5)*0.5)
 				jchat.angle_offset = Angle(jchat.RandomSeed(-1,1)*2, jchat.RandomSeed(-1,1)*8, jchat.RandomSeed(-1,1))
 				jchat.fov_target = jchat.RandomSeed(20, 50)
+
+				if table.Count(jchat.GetPlayers()) > 1 then
+					jchat.local_camera_pos = jchat.local_camera_pos + (ply:EyePos() - get_center()):Angle():Right() * ((jchat.RandomSeed(-1, 1) > 0 and 1 or -1) * jchat.RandomSeed(0.5, 1))
+				end
 
 				jchat.new_angle = true
 				jchat.panning_dir = Angle(0,0,0)
@@ -259,17 +305,7 @@ do -- view
 	end
 
 	function jchat.GetWorldCameraPos()
-		local middle = vector_origin
-		local players = jchat.GetPlayers()
-
-		for ply in pairs(jchat.GetPlayers()) do
-			middle = middle + jchat.GetEyePos(ply)
-		end
-
-		if middle ~= vector_origin then
-			middle = middle / table.Count(players)
-		end
-
+		local middle = get_center()
 		local ply = jchat.GetActivePlayer()
 
 		return LerpVector(0.2, jchat.GetEyePos(ply) + (jchat.GetLocalCameraPos() * (jchat.cam_distance * 0.5)), middle)
@@ -313,6 +349,19 @@ do -- view
 				jchat.fov_smooth = jchat.fov_target
 
 				jchat.new_angle = false
+			end
+
+			do -- trace block
+				local data = util.TraceLine({
+					start = ply:NearestPoint(jchat.pos_smooth),
+					endpos = jchat.pos_smooth,
+					filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
+					mask =  MASK_VISIBLE,
+				})
+
+				if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
+					jchat.pos_smooth = data.HitPos--Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
+				end
 			end
 
 			params.origin = jchat.pos_smooth
@@ -377,12 +426,13 @@ do -- view
 			name = (jrpg and jrpg.GetFriendlyName(ent) or ent:Nick())
 		end
 
-		local font_size = 60
+		local mult = ScrW() / 1920
+		local font_size = 60*mult
 		local font_weight = 100
 		local y = 0
 
 		if not jchat.wrapped_message then
-			prettytext.GetTextSize("", "Square721 BT", font_size, font_weight, 3, 31)
+			prettytext.GetTextSize("", "Square721 BT", font_size, font_weight, 4*mult, 31*mult)
 			jchat.wrapped_message = string_wrapwords(jchat.message, ScrW() - 350)
 		end
 
@@ -396,18 +446,18 @@ do -- view
 
 		do
 			local y = y
-			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 3, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 31)
+			local w = prettytext.Draw(name, x, y, "Square721 BT", font_size, font_weight, 4*mult, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), nil, -1, 10*mult)
 
 			surface.SetDrawColor(0, 0, 0, 255)
-			surface.DrawRect(0 - 3, y - 3 + 5, w + x + 10 + 6, 3 + 6)
+			surface.DrawRect(0 - 3 * mult, y - (3 + 5) * mult, w + x + (10 + 6) * mult, (3 + 6) * mult )
 
 			surface.SetDrawColor(170, 170, 170, 255)
-			surface.DrawRect(0, y + 5, w + x + 10, 3)
+			surface.DrawRect(0, y - 5 * mult, w + x + (10 * mult), 3 * mult)
 		end
 
 		local y = y
 		for _, str in ipairs(jchat.wrapped_message) do
-			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 3, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 31)
+			prettytext.Draw(str, ScrW() / 2, y + 25, "Square721 BT", font_size, font_weight, 4*mult, Color(brightness, brightness, brightness, 255 * jchat.fade), Color(0,0,0,255), -0.5, nil, 5*mult)
 			y = y + font_size
 		end
 	end
@@ -435,16 +485,54 @@ do -- view
 	end
 end
 
+do
+	local self_chat = false
+
+	hook.Add("ChatTextChanged", "jchat", function()
+		jchat.show_chat = true
+
+		if jchat.IsActive() then return end
+		if not battlecam.IsEnabled() then return end
+
+		jchat.Start(function() battlecam.Enable() end)
+		jchat.AddPlayer(LocalPlayer())
+		jchat.PlayerSay(LocalPlayer(), "")
+
+		battlecam.Disable()
+		self_chat = true
+	end)
+
+	hook.Add("FinishChat", "jchat", function()
+		timer.Simple(0, function()
+			jchat.show_chat = nil
+		end)
+
+		if not jchat.IsActive() then return end
+		if not self_chat then return end
+
+		jchat.Stop()
+
+		self_chat = false
+	end)
+end
+
+
 hook.Add("PlayerUsedEntity", "jchat", function(ply, ent)
 	if not battlecam.IsEnabled() then return end
+	if jtarget.GetEntity(LocalPlayer()):IsValid() then return end
 
-	if ply == LocalPlayer() and (ent:IsNPC() or ent:IsPlayer()) then
-		jchat.Start(function()
-			battlecam.Enable()
-		end)
+	if ply == LocalPlayer() and (ent:IsNPC() or ent:IsPlayer()) and jchat.CanChat(ent) then
+		jchat.Start(function() battlecam.Enable() end)
 		jchat.AddPlayer(ply)
 		jchat.AddPlayer(ent)
 		jchat.PlayerSay(ent, "")
+
+		for i,v in ipairs(ents.FindInSphere(ply:EyePos(), 800)) do
+			if v:IsNPC() or v:IsPlayer() then
+				jchat.AddPlayer(v)
+			end
+		end
+
 		battlecam.Disable()
 	end
 end)
