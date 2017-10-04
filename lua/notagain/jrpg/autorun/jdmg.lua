@@ -1397,9 +1397,9 @@ if SERVER then
 		local type = dmginfo:GetDamageType()
 		local dmg = dmginfo:GetDamage()
 		local max_health = math.max(ent:GetMaxHealth(), 1)
-		local fraction = dmg/max_health
+		local fraction = math.abs(dmg)/max_health
 
-		local duration = math.Clamp(dmg/50, 0.5, 4)
+		local duration = math.Clamp(math.abs(dmg)/50, 0.5, 4)
 		local strength = math.max((fraction^0.5) * 2, 0.5)
 
 		local override = jdmg.GetDamageType(dmginfo)

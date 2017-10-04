@@ -311,7 +311,7 @@ if CLIENT then
                     local health_color
                     local mana_color
                     local stamina_color
-                    
+
                     if jattributes then
                         health_color  = jattributes.Colors.Health
                         mana_color    = jattributes.Colors.Mana
@@ -764,27 +764,29 @@ if SERVER then
 		--if jdmg.GetDamageType(dmg) == "heal" then return end
 
 		local last_health = ent:Health()
-		local health = -dmg:GetDamage()
+		local damage = dmg:GetDamage()
 		local pos = dmg:GetDamagePosition()
 
 		if pos == vector_origin then
 			pos = ent:GetPos()
 		end
 
-
 		timer.Create(tostring(ent).."_hitmarker", 0, 1, function()
 			if ent:IsValid() then
-				if last_health == ent:Health() then
-					if ent:IsNPC() or ent:IsPlayer() then
-						health = 0
-					else
-						return
+
+				if damage > 0 then
+					if last_health == ent:Health() then
+						if ent:IsNPC() or ent:IsPlayer() then
+							damage = 0
+						else
+							return
+						end
+					elseif (ent:Health() - last_health) ~= damage then
+						damage = ent:Health() - last_health
 					end
-				elseif (ent:Health() - last_health) ~= health then
-					health = ent:Health() - last_health
 				end
 
-				hitmarkers.ShowDamage(ent, health, pos, filter)
+				hitmarkers.ShowDamage(ent, -damage, pos, filter)
 			end
 		end)
 	end)
