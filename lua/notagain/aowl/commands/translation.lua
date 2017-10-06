@@ -1,11 +1,27 @@
 AddCSLuaFile()
 
-if SERVER then
-	API_TRANS_URL = "https://translation.googleapis.com/language/translate/v2"
-	API_DETECT_URL = "https://translation.googleapis.com/language/translate/v2/detect"
-	API_TRANS_KEY = file.Read("translation_key.txt")
+local tag = "trans"
+trans = trans or {}
 
-	local LangCode = {
+trans.error = {}
+trans.error.LangConvert = 1
+trans.error.InvaildJson = 2
+trans.error.HttpRequest = 3
+
+trans.error._Message = {
+	[trans.error.LangConvert] = "Language Convert Error",
+	[trans.error.InvaildJson] = "Invailed Json",
+	[trans.error.HttpRequest] = "Bad request"
+}
+
+if SERVER then
+	trans.transUrl = "https://translation.googleapis.com/language/translate/v2"
+	trans.detectUrl = "https://translation.googleapis.com/language/translate/v2/detect"
+	trans.Key = file.Read("translate_key.txt")
+
+	util.AddNetworkString( "s2c_" .. tag )
+	
+	trans.langs = {
 		["afrikaans"] = "af",
 		["albanian"] = "sq",
 		["amharic"] = "am",
@@ -111,118 +127,96 @@ if SERVER then
 		["yoruba"] = "yo",
 		["zulu"] = "zu",
 	}
-
-	function ConvertLang( str )
-		str = string.lower( str )
-
-		if str == "auto" then
-			return ""
-		end
-
-		for k, v in pairs( LangCode ) do
+	
+	function string.lang( str )
+		for k, v in pairs( trans.langs ) do
 			if v == str then
-				return str
-			end
-
-			if string.StartWith( k, str ) then
 				return v
 			end
 		end
-	end
-
-	function translate( sentence, from, to, callback )
-		from = ConvertLang( from )
-		to = ConvertLang( to )
-
-		http.Post(API_TRANS_URL,
-		{
-			key = API_TRANS_KEY,
-			source = from,
-			target = to,
-			q = sentence
-		},
-
-		function( res )
-			local tab = util.JSONToTable(res)
-
-			if tab.data then
-				callback(tab.data.translations[1].translatedText)
-				return
+		
+		for k, v in pairs( trans.langs ) do
+			if k:StartWith( str ) then
+				return v
 			end
-			callback(false)
-		end,
-		function( err )
-			callback(false)
 		end
-		)
+	
+		return false
 	end
-
-	function detectlang( query, callback )
-	  http.Post(API_DETECT_URL,
-		{
-		  key = API_TRANS_KEY,
-		  q = query
-		},
-		function( res )
-		  local tab = util.JSONToTable(res)
-
-		  if tab then
-			callback(tab.data.detections[1][1].language)
-		  end
-		end,
-		function( err )
-		  print("Error:" .. err)
-		end
-	  )
+	
+	function trans.Error( code )
+		MsgC( Color( 255, 0, 0 ), ("[Translate Error] %s\n"):format( trans.error._Message[code] ) )
 	end
-
-	util.AddNetworkString( "s2c_translate" )
-
-	aowl.AddCommand("tr|translate=string,string,string_rest", function( player, line, from, to, sentence )
-		translate( sentence, from, to, function( data )
-			if data then
-				net.Start( "s2c_translate" )
-				net.WriteString( data )
-				net.Broadcast()
+	
+	function trans.detect( str, success, failed )
+		local data = {
+			key = trans.Key,
+			q = str
+		}
+		
+		local function _success( body )
+			local tab = util.JSONToTable( body )
+			
+			if ( tab ) then
+				success( tab.data.detections[1][1].language )
 			else
-				aowl.Message( player, "Translation error", "error" )
+				trans.Error( trans.error.InvaildJson )
+				if failed then failed( trans.error.InvaildJson ) end
 			end
-		end )
-	end)
-
-
-	// Chat
-	util.AddNetworkString( "s2c_reqtranschat" )
-	util.AddNetworkString( "c2s_reqtranschat" )
-
-	aowl.AddCommand( {"trchat"}, function( pl, line, target )
-		if target then
-			local lang = ConvertLang( target )
-
-			if lang then
-				pl:SetNWString( "trchat", lang )
-			end
-		else
-			pl:SetNWString( "trchat", "" )
 		end
-	end)
+		
+		local function _failed( err )
+			trans.Error( trans.error.HttpRequest )
+			if failed then failed( trans.error.HttpRequest ) end
+		end
+	
+		http.Post(trans.detectUrl, data, _success, _failed)
+	end
+	
+	function trans.to( str, target, success, failed )
+		target = target:lang()
 
-	net.Receive( "c2s_reqtranschat", function( len, pl )
-		local p = net.ReadEntity()
-		local t = net.ReadString()
-		local lang = pl:GetNWString( "trchat" )
-
-		translate( t, "auto", lang, function( q )
-			if q then
-				net.Start( "s2c_reqtranschat" )
-				net.WriteEntity( p )
-				net.WriteString( q )
-				net.Send( pl )
+		local function _success( body )
+			local tab = util.JSONToTable( body )
+			
+			if ( tab ) then
+				success( tab.data.translations[1].translatedText )
+			else
+				trans.Error( trans.error.InvaildJson )
+				if failed then failed( trans.error.InvaildJson ) end
 			end
+		end
+		
+		local function _failed( err )
+			trans.Error( trans.error.HttpRequest )
+			if failed then failed( trans.error.HttpRequest ) end
+		end
+		
+		if ( target ) then
+			local data = {
+				key = trans.Key,
+				target = target,
+				q  = str
+			}
+		
+			http.Post( trans.transUrl, data, _success, _failed )
+		else
+			if failed then failed( trans.error.LangConvert ) end
+			trans.Error( trans.error.LangConvert )
+		end
+	end
+	
+	aowl.AddCommand("tr|translate=string,string_rest", function( player, line, to, sentence )
+		trans.to( sentence, to, function( text )
+			net.Start( "s2c_" .. tag )
+			net.WriteString( text )
+			net.Broadcast()
+		end, function( code )
+			aowl.Message( player, "Translation error: " .. trans.error._Message[code], "error" )
 		end )
-	end )
+	end)
 else
-	net.Receive( "s2c_translate", function()
+	net.Receive( "s2c_" .. tag, function()
 		local data = net.ReadString()
 
 		chat.AddText(
@@ -237,28 +231,5 @@ else
 		Color(252, 202, 3), "e",
 		color_white, ": ",
 		data)
-	end )
-
-	// chat
-	hook.Add( "OnPlayerChat", "translation_chat", function( pl, t )
-		local targetLang = LocalPlayer():GetNWString( "trchat" )
-
-		if targetLang != "" and !string.StartWith( t, "!" ) and pl != LocalPlayer() then
-			net.Start( "c2s_reqtranschat" )
-			net.WriteEntity( pl )
-			net.WriteString( t )
-			net.SendToServer()
-		end
-	end )
-
-	net.Receive( "s2c_reqtranschat", function()
-		local p = net.ReadEntity()
-		local t = net.ReadString()
-
-		chat.AddText(
-		Color(192, 127, 255), "[Translate] ",
-		Color(192, 127, 255), p:Nick(),
-		color_white, ": " .. t
-		)
 	end )
 end
