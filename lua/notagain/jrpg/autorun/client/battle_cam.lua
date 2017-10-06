@@ -264,7 +264,7 @@ do -- view
 					battlecam.active_target_dist = nil
 					battlecam.active_target_campos = nil
 
-					local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 240), 0, 1) ^ 10 - 0.05, 0)
+					local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 240 * (ply:GetModelScale() or 1)), 0, 1) ^ 10 - 0.05, 0)
 					target_pos = Lerp(inside_sphere, smooth_pos, ply:EyePos())
 
 					local cam_ang = smooth_dir:Angle()
