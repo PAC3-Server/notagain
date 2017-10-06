@@ -2,14 +2,24 @@ if SERVER then
 	timer.Create("juse", 0.5, 0, function()
 		for _, ply in pairs(player.GetAll()) do
 			ply:SetNWEntity("juse_ent", NULL)
-			ply:SetNWBool("rpg",ply:GetNWBool("rpg")or false)
 			if (ply:GetInfoNum("ctp_enabled", 0) == 1 or ply:GetInfoNum("battlecam_enabled", 0) == 1) and ply:GetNWBool("rpg") then
 				local found = {}
 				for _, ent in pairs(ents.FindInSphere(ply:EyePos(), 70)) do
 					if ent ~= ply then
 						local name = ent:GetClass()
-						if jrpg.IsFriend(ply, ent) and ent ~= ply and (ent:IsPlayer() or ent:IsNPC() or name:find("button") or name == "func_movelinear") then
-							table.insert(found, {ent = ent, dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())})
+						if ent ~= ply then
+							local val
+							if ent:IsPlayer() or ent:IsNPC() then
+								if jrpg.IsFriend(ply, ent) then
+									val = ent
+								end
+							elseif name:find("button") or name == "func_movelinear" then
+								val = ent
+							end
+
+							if val then
+								table.insert(found, {ent = val, dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())})
+							end
 						end
 					end
 				end
