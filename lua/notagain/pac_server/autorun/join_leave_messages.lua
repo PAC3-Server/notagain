@@ -11,8 +11,7 @@ if SERVER then
  		end
  	end
 
-	local geoip		
- 	pcall(function() geoip = requirex("geoip") end)
+	local geoip	= pcall(function() geoip = requirex("geoip") end)
 
  	util.AddNetworkString(tag)
 
@@ -37,7 +36,7 @@ if SERVER then
 		local name 		= data.name
 		local steamid 	= data.networkid
 		local reason 	= data.reason
-		
+
 		playerJoin(false, name .. " (" .. steamid .. ") has left the server! (" .. reason .. ")")
 	end)
 
