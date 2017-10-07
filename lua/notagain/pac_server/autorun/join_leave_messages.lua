@@ -11,7 +11,7 @@ if SERVER then
  		end
  	end
 
-	local geoip	= pcall(function() geoip = requirex("geoip") end)
+	local geoip	= pcall(function() requirex("geoip") end)
 
  	util.AddNetworkString(tag)
 
