@@ -1,5 +1,3 @@
-if not StormFox or StormFox.Version < 1.1 then return end
-
 aowl.AddCommand("weather=string,number[1]",function(ply,line,weather,intensity)
     if StormFox then
         local valids = {}
