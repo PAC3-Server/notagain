@@ -262,7 +262,7 @@ do -- view
 					offset.z = p
 
 
-					target_pos = (LerpVector(0 or 0.5, ply_pos, ent_pos) - offset/2) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-500))
+					target_pos = (LerpVector(0 or 0.5, ply_pos, ent_pos) - offset/2) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-enemy_size))
 
 					lerp_thing = (((target_pos:Distance(ent_pos) - target_pos:Distance(ply_pos)) / offset:Length()) / 1.5) * 0.5 + 0.5
 					target_dir = (LerpVector(0 or lerp_thing, ent_pos, ply_pos) - target_pos)
