@@ -766,12 +766,12 @@ if SERVER then
 		local phys = self:GetPhysicsObject()
 		phys:AddVelocity(dmg:GetDamageForce())
 
-		local ply = dmg:GetAttacker()
-		if ply:IsPlayer() and (not ply.alan_last_hurt or ply.alan_last_hurt < CurTime()) and hurt_list then
-			self:PlayerSay(ply, ply:Nick() .. table.Random(hurt_list))
-			ply.alan_last_hurt = CurTime() + 1
-			self:Smite(ply)
-		end
+		-- local ply = dmg:GetAttacker()
+		-- if ply:IsPlayer() and (not ply.alan_last_hurt or ply.alan_last_hurt < CurTime()) then
+		-- 	self:PlayerSay(ply, ply:Nick() .. table.Random(hurt_list))
+		-- 	ply.alan_last_hurt = CurTime() + 1
+		-- 	self:Smite(ply)
+		-- end
 	end
 
 	function ENT:PhysicsCollide(data, phys)
