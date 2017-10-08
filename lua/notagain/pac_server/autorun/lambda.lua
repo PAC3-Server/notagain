@@ -1,4 +1,4 @@
-if gmod.GetGamemode().Name ~= "Lambda" then return end
+if engine.ActiveGamemode() ~= "lambda" then return end
 
 hook.Add("PlayerSpawn", "pac_server_lambda", function(ply)
 	timer.Simple(0, function()
