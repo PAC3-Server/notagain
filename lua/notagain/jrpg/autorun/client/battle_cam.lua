@@ -206,7 +206,19 @@ do -- view
 			end
 		end
 
-		if battlecam.IsKeyDown("simple_target") and not LocalPlayer():GetNWEntity("juse_ent"):IsValid() or (jtarget.IsSelecting() and input.IsKeyDown(KEY_ENTER)) then
+		local ok = true
+
+		if battlecam.target_select_wait_for_release  then
+			if battlecam.IsKeyDown("simple_target") then
+				ok = false
+			else
+				battlecam.target_select_wait_for_release = nil
+				ok = false
+			end
+		end
+
+		if ok and not jchat.IsActive() and battlecam.IsKeyDown("simple_target") and not LocalPlayer():GetNWEntity("juse_ent"):IsValid() or (jtarget.IsSelecting() and input.IsKeyDown(KEY_ENTER)) then
+
 			if jtarget.IsSelecting() then
 				jtarget.StopSelection()
 				battlecam.last_target_select = RealTime() + 0.15
@@ -218,6 +230,7 @@ do -- view
 					jtarget.StopSelection()
 				end
 				battlecam.last_target_select = RealTime() + 0.15
+				battlecam.target_select_wait_for_release = true
 			end
 		end
 
