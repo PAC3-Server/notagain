@@ -89,6 +89,7 @@ end
 
 function SWEP:Initialize()
 	self:SetHoldType("melee")
+	return self.BaseClass.Initialize(self)
 end
 
 function SWEP:OnDrop()
