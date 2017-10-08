@@ -823,6 +823,6 @@ if SERVER then
 	end)
 end
 
-if LocalPlayer():IsValid() then hitmarkers.ShowAttack(me, "Blitz") end
+--if LocalPlayer():IsValid() then hitmarkers.ShowAttack(me, "Blitz") end
 
 return hitmarkers
