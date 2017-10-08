@@ -9,11 +9,12 @@ if SERVER then
 						local name = ent:GetClass()
 						if ent ~= ply then
 							local val
+							local savetable = ent:GetSaveTable()
 							if ent:IsPlayer() or ent:IsNPC() then
 								if jrpg.IsFriend(ply, ent) then
 									val = ent
 								end
-							elseif name:find("button") or name == "func_movelinear" then
+							elseif name:find("button") or name:find("door") or name == "func_movelinear" or savetable.m_toggle_state or savetable.m_eDoorState then
 								val = ent
 							end
 
@@ -25,7 +26,37 @@ if SERVER then
 				end
 				if found[1] then
 					table.sort(found, function(a, b) return a.dist < b.dist end)
-					ply:SetNWEntity("juse_ent", found[1].ent)
+					local ent = found[1].ent
+
+					ply:SetNWEntity("juse_ent", ent)
+
+					local text = "examine"
+
+					if ent.GetActiveWeapon then
+						text = "talk"
+					else
+						local savetable = ent:GetSaveTable()
+
+						if savetable.m_toggle_state then
+							if savetable.m_toggle_state == 0 then
+								text = "close"
+							else
+								text = "open"
+							end
+						elseif savetable.m_eDoorState then
+							if savetable.m_eDoorState ~= 0 then
+								text = "close"
+							else
+								text = "open"
+							end
+						else
+							button:Use(ply, ply, USE_TOGGLE, 1)
+							button:Use(ply, ply, USE_ON, 1)
+							text = "use"
+						end
+					end
+
+					ply:SetNWString("juse_text", text)
 				end
 			end
 		end
@@ -35,9 +66,28 @@ if SERVER then
 		if key ~= IN_USE then return end
 		local button = ply:GetNWEntity("juse_ent")
 		if button:IsValid() then
-			button:Use(ply, ply, USE_TOGGLE, 1)
-			button:Use(ply, ply, USE_ON, 1)
+
+			local savetable = button:GetSaveTable()
+
+			if savetable.m_toggle_state then
+				if savetable.m_toggle_state == 0 then
+					button:Fire("close")
+				else
+					button:Fire("open")
+				end
+			elseif savetable.m_eDoorState then
+				if savetable.m_toggle_state ~= 0 then
+					button:Fire("close")
+				else
+					button:Fire("open")
+				end
+			else
+				button:Use(ply, ply, USE_TOGGLE, 1)
+				button:Use(ply, ply, USE_ON, 1)
+			end
 			ply:SetEyeAngles(((button:IsNPC() and button:EyePos() or button:WorldSpaceCenter()) - ply:EyePos()):Angle())
+
+			ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_item_" .. (ply.GetActiveWeapon and "wave" or "give")) , 0.5, true)
 
 			net.Start("juse")
 				net.WriteEntity(ply)
@@ -59,6 +109,8 @@ if CLIENT then
 	net.Receive("juse", function()
 		local ply = net.ReadEntity()
 		local ent = net.ReadEntity()
+
+		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_item_" .. (ply.GetActiveWeapon and "wave" or "give")) , 0.5, true)
 
 		if ply:IsValid() and ent:IsValid() then
 			hook.Run("PlayerUsedEntity", ply, ent)
@@ -127,7 +179,7 @@ if CLIENT then
 		local x = ScrW()/2
 		local y = ScrH()/3
 		local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
-		local str = ent:IsValid() and (ent.GetActiveWeapon and "TALK" or "EXAMINE") or last_str
+		local str = LocalPlayer():GetNWString("juse_text", "examine"):upper()
 		last_str = str
 		local w,h = prettytext.GetTextSize(str, "Square721 BT", txt_size, 0, 3)
 		local key_width, key_height = prettytext.GetTextSize(key or "E", "Square721 BT", txt_size, 0, 3)
@@ -135,12 +187,12 @@ if CLIENT then
 
 		surface.SetDrawColor(0,0,0,200*fade_out)
 		surface.SetMaterial(gradient)
-		surface.DrawTexturedRect(x - bg_width, y + h/8, bg_width * 2, h/1.3)
+		surface.DrawTexturedRect(x - bg_width, y - 8/2, bg_width * 2, h + 8)
 
 		surface.SetDrawColor(255,255,255,255*fade_out)
 		draw.RoundedBox(4, x - key_width*2 - w/2 - key_width*0.25, y + border-16, key_width*1.5, key_height/1.3, Color(25,25,25,255*fade_out))
-		prettytext.Draw(str, x - w / 2, y, "Square721 BT", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
 
+		prettytext.Draw(str, x - w / 2, y, "Square721 BT", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
 		prettytext.Draw(key, x - key_width*2 - w/2, y, "Square721 BT", txt_size, 0, 3, Color(255, 255, 255, 255*fade_out))
 
 	end)
