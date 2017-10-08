@@ -293,22 +293,6 @@ do -- view
 					smooth_pos = smooth_pos + right*1500 + up*1500
 					smooth_dir = smooth_dir - right*8 - up*8
 
-
-					do -- trace block
-						local data = util.TraceHull({
-							mins = Vector(1,1.1)*-10,
-							maxs = Vector(1,1.1)*10,
-							start = ply:NearestPoint(smooth_pos),
-							endpos = smooth_pos,
-							filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
-							mask =  MASK_VISIBLE,
-						})
-
-						if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
-							smooth_pos = data.HitPos--Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
-						end
-					end
-
 					do
 						local hack = math.min((battlecam.cam_pos * Vector(1,1,0)):Distance(ply:EyePos() * Vector(1,1,0)) / 300, 1) ^ 1.5
 						battlecam.last_flip_walk = battlecam.last_flip_walk or 0
@@ -326,6 +310,21 @@ do -- view
 						battlecam.reset_dir = false
 					end
 				end
+			end
+		end
+
+		do -- trace block
+			local data = util.TraceHull({
+				mins = Vector(1,1.1)*-10,
+				maxs = Vector(1,1.1)*10,
+				start = ply:NearestPoint(smooth_pos),
+				endpos = smooth_pos,
+				filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
+				mask =  MASK_VISIBLE,
+			})
+
+			if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
+				smooth_pos = data.HitPos--Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
 			end
 		end
 
