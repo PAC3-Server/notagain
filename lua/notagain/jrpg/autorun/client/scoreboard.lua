@@ -241,7 +241,7 @@ local player_line = {
 			if self:IsHovered() then
 				surface.SetDrawColor(127,255,127)
 			elseif not parent.Player:Alive() then
-				surface.SetDrawColor(255,127,127)
+				surface.SetDrawColor(127,127,127)
 			else
 				surface.SetDrawColor(parent.Color)
 			end
@@ -474,8 +474,13 @@ local scoreboard = {
 					line:Dock(TOP)
 					line:Setup(v)
 					ply_lines[v:SteamID()] = line
+
 				end
+
+				ply_lines[v:SteamID()].Color = team.GetColor(v:Team())
 			end
+
+
 			if IsValid(selected_player) and not ply_lines[selected_player:SteamID()].Selected then
 				ply_lines[selected_player:SteamID()].Selected = true
 			end
