@@ -1153,6 +1153,8 @@ do -- groups
 		administrator = "developers",
 	}
 
+	local META = FindMetaTable("Player")
+
 	function META:CheckUserGroupLevel(name)
 
 		--Console?
