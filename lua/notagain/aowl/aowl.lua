@@ -1206,10 +1206,6 @@ do -- groups
 			return true -- no prop protection means you can alter anything
 		end
 
-		if a:IsAdmin() and b:IsAdmin() then
-			return true
-		end
-
 		if b.IsFriend then
 			return b:IsFriend(a)
 		end
