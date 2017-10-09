@@ -46,6 +46,25 @@ function META:GetFriends()
 	return out
 end
 
+if CLIENT then
+	TEAM_PLAYERS = 1
+	TEAM_FRIENDS = 2
+
+	local b = 1.5
+	team.SetUp(TEAM_PLAYERS, "players", Color(150*b, 50*b, 50*b, 255))
+	team.SetUp(TEAM_FRIENDS, "priends", Color(25*b, 100*b, 130*b, 255))
+
+	META._Team = META._Team or META.Team
+
+	function META:Team(...)
+		if self.IsFriend then
+			return LocalPlayer():IsFriend(self) and TEAM_FRIENDS or TEAM_PLAYERS
+		end
+
+		return META._Team(self, ...)
+	end
+end
+
 if CPPI then
 	META.CPPIGetFriends = META.GetFriends
 end
@@ -59,8 +78,6 @@ if SERVER then
 		local friend = net.ReadEntity()
 		if friend:IsValid() then
 			local status = net.ReadString()
-
-			print(ply, friend, status)
 
 			if status == "__add" then
 				ply:SetNW2Bool("friends_set_" .. friend:UniqueID(), true)
