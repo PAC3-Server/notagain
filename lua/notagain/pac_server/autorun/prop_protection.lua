@@ -222,36 +222,48 @@ if CLIENT then
 	CreateClientConVar("spp_dae", 0, false, true)
 	CreateClientConVar("spp_delay", 120, false, true)
 
-	function proptect.HUDPaint()
+	local ent = NULL
+
+	timer.Create("proptect_owner_label", 0.25, 0, function()
+		ent = NULL
+
 		if not IsValid(LocalPlayer()) then
 			return
 		end
 		local tr = util.TraceLine(util.GetPlayerTrace(LocalPlayer()))
 		if tr.HitNonWorld then
 			if IsValid(tr.Entity) and not tr.Entity:IsPlayer() and not LocalPlayer():InVehicle() then
-				local PropOwner = "Owner: "
-				local OwnerObj = tr.Entity:GetNWEntity("OwnerObj", false)
-				if IsValid(OwnerObj) and OwnerObj:IsPlayer() then
-					PropOwner = PropOwner .. OwnerObj:Name()
-				else
-					OwnerObj = tr.Entity:GetNWString("Owner", "N/A")
-					if type(OwnerObj) == "string" then
-						PropOwner = PropOwner .. OwnerObj
-					elseif IsValid(OwnerObj) and OwnerObj:IsPlayer() then
+				ent = tr.Entity
+				hook.Add("HUDPaint", "prop_protection", function()
+					if not ent:IsValid() then return end
+
+					local PropOwner = "Owner: "
+					local OwnerObj = ent:GetNWEntity("OwnerObj", false)
+					if IsValid(OwnerObj) and OwnerObj:IsPlayer() then
 						PropOwner = PropOwner .. OwnerObj:Name()
 					else
-						PropOwner = PropOwner .. "N/A"
+						OwnerObj = ent:GetNWString("Owner", "N/A")
+						if type(OwnerObj) == "string" then
+							PropOwner = PropOwner .. OwnerObj
+						elseif IsValid(OwnerObj) and OwnerObj:IsPlayer() then
+							PropOwner = PropOwner .. OwnerObj:Name()
+						else
+							PropOwner = PropOwner .. "N/A"
+						end
 					end
-				end
-				surface.SetFont("Default")
-				local w, h = surface.GetTextSize(PropOwner)
-				w = w + 25
-				draw.RoundedBox(4, ScrW() - (w + 8), (ScrH() / 2 - 200) - (8), w + 8, h + 8, Color(0, 0, 0, 150))
-				draw.SimpleText(PropOwner, "Default", ScrW() - (w / 2) - 7, ScrH() / 2 - 200, Color(255, 255, 255, 255), 1, 1)
+					surface.SetFont("Default")
+					local w, h = surface.GetTextSize(PropOwner)
+					w = w + 25
+					draw.RoundedBox(4, ScrW() - (w + 8), (ScrH() / 2 - 200) - (8), w + 8, h + 8, Color(0, 0, 0, 150))
+					draw.SimpleText(PropOwner, "Default", ScrW() - (w / 2) - 7, ScrH() / 2 - 200, Color(255, 255, 255, 255), 1, 1)
+				end)
 			end
 		end
-	end
-	hook.Add("HUDPaint", "prop_protection", proptect.HUDPaint)
+
+		if not ent:IsValid() then
+			hook.Remove("HUDPaint", "prop_protection")
+		end
+	end)
 
 	function proptect.AdminPanel(Panel)
 		Panel:ClearControls()
