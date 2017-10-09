@@ -206,6 +206,16 @@ local player_line = {
 				self.Menu:AddOption("Open Profile",function() parent.Player:ShowProfile() end):SetImage("icon16/world.png")
 				self.Menu:AddOption(parent.Player:IsMuted() and "Unmute" or "Mute",function() parent.Player:SetMuted(not parent.Player:IsMuted()) end):SetImage(parent.Player:IsMuted() and "icon16/sound_add.png" or "icon16/sound_mute.png")
 
+				if friends then
+					self.Menu:AddOption(LocalPlayer():IsFriend(parent.Player) and "untrust" or "trust", function()
+						if LocalPlayer():IsFriend(parent.Player) then
+							RunConsoleCommand("friends_set", parent.Player:UniqueID(), "remove")
+						else
+							RunConsoleCommand("friends_set", parent.Player:UniqueID(), "add")
+						end
+					end):SetImage(LocalPlayer():IsFriend(parent.Player) and "icon16/user_delete.png" or "icon16/user_add.png")
+				end
+
 
 				RegisterDermaMenuForClose( self.Menu )
 				self.Menu:Open()
