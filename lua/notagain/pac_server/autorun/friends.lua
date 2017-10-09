@@ -186,8 +186,3 @@ function friends.PopulateToolMenu()
 	spawnmenu.AddToolMenuOption("Utilities", "AOWL", "Friends", "Friends", "", "", friends.ClientPanel)
 end
 hook.Add("PopulateToolMenu", "friends", friends.PopulateToolMenu)
-
-function friends.PlayerInitialSpawn(ply)
-	friends.LoadFriends(ply)
-end
-hook.Add("PlayerInitialSpawn", "friends", friends.PlayerInitialSpawn)
