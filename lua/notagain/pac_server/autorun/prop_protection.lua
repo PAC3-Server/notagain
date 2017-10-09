@@ -338,7 +338,6 @@ if SERVER then
 	function proptect.SetupSettings()
 		if not sql.TableExists("prop_protection") then
 			sql.Query("CREATE TABLE IF NOT EXISTS spropprotection(toggle INTEGER NOT NULL, admin INTEGER NOT NULL, use INTEGER NOT NULL, edmg INTEGER NOT NULL, pgr INTEGER NOT NULL, awp INTEGER NOT NULL, dpd INTEGER NOT NULL, dae INTEGER NOT NULL, delay INTEGER NOT NULL);")
-			sql.Query("CREATE TABLE IF NOT EXISTS spropprotectionfriends(steamid TEXT NOT NULL PRIMARY KEY, bsteamid TEXT);")
 			sql.Query("INSERT INTO spropprotection(toggle, admin, use, edmg, pgr, awp, dpd, dae, delay) VALUES(1, 1, 1, 1, 1, 1, 1, 0, 120)")
 		end
 		return sql.QueryRow("SELECT * FROM spropprotection LIMIT 1")
