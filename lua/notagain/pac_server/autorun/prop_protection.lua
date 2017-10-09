@@ -33,20 +33,6 @@ if not plymeta then
 	return
 end
 
-function plymeta:CPPIGetFriends()
-	if SERVER then
-		local Table = {}
-		for k, v in pairs(player.GetAll()) do
-			if table.HasValue(proptect[self:SteamID()], v:SteamID()) then
-				table.insert(Table, v)
-			end
-		end
-		return Table
-	else
-		return CPPI_NOTIMPLEMENTED
-	end
-end
-
 local entmeta = FindMetaTable("Entity")
 if not entmeta then
 	print("Couldn't find Entity metatable")
@@ -312,24 +298,6 @@ if CLIENT then
 		Panel:AddControl("Label", {Text = "SPP - Client Panel - Spacetech"})
 
 		Panel:AddControl("Button", {Text = "Cleanup Props", Command = "spp_cleanupprops"})
-		Panel:AddControl("Label", {Text = "Friends Panel"})
-
-		local Players = player.GetAll()
-		if table.Count(Players) == 1 then
-			Panel:AddControl("Label", {Text = "No Other Players Are Online"})
-		else
-			for k, ply in pairs(Players) do
-				if IsValid(ply) and ply ~= LocalPlayer() then
-					local FriendCommand = "spp_friend_" .. ply:GetNWString("SPPSteamID")
-					if not LocalPlayer():GetInfo(FriendCommand) then
-						CreateClientConVar(FriendCommand, 0, false, true)
-					end
-					Panel:AddControl("CheckBox", {Label = ply:Nick(), Command = FriendCommand})
-				end
-			end
-			Panel:AddControl("Button", {Text = "Apply Settings", Command = "spp_applyfriends"})
-		end
-		Panel:AddControl("Button", {Text = "Clear Friends", Command = "spp_clearfriends"})
 	end
 
 	function proptect.SpawnMenuOpen()
@@ -348,14 +316,6 @@ if CLIENT then
 		spawnmenu.AddToolMenuOption("Utilities", "Simple Prop Protection", "Client", "Client", "", "", proptect.ClientPanel)
 	end
 	hook.Add("PopulateToolMenu", "prop_protection", proptect.PopulateToolMenu)
-
-	net.Receive("spp_notify", function()
-		local msg = net.ReadString()
-
-		GAMEMODE:AddNotify(msg, NOTIFY_GENERIC, 5)
-		surface.PlaySound("ambient/water/drip" .. math.random(1, 4) .. ".wav")
-	end)
-
 end
 
 if SERVER then
@@ -387,19 +347,11 @@ if SERVER then
 	proptect.Config = proptect.SetupSettings()
 
 	function proptect.NotifyAll(str)
-		for _,v in pairs(player.GetAll()) do
-			proptect.Notify(v, str)
-		end
-		MsgN(str)
+		aowl.Message(player.GetAll(), str, "generic")
 	end
 
-	util.AddNetworkString("spp_notify")
 	function proptect.Notify(ply, str)
-		net.Start("spp_notify")
-			net.WriteString(str)
-		net.Send(ply)
-
-		ply:PrintMessage(HUD_PRINTCONSOLE, str)
+		aowl.Message(ply, str, "generic")
 	end
 
 	function proptect.AdminReloadPlayer(ply)
@@ -423,20 +375,6 @@ if SERVER then
 				proptect.AdminReloadPlayer(v)
 			end
 		end
-	end
-
-	function proptect.LoadFriends(ply)
-		local PData = ply:GetPData("SPPFriends", "")
-		if PData ~= "" then
-			for k,v in pairs(string.Explode(";", PData)) do
-				local String = string.Trim(v)
-				if String ~= "" then
-					table.insert(proptect[ply:SteamID()], String)
-				end
-			end
-		end
-
-		proptect.NotifyFriendChange(ply)
 	end
 
 	function proptect.UnOwnProp(ent)
@@ -501,27 +439,10 @@ if SERVER then
 	end
 
 	function proptect.IsFriend(ply, ent)
-		local plys = player.GetAll()
-
-		if #plys == 1 then
-			return true
-		end
-		for k,v in pairs(plys) do
-			if v ~= ply then
-				if proptect.Props[ent:EntIndex()].SteamID == v:SteamID() then
-					if proptect[v:SteamID()] and table.HasValue(proptect[v:SteamID()], ply:SteamID()) then
-						return true
-					else
-						return false
-					end
-				end
-			end
-		end
+		return ply:CanAlter(ent)
 	end
 
 	function proptect.PlayerCanTouch(ply, ent)
-		if ply:CanAlter(ent) then return true end
-
 		if tonumber(proptect.Config["toggle"]) == 0 or ent:GetClass() == "worldspawn" then
 			return true
 		end
@@ -559,9 +480,7 @@ if SERVER then
 	end
 
 	function proptect.PlayerInitialSpawn(ply)
-		ply:SetNWString("SPPSteamID", string.gsub(ply:SteamID(), ":", "_"))
 		proptect[ply:SteamID()] = {}
-		proptect.LoadFriends(ply)
 		proptect.AdminReload(ply)
 		local TimerName = "prop_protection" .. ply:SteamID()
 		if timer.Exists(TimerName) then
@@ -794,87 +713,6 @@ if SERVER then
 		end
 	end
 	concommand.Add("spp_cleanupprops", proptect.CleanupProps)
-
-	function proptect.NotifyFriendChange(ply)
-		local Table = {}
-		for k,v in pairs(proptect[ply:SteamID()]) do
-			for k2,v2 in pairs(player.GetAll()) do
-				if v == v2:SteamID() then
-					table.insert(Table, v2)
-					break
-				end
-			end
-		end
-		hook.Run("CPPIFriendsChanged", ply, Table)
-	end
-
-	function proptect.ApplyFriends(ply, cmd, args)
-		if not IsValid(ply) then
-			MsgN("This command can only be run in-game!")
-			return
-		end
-
-		local plys = player.GetAll()
-		if #plys > 1 then
-			local ChangedFriends = false
-			for k,v in pairs(plys) do
-				local PlayersSteamID = v:SteamID()
-				local PData = ply:GetPData("SPPFriends", "")
-				if tonumber(ply:GetInfo("spp_friend_" .. v:GetNWString("SPPSteamID"))) == 1 then
-					if not table.HasValue(proptect[ply:SteamID()], PlayersSteamID) then
-						ChangedFriends = true
-						table.insert(proptect[ply:SteamID()], PlayersSteamID)
-						if PData == "" then
-							ply:SetPData("SPPFriends", PlayersSteamID .. ";")
-						else
-							ply:SetPData("SPPFriends", PData .. PlayersSteamID .. ";")
-						end
-					end
-				else
-					if table.HasValue(proptect[ply:SteamID()], PlayersSteamID) then
-						for k2,v2 in pairs(proptect[ply:SteamID()]) do
-							if v2 == PlayersSteamID then
-								ChangedFriends = true
-								table.remove(proptect[ply:SteamID()], k2)
-								ply:SetPData("SPPFriends", string.gsub(PData, PlayersSteamID .. ";", ""))
-							end
-						end
-					end
-				end
-			end
-			if ChangedFriends then
-				proptect.NotifyFriendChange(ply)
-			end
-		end
-		proptect.Notify(ply, "Your friends have been updated")
-	end
-	concommand.Add("spp_applyfriends", proptect.ApplyFriends)
-
-	function proptect.ClearFriends(ply, cmd, args)
-		if not IsValid(ply) then
-			MsgN("This command can only be run in-game!")
-			return
-		end
-
-		local PData = ply:GetPData("SPPFriends", "")
-		if PData ~= "" then
-			for k,v in pairs(string.Explode(";", PData)) do
-				local String = string.Trim(v)
-				if String ~= "" then
-					ply:ConCommand("spp_friend_" .. string.gsub(String, ":", "_") .. " 0\n")
-				end
-			end
-			ply:SetPData("SPPFriends", "")
-		end
-		if proptect[ply:SteamID()] then
-			for k,v in pairs(proptect[ply:SteamID()]) do
-				ply:ConCommand("spp_friend_" .. string.gsub(v, ":", "_") .. " 0\n")
-			end
-		end
-		proptect[ply:SteamID()] = {}
-		proptect.Notify(ply, "Your friends have been cleared")
-	end
-	concommand.Add("spp_clearfriends", proptect.ClearFriends)
 
 	function proptect.ApplySettings(ply, cmd, args)
 		if not IsValid(ply) then

@@ -631,14 +631,14 @@ do -- commands
 
 		hook.Run("AowlCommandAdded", aowl.commands[aliases[1]])
 	end
-  
+
  	function aowl.AddHelp(command, help)
   		local commandFound, msg = aowl.FindCommand(command)
   		if not commandFound then
   			return false
   		end
 
-  		for _, alias in next, commandFound.aliases do 
+  		for _, alias in next, commandFound.aliases do
 			aowl.help[alias] = help
 		end
   		return true
@@ -664,9 +664,9 @@ do -- commands
 	function aowl.GetHelpText(alias)
 		local command, msg = aowl.FindCommand(alias)
 		if not command then return false, msg end
-    
+
 		local str = aowl.help[command]
-    
+
 		if str then
 			return str
 		end
@@ -1153,90 +1153,6 @@ do -- groups
 		administrator = "developers",
 	}
 
-	local META = FindMetaTable("Player")
-
-	do -- friends
-		local tag = "aowl_friends"
-
-		if SERVER then
-			util.AddNetworkString(tag)
-
-			function META:AddFriend(ply)
-				if IsValid(ply) and ply:IsPlayer() then
-					self.aowl_friends = self.aowl_friends or {}
-					self.aowl_friends[ply] = ply
-				end
-			end
-
-			function META:RemoveFriend(ply)
-				if IsValid(ply) and ply:IsPlayer() and self.aowl_friends then
-					self.aowl_friends[ply] = nil
-				end
-			end
-
-			function META:IsFriend(ply)
-				return ply == self or self.aowl_friends and self.aowl_friends[ply] ~= nil
-			end
-
-			function META:GetFriends()
-				self.aowl_friends = self.aowl_friends or {}
-				return self.aowl_friends
-			end
-
-			net.Receive(tag, function(len , ply)
-				if not ply:IsValid() then return end
-
-				local friend = net.ReadEntity()
-				if friend:IsValid() then
-					local status = net.ReadString()
-
-					if status == "friend" or status == "requested" then
-						ply:AddFriend(friend)
-					elseif status == "none" or status == "blocked" then
-						ply:RemoveFriend(friend)
-					end
-				end
-			end)
-
-			hook.Add("PlayerDisconnected" , tag, function(friend)
-				for _, ply in ipairs(player.GetAll()) do
-					ply:RemoveFriend(friend)
-				end
-			end)
-		end
-
-		if CLIENT then
-			function META:IsFriend(ply)
-				if ply == self then return true end
-				local status = ply:GetFriendStatus()
-				return status == "friend" or status == "requested"
-			end
-
-			function META:GetFriends()
-				local out = {}
-				for i, ply in ipairs(player.GetAll()) do
-					if ply:IsFriend() then
-						table.insert(out, ply)
-					end
-				end
-				return out
-			end
-
-			timer.Create(tag, 1, 0, function()
-				for _, ply in ipairs(player.GetAll()) do
-					local status = ply:GetFriendStatus()
-					if ply.aowl_last_friend_status ~= status then
-						net.Start(tag)
-							net.WriteEntity(ply)
-							net.WriteString(status)
-						net.SendToServer()
-					end
-					ply.aowl_last_friend_status = status
-				end
-			end)
-		end
-	end
-
 	function META:CheckUserGroupLevel(name)
 
 		--Console?
@@ -1270,7 +1186,7 @@ do -- groups
 	function META:IsSudo()
 		return self.aowl_sudo and true or false
 	end
-	
+
 	function META:SetSudo(b)
 		self.aowl_sudo = b
 	end
@@ -1292,7 +1208,9 @@ do -- groups
 			return true
 		end
 
-		return b:IsFriend(a)
+		if b.IsFriend then
+			return b:IsFriend(a)
+		end
 	end
 
 	function META:IsSuperAdmin()
