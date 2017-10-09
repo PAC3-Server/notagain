@@ -116,19 +116,18 @@ if CLIENT then
 			end
 			ply.friends_last_friend_status = status
 
-			local status = cookie.GetNumber("friends_" .. ply:UniqueID(), -1)
-			if status == -1 then
-				cookie.Delete("friends_" .. ply:UniqueID())
-			else
-				net.Start("friends")
-					net.WriteEntity(ply)
-					if status == 1 then
-						net.WriteString("add")
-					elseif status == 0 then
-						net.WriteString("remove")
-					end
-				net.SendToServer()
+			local status = cookie.GetString("friends_" .. ply:UniqueID())
+			if ply.friends_last_cookie ~= status then
+				if status == "clear" then
+					cookie.Delete("friends_" .. ply:UniqueID())
+				else
+					net.Start("friends")
+						net.WriteEntity(ply)
+						net.WriteString(status)
+					net.SendToServer()
+				end
 			end
+			ply.friends_last_cookie = status
 		end
 	end)
 
@@ -140,6 +139,8 @@ if CLIENT then
 			net.WriteEntity(ply)
 			net.WriteString(args[2])
 		net.SendToServer()
+
+		cookie.Set("friends_" .. args[1], args[2])
 	end)
 end
 
