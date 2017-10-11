@@ -64,6 +64,7 @@ if CLIENT then
 end
 
 local function can_roll(ply)
+	if ply:GetNWEntity("shield"):IsValid() then return end
 	return (ply:IsValid() and ply:GetNWBool("rpg") and not is_rolling(ply) and ply:Alive() and ply:OnGround() and ply:GetMoveType() == MOVETYPE_WALK and not ply:InVehicle()) or ply.roll_landed
 end
 
