@@ -221,6 +221,7 @@ do
 				shield:SetOwner(ply)
 				shield:SetPos(ply:GetPos())
 				shield:Spawn()
+				if CPPI then shield:CPPISetOwner(self:GetOwner()) end
 				ply:SetNWEntity("shield", shield)
 			end
 

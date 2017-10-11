@@ -466,6 +466,7 @@ function SWEP:PrimaryAttack()
 
 		local ent = ents.Create("jprojectile_bullet")
 		ent:SetOwner(self.Owner)
+		if CPPI then ent:CPPISetOwner(self.Owner) end
 		ent:SetProjectileData(self.Owner, self.Owner:GetShootPos(), self.Owner:GetAimVector(), 50, self)
 		ent:Spawn()
 
