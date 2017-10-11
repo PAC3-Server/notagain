@@ -206,6 +206,9 @@ do
 		end
 	end
 
+	function SWEP:PrimaryAttack() end
+	function SWEP:SecondaryAttack() end
+
 	if SERVER then
 		function SWEP:ShowShield()
 			local ply = self.Owner
