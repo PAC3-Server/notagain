@@ -237,12 +237,12 @@ do
 		end
 
 		function SWEP:Deploy()
-			self:ShowShield()
+			--self:ShowShield()
 			return true
 		end
 
 		function SWEP:Holster()
-			self:HideShield()
+			--self:HideShield()
 			return true
 		end
 	end
