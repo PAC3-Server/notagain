@@ -12,7 +12,7 @@ if CLIENT then
 		for _, val in ipairs(ents) do
 			if
 				(not val.Alive or (val:Alive() and not val.jtarget_probably_dead)) and
-				(val:IsNPC() or (val:IsPlayer() and val ~= ply)) and
+				((val:IsPlayer() and val ~= ply) or (not val:IsPlayer() and jrpg.IsActor(val))) and
 				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
 				val ~= prev_target and
 				not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit

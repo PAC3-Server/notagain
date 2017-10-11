@@ -28,6 +28,25 @@ function jrpg.GetFriendlyName(ent)
 	return name
 end
 
+function jrpg.IsActor(ent)
+	if not ent or not ent:IsValid() then return false end
+
+	if ent:EntIndex() == -1 then return end
+	if ent:IsWeapon() then return false end
+	if ent:GetParent():IsPlayer() or ent:GetOwner():IsPlayer() then return false end
+	if ent:GetParent():IsNPC() or ent:GetOwner():IsNPC() then return false end
+
+	if ent:IsNPC() or ent:IsPlayer() or ent:GetBoneCount() > 1 then
+		return true
+	end
+
+	if ent:GetMaxHealth() > 1 then
+		return true
+	end
+
+	return false
+end
+
 local friendly_npcs = {
 	monster_scientist = true,
 	monster_barney = true,
