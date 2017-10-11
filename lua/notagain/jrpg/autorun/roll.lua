@@ -211,6 +211,8 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 					ply:SetNW2Float("roll_time2", ply.roll_time2)
 
 					jattributes.SetStamina(ply, stamina - 15)
+
+					ply:EmitSound("npc/zombie/foot_slide3.wav")
 				end
 			end
 		else
