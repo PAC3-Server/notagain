@@ -152,6 +152,7 @@ end
 
 do
 	local SWEP = {Primary = {}, Secondary = {}}
+	SWEP.Weight = -1
 	SWEP.MagicDefence = 0
 	SWEP.PhysicalDefence = 1
 
