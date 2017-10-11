@@ -111,6 +111,7 @@ do
 							for i = 1, math.random(3, 6) do
 								local temp = ents.Create("prop_physics")
 								temp:SetModel("models/props_junk/rock001a.mdl")
+								if CPPI then temp:CPPISetOwner(self:GetOwner()) end
 								temp:SetPos(pos)
 								temp:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
 								temp:SetModelScale(math.Rand(0.25, 1))
@@ -137,6 +138,7 @@ do
 							local sphere = ents.Create("jprojectile_bullet")
 							sphere:SetPos(pos)
 							sphere:SetDamageTypes(self:GetDamageTypes())
+							if CPPI then sphere:CPPISetOwner(self:GetOwner()) end
 							sphere:Spawn()
 							local phys = sphere:GetPhysicsObject()
 							phys:SetVelocity(self.old_vel*1)
