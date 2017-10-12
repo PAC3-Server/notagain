@@ -427,8 +427,8 @@ do
 		smooth_x = smooth_x + ((x - smooth_x) * FrameTime() * 10)
 		smooth_y = smooth_y + ((y - smooth_y) * FrameTime() * 10)
 
-		battlecam.cam_rotation_velocity.y = smooth_x / 60
-		battlecam.cam_rotation_velocity.x = smooth_y / 60
+		battlecam.cam_rotation_velocity.y = smooth_x / 100
+		battlecam.cam_rotation_velocity.x = smooth_y / 100
 
 		return true
 	end
