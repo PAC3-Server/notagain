@@ -18,6 +18,8 @@ timer.Simple(0.1, function()
 			if remove_these[ent:GetClass()] or ent:GetClass():find("trigger_", nil, true) then
 				ent:Remove()
 			end
+
+			ent:Fire("unlock")
 		end
 	end
 
