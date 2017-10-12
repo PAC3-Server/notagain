@@ -14,6 +14,7 @@ do
 
 	function ENT:GetPosAng(pos, ang)
 		local ply = self:GetOwner()
+		if not ply:IsValid() then return end
 
 		pos = pos or ply:WorldSpaceCenter()
 		ang = ang or ply:EyeAngles()
@@ -30,7 +31,6 @@ do
 
 	if SERVER then
 		function ENT:Initialize()
-
 			self:SetModel(self.Model)
 			self:SetMoveType(MOVETYPE_NONE)
 			self:SetSolid(SOLID_VPHYSICS)
@@ -41,7 +41,7 @@ do
 			local phys = self:GetPhysicsObject()
 			phys:EnableGravity(false)
 
-			phys:SetPos(self:GetOwner():WorldSpaceCenter())
+			phys:SetPos(self:GetOwner():WorldSpaceCenter() or self:GetOwner():GetPos())
 		end
 
 		function ENT:PhysicsSimulate(phys, dt)
@@ -127,6 +127,16 @@ do
 			end
 
 			pos, ang = self:GetPosAng(pos, ang)
+
+			local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
+
+			if id then
+				local handpos, handang = ply:GetBonePosition(id)
+
+				pos = LerpVector(0.75, pos, handpos)
+				ang = LerpAngle(0.1, ang, handang)
+			end
+
 
 			if self.csent then
 				pos, ang = self:CSTranslateModelPosAng(pos, ang)
@@ -241,12 +251,12 @@ do
 		end
 
 		function SWEP:Deploy()
-			--self:ShowShield()
+			self:ShowShield()
 			return true
 		end
 
 		function SWEP:Holster()
-			--self:HideShield()
+			self:HideShield()
 			return true
 		end
 	end
@@ -261,6 +271,8 @@ local function register_shield(tbl)
 	SWEP.PrintName = tbl.Name .. " shield"
 	SWEP.Base = "weapon_shield_base"
 	SWEP.WorldModel = tbl.Model
+	SWEP.Spawnable = true
+
 	for key, val in pairs(tbl) do SWEP[key] = val end
 	weapons.Register(SWEP, SWEP.ClassName)
 
@@ -388,6 +400,25 @@ local shields = {
 		end,
 	}
 }
+
+local shields = {}
+
+local files = file.Find("models/demonssouls/shields/*.mdl", "GAME")
+for k,v in pairs(files) do
+	table.insert(shields, {
+		Name = v:match("(.+)%.mdl"):gsub("shield", ""):gsub("%p", ""):gsub("%s+", " "):Trim(),
+		Model = "models/demonssouls/shields/" .. v,
+		TranslateModelPosAng = function(self, pos, ang)
+			pos = pos + ang:Up() * -5
+			pos = pos + ang:Forward() * -2
+
+			ang:RotateAroundAxis(ang:Up(), -90)
+			ang:RotateAroundAxis(ang:Forward(), 180 + 12.25)
+
+			return pos, ang
+		end,
+	})
+end
 
 for _, tbl in pairs(shields) do
 	register_shield(tbl)
