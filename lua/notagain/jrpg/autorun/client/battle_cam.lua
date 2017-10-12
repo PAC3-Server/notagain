@@ -319,7 +319,7 @@ do -- view
 				maxs = Vector(1,1.1)*10,
 				start = ply:NearestPoint(smooth_pos),
 				endpos = smooth_pos,
-				filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
+				filter = {ply, ply:GetVehicle(), ply:GetParent()},
 				mask =  MASK_VISIBLE,
 			})
 
