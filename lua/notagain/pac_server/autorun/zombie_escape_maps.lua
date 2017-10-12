@@ -1,6 +1,6 @@
 if not game.GetMap():lower():StartWith("ze_") then return end
 
-timer.Simple(0.1, function()
+local function fix_map()
 	if SERVER then
 		local remove_these = {
 			point_teleport = true,
@@ -26,4 +26,8 @@ timer.Simple(0.1, function()
 	if CLIENT then
 		RunConsoleCommand("mat_colorcorrection", "0")
 	end
-end)
+end
+
+timer.Simple(0.1, fix_map)
+
+hook.Add("PostCleanupMap", "zombie_escape_maps", fix_map)
