@@ -54,7 +54,7 @@ local friendly_npcs = {
 
 if CLIENT then
 	function jrpg.IsFriend(ent)
-		return ent == LocalPlayer() or ent:IsPlayer() and (ent:GetFriendStatus() == "friend" or ent.CanAlter and LocalPlayer():CanAlter(ent)) or IsFriendEntityName(ent:GetClass()) or friendly_npcs[ent:GetClass()]
+		return ent == LocalPlayer() or ent:IsPlayer() and (ent:GetFriendStatus() == "friend" or ent.CanAlter and (LocalPlayer():CanAlter(ent) and ent:CanAlter(LocalPlayer()))) or IsFriendEntityName(ent:GetClass()) or friendly_npcs[ent:GetClass()]
 	end
 end
 
