@@ -33,7 +33,7 @@ function jchat.Start(stop_cb)
 	hook.Add("HUDShouldDraw", "jchat", function(str)
 		if jchat.show_chat then return end
 
-		if str ~= "CHudWeaponSelection" and str ~= "CHudGMod" then
+		if str ~= "CHudWeaponSelection" and str ~= "CHudGMod" and str ~= "CHudChat" then
 			return false
 		end
 	end)

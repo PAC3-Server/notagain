@@ -492,11 +492,11 @@ do
 		end
 
 		if battlecam.IsKeyDown("shield") then
-			if not ply:GetNWEntity("shield"):IsValid() then
+			if not jrpg.IsWieldingShield(ply) then
 				RunConsoleCommand("+jshield")
 			end
 		else
-			if ply:GetNWEntity("shield"):IsValid() then
+			if jrpg.IsWieldingShield(ply) then
 				RunConsoleCommand("-jshield")
 			end
 		end
