@@ -1,6 +1,6 @@
 local function loadout(ply)
 	if gmod.GetGamemode().Name == "Sandbox" then
-		ply:Give("weapon_steel_shield")
+		ply:Give("weapon_shield_soldiers")
 		ply:Give("magic")
 	end
 end
