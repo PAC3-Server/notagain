@@ -401,7 +401,7 @@ if SERVER then
 
 				if jattributes.HasStamina(ply) and not ply:GetNWBool("shield_stunned") then
 					if ply:IsOnGround() then
-						local shield = ply:GetNWEntity("shield"):IsValid()
+						local shield = jrpg.IsWieldingShield(ply)
 						if ply:GetVelocity():IsZero() then
 							if jattributes.CanRegenStamina(ply) then
 								jattributes.SetStamina(ply, math.min(jattributes.GetStamina(ply) + (shield and 0.5 or 3), jattributes.GetMaxStamina(ply)))

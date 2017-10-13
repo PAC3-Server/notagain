@@ -113,20 +113,9 @@ do
 		function ENT:Draw()
 			local ply = self:GetOwner()
 			if not ply:IsValid() then return end
-			if not ply.shield_wield_time then return end
 
-			local pos, ang
 
-			if (CurTime() - ply.shield_wield_time) < 0.3 then
-				local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
-				if id then
-					pos, ang = ply:GetBonePosition(id)
-				else
-					pos, ang = ply:EyePos(), ply:EyeAngles()
-				end
-			end
-
-			pos, ang = self:GetPosAng(pos, ang)
+			local pos, ang = self:GetPosAng(pos, ang)
 
 			local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
 
@@ -135,6 +124,19 @@ do
 
 				pos = LerpVector(0.75, pos, handpos)
 				ang = LerpAngle(0.1, ang, handang)
+			end
+
+			if not ply.shield_wield_time then
+
+				local pos, ang = ply:GetBonePosition(id)
+				local pos, ang = self:TranslateModelPosAng(pos, ang, true)
+
+				self:SetPos(pos)
+				self:SetAngles(ang)
+				self:SetupBones()
+				self:DrawModel()
+
+				return
 			end
 
 
@@ -170,7 +172,6 @@ do
 	SWEP.Category = "JRPG"
 
 	SWEP.PrintName = "shield"
-	SWEP.Spawnable = true
 
 	SWEP.WorldModel = "models/hunter/plates/plate1x1.mdl"
 	SWEP.ViewModel = Model("models/weapons/c_medkit.mdl")
@@ -228,16 +229,7 @@ do
 
 			if jattributes.GetStamina(ply) == 0 then return end
 
-			local shield = ply:GetNWEntity("shield")
-
-			if not shield:IsValid() and self.ShieldName then
-				shield = ents.Create(self.ShieldName)
-				shield:SetOwner(ply)
-				shield:SetPos(ply:GetPos())
-				shield:Spawn()
-				if CPPI then shield:CPPISetOwner(self:GetOwner()) end
-				ply:SetNWEntity("shield", shield)
-			end
+			ply:SetNWBool("wield_shield", true)
 
 			return true
 		end
@@ -245,20 +237,52 @@ do
 		function SWEP:HideShield()
 			local ply = self.Owner
 
-			SafeRemoveEntity(ply:GetNWEntity("shield"))
+			ply:SetNWBool("wield_shield", false)
 
 			return true
 		end
 
+		function SWEP:OnRemove()
+			local ply = self.Owner
+
+			SafeRemoveEntity(ply:GetNWEntity("shield"))
+		end
+
 		function SWEP:Deploy()
-			self:ShowShield()
+		--	self:ShowShield()
 			return true
 		end
 
 		function SWEP:Holster()
-			self:HideShield()
+			--self:HideShield()
 			return true
 		end
+
+		function SWEP:Think() end
+		function SWEP:GlobalThink()
+			local ply = self:GetOwner()
+			if not ply:IsValid() then return end
+
+			local shield = ply:GetNWEntity("shield")
+
+			if not shield:IsValid() and self.ShieldName then
+				shield = ents.Create(self.ShieldName)
+				shield:SetOwner(ply)
+				shield:SetPos(ply:GetPos())
+				shield:Spawn()
+
+				if CPPI then shield:CPPISetOwner(self:GetOwner()) end
+				ply:SetNWEntity("shield", shield)
+			end
+		end
+
+		hook.Add("Think", "shield", function()
+			for _, self in ipairs(ents.GetAll()) do
+				if self.is_shield then
+					self:GlobalThink()
+				end
+			end
+		end)
 	end
 
 	weapons.Register(SWEP, SWEP.ClassName)
@@ -268,10 +292,13 @@ local function register_shield(tbl)
 	local SWEP = {Primary = {}, Secondary = {}}
 	SWEP.ShieldName = "shield_" .. tbl.Name:gsub(" ", "_")
 	SWEP.ClassName = "weapon_shield_" .. tbl.Name:gsub(" ", "_")
+
 	SWEP.PrintName = tbl.Name .. " shield"
+	SWEP.Category = "JRPG"
+	SWEP.Spawnable = true
+
 	SWEP.Base = "weapon_shield_base"
 	SWEP.WorldModel = tbl.Model
-	SWEP.Spawnable = true
 
 	for key, val in pairs(tbl) do SWEP[key] = val end
 	weapons.Register(SWEP, SWEP.ClassName)
@@ -408,9 +435,14 @@ for k,v in pairs(files) do
 	table.insert(shields, {
 		Name = v:match("(.+)%.mdl"):gsub("shield", ""):gsub("%p", ""):gsub("%s+", " "):Trim(),
 		Model = "models/demonssouls/shields/" .. v,
-		TranslateModelPosAng = function(self, pos, ang)
-			pos = pos + ang:Up() * -5
-			pos = pos + ang:Forward() * -2
+		TranslateModelPosAng = function(self, pos, ang, idle)
+			if not idle then
+				pos = pos + ang:Up() * -5
+				pos = pos + ang:Forward() * -2
+			else
+				pos = pos + ang:Right() * -1
+				ang:RotateAroundAxis(ang:Forward(), -90)
+			end
 
 			ang:RotateAroundAxis(ang:Up(), -90)
 			ang:RotateAroundAxis(ang:Forward(), 180 + 12.25)
@@ -425,8 +457,7 @@ for _, tbl in pairs(shields) do
 end
 
 hook.Add("SetupMove", "shield", function(ply, ucmd)
-	local shield = ply:GetNWEntity("shield")
-	if not shield:IsValid() then return end
+	if not jrpg.IsWieldingShield(ply) then return end
 
 	if ucmd:KeyDown(IN_ATTACK) then
 		ucmd:SetButtons(bit.band(ucmd:GetButtons(), bit.bnot(IN_ATTACK)))
@@ -445,7 +476,6 @@ end)
 if SERVER then
 	function EnableShield(ply, b)
 		if b then
-			if ply:GetNWEntity("shield"):IsValid() then return end
 			for k,v in pairs(ply:GetWeapons()) do
 				if v.is_shield and ply:GetActiveWeapon() ~= v then
 					v:ShowShield()
@@ -453,7 +483,6 @@ if SERVER then
 				end
 			end
 		else
-			if not ply:GetNWEntity("shield"):IsValid() then return end
 			for k,v in pairs(ply:GetWeapons()) do
 				if v.is_shield and ply:GetActiveWeapon() ~= v then
 					v:HideShield()
@@ -495,10 +524,10 @@ local function manip_angles(ply, id, ang)
 end
 
 hook.Add("UpdateAnimation", "shield", function(ply)
-	if ply:GetNWEntity("shield"):IsValid() then
+	if jrpg.IsWieldingShield(ply) then
 		ply.shield_unwield_time = nil
 		ply.shield_wield_time = ply.shield_wield_time or CurTime()
-		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_bow"), math.min((CurTime() - ply.shield_wield_time)*1.25, 0.3), false)
+		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_bow"), math.min(((CurTime() - ply.shield_wield_time) ^ 0.3) * 0.4, 0.3), false)
 
 		if CLIENT then
 			local id = ply:LookupBone("ValveBiped.Bip01_L_UpperArm")
@@ -507,10 +536,10 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 			end
 		end
 
-		return true
+--		return true
 	elseif ply.shield_wield_time then
 		ply.shield_unwield_time = ply.shield_unwield_time or CurTime()
-		local cycle = -math.min((CurTime() - ply.shield_unwield_time)*1.25, 0.3)+0.3
+		local cycle = -math.min(((CurTime() - ply.shield_unwield_time) ^ 1.25)*0.8, 0.3)+0.3
 		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_bow"), cycle, false)
 		if cycle == 0 then
 			ply.shield_wield_time = nil
@@ -539,8 +568,7 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 end)
 
 hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
-	local shield = ent:GetNWEntity("shield")
-	if shield:IsValid() then
+	if jrpg.IsWieldingShield(ent) then
 		local type = dmginfo:GetDamageType()
 
 		if jdmg.GetDamageType(dmginfo) then
@@ -567,3 +595,7 @@ hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 		end
 	end
 end)
+
+function jrpg.IsWieldingShield(ply)
+	return ply:GetNWEntity("shield"):IsValid() and ply:GetNWBool("wield_shield")
+end
