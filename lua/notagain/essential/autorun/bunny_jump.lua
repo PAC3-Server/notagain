@@ -155,7 +155,13 @@ hook.Add("Move", hook_key, function(ply, data)
 		local params = {}
 			params.start = data:GetOrigin()
 			params.endpos = params.start + normalized * ply:BoundingRadius() * 2
-			params.filter = ply
+			local filter = {ply}
+			for k,v in pairs(ents.FindInSphere(ply:GetPos(), 512)) do
+				if v:GetOwner() == ply then
+					table.insert(filter, v)
+				end
+			end
+			params.filter = filter
 			params.mins = ply:OBBMins()
 			params.maxs = ply:OBBMaxs()
 		local res = util.TraceHull(params)
