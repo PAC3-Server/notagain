@@ -222,6 +222,25 @@ do
 	function SWEP:SecondaryAttack() end
 
 	if SERVER then
+		function SWEP:PrimaryAttack()
+			local ply = self:GetOwner()
+
+			for k, v in pairs(ply:GetWeapons()) do
+				if v.is_shield then
+					v:SecondaryAttack()
+				end
+			end
+
+			self:OnRemove()
+			self:GlobalThink()
+			self.active = true
+		end
+
+		function SWEP:SecondaryAttack()
+			self:OnRemove()
+			self.active = false
+		end
+
 		function SWEP:ShowShield()
 			local ply = self.Owner
 
@@ -249,12 +268,10 @@ do
 		end
 
 		function SWEP:Deploy()
-		--	self:ShowShield()
 			return true
 		end
 
 		function SWEP:Holster()
-			--self:HideShield()
 			return true
 		end
 
@@ -262,6 +279,8 @@ do
 		function SWEP:GlobalThink()
 			local ply = self:GetOwner()
 			if not ply:IsValid() then return end
+
+			if self.active == false then return end
 
 			local shield = ply:GetNWEntity("shield")
 
