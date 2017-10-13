@@ -1,8 +1,9 @@
 -- wos custom animations
-resource.AddWorkshop("757604550")
-resource.AddWorkshop("848953359")
-resource.AddWorkshop("873302121")
-
+resource.AddWorkshop("757604550") -- base
+--resource.AddWorkshop("848953359") -- blade symphony
+resource.AddWorkshop("925184078") -- blade symphony fixed legs
+resource.AddWorkshop("873302121") -- action half life
+resource.AddWorkshop("848953609") -- age of chivalry
 
 if game.SinglePlayer() then return end
 
