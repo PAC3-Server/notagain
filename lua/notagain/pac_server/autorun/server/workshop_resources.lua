@@ -3,7 +3,7 @@ resource.AddWorkshop("757604550") -- base
 --resource.AddWorkshop("848953359") -- blade symphony
 resource.AddWorkshop("925184078") -- blade symphony fixed legs
 resource.AddWorkshop("873302121") -- action half life
-resource.AddWorkshop("848953609") -- age of chivalry
+--resource.AddWorkshop("848953609") -- age of chivalry -- breaks everything
 
 if game.SinglePlayer() then return end
 
