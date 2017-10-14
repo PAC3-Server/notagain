@@ -1,10 +1,3 @@
-local function loadout(ply)
-	if gmod.GetGamemode().Name == "Sandbox" then
-		ply:Give("weapon_shield_soldiers")
-		ply:Give("magic")
-	end
-end
-
 aowl.AddCommand("rpg=boolean", function(ply, _, cheat)
 	jrpg.SetRPG(ply,not ply:GetNWBool("rpg",false), cheat)
 end)
@@ -67,6 +60,6 @@ end)
 hook.Add("PlayerSpawn", "rpg_loadout", function(ply)
 	if not ply:GetNWBool("rpg") then return end
 	timer.Simple(0.1, function()
-		loadout(ply)
+		jrpg.Loadout(ply)
 	end)
 end)
