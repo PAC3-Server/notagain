@@ -9,6 +9,7 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 				return seq, seq
 			end
 		end
+
 	else
 		ply.m_bJumping = true
 		ply.m_flJumpStartTime = 0
@@ -129,7 +130,7 @@ if CLIENT then
 		end
 	end
 
-	local function manip_pos(ply, id, pos)
+	local function manip_origin(ply, pos)
 		if pos:IsZero() then
 			ply:DisableMatrix("RenderMultiply")
 			return
@@ -175,23 +176,23 @@ if CLIENT then
 		if not ply:IsOnGround() then
 			if duck_lerp and ply:Crouching() then
 				local _, max = ply:GetHullDuck()
-				manip_pos(ply, 0, Vector(0,0,max.z*-duck_lerp+1))
+				manip_origin(ply, Vector(0,0,max.z*-duck_lerp+1))
 			elseif unduck_lerp and not ply:Crouching() then
 				local _, max = ply:GetHullDuck()
-				manip_pos(ply, 0, Vector(0,0,max.z*unduck_lerp))
+				manip_origin(ply, Vector(0,0,max.z*unduck_lerp))
 			end
 		end
 
 		if not duck_lerp then
 			if not ply.airduck_reset_duck then
-				manip_pos(ply, 0, Vector(0,0,0))
+				manip_origin(ply, Vector(0,0,0))
 				ply.airduck_reset_duck = true
 			end
 		end
 
 		if not unduck_lerp then
 			if not ply.airduck_reset_unduck then
-				manip_pos(ply, 0, Vector(0,0,0))
+				manip_origin(ply, Vector(0,0,0))
 				ply.airduck_reset_unduck = true
 			end
 		end
@@ -214,6 +215,8 @@ if CLIENT then
 		else
 			manip_angles(ply, 0, Angle(0,0,0))
 		end
+
+
 
 
 		local vel = ply:GetVelocity()
