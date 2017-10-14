@@ -4,7 +4,9 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 	if ply.fdmg_last_vel and ply:GetMoveType() == MOVETYPE_WALK then
 		local diff = vel - ply.fdmg_last_vel
 		local len = diff:Length()
-		if len > 500 then
+		local rpg = ply:GetNWBool("rpg") and len > 50
+
+		if len > 500 or rpg then
 			local params = {}
 			params.start = data:GetOrigin() + ply:OBBCenter()
 			params.endpos = params.start - diff:GetNormalized() * ply:BoundingRadius()
@@ -16,10 +18,12 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 			local dmg = (len - 500) / 4
 			local z = math.abs(res.HitNormal.z)
 
-			if res.Hit and (z < 0.1 or z > 0.9) then
+			if res.Hit and (rpg or (z < 0.1 or z > 0.9)) then
 				local fall_damage = hook.Run("GetFallDamage", ply, len) -- Prepare Override & Check Expected Fall Damage
 
-				if fall_damage > 0 then
+				if rpg or fall_damage > 0 then
+					dmg = math.max(dmg, 0)
+
 					local world = game.GetWorld()
 					local pos = data:GetOrigin()
 					local info = DamageInfo()
