@@ -81,8 +81,21 @@ do
 						ply:SetNWBool("shield_stunned", false)
 					end)
 				end
+
 				ply.shield_suppress_damage = true
+
+				if jdmg.GetDamageType(dmginfo) then
+					dmginfo:SetDamage(dmginfo:GetDamage() * (-self.MagicDefence+1))
+				end
+
+				dmginfo:SetDamage(dmginfo:GetDamage() * (-self.PhysicalDefence+1))
+
+				if dmginfo:GetDamage() == 0 then
+					dmginfo:SetDamage(-1)
+				end
+
 				ply:TakeDamageInfo(dmginfo)
+
 				ply.shield_suppress_damage = nil
 			end
 		end
@@ -595,30 +608,15 @@ end)
 
 hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 	if jrpg.IsWieldingShield(ent) then
-		local shield = ent:GetNWEntity("shield")
-		local type = dmginfo:GetDamageType()
-
-		if jdmg.GetDamageType(dmginfo) then
-			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.MagicDefence+1))
-		end
-
-		if ent.shield_suppress_damage then
-			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.PhysicalDefence+1))
-			return
-		end
-
-		if type == DMG_CRUSH or type == DMG_SLASH then
-			shield:OnTakeDamage(dmginfo)
-			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.PhysicalDefence+1))
-			ent:ChatPrint("block!")
-			return
-		end
-
-		local data = util.TraceLine({start = dmginfo:GetDamagePosition(), endpos = ent:WorldSpaceCenter(), filter = {dmginfo:GetAttacker()}})
+		local data = util.TraceLine({
+			start = dmginfo:GetDamagePosition(),
+			endpos = ent:WorldSpaceCenter(),
+			filter = {dmginfo:GetAttacker()}
+		})
 
 		if data.Entity == shield then
 			shield:OnTakeDamage(dmginfo)
-			dmginfo:SetDamage(dmginfo:GetDamage() * (-shield.PhysicalDefence+1))
+			return true
 		end
 	end
 end)

@@ -473,7 +473,9 @@ if CLIENT then
 
 				local txt = math.Round(Lerp(math.Clamp(fraction-0.95, 0, 1), data.dmg, 0))
 
-				if data.xp then
+				if data.str then
+					txt = data.str
+				elseif data.xp then
 					txt = "xp +" .. txt
 				elseif data.dmg == 0 then
 					txt = "MISS"
@@ -575,6 +577,12 @@ if CLIENT then
 		dmg = dmg or 0
 		pos = pos or ent:EyePos()
 
+		local str
+		if type(dmg) == "string" then
+			str = dmg
+			dmg = 0
+		end
+
 		if ent:IsValid() then
 			pos = ent:WorldToLocal(pos)
 		end
@@ -590,6 +598,7 @@ if CLIENT then
 			hitmarks,
 			{
 				ent = ent,
+				str = str,
 				first_angle = ent:IsValid() and ent:GetAngles() or Angle(0,0,0),
 				real_pos = pos,
 				dmg = dmg,
@@ -690,6 +699,25 @@ if CLIENT then
 		hitmarkers.ShowDamage(ent, dmg, pos)
 	end)
 
+	net.Receive("hitmark_custom", function()
+		local ent = net.ReadEntity()
+		local str = net.ReadString()
+		local pos = net.ReadVector()
+		local cur = math.Round(net.ReadFloat())
+		local max = math.Round(net.ReadFloat())
+
+		if not ent.hm_last_health_time or ent.hm_last_health_time < CurTime() then
+			ent.hm_last_health = ent.hm_cur_health or max
+		end
+
+		ent.hm_last_health_time = CurTime() + 3
+
+		ent.hm_cur_health = cur
+		ent.hm_max_health = max
+
+		hitmarkers.ShowDamage(ent, str, pos)
+	end)
+
 	net.Receive("hitmark_xp", function()
 		local ent = net.ReadEntity()
 		local xp = math.Round(net.ReadFloat())
@@ -735,6 +763,22 @@ if SERVER then
 
 	util.AddNetworkString("hitmark")
 
+	function hitmarkers.ShowDamageCustom(ent, str, pos, filter)
+		ent = ent or NULL
+		pos = pos or ent:EyePos()
+		filter = filter or player.GetAll()
+
+		net.Start("hitmark_custom", true)
+			net.WriteEntity(ent)
+			net.WriteString(str)
+			net.WriteVector(pos)
+			net.WriteFloat(ent:Health())
+			net.WriteFloat(ent:GetMaxHealth())
+		net.Send(filter)
+	end
+
+	util.AddNetworkString("hitmark_custom")
+
 	function hitmarkers.ShowXP(ent, xp, pos, filter)
 		ent = ent or NULL
 		xp = xp or 0
@@ -765,7 +809,7 @@ if SERVER then
 		if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
 		local filter = {}
 		for k,v in pairs(player.GetAll()) do
-			if v ~= ent and v:GetPos():Distance(ent:GetPos()) < 1500 * (ent:GetModelScale() or 1) then
+			if v:GetPos():Distance(ent:GetPos()) < 1500 * (ent:GetModelScale() or 1) then
 				table.insert(filter, v)
 			end
 		end
@@ -774,6 +818,12 @@ if SERVER then
 
 		local last_health = ent:Health()
 		local damage = dmg:GetDamage()
+
+		if damage == -1 then
+			hitmarkers.ShowDamageCustom(ent, "BLOCK", pos, filter)
+			return
+		end
+
 		local pos = dmg:GetDamagePosition()
 
 		if pos == vector_origin then
