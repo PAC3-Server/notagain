@@ -4,8 +4,8 @@ SWEP.ClassName = "weapon_jsword"
 SWEP.PrintName = "jrpg sword"
 SWEP.Spawnable = true
 
-SWEP.WorldModel = "models/weapons/w_crowbar.mdl"
-SWEP.ViewModel = "models/weapons/v_crowbar.mdl"
+SWEP.WorldModel = "models/kuma96/2b/virtuouscontract/virtuouscontract.mdl"
+SWEP.ViewModel = ""
 SWEP.UseHands = true
 
 --ryoku pure vanguard judge phalanx
@@ -145,11 +145,16 @@ if CLIENT then
 			if id then
 				pos, ang = self.Owner:GetBonePosition(id)
 
-				ang:RotateAroundAxis(ang:Right(), 90)
-				ang:RotateAroundAxis(ang:Up(), 180)
-				pos = pos + ang:Forward()*20
-				pos = pos + ang:Up()*-3.2
-				pos = pos + ang:Right()*-1.5
+				--ang:RotateAroundAxis(ang:Right(), 90)
+				--pos = pos + ang:Forward()*20
+				--pos = pos + ang:Up()*-3.2
+				--pos = pos + ang:Right()*-1.5
+
+				pos = pos + ang:Forward()*2
+				pos = pos + ang:Right()*1
+				pos = pos + ang:Up()*-63
+
+				ang:RotateAroundAxis(ang:Up(), 90)
 
 				self:SetPos(pos)
 				self:SetAngles(ang)
@@ -211,8 +216,9 @@ if CLIENT then
 
 						if i > 8 and l > 2 and math.random() > 0.95 then
 
-							local tr = util.TraceLine({start = pos + ang:Forward() * -20, endpos = pos + ang:Forward() * 20, filter = {self.Owner, self, self.Owner:GetNWEntity("shield")}})
+							local tr = util.TraceLine({start = pos, endpos = pos + ang:Up() * 50, filter = {self.Owner, self, self.Owner:GetNWEntity("shield")}})
 							if tr.Hit then
+
 								hit = true
 								--self:EmitSound("weapons/sniper/sniper_zoomout.wav", 75, math.random(100,150), 1)
 								mute_sounds = true
@@ -269,7 +275,7 @@ if CLIENT then
 		end
 	end
 
-	function ENT:OnRemove()
+	function SWEP:OnRemove()
 		if self.snd then
 			self.snd:Stop()
 			self.scrape_snd:Stop()
@@ -279,7 +285,8 @@ end
 
 function SWEP:Initialize()
 	self:SetHoldType("melee2")
-	self:SetModelScale(1.5)
+	--self:SetModelScale(1.5)
+	self:SetModelScale(1.25)
 end
 
 
