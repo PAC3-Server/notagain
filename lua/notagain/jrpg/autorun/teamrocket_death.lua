@@ -78,7 +78,8 @@ if SERVER then
 
 		if rag:IsValid() then
 			local path
-			if victim:LookupBone("ValveBiped.Bip01_R_Pectoral") then
+
+			if jrpg.GetGender(victim) == "female" then
 				path = "pac_server/throw/female/" .. math.random(1,9) .. ".ogg"
 			else
 				path = "pac_server/throw/male/" .. math.random(1,19) .. ".ogg"
