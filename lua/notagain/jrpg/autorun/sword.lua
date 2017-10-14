@@ -33,7 +33,7 @@ hook.Add("CalcMainActivity", SWEP.ClassName, function(ply)
 end)
 
 local function manip_pos(ply, id, pos)
-	if pac then
+	if pac and pac.ManipulateBonePosition then
 		pac.ManipulateBonePosition(ply, id, pos)
 	else
 		ply:ManipulateBonePosition(id, pos)
