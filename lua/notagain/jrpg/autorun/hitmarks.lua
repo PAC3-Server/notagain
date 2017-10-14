@@ -791,7 +791,7 @@ if SERVER then
 							return
 						end
 					elseif (ent:Health() - last_health) ~= damage then
-						damage = ent:Health() - last_health
+						damage = last_health - ent:Health()
 					end
 				end
 
