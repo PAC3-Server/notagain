@@ -128,12 +128,19 @@ if SERVER then
 			end
 			ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
 			ply:ChatPrint("RPG: Enabled")
+
+			if ply.SetSuperJumpMultiplier then
+				ply:SetSuperJumpMultiplier(1)
+			end
 		else
 			jattributes.Disable(ply)
 			ply:SetHealth(100) -- fix to no health after removing rpg
 			ply:SetMaxHealth(100)
 			ply:SendLua([[if battlecam and battlecam.IsEnabled() then battlecam.Disable() end]])
 			ply:ChatPrint("RPG: Disabled")
+			if ply.SetSuperJumpMultiplier then
+				ply:SetSuperJumpMultiplier(1.5)
+			end
 		end
 
 		ply.rpg_cheat = cheat
