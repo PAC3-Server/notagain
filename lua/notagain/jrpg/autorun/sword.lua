@@ -120,7 +120,6 @@ if CLIENT then
 		wep:Attack(id, delay)
 	end)
 
-
 	local suppress_player_draw = false
 
 	hook.Add("PrePlayerDraw", SWEP.ClassName, function(ply)
@@ -364,14 +363,3 @@ function SWEP:SecondaryAttack()
 end
 
 weapons.Register(SWEP, SWEP.ClassName)
-
-if SERVER then
-	if me then
-		local name = SWEP.ClassName
-		SafeRemoveEntity(me:GetWeapon(name))
-		timer.Simple(0.1, function()
-			me:Give(name)
-			me:SelectWeapon(name)
-		end)
-	end
-end
