@@ -249,6 +249,8 @@ do
 			if jattributes.GetStamina(ply) == 0 then return end
 
 			ply:SetNWBool("wield_shield", true)
+			ply:GetNWEntity("shield"):SetCollisionGroup(COLLISION_GROUP_NONE)
+			ply:GetNWEntity("shield"):GetPhysicsObject():EnableCollisions(true)
 
 			return true
 		end
@@ -257,6 +259,9 @@ do
 			local ply = self.Owner
 
 			ply:SetNWBool("wield_shield", false)
+
+			ply:GetNWEntity("shield"):GetPhysicsObject():EnableCollisions(false)
+			ply:GetNWEntity("shield"):SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 
 			return true
 		end
@@ -292,6 +297,8 @@ do
 
 				if CPPI then shield:CPPISetOwner(self:GetOwner()) end
 				ply:SetNWEntity("shield", shield)
+
+				self:HideShield()
 			end
 		end
 
