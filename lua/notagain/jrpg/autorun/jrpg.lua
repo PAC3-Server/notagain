@@ -1,16 +1,14 @@
 jrpg = jrpg or {}
 
 function jrpg.Loadout(ply)
-	if gmod.GetGamemode().Name == "Sandbox" then
-		ply:Give("weapon_shield_soldiers")
-		ply:Give("potion_health")
-		ply:Give("potion_mana")
-		ply:Give("potion_stamina")
-		ply:Give("weapon_sword")
-		ply:Give("magic")
+	ply:Give("weapon_shield_soldiers")
+	ply:Give("potion_health")
+	ply:Give("potion_mana")
+	ply:Give("potion_stamina")
+	ply:Give("weapon_jsword")
+	ply:Give("magic")
 
-		ply:SelectWeapon("weapon_sword")
-	end
+	ply:SelectWeapon("weapon_jsword")
 end
 
 do
@@ -125,7 +123,9 @@ if SERVER then
 			ply:SetHealth(ply:GetMaxHealth())
 			jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
 			jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
-			jrpg.Loadout(ply)
+			if gmod.GetGamemode().Name == "Sandbox" then
+				jrpg.Loadout(ply)
+			end
 			ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
 			ply:ChatPrint("RPG: Enabled")
 		else
