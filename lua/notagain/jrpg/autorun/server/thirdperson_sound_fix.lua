@@ -11,6 +11,8 @@ timer.Create("thirdperson_sound_fix", 0.1, 0, function()
 				ply.tp_soundfix_dummy:SetPos(ply:GetPos())
 				ply.tp_soundfix_dummy:SetParent(ply)
 				ply.tp_soundfix_dummy:SetOwner(ply)
+				ply.tp_soundfix_dummy:SetModel("models/error.mdl")
+				ply.tp_soundfix_dummy:SetNoDraw(true)
 				ply.tp_soundfix_dummy:Spawn()
 
 				ply:SetViewEntity(ply.tp_soundfix_dummy)
