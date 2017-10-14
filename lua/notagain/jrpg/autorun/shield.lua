@@ -595,6 +595,7 @@ end)
 
 hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 	if jrpg.IsWieldingShield(ent) then
+		local shield = ent:GetNWEntity("shield")
 		local type = dmginfo:GetDamageType()
 
 		if jdmg.GetDamageType(dmginfo) then
