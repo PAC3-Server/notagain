@@ -1,5 +1,18 @@
 jrpg = jrpg or {}
 
+function jrpg.Loadout(ply)
+	if gmod.GetGamemode().Name == "Sandbox" then
+		ply:Give("weapon_shield_soldiers")
+		ply:Give("potion_health")
+		ply:Give("potion_mana")
+		ply:Give("potion_stamina")
+		ply:Give("weapon_sword")
+		ply:Give("magic")
+
+		ply:SelectWeapon("weapon_sword")
+	end
+end
+
 do
 	local male_bbox = Vector(22.291288, 20.596443, 72.959808)
 	local female_bbox = Vector(21.857199, 20.744711, 71.528900)
@@ -99,13 +112,6 @@ if SERVER then
 		return a:IsFriend(b)
 	end
 
-	local function loadout(ply)
-		if gmod.GetGamemode().Name == "Sandbox" then
-			ply:Give("weapon_shield_scanner")
-			ply:Give("magic")
-		end
-	end
-
 	function jrpg.SetRPG(ply, b, cheat)
 		ply:SetNWBool("rpg", b)
 		if b then
@@ -119,7 +125,7 @@ if SERVER then
 			ply:SetHealth(ply:GetMaxHealth())
 			jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
 			jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
-			loadout(ply)
+			jrpg.Loadout(ply)
 			ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
 			ply:ChatPrint("RPG: Enabled")
 		else
