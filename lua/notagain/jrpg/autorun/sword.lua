@@ -5,7 +5,7 @@ SWEP.PrintName = "jrpg sword"
 SWEP.Spawnable = true
 
 SWEP.WorldModel = "models/kuma96/2b/virtuouscontract/virtuouscontract.mdl"
-SWEP.ViewModel = ""
+SWEP.ViewModel = SWEP.WorldModel
 SWEP.UseHands = true
 
 --ryoku pure vanguard judge phalanx
