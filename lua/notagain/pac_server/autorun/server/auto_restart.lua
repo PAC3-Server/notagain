@@ -1,3 +1,5 @@
+if game.SinglePlayer() then return end
+
 local restarting = false
 local try_restart = false
 
