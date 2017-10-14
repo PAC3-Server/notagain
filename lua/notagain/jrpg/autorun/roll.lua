@@ -92,7 +92,7 @@ hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 	if is_dodging(ply) then
 		local dir = vel_to_dir(ply:EyeAngles(), velocity, dodge_speed)
 
-		ply.dodge_back_cycle = (ply.dodge_back_cycle or 0) + (ply:GetVelocity():Length2D() * FrameTime() / 250)
+		ply.dodge_back_cycle = (ply.dodge_back_cycle or 0) + FrameTime() * 1.25
 
 		ply.dodge_fraction = math.Clamp(ply.dodge_back_cycle,0,1)
 
@@ -102,13 +102,11 @@ hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 			--f = math.EaseInOut(f, 1, 2)
 
 			if dir == "forward" then
-				local cycle = Lerp(f, 0.68, 0.3)
-				if cycle <= 0.31 then cycle = 0.68 end
+				local cycle = Lerp(f, 0.7, 0.25)
+				--if cycle <= 0.3 then cycle = 0.68 end
 				ply:SetCycle(cycle)
 			elseif dir == "backward" then
-				ply:SetCycle(Lerp(f, 0.3, 0.75))
-			elseif dir == "left" or dir == "right" then
-				ply:SetCycle(Lerp(f, 0.25, 1))
+				ply:SetCycle(Lerp(f, 0.25, 0.7))
 			end
 
 			ply:SetPlaybackRate(0)
@@ -217,7 +215,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 
 		if mv:KeyPressed(IN_JUMP) then
 
-			if (mv:KeyDown(IN_ATTACK) or mv:KeyDown(IN_ATTACK2) or mv:KeyDown(IN_SPEED)) and mv:KeyDown(IN_JUMP) then
+			if (mv:KeyDown(IN_ATTACK) or mv:KeyDown(IN_ATTACK2)) and mv:KeyDown(IN_JUMP) then
 				ply.dodge_ang = mv:GetAngles()
 
 				ply.dodge_time2 = dodge_time / math.Clamp(mv:GetVelocity():Length2D() / 200, 0.75, 1.25)
