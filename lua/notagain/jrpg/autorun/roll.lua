@@ -4,7 +4,7 @@ local threshold = 30
 local roll_time = 0.75/speed
 local roll_speed = 1*speed
 
-local dodge_time = 0.75/speed
+local dodge_time = 0.5/speed
 local dodge_speed = 1*speed
 
 local function is_rolling(ply)
@@ -84,34 +84,30 @@ local function can_dodge(ply)
 end
 
 hook.Add("UpdateAnimation", "roll", function(ply, velocity)
-	if velocity:Length2D() < threshold then
-		ply.roll_time = nil
-		return
-	end
-
 	if is_dodging(ply) then
 		local dir = vel_to_dir(ply:EyeAngles(), velocity, dodge_speed)
+		if dir == "forward" or dir == "backward" then
+			ply.dodge_back_cycle = (ply.dodge_back_cycle or 0) + FrameTime() * 1.25
 
-		ply.dodge_back_cycle = (ply.dodge_back_cycle or 0) + FrameTime() * 1.25
+			ply.dodge_fraction = math.Clamp(ply.dodge_back_cycle,0,1)
 
-		ply.dodge_fraction = math.Clamp(ply.dodge_back_cycle,0,1)
+			if ply.dodge_fraction < 1 then
 
-		if ply.dodge_fraction < 1 then
+				local f = ply.dodge_fraction
+				--f = math.EaseInOut(f, 1, 2)
 
-			local f = ply.dodge_fraction
-			--f = math.EaseInOut(f, 1, 2)
+				if dir == "forward" then
+					local cycle = Lerp(f, 0.7, 0.25)
+					if cycle <= 0.3 then cycle = 0.68 end
+					ply:SetCycle(cycle)
+				elseif dir == "backward" then
+					ply:SetCycle(Lerp(f, 0.25, 0.7))
+				end
 
-			if dir == "forward" then
-				local cycle = Lerp(f, 0.7, 0.25)
-				--if cycle <= 0.3 then cycle = 0.68 end
-				ply:SetCycle(cycle)
-			elseif dir == "backward" then
-				ply:SetCycle(Lerp(f, 0.25, 0.7))
+				ply:SetPlaybackRate(0)
+
+				return true
 			end
-
-			ply:SetPlaybackRate(0)
-
-			return true
 		end
 	else
 		ply.dodge_back_cycle = nil
@@ -162,10 +158,6 @@ hook.Add("OnPlayerHitGround", "roll", function(ply)
 end)
 
 hook.Add("CalcMainActivity", "roll", function(ply)
-	if ply:GetVelocity():Length2D() < threshold then
-		return
-	end
-
 	if is_rolling(ply) and ply.roll_fraction and ply.roll_fraction < 1 then
 		local dir = vel_to_dir(ply:EyeAngles(), ply:GetVelocity(), roll_speed)
 
@@ -208,6 +200,24 @@ end)
 
 hook.Add("Move", "roll", function(ply, mv, ucmd)
 	if not ply:GetNWBool("rpg") then return end
+
+	if mv:GetVelocity():Length2D() < threshold then
+		ply.roll_ang = nil
+		ply.roll_time = nil
+		ply.roll_time2 = nil
+		ply.roll_dir = nil
+		ply:SetNW2Float("roll_time", 0)
+		ply:SetNW2Float("roll_time2", 0)
+
+		ply.dodge_ang = nil
+		ply.dodge_time = nil
+		ply.dodge_time2 = nil
+		ply.dodge_dir = nil
+		ply:SetNW2Float("dodge_time", 0)
+		ply:SetNW2Float("dodge_time2", 0)
+
+		return
+	end
 
 	if can_dodge(ply) then
 		local stamina = jattributes.GetStamina(ply)
