@@ -115,7 +115,7 @@ do
 			if not ply:IsValid() then return end
 
 
-			local pos, ang = self:GetPosAng(pos, ang)
+			local pos, ang = self:GetPosAng()
 
 			local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
 
