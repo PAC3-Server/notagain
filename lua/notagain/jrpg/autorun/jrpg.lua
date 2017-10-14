@@ -1,5 +1,37 @@
 jrpg = jrpg or {}
 
+do
+	local male_bbox = Vector(22.291288, 20.596443, 72.959808)
+	local female_bbox = Vector(21.857199, 20.744711, 71.528900)
+
+	function jrpg.GetGender(ent)
+		if not ent:GetModel() then return end
+
+		local seq = ent:LookupSequence("walk_all")
+
+		if seq and seq > 0 then
+			local info = ent:GetSequenceInfo(seq)
+			if info.bbmax == male_bbox then
+				return "male"
+			elseif info.bbmax == female_bbox then
+				return "female"
+			end
+		end
+
+		if
+			ent:GetModel():lower():find("female") or
+			ent:LookupBone("ValveBiped.Bip01_R_Pectoral") or
+			ent:LookupBone("ValveBiped.Bip01_R_Latt") or
+			ent:LookupBone("ValveBiped.Bip01_L_Pectoral") or
+			ent:LookupBone("ValveBiped.Bip01_L_Latt")
+		then
+			return "female"
+		end
+
+		return "male"
+	end
+end
+
 function jrpg.GetFriendlyName(ent)
 	local name
 
