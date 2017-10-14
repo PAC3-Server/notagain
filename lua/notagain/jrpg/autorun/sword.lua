@@ -1,5 +1,5 @@
 local SWEP = {Primary = {}, Secondary = {}}
-SWEP.ClassName = "weapon_sword"
+SWEP.ClassName = "weapon_jsword"
 
 SWEP.PrintName = "jrpg sword"
 SWEP.Spawnable = true
