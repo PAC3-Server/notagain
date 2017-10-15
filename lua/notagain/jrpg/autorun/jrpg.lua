@@ -5,10 +5,10 @@ function jrpg.Loadout(ply)
 	ply:Give("potion_health")
 	ply:Give("potion_mana")
 	ply:Give("potion_stamina")
-	ply:Give("weapon_jsword")
+	ply:Give("weapon_jsword_virtuouscontract")
 	ply:Give("magic")
 
-	ply:SelectWeapon("weapon_jsword")
+	ply:SelectWeapon("weapon_jsword_virtuouscontract")
 end
 
 do

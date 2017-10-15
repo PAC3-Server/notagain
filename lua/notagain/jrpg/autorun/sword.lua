@@ -1,20 +1,20 @@
 local SWEP = {Primary = {}, Secondary = {}}
-SWEP.ClassName = "weapon_jsword"
+SWEP.ClassName = "weapon_jsword_base"
 
 SWEP.PrintName = "jrpg sword"
 SWEP.Spawnable = true
+SWEP.ModelScale = 1
 
-SWEP.WorldModel = "models/kuma96/2b/virtuouscontract/virtuouscontract.mdl"
 SWEP.ViewModel = SWEP.WorldModel
 SWEP.UseHands = true
-
+SWEP.is_jsword = true
 --ryoku pure vanguard judge phalanx
 SWEP.MoveSet = "phalanx"
 SWEP.Speed = 0.1
 
 hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	local self = ply:GetActiveWeapon()
-	if self.ClassName ~= SWEP.ClassName then return end
+	if not self.is_jsword then return end
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
 	if ply.sword_anim and ply.sword_cycle and ply.sword_cycle < 0.5 then
@@ -24,7 +24,7 @@ end)
 
 hook.Add("CalcMainActivity", SWEP.ClassName, function(ply)
 	local self = ply:GetActiveWeapon()
-	if self.ClassName ~= SWEP.ClassName then return end
+	if not self.is_jsword then return end
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
 	if ply.sword_anim then
@@ -52,7 +52,7 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 	end
 
 	local self = ply:GetActiveWeapon()
-	if self.ClassName ~= SWEP.ClassName then return end
+	if not self.is_jsword then return end
 	if jrpg.IsWieldingShield(ply) then return end
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
@@ -144,17 +144,7 @@ if CLIENT then
 			local id = self.Owner:LookupBone("ValveBiped.Bip01_R_Hand")
 			if id then
 				pos, ang = self.Owner:GetBonePosition(id)
-
-				--ang:RotateAroundAxis(ang:Right(), 90)
-				--pos = pos + ang:Forward()*20
-				--pos = pos + ang:Up()*-3.2
-				--pos = pos + ang:Right()*-1.5
-
-				pos = pos + ang:Forward()*2
-				pos = pos + ang:Right()*1
-				pos = pos + ang:Up()*-63
-
-				ang:RotateAroundAxis(ang:Up(), 90)
+				pos, ang = self:SetupPosition(pos, ang)
 
 				self:SetPos(pos)
 				self:SetAngles(ang)
@@ -163,6 +153,21 @@ if CLIENT then
 		end
 
 		self:DrawModel()
+
+		if false and self:GetNWBool("wepstats_elemental") then
+			for k, v in pairs(jdmg.types) do
+				if self:GetNWBool("wepstats_elemental_" .. k) then
+					local len = self.last_vel_length or 0
+					len = 1
+					v.draw(self, len, len, RealTime())
+					if v.think then v.think(self, len, len, RealTime()) end
+					v.draw_projectile(self, len, false)
+				end
+			end
+			render.SetColorModulation(1,1,1)
+			render.ModelMaterialOverride()
+			render.SetBlend(1)
+		end
 
 		if self.Owner:IsValid() and self.Owner.sword_anim then
 
@@ -196,6 +201,8 @@ if CLIENT then
 			vel = vel / #self.pos_history
 			local l = vel:Length()
 
+			self.last_vel_length = l
+
 			local hit = false
 
 			for i, data in ipairs(self.pos_history) do
@@ -216,7 +223,9 @@ if CLIENT then
 
 						if i > 8 and l > 2 and math.random() > 0.95 then
 
-							local tr = util.TraceLine({start = pos, endpos = pos + ang:Up() * 50, filter = {self.Owner, self, self.Owner:GetNWEntity("shield")}})
+							local start_pos, end_pos = self:TracePosition(pos, ang)
+
+							local tr = util.TraceLine({start = start_pos, endpos = end_pos, filter = {self.Owner, self, self.Owner:GetNWEntity("shield")}})
 							if tr.Hit then
 
 								hit = true
@@ -285,7 +294,7 @@ end
 
 function SWEP:Initialize()
 	self:SetHoldType("melee2")
-	--self:SetModelScale(1.5)
+	self:SetModelScale(self.ModelScale)
 	self:SetModelScale(1.25)
 end
 
@@ -297,7 +306,7 @@ if SERVER then
 	util.AddNetworkString("sword_damage")
 	net.Receive("sword_damage", function(_, ply)
 		local self = ply:GetActiveWeapon()
-		if self.ClassName ~= SWEP.ClassName then return end
+		if not self.is_jsword then return end
 
 		local pos = net.ReadVector()
 		local dmg = net.ReadUInt(8)
@@ -370,3 +379,102 @@ function SWEP:SecondaryAttack()
 end
 
 weapons.Register(SWEP, SWEP.ClassName)
+
+do
+	local SWEP = {Primary = {}, Secondary = {}}
+	SWEP.ClassName = "weapon_jsword_virtuouscontract"
+	SWEP.Base = "weapon_jsword_base"
+
+	SWEP.PrintName = "virtuous contract"
+
+	SWEP.WorldModel = "models/kuma96/2b/virtuouscontract/virtuouscontract.mdl"
+	SWEP.SetupPosition = function(self, pos, ang)
+		pos = pos + ang:Forward()*2
+		pos = pos + ang:Right()*1
+		pos = pos + ang:Up()*-63
+
+		ang:RotateAroundAxis(ang:Up(), 90)
+		return pos, ang
+	end
+	SWEP.TracePosition = function(self, pos, ang)
+		return pos, pos + ang:Up() * 50
+	end
+
+	weapons.Register(SWEP, SWEP.ClassName)
+end
+
+
+if false then
+	local SWEP = {Primary = {}, Secondary = {}}
+	SWEP.ClassName = "weapon_jsword_overture"
+	SWEP.Base = "weapon_jsword_base"
+
+	SWEP.PrintName = "overture"
+
+	SWEP.WorldModel = "models/kuma96/lightningetro/overture/overture.mdl"
+	SWEP.SetupPosition = function(self, pos, ang)
+		pos = pos + ang:Forward()*2
+		pos = pos + ang:Right()*1
+		pos = pos + ang:Up()*-10
+
+		ang:RotateAroundAxis(ang:Up(), -180)
+		return pos, ang
+	end
+	SWEP.TracePosition = function(self, pos, ang)
+		return pos, pos + ang:Up() * 50
+	end
+
+	weapons.Register(SWEP, SWEP.ClassName)
+end
+
+do
+	local SWEP = {Primary = {}, Secondary = {}}
+	SWEP.ClassName = "weapon_jsword_crowbar"
+	SWEP.Base = "weapon_jsword_base"
+
+	--ryoku pure vanguard judge phalanx
+	SWEP.MoveSet = "phalanx"
+
+	SWEP.PrintName = "crowbar"
+
+	SWEP.WorldModel = "models/weapons/w_crowbar.mdl"
+	SWEP.ModelScale = 1.5
+	SWEP.SetupPosition = function(self, pos, ang)
+		ang:RotateAroundAxis(ang:Right(), 90)
+		ang:RotateAroundAxis(ang:Up(), 180)
+		pos = pos + ang:Forward()*20
+		pos = pos + ang:Up()*-3.2
+		pos = pos + ang:Right()*-1.5
+
+		return pos, ang
+	end
+	SWEP.TracePosition = function(self, pos, ang)
+		return pos + ang:Forward() * -20, pos + ang:Forward() * 20
+	end
+
+
+	weapons.Register(SWEP, SWEP.ClassName)
+end
+
+do
+	local SWEP = {Primary = {}, Secondary = {}}
+	SWEP.ClassName = "weapon_jsword_beastlord"
+	SWEP.Base = "weapon_jsword_base"
+
+	SWEP.PrintName = "beastlord"
+	SWEP.MoveSet = "vanguard"
+	SWEP.WorldModel = "models/kuma96/2b/beastlord/beastlord.mdl"
+	SWEP.SetupPosition = function(self, pos, ang)
+		pos = pos + ang:Forward()*-1
+		pos = pos + ang:Right()*1
+		pos = pos + ang:Up()*-92
+
+		ang:RotateAroundAxis(ang:Up(), 90)
+		return pos, ang
+	end
+	SWEP.TracePosition = function(self, pos, ang)
+		return pos, pos + ang:Up() * 50
+	end
+
+	weapons.Register(SWEP, SWEP.ClassName)
+end
