@@ -1,8 +1,8 @@
 local SWEP = {Primary = {}, Secondary = {}}
 SWEP.ClassName = "weapon_jsword_base"
 
-SWEP.PrintName = "jrpg sword"
-SWEP.Spawnable = true
+SWEP.PrintName = "jrpg base sword"
+SWEP.Spawnable = false
 SWEP.ModelScale = 1
 
 SWEP.ViewModel = SWEP.WorldModel
@@ -386,6 +386,8 @@ do
 	SWEP.Base = "weapon_jsword_base"
 
 	SWEP.PrintName = "virtuous contract"
+	SWEP.Spawnable = true
+	SWEP.Category = "JRPG"
 
 	SWEP.WorldModel = "models/kuma96/2b/virtuouscontract/virtuouscontract.mdl"
 	SWEP.SetupPosition = function(self, pos, ang)
