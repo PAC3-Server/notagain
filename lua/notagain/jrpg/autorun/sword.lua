@@ -412,6 +412,8 @@ if false then
 	SWEP.Base = "weapon_jsword_base"
 
 	SWEP.PrintName = "overture"
+	SWEP.Spawnable = true
+	SWEP.Category = "JRPG"
 
 	SWEP.WorldModel = "models/kuma96/lightningetro/overture/overture.mdl"
 	SWEP.SetupPosition = function(self, pos, ang)
@@ -438,6 +440,8 @@ do
 	SWEP.MoveSet = "phalanx"
 
 	SWEP.PrintName = "crowbar"
+	SWEP.Spawnable = true
+	SWEP.Category = "JRPG"
 
 	SWEP.WorldModel = "models/weapons/w_crowbar.mdl"
 	SWEP.ModelScale = 1.5
@@ -464,6 +468,9 @@ do
 	SWEP.Base = "weapon_jsword_base"
 
 	SWEP.PrintName = "beastlord"
+	SWEP.Spawnable = true
+	SWEP.Category = "JRPG"
+
 	SWEP.MoveSet = "vanguard"
 	SWEP.WorldModel = "models/kuma96/2b/beastlord/beastlord.mdl"
 	SWEP.SetupPosition = function(self, pos, ang)
