@@ -609,6 +609,12 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 end)
 
 hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
+	if ent:GetNWBool("shield_stunned") then
+		dmginfo:SetDamage(dmginfo:GetDamage() * 3)
+
+		return
+	end
+
 	if jrpg.IsWieldingShield(ent) then
 		local data = util.TraceLine({
 			start = dmginfo:GetDamagePosition(),
