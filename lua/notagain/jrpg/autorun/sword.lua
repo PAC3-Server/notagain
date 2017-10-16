@@ -10,15 +10,15 @@ SWEP.UseHands = true
 SWEP.is_jsword = true
 --ryoku pure vanguard judge phalanx
 SWEP.MoveSet = "phalanx"
-SWEP.Speed = 0.1
+SWEP.Speed = 0.05
 
 hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	local self = ply:GetActiveWeapon()
 	if not self.is_jsword then return end
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
-	if ply.sword_anim and ply.sword_cycle and ply.sword_cycle < 0.5 then
-		mv:SetForwardSpeed(mv:GetForwardSpeed() + 75)
+	if ply.sword_anim and ply.sword_cycle and ply.sword_cycle < 0.9 and ply.sword_cycle > 0.1 then
+		mv:SetForwardSpeed(0)
 	end
 end)
 
@@ -107,7 +107,7 @@ end)
 function SWEP:Animation(id)
 	local ply = self.Owner
 
-	ply.sword_anim = self.MoveSet .. "_b_s" .. id .. "_t" .. math.random(1, 3)
+	ply.sword_anim = self.MoveSet .. "_b_s" .. id .. "_t" .. math.Round(util.SharedRandom(self.ClassName, 1, 3))
 	ply.sword_cycle = 0
 end
 
@@ -139,7 +139,7 @@ if CLIENT then
 		end
 	end)
 	function SWEP:DrawWorldModel()
-		local pos, ang
+		local pos, ang = Vector(), Angle()
 		if self.Owner:IsValid() then
 			local id = self.Owner:LookupBone("ValveBiped.Bip01_R_Hand")
 			if id then
@@ -154,7 +154,7 @@ if CLIENT then
 
 		self:DrawModel()
 
-		if false and self:GetNWBool("wepstats_elemental") then
+		if self:GetNWBool("wepstats_elemental") then
 			for k, v in pairs(jdmg.types) do
 				if self:GetNWBool("wepstats_elemental_" .. k) then
 					local len = self.last_vel_length or 0
@@ -169,7 +169,7 @@ if CLIENT then
 			render.SetBlend(1)
 		end
 
-		if self.Owner:IsValid() and self.Owner.sword_anim then
+		if self.Owner:IsValid() then--and self.Owner.sword_anim then
 
 			if not self.snd then
 				self.snd = CreateSound(self.Owner, "weapons/tripwire/ropeshoot.wav")
@@ -204,6 +204,7 @@ if CLIENT then
 			self.last_vel_length = l
 
 			local hit = false
+			local last_pos = Vector()
 
 			for i, data in ipairs(self.pos_history) do
 				render.SetColorModulation(1,1,1)
@@ -221,13 +222,20 @@ if CLIENT then
 						local pos = LerpVector(i2/20, cur_pos, nxt_pos)
 						local ang = LerpAngle(i2/20, cur_ang, nxt_ang)
 
-						if i > 8 and l > 2 and math.random() > 0.95 then
+						local start_pos, end_pos = self:TracePosition(pos, ang)
 
-							local start_pos, end_pos = self:TracePosition(pos, ang)
+						if i > 8 and l > 2 and last_pos:Distance(start_pos) > 2.5 then
+							last_pos = start_pos
 
-							local tr = util.TraceLine({start = start_pos, endpos = end_pos, filter = {self.Owner, self, self.Owner:GetNWEntity("shield")}})
+							local data = {
+								start = start_pos,
+								endpos = end_pos,
+								filter = {self.Owner, self, self.Owner:GetNWEntity("shield"), self:GetNW2Entity("physics")}
+							}
+							local tr = util.TraceLine(data)
+							debugoverlay.Line(data.start, tr.HitPos, 1, tr.Hit and Color(255, 0,0,0) or Color(255, 255, 255, 255))
 							if tr.Hit then
-
+								debugoverlay.Cross(tr.HitPos, 10, 2)
 								hit = true
 								--self:EmitSound("weapons/sniper/sniper_zoomout.wav", 75, math.random(100,150), 1)
 								mute_sounds = true
@@ -235,19 +243,19 @@ if CLIENT then
 									Damage = 100,
 									Distance = 1,
 									Dir = tr.Normal,
-									Src = tr.HitPos - tr.HitNormal,
+									Src = tr.HitPos - tr.HitNormal*2,
 									TracerName = "HelicopterTracer",
 									AmmoType = "none",
 								})
 
-								-- hahahha
+								--[[hahahha
 								if tr.Entity:IsValid() then
 									net.Start("sword_damage", true)
 										net.WriteVector(tr.HitPos)
 										net.WriteUInt(l, 8)
 										net.WriteEntity(tr.Entity)
 									net.SendToServer()
-								end
+								end]]
 								volume = l
 								mute_sounds = false
 							end
@@ -262,8 +270,14 @@ if CLIENT then
 			end
 
 			if self.snd then
-				self.snd:ChangePitch(math.min(90 + l*5, 255))
-				self.snd:ChangeVolume((l/8)^2)
+				local size = 90
+				local phys = self:GetNW2Entity("physics")
+				if phys:IsValid() then
+					size = 1/(phys:OBBMins() - phys:OBBMaxs()):Length2D() * 700
+				end
+
+				self.snd:ChangePitch(math.min(size + l*5, 255))
+				self.snd:ChangeVolume((l/8)^4)
 
 				if hit then
 					self.scrape_snd:ChangeVolume(0.25)
@@ -295,13 +309,123 @@ end
 function SWEP:Initialize()
 	self:SetHoldType("melee2")
 	self:SetModelScale(self.ModelScale)
-	self:SetModelScale(1.25)
+	--self:SetModelScale(1.25)
 end
 
+hook.Add("ShouldCollide", SWEP.ClassName, function(a, b)
+	if a.is_sword_phys and b:IsWorld() then return false end
+	if a.is_sword_phys and b.is_shield_ent and a:GetOwner() == b:GetOwner() then print("yes")return  false end
+end)
+
+function SWEP:Deploy()
+	if SERVER then
+		local ent = ents.Create("prop_physics")
+		ent:SetModel(self.WorldModel)
+		ent:SetOwner(self:GetOwner())
+		--ent:SetMaterial("models/wireframe")
+		ent:SetNoDraw(true)
+		ent:SetPos(self:GetOwner():GetPos())
+		ent:Spawn()
+		ent:GetPhysicsObject():SetMass(1)
+		ent:GetPhysicsObject():EnableGravity(false)
+		ent:SetCustomCollisionCheck(true)
+		ent.is_sword_phys = true
+		self:SetNW2Entity("physics", ent)
+		ent:AddCallback("PhysicsCollide", function(_, data)
+			if not data.HitEntity:IsValid() then return end
+			local d = DamageInfo()
+			d:SetAttacker(self.Owner)
+			d:SetInflictor(self.Owner)
+			d:SetDamage(data.Speed/100)
+			d:SetDamageType(DMG_SLASH)
+			d:SetDamagePosition(self.Owner:EyePos())
+			data.HitEntity:TakeDamageInfo(d)
+			self.tp_back = true
+		end)
+		self.phys = ent
+	end
+	return true
+end
+
+function SWEP:Think()
+	if SERVER then
+		local id = self.Owner:LookupBone("ValveBiped.Bip01_R_Hand")
+
+		if id then
+			local pos, ang = self.Owner:GetBonePosition(id)
+			pos, ang = self:SetupPosition(pos, ang)
+
+			--[[local start_pos, end_pos = self:TracePosition(pos, ang)
+			local data = {
+				mins = Vector( -10, -10, -10 ),
+				maxs = Vector( 10, 10, 10 ),
+				start = start_pos,
+				endpos = end_pos,
+				filter = {self.Owner, self, self.Owner:GetNWEntity("shield"), self:GetNW2Entity("physics")}
+			}
+			local tr = util.TraceHull(data)
+
+			if tr.Entity:IsValid() then
+				local d = DamageInfo()
+				d:SetAttacker(self.Owner)
+				d:SetInflictor(self.Owner)
+				d:SetDamage(1)
+				d:SetDamageType(DMG_SLASH)
+				d:SetDamagePosition(self.Owner:EyePos())
+				tr.Entity:TakeDamageInfo(d)
+			end
+			]]
+
+			if self.phys:IsValid() then
+
+				local phys = self.phys:GetPhysicsObject()
+
+				if self.tp_back then
+					phys:SetPos(pos)
+					phys:SetAngles(ang)
+					self.tp_back = false
+				end
+
+				phys:Wake()
+				phys:ComputeShadowControl({
+					pos = pos,
+					angle = ang,
+					deltatime = FrameTime(),
+					teleportdistance = 150,
+					dampfactor = 0.9,
+					maxspeeddamp = 1000000,
+					maxspeed = 1000000,
+					maxangulardamp = 1000000,
+					maxangular = 1000000,
+					secondstoarrive = 0.001,
+				})
+			end
+		end
+	end
+end
+
+function SWEP:Holster()
+	if SERVER then
+		SafeRemoveEntity(self.phys)
+	end
+	return true
+end
+
+if SERVER then
+	function SWEP:OnDrop()
+		SafeRemoveEntity(self.phys)
+	end
+end
+function SWEP:OnRemove()
+	if SERVER then
+		SafeRemoveEntity(self.phys)
+	end
+end
 
 if SERVER then
 	util.AddNetworkString(SWEP.ClassName)
 
+--[[
 	-- hahahha
 	util.AddNetworkString("sword_damage")
 	net.Receive("sword_damage", function(_, ply)
@@ -322,6 +446,7 @@ if SERVER then
 			ent:TakeDamageInfo(d)
 		end
 	end)
+]]
 end
 
 function SWEP:Attack(id, delay)
@@ -369,13 +494,15 @@ end
 
 function SWEP:PrimaryAttack()
 	self:Attack(3, 0.3)
-	--self:SetNextPrimaryFire(CurTime() + 0.25)
+	self:SetNextPrimaryFire(CurTime() + 0.5)
+	self:SetNextSecondaryFire(CurTime() + 0.5)
 end
 
 
 function SWEP:SecondaryAttack()
 	self:Attack(1, 0.25)
-	--self:SetNextPrimaryFire(CurTime() + 0.25)
+	self:SetNextPrimaryFire(CurTime() + 0.5)
+	self:SetNextSecondaryFire(CurTime() + 0.5)
 end
 
 weapons.Register(SWEP, SWEP.ClassName)
@@ -399,7 +526,7 @@ do
 		return pos, ang
 	end
 	SWEP.TracePosition = function(self, pos, ang)
-		return pos, pos + ang:Up() * 50
+		return pos + ang:Up() * 50, pos
 	end
 
 	weapons.Register(SWEP, SWEP.ClassName)
