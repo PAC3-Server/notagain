@@ -134,6 +134,7 @@ if SERVER then
 
 		if res.Hit and res.HitSky and victim:GetPos():Distance(res.HitPos) > 1000 then
 			suppress = true
+			force.z = math.abs(force.z) + 0.5
 			team_rocket_death(victim, info:GetAttacker(), force:GetNormalized())
 			suppress = false
 		end
