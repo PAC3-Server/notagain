@@ -137,21 +137,21 @@ do
 
 				pos = LerpVector(0.75, pos, handpos)
 				ang = LerpAngle(0.1, ang, handang)
+
+				if not ply.shield_wield_time then
+
+					local pos, ang = ply:GetBonePosition(id)
+					local pos, ang = self:TranslateModelPosAng(pos, ang, true)
+
+					self:SetPos(pos)
+					self:SetAngles(ang)
+					self:SetupBones()
+					self:DrawModel()
+
+					return
+				end
+
 			end
-
-			if not ply.shield_wield_time then
-
-				local pos, ang = ply:GetBonePosition(id)
-				local pos, ang = self:TranslateModelPosAng(pos, ang, true)
-
-				self:SetPos(pos)
-				self:SetAngles(ang)
-				self:SetupBones()
-				self:DrawModel()
-
-				return
-			end
-
 
 			if self.csent then
 				pos, ang = self:CSTranslateModelPosAng(pos, ang)
@@ -343,6 +343,7 @@ local function register_shield(tbl)
 	weapons.Register(SWEP, SWEP.ClassName)
 
 	local ENT = {}
+	ENT.is_shield_ent = true
 	ENT.ClassName = SWEP.ShieldName
 	ENT.Base = "shield_base"
 	for key, val in pairs(tbl) do ENT[key] = val end
