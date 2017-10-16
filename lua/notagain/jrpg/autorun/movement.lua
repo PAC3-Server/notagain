@@ -1,15 +1,35 @@
+local function manip_angles(ply, id, ang)
+	if pac and pac.ManipulateBoneAngles then
+		pac.ManipulateBoneAngles(ply, id, ang)
+	else
+		ply:ManipulateBoneAngles(id, ang)
+	end
+end
+
 hook.Add("CalcMainActivity", "movement", function(ply)
 	if not ply:GetNWBool("rpg") then return end
 	local vel = ply:GetVelocity()
 
 	if ply:IsOnGround() then
 		if vel:Length() > 300 then
+
+			ply.sprint_lean = ply.sprint_lean or CurTime() + 2
+
+			if ply.sprint_lean > CurTime() then
+				local lean = (CurTime() - ply.sprint_lean)/2
+				manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_Spine1"), Angle(0, -lean*30, 0))
+			end
+
 			local seq = ply:LookupSequence("run_all_02")
 			if seq > 1 then
 				return seq, seq
 			end
+		else
+			if ply.sprint_lean then
+				manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_Spine1"), Angle(0, 0, 0))
+				ply.sprint_lean = nil
+			end
 		end
-
 	else
 		ply.m_bJumping = true
 		ply.m_flJumpStartTime = 0
@@ -121,15 +141,6 @@ hook.Add("Move", "movement", function(ply, mv)
 end)
 
 if CLIENT then
-
-	local function manip_angles(ply, id, ang)
-		if pac then
-			pac.ManipulateBoneAngles(ply, id, ang)
-		else
-			ply:ManipulateBoneAngles(id, ang)
-		end
-	end
-
 	local function manip_origin(ply, pos)
 		if pos:IsZero() then
 			ply:DisableMatrix("RenderMultiply")
