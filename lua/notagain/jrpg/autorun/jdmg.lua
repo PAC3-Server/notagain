@@ -261,7 +261,7 @@ do
 		--jdmg.types.dark.sound_path = "npc/antlion_guard/confused1.wav"
 
 		jdmg.types.dark.think = function(ent, f, s, t)
-				if math.random() > 0.5 then
+			if math.random() > 0.5 then
 				ent:EmitSound("hl1/fvox/buzz.wav", 75, math.Rand(175,255), f)
 			end
 		end
@@ -639,9 +639,7 @@ do
 			if math.random() > 0.98 then
 				ent:EmitSound("ambient/fire/mtov_flame2.wav", 75, math.Rand(50,100), f)
 			end
-		end
 
-		jdmg.types.fire.draw = function(ent, f, s, t)
 			for i = 1, 1 do
 				local pos
 				local mat = ent:GetBoneMatrix(math.random(1, ent:GetBoneCount()))
@@ -681,8 +679,9 @@ do
 					p:SetDieTime(math.Rand(0.3,1.5)*5)
 				end
 			end
+		end
 
-
+		jdmg.types.fire.draw = function(ent, f, s, t)
 			render.ModelMaterialOverride(mat)
 			render.SetColorModulation(2*s,1*s,0.5)
 			render.SetBlend(f)
