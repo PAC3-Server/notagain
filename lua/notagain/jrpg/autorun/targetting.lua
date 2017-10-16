@@ -275,7 +275,7 @@ if CLIENT then
 			local ent = jtarget.GetEntity(LocalPlayer())
 
 			for _, val in ipairs(ents.FindInSphere(ent:GetPos(), 500)) do
-				if val:IsNPC() and val:GetRagdollOwner() == ent then
+				if val:GetRagdollOwner() == ent then
 					jtarget.SetEntity(LocalPlayer())
 					jtarget.StartSelection()
 					ent.jtarget_probably_dead = true
