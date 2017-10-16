@@ -515,6 +515,14 @@ hook.Add("PreDrawViewModel", "jrpg_items", function(ent, ply, wep)
 	ent:DrawModel()
 	suppress = false
 
+	suppress = true
+	for k,v in pairs(jdmg.types) do
+		if wep:GetNWBool("wepstats_elemental_" .. k) then
+			v.draw(ent, 0.1, 0, 0)
+		end
+	end
+	suppress = false
+
 	draw_glow(ent, time, 0, 10, 0.2, color, true)
 
 	for i, atch in ipairs(ent:GetAttachments()) do
