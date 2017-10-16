@@ -68,6 +68,7 @@ do
 
 		function ENT:OnTakeDamage(dmginfo)
 			local ply = self:GetOwner()
+			if not jrpg.IsWieldingShield(ply) then return end
 			if jattributes.HasStamina(ply) then
 				jattributes.SetStamina(ply, math.max(jattributes.GetStamina(ply) - dmginfo:GetDamage(), 0))
 				if jattributes.GetStamina(ply) == 0 then
