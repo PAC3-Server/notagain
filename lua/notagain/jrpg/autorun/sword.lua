@@ -10,16 +10,15 @@ SWEP.UseHands = true
 SWEP.is_jsword = true
 --ryoku pure vanguard judge phalanx
 SWEP.MoveSet = "phalanx"
-SWEP.Speed = 0.05
 
 hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	local self = ply:GetActiveWeapon()
 	if not self.is_jsword then return end
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
-	if ply.sword_anim and ply.sword_cycle and ply.sword_cycle < 0.9 and ply.sword_cycle > 0.1 then
-		mv:SetForwardSpeed(0)
-	end
+	--if ply.sword_anim and ply.sword_anim_time and ply.sword_anim_time < 0.9 and ply.sword_cycle > 0.1 then
+	--	mv:SetForwardSpeed(0)
+	--end
 end)
 
 hook.Add("CalcMainActivity", SWEP.ClassName, function(ply)
@@ -80,14 +79,55 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 		ply:SetSequence(seq)
 	end
 
-	if ply.sword_anim then
-		ply:SetSequence(ply:LookupSequence(ply.sword_anim))
-		ply:SetCycle(ply.sword_cycle)
 
-		--ply:SetPlaybackRate(1)
-		ply.sword_cycle = ply.sword_cycle + FrameTime()
-		if ply.sword_cycle > 1 then
-			ply.sword_anim = nil
+	if ply.sword_anim then
+		local f = (ply.sword_anim_time - CurTime()) / ply.sword_anim.duration
+		f = math.Clamp(-f+1, 0, 1)
+
+		if ply.sword_anim then
+			ply:SetSequence(ply:LookupSequence(ply.sword_anim.seq))
+			local min = ply.sword_anim.min or 0
+			local max = ply.sword_anim.max or 1
+
+			ply:SetCycle(Lerp(f, min, max))
+			ply:SetPlaybackRate(0)
+
+			if f >= ply.sword_anim.damage_frac then
+				if not ply.sword_damaged then
+					local pos = ply:WorldSpaceCenter() + ply:GetForward() * 30
+					local ang = ply:LocalToWorldAngles(ply.sword_anim.damage_ang)
+					local size = 40
+					debugoverlay.Sphere(pos, size, 0.5)
+					debugoverlay.Axis(pos, ang, 20, 1, true)
+					for k,v in pairs(ents.FindInSphere(pos, size)) do
+						if v ~= ply and v:GetOwner() ~= ply then
+							if SERVER then
+								local d = DamageInfo()
+								d:SetAttacker(ply)
+								d:SetInflictor(ply)
+								d:SetDamage(30)
+								d:SetDamageType(DMG_SLASH)
+								d:SetDamagePosition(ply:EyePos())
+								d:SetDamageForce(ang:Forward() * 10000)
+								v:TakeDamageInfo(d)
+							else
+								v:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 100, math.Rand(140,160))
+								debugoverlay.Cross(v:GetPos(), 10)
+							end
+						end
+					end
+
+					if CLIENT then
+						ply:EmitSound("npc/fast_zombie/claw_miss1.wav", 100, math.Rand(140,160))
+					end
+
+					ply.sword_damaged = true
+				end
+			end
+
+			if f == 1 then
+				ply.sword_anim = nil
+			end
 		end
 	end
 
@@ -104,20 +144,20 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 	--return true
 end)
 
-function SWEP:Animation(id)
+function SWEP:Animation(type)
 	local ply = self.Owner
-
-	ply.sword_anim = self.MoveSet .. "_b_s" .. id .. "_t" .. math.Round(util.SharedRandom(self.ClassName, 1, 3))
-	ply.sword_cycle = 0
+	ply.sword_anim = self.MoveSet2.light[math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2.light))]
+	ply.sword_anim_time = CurTime() + ply.sword_anim.duration
+	ply.sword_damaged = nil
 end
 
 if CLIENT then
 	net.Receive(SWEP.ClassName, function()
 		local wep = net.ReadEntity()
 		if not wep:IsValid() then return end
-		local id = net.ReadUInt(8)
+		local light = net.ReadBool()
 		local delay = net.ReadFloat()
-		wep:Attack(id, delay)
+		wep:Attack(light and "light" or "heavy")
 	end)
 
 	local suppress_player_draw = false
@@ -160,8 +200,6 @@ if CLIENT then
 					local len = self.last_vel_length or 0
 					len = 1
 					v.draw(self, len, len, RealTime())
-					if v.think then v.think(self, len, len, RealTime()) end
-					v.draw_projectile(self, len, false)
 				end
 			end
 			render.SetColorModulation(1,1,1)
@@ -169,16 +207,20 @@ if CLIENT then
 			render.SetBlend(1)
 		end
 
-		if self.Owner:IsValid() then--and self.Owner.sword_anim then
-
-			if not self.snd then
-				self.snd = CreateSound(self.Owner, "weapons/tripwire/ropeshoot.wav")
-				self.snd:Play()
-				self.snd:ChangeVolume(0)
-
-				self.scrape_snd = CreateSound(self.Owner, "physics/cardboard/cardboard_box_scrape_smooth_loop1.wav")
-				self.scrape_snd:Play()
-				self.scrape_snd:ChangeVolume(0)
+		if self.Owner:IsValid() and self.Owner.sword_anim then
+			if self:GetNWBool("wepstats_elemental") then
+				for k, v in pairs(jdmg.types) do
+					if self:GetNWBool("wepstats_elemental_" .. k) then
+						local len = self.last_vel_length or 0
+						len = 1
+						v.draw(self, len, len, RealTime())
+						if v.think then v.think(self, len, len, RealTime()) end
+						v.draw_projectile(self, len, false)
+					end
+				end
+				render.SetColorModulation(1,1,1)
+				render.ModelMaterialOverride()
+				render.SetBlend(1)
 			end
 
 			suppress_player_draw = true
@@ -222,45 +264,6 @@ if CLIENT then
 						local pos = LerpVector(i2/20, cur_pos, nxt_pos)
 						local ang = LerpAngle(i2/20, cur_ang, nxt_ang)
 
-						local start_pos, end_pos = self:TracePosition(pos, ang)
-
-						if i > 8 and l > 2 and last_pos:Distance(start_pos) > 2.5 then
-							last_pos = start_pos
-
-							local data = {
-								start = start_pos,
-								endpos = end_pos,
-								filter = {self.Owner, self, self.Owner:GetNWEntity("shield"), self:GetNW2Entity("physics")}
-							}
-							local tr = util.TraceLine(data)
-							debugoverlay.Line(data.start, tr.HitPos, 1, tr.Hit and Color(255, 0,0,0) or Color(255, 255, 255, 255))
-							if tr.Hit then
-								debugoverlay.Cross(tr.HitPos, 10, 2)
-								hit = true
-								--self:EmitSound("weapons/sniper/sniper_zoomout.wav", 75, math.random(100,150), 1)
-								mute_sounds = true
-								self:FireBullets({
-									Damage = 100,
-									Distance = 1,
-									Dir = tr.Normal,
-									Src = tr.HitPos - tr.HitNormal*2,
-									TracerName = "HelicopterTracer",
-									AmmoType = "none",
-								})
-
-								--[[hahahha
-								if tr.Entity:IsValid() then
-									net.Start("sword_damage", true)
-										net.WriteVector(tr.HitPos)
-										net.WriteUInt(l, 8)
-										net.WriteEntity(tr.Entity)
-									net.SendToServer()
-								end]]
-								volume = l
-								mute_sounds = false
-							end
-						end
-
 						self:SetPos(pos)
 						self:SetAngles(ang)
 						self:SetupBones()
@@ -269,40 +272,14 @@ if CLIENT then
 				end
 			end
 
-			if self.snd then
-				local size = 90
-				local phys = self:GetNW2Entity("physics")
-				if phys:IsValid() then
-					size = 1/(phys:OBBMins() - phys:OBBMaxs()):Length2D() * 700
-				end
-
-				self.snd:ChangePitch(math.min(size + l*5, 255))
-				self.snd:ChangeVolume((l/8)^4)
-
-				if hit then
-					self.scrape_snd:ChangeVolume(0.25)
-					self.scrape_snd:ChangePitch(math.min(200 + l*10, 255))
-				else
-					self.scrape_snd:ChangeVolume(0)
-				end
-			end
-
 			render.SetBlend(1)
 			render.SetColorModulation(1,1,1)
 			suppress_player_draw = false
-		else
-			if self.snd then
-				self.snd:ChangeVolume(0)
-				self.scrape_snd:ChangeVolume(0)
-			end
 		end
 	end
 
 	function SWEP:OnRemove()
-		if self.snd then
-			self.snd:Stop()
-			self.scrape_snd:Stop()
-		end
+
 	end
 end
 
@@ -314,16 +291,16 @@ end
 
 hook.Add("ShouldCollide", SWEP.ClassName, function(a, b)
 	if a.is_sword_phys and b:IsWorld() then return false end
-	if a.is_sword_phys and b.is_shield_ent and a:GetOwner() == b:GetOwner() then print("yes")return  false end
+	if a.is_sword_phys and b.is_shield_ent and a:GetOwner() == b:GetOwner() then return  false end
 end)
-
+--[[
 function SWEP:Deploy()
 	if SERVER then
 		local ent = ents.Create("prop_physics")
 		ent:SetModel(self.WorldModel)
 		ent:SetOwner(self:GetOwner())
-		--ent:SetMaterial("models/wireframe")
-		ent:SetNoDraw(true)
+		ent:SetMaterial("models/wireframe")
+		--ent:SetNoDraw(true)
 		ent:SetPos(self:GetOwner():GetPos())
 		ent:Spawn()
 		ent:GetPhysicsObject():SetMass(1)
@@ -331,17 +308,6 @@ function SWEP:Deploy()
 		ent:SetCustomCollisionCheck(true)
 		ent.is_sword_phys = true
 		self:SetNW2Entity("physics", ent)
-		ent:AddCallback("PhysicsCollide", function(_, data)
-			if not data.HitEntity:IsValid() then return end
-			local d = DamageInfo()
-			d:SetAttacker(self.Owner)
-			d:SetInflictor(self.Owner)
-			d:SetDamage(data.Speed/100)
-			d:SetDamageType(DMG_SLASH)
-			d:SetDamagePosition(self.Owner:EyePos())
-			data.HitEntity:TakeDamageInfo(d)
-			self.tp_back = true
-		end)
 		self.phys = ent
 	end
 	return true
@@ -355,50 +321,12 @@ function SWEP:Think()
 			local pos, ang = self.Owner:GetBonePosition(id)
 			pos, ang = self:SetupPosition(pos, ang)
 
-			--[[local start_pos, end_pos = self:TracePosition(pos, ang)
-			local data = {
-				mins = Vector( -10, -10, -10 ),
-				maxs = Vector( 10, 10, 10 ),
-				start = start_pos,
-				endpos = end_pos,
-				filter = {self.Owner, self, self.Owner:GetNWEntity("shield"), self:GetNW2Entity("physics")}
-			}
-			local tr = util.TraceHull(data)
-
-			if tr.Entity:IsValid() then
-				local d = DamageInfo()
-				d:SetAttacker(self.Owner)
-				d:SetInflictor(self.Owner)
-				d:SetDamage(1)
-				d:SetDamageType(DMG_SLASH)
-				d:SetDamagePosition(self.Owner:EyePos())
-				tr.Entity:TakeDamageInfo(d)
-			end
-			]]
-
 			if self.phys:IsValid() then
 
 				local phys = self.phys:GetPhysicsObject()
 
-				if self.tp_back then
-					phys:SetPos(pos)
-					phys:SetAngles(ang)
-					self.tp_back = false
-				end
-
-				phys:Wake()
-				phys:ComputeShadowControl({
-					pos = pos,
-					angle = ang,
-					deltatime = FrameTime(),
-					teleportdistance = 150,
-					dampfactor = 0.9,
-					maxspeeddamp = 1000000,
-					maxspeed = 1000000,
-					maxangulardamp = 1000000,
-					maxangular = 1000000,
-					secondstoarrive = 0.001,
-				})
+				phys:SetPos(pos)
+				phys:SetAngles(ang)
 			end
 		end
 	end
@@ -421,6 +349,7 @@ function SWEP:OnRemove()
 		SafeRemoveEntity(self.phys)
 	end
 end
+]]
 
 if SERVER then
 	util.AddNetworkString(SWEP.ClassName)
@@ -449,47 +378,20 @@ if SERVER then
 ]]
 end
 
-function SWEP:Attack(id, delay)
+function SWEP:Attack(type)
 	-- self.Owner:SetVelocity(self.Owner:GetAimVector()*500)
 
 	if SERVER then
-		self:Animation(id)
+		self:Animation(type)
 		net.Start(SWEP.ClassName, true)
 			net.WriteEntity(self)
-			net.WriteUInt(id, 8)
-			net.WriteFloat(delay)
+			net.WriteBool(type == "light")
 		net.SendOmit(self.Owner)
 	end
 
 	if CLIENT then
-		self:Animation(id)
+		self:Animation(type)
 	end
-
-	--self:Damage(delay)
-end
-
-function SWEP:Damage(delay)
-	if CLIENT then
-		--timer.Create(tostring(self) .. "sound", delay/2, 1, function()
---			self:EmitSound("Weapon_Crowbar.Single", nil, 100)
-		--end)
-	end
-
-	local ply = self.Owner
-	timer.Create(tostring(self) .. "damage", delay, 1, function()
-		local tr = util.TraceHull({start = ply:EyePos() + ply:GetAimVector() * 15, endpos = ply:EyePos() + ply:GetAimVector() * 30, filter = {ply}, mins = Vector(1,1,1)*-30, maxs = Vector(1,1,1)*30})
-		if tr.Entity:IsValid() then
-			if SERVER then
-				local d = DamageInfo()
-				d:SetAttacker(ply)
-				d:SetInflictor(ply)
-				d:SetDamage(30)
-				d:SetDamageType(DMG_SLASH)
-				d:SetDamagePosition(ply:EyePos())
-				tr.Entity:TakeDamageInfo(d)
-			end
-		end
-	end)
 end
 
 function SWEP:PrimaryAttack()
@@ -516,11 +418,53 @@ do
 	SWEP.Spawnable = true
 	SWEP.Category = "JRPG"
 
+	SWEP.MoveSet2 = {
+		light = {
+			{
+				seq = "phalanx_b_s2_t2",
+				duration = 0.5,
+				min = 0,
+				max = 0.7,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,-90,0),
+			},
+
+			{
+				seq = "phalanx_b_s2_t3",
+				duration = 0.5,
+				min = 0,
+				max = 0.8,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,-90,0),
+			},
+			{
+				seq = "phalanx_b_s1_t2",
+				duration = 1,
+				min = 0,
+				max = 0.65,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,90,0),
+			},
+			{
+				seq = "phalanx_b_s1_t3",
+				duration = 1,
+				min = 0,
+				max = 0.8,
+
+				damage_frac = 0.4,
+				damage_ang = Angle(60,90,0),
+			},
+		},
+	}
+
 	SWEP.WorldModel = "models/kuma96/2b/virtuouscontract/virtuouscontract.mdl"
 	SWEP.SetupPosition = function(self, pos, ang)
 		pos = pos + ang:Forward()*2
 		pos = pos + ang:Right()*1
-		pos = pos + ang:Up()*-63
+		pos = pos + ang:Up()*-50
 
 		ang:RotateAroundAxis(ang:Up(), 90)
 		return pos, ang
