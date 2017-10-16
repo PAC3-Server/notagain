@@ -845,6 +845,8 @@ if SERVER then
 					end
 				end
 
+				if damage == 0 and not ent:Alive() then return end
+
 				hitmarkers.ShowDamage(ent, -damage, pos, filter)
 			end
 		end)
@@ -865,7 +867,9 @@ if SERVER then
 				end
 
 				if ent.hm_last_max_health ~= ent:GetMaxHealth() then
-					hitmarkers.ShowDamage(ent, 0)
+					if ent.hm_last_max_health then
+						hitmarkers.ShowDamage(ent, 0)
+					end
 					ent.hm_last_max_health = ent:GetMaxHealth()
 				end
 			end
