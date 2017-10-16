@@ -4,6 +4,10 @@ SWEP.ClassName = "weapon_jsword_base"
 SWEP.PrintName = "jrpg base sword"
 SWEP.Spawnable = false
 SWEP.ModelScale = 1
+SWEP.OverallSpeed = 1
+SWEP.SwordRange = 30
+SWEP.Damage = 30
+SWEP.Force = 1
 
 SWEP.ViewModel = SWEP.WorldModel
 SWEP.UseHands = true
@@ -81,7 +85,7 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 
 
 	if ply.sword_anim then
-		local f = (ply.sword_anim_time - CurTime()) / ply.sword_anim.duration
+		local f = (ply.sword_anim_time - CurTime()) / (ply.sword_anim.duration*self.OverallSpeed)
 		f = math.Clamp(-f+1, 0, 1)
 
 		if ply.sword_anim then
@@ -94,7 +98,7 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 
 			if f >= ply.sword_anim.damage_frac then
 				if not ply.sword_damaged then
-					local pos = ply:WorldSpaceCenter() + ply:GetForward() * 30
+					local pos = ply:WorldSpaceCenter() + ply:GetForward() * self.SwordRange
 					local ang = ply:LocalToWorldAngles(ply.sword_anim.damage_ang)
 					local size = 40
 					debugoverlay.Sphere(pos, size, 0.5)
@@ -105,10 +109,10 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 								local d = DamageInfo()
 								d:SetAttacker(ply)
 								d:SetInflictor(ply)
-								d:SetDamage(30)
+								d:SetDamage(self.Damage)
 								d:SetDamageType(DMG_SLASH)
 								d:SetDamagePosition(ply:EyePos())
-								d:SetDamageForce(ang:Forward() * 10000)
+								d:SetDamageForce(ang:Forward() * 10000 * self.Force)
 								v:TakeDamageInfo(d)
 							else
 								v:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 100, math.Rand(140,160))
@@ -147,7 +151,7 @@ end)
 function SWEP:Animation(type)
 	local ply = self.Owner
 	ply.sword_anim = self.MoveSet2.light[math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2.light))]
-	ply.sword_anim_time = CurTime() + ply.sword_anim.duration
+	ply.sword_anim_time = CurTime() + (ply.sword_anim.duration*self.OverallSpeed)
 	ply.sword_damaged = nil
 end
 
@@ -250,7 +254,7 @@ if CLIENT then
 
 			for i, data in ipairs(self.pos_history) do
 				render.SetColorModulation(1,1,1)
-				render.SetBlend((i/10) * 0.1)
+				render.SetBlend(((i/10) * 0.1)^1.25)
 
 				if self.pos_history[i+1] then
 
@@ -538,6 +542,70 @@ do
 	SWEP.ClassName = "weapon_jsword_beastlord"
 	SWEP.Base = "weapon_jsword_base"
 
+	SWEP.OverallSpeed = 1.5
+	SWEP.SwordRange = 60
+	SWEP.Damage = 60
+	SWEP.Force = 5
+
+	SWEP.MoveSet2 = {
+		light = {
+			{
+				seq = "vanguard_b_s1_t3",
+				duration = 1,
+				min = 0,
+				max = 1,
+
+				damage_frac = 0.7,
+				damage_ang = Angle(45,-90,0),
+			},
+			{
+				seq = "vanguard_b_s2_t3",
+				duration = 1,
+				min = 0.25,
+				max = 1,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(-45,-90,0),
+			},
+			{
+				seq = "vanguard_b_s3_t1",
+				duration = 1,
+				min = 0.1,
+				max = 1,
+
+				damage_frac = 0.4,
+				damage_ang = Angle(90,-90,0),
+			},
+			{
+				seq = "vanguard_b_s3_t1",
+				duration = 1,
+				min = 0,
+				max = 0.6,
+
+				damage_frac = 0.7,
+				damage_ang = Angle(90,-90,0),
+			},
+			{
+				seq = "vanguard_b_s3_t3",
+				duration = 1,
+				min = 0,
+				max = 1,
+
+				damage_frac = 0.4,
+				damage_ang = Angle(90,-90,0),
+			},
+			{
+				seq = "vanguard_b_s3_t2",
+				duration = 1,
+				min = 0.1,
+				max = 1,
+
+				damage_frac = 0.4,
+				damage_ang = Angle(90,-90,0),
+			},
+		},
+	}
+
 	SWEP.PrintName = "beastlord"
 	SWEP.Spawnable = true
 	SWEP.Category = "JRPG"
@@ -547,7 +615,7 @@ do
 	SWEP.SetupPosition = function(self, pos, ang)
 		pos = pos + ang:Forward()*-1
 		pos = pos + ang:Right()*1
-		pos = pos + ang:Up()*-92
+		pos = pos + ang:Up()*-70
 
 		ang:RotateAroundAxis(ang:Up(), 90)
 		return pos, ang
