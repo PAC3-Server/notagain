@@ -230,6 +230,7 @@ do
 
 	function BASE:Initialize() end
 	function BASE:OnAttach() end
+	function BASE:OnDetach() end
 	function BASE:OnDamage(attacker, victim, dmginfo) end
 	function BASE:OnReceiveDamage(attacker, victim, dmginfo) end
 	function BASE:OnFireBullet(data) end
@@ -248,6 +249,7 @@ do
 
 	function BASE:Remove()
 		self.Weapon.wepstats[self.ClassName] = nil
+		self:OnDetach()
 	end
 
 	function BASE:TakeDamageInfo(ent, dmginfo)
@@ -659,6 +661,12 @@ do -- effects
 
 			function META:OnAttach()
 				self.Weapon:SetNWBool("wepstats_elemental", true)
+				self.Weapon:SetNWBool("wepstats_elemental_" .. name, true)
+			end
+
+			function META:OnDetach()
+				self.Weapon:SetNWBool("wepstats_elemental", false)
+				self.Weapon:SetNWBool("wepstats_elemental_" .. name, false)
 			end
 
 			function META:OnDamage(attacker, victim, dmginfo)
