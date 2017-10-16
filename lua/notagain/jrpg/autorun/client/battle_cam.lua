@@ -247,7 +247,7 @@ do -- view
 				local ent = jtarget.GetEntity(ply)
 
 				if ent:IsValid() then
-					local enemy_size = math.min(ent:BoundingRadius() * (ent:GetModelScale() or 1), 200)
+					local enemy_size = math.min(ent:BoundingRadius() * (ent:GetModelScale() or 1), 200) + 50
 					local ply_pos = ply:EyePos()
 
 					local dist = math.min((enemy_size/4)/ent:NearestPoint(ply:GetPos()):Distance(ply:NearestPoint(ent:GetPos())), 1)
@@ -259,7 +259,7 @@ do -- view
 					offset:Rotate(Angle(0,battlecam.target_cam_rotation.y,0))
 
 					local p = battlecam.target_cam_rotation.p
-					offset.z = p
+					offset.z = p + dist*-30
 
 
 					target_pos = (LerpVector(0 or 0.5, ply_pos, ent_pos) - offset/2) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-enemy_size))
