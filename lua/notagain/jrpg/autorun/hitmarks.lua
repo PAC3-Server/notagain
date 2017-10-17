@@ -845,7 +845,7 @@ if SERVER then
 					end
 				end
 
-				if damage == 0 and not ent:Alive() then return end
+				if damage == 0 and not jrpg.IsAlive(ent) then return end
 
 				hitmarkers.ShowDamage(ent, -damage, pos, filter)
 			end
