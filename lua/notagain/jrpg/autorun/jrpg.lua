@@ -1,5 +1,27 @@
 jrpg = jrpg or {}
 
+function jrpg.IsAlive(ent)
+	if ent.Alive then
+		if ent:IsPlayer() then
+			return ent:Alive()
+		end
+	end
+
+	if ent:IsNPC() and IsValid(ent.jrpg_rag_ent) then
+		return false
+	end
+
+	return ent:Health() > 0
+end
+
+hook.Add("OnEntityCreated", "jrpg_isalive", function(ent)
+	timer.Simple(0, function()
+		if ent.GetRagdollOwner and ent:GetRagdollOwner() and ent:GetRagdollOwner():IsValid() then
+			ent.jrpg_rag_ent = ent:GetRagdollOwner()
+		end
+	end)
+end)
+
 function jrpg.Loadout(ply)
 	ply:Give("weapon_shield_soldiers")
 	ply:Give("potion_health")
