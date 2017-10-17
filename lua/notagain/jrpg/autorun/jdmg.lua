@@ -1295,10 +1295,14 @@ if CLIENT then
 					end
 				end
 
-				if data.ent:IsPlayer() and not data.ent:Alive() then
-					local rag = data.ent:GetRagdollEntity()
-					if rag then
-						data.type.draw(data.ent, f, data.strength, time + data.time_offset)
+				if not jrpg.IsAlive(data.ent) then
+					if data.ent:IsPlayer() then
+						local rag = data.ent:GetRagdollEntity()
+						if IsValid(rag) then
+							data.type.draw(rag, f, data.strength, time + data.time_offset)
+						end
+					elseif data.ent:IsNPC() and IsValid(data.ent.jrpg_rag_ent) then
+						data.type.draw(data.ent.jrpg_rag_ent, f, data.strength, time + data.time_offset)
 					end
 				else
 					data.type.draw(data.ent, f, data.strength, time + data.time_offset)
