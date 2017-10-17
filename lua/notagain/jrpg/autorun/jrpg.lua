@@ -15,11 +15,9 @@ function jrpg.IsAlive(ent)
 end
 
 hook.Add("OnEntityCreated", "jrpg_isalive", function(ent)
-	timer.Simple(0, function()
-		if ent.GetRagdollOwner and ent:GetRagdollOwner() and ent:GetRagdollOwner():IsValid() then
-			ent.jrpg_rag_ent = ent:GetRagdollOwner()
-		end
-	end)
+	if ent.GetRagdollOwner and ent:GetRagdollOwner() and ent:GetRagdollOwner():IsValid() then
+		ent:GetRagdollOwner().jrpg_rag_ent = ent
+	end
 end)
 
 function jrpg.Loadout(ply)
