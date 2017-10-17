@@ -481,7 +481,7 @@ do
 end
 
 
-if false then
+if true then
 	local SWEP = {Primary = {}, Secondary = {}}
 	SWEP.ClassName = "weapon_jsword_overture"
 	SWEP.Base = "weapon_jsword_base"
@@ -489,14 +489,76 @@ if false then
 	SWEP.PrintName = "overture"
 	SWEP.Spawnable = true
 	SWEP.Category = "JRPG"
+	SWEP.OverallSpeed = 2
 
+	SWEP.MoveSet2 = {
+		light = {
+			{
+				seq = "ryoku_b_s1_t2",
+				duration = 0.25,
+				min = 0.6,
+				max = 0.9,
+
+				damage_frac = 0.15,
+				damage_ang = Angle(0,-0,0),
+			},
+			--[[{
+				seq = "ryoku_b_s1_t3",
+				duration = 0.6,
+				min = 0.4,
+				max = 0.86,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,-90,0),
+			},
+			{
+				seq = "phalanx_b_s2_t2",
+				duration = 0.5,
+				min = 0,
+				max = 0.7,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,-90,0),
+			},
+
+			{
+				seq = "phalanx_b_s2_t3",
+				duration = 0.5,
+				min = 0,
+				max = 0.8,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,-90,0),
+			},
+			{
+				seq = "phalanx_b_s1_t2",
+				duration = 1,
+				min = 0,
+				max = 0.65,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,90,0),
+			},
+			{
+				seq = "phalanx_b_s1_t3",
+				duration = 1,
+				min = 0,
+				max = 0.8,
+
+				damage_frac = 0.4,
+				damage_ang = Angle(60,90,0),
+			},]]
+		},
+	}
+
+	SWEP.MoveSet = "ryoku"
 	SWEP.WorldModel = "models/kuma96/lightningetro/overture/overture.mdl"
 	SWEP.SetupPosition = function(self, pos, ang)
-		pos = pos + ang:Forward()*2
-		pos = pos + ang:Right()*1
-		pos = pos + ang:Up()*-10
+		pos = pos + ang:Forward()*-12
+		pos = pos + ang:Right()*-0
+		pos = pos + ang:Up()*-13
 
-		ang:RotateAroundAxis(ang:Up(), -180)
+		ang:RotateAroundAxis(ang:Right(), -90)
 		return pos, ang
 	end
 	SWEP.TracePosition = function(self, pos, ang)
