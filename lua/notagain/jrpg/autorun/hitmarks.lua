@@ -124,7 +124,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 30,
+			size = 20,
 			color = Color(0, 0, 0, 255),
 		},
 		{
@@ -133,7 +133,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 40,
+			size = 26,
 			color = Color(150, 150, 50, 255),
 		},
 		{
@@ -142,7 +142,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 50,
+			size = 30,
 			color = Color(200, 50, 50, 255),
 		},
 		{
@@ -151,7 +151,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 120,
-			size = 60,
+			size = 40,
 			--color = Color(200, 50, 50, 255),
 		},
 	}
@@ -590,7 +590,7 @@ if CLIENT then
 		local rec = dmg > 0
 
 		local vel = VectorRand()
-		local offset = math.random() * 10
+		local offset = math.random() * 5
 
 		height_offset = (height_offset + 1)%5
 
