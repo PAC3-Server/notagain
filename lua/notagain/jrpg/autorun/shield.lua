@@ -615,15 +615,14 @@ hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 		return
 	end
 
-	if jrpg.IsWieldingShield(ent) then
+	if jrpg.IsWieldingShield(ent) and dmginfo:GetAttacker():IsValid() and dmginfo:GetAttacker() ~= ent then
 		local data = util.TraceLine({
 			start = dmginfo:GetDamagePosition(),
 			endpos = ent:WorldSpaceCenter(),
 			filter = {dmginfo:GetAttacker()}
 		})
 
-		if data.Entity == shield then
-			shield:OnTakeDamage(dmginfo)
+		if data.Entity == ent:GetNWEntity("shield") then
 			return true
 		end
 	end
