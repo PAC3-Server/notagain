@@ -115,14 +115,14 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 								d:SetDamageForce(ang:Forward() * 10000 * self.Force)
 								v:TakeDamageInfo(d)
 							else
-								v:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 100, math.Rand(140,160))
+								v:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 70, math.Rand(140,160))
 								debugoverlay.Cross(v:GetPos(), 10)
 							end
 						end
 					end
 
 					if CLIENT then
-						ply:EmitSound("npc/fast_zombie/claw_miss1.wav", 100, math.Rand(140,160))
+						ply:EmitSound("npc/fast_zombie/claw_miss1.wav", 70, math.Rand(140,160))
 					end
 
 					ply.sword_damaged = true
