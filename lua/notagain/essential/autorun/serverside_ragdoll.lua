@@ -24,9 +24,18 @@ if CLIENT then
 	hook.Add("CalcView", "serverside_ragdoll", function(ply, origin, angles)
 		local ent = ply:GetNWEntity("serverside_ragdoll")
 		if ent:IsValid() then
+			ent.serverside_ragdoll_origin = ent.serverside_ragdoll_origin or origin
+			local pos = ent.serverside_ragdoll_origin
+			local dir = ent:GetPos() - pos
+			local dist = dir:Length()
+
 			return {
-				origin = util.QuickTrace(ent:GetPos(), angles:Forward() * -100, ent).HitPos
+				origin = pos,
+				angles = dir:Angle(),
+				fov = math.max((-math.min(dist / 1000, 1)+1) * 70, 5)
 			}
+		else
+			ent.serverside_ragdoll_origin = nil
 		end
 	end)
 end
