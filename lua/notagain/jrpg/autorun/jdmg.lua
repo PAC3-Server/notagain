@@ -1379,6 +1379,10 @@ if SERVER then
 			net.WriteFloat(strength)
 			net.WriteVector(pos or vector_origin)
 		net.Broadcast()
+
+		if ent:IsNPC() and type ~= "heal" then
+			ent:AddGesture(ACT_GESTURE_FLINCH_BLAST)
+		end
 	end
 
 	util.AddNetworkString("jdmg")
