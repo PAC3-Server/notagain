@@ -20,9 +20,19 @@ hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	if not self.is_jsword then return end
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
-	--if ply.sword_anim and ply.sword_anim_time and ply.sword_anim_time < 0.9 and ply.sword_cycle > 0.1 then
-	--	mv:SetForwardSpeed(0)
-	--end
+
+	if ply.sword_anim then
+		local f = (ply.sword_anim_time - CurTime()) / (ply.sword_anim.duration*self.OverallSpeed)
+		f = -f + 1
+		if f > 0 and f < 0.7 then
+			if f >= ply.sword_anim.damage_frac then
+				mv:SetForwardSpeed(50)
+			else
+				mv:SetForwardSpeed(0)
+			end
+			mv:SetSideSpeed(0)
+		end
+	end
 end)
 
 hook.Add("CalcMainActivity", SWEP.ClassName, function(ply)
