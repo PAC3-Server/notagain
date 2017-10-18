@@ -101,12 +101,13 @@ if CLIENT then
 		local next_scroll = 0
 
 		local ring_mat = CreateMaterial("battlecam_select_ring_" .. os.clock(), "UnlitGeneric", {
-			["$BaseTexture"] = "effects/splashwake3",
+			["$BaseTexture"] = "sprites/animglow02",
 			["$VertexColor"] = 1,
 			["$VertexAlpha"] = 1,
+			["$Additive"] = 1,
 		})
-
-		local size = 40
+	--ring_mat = Material("sprites/animglow02")
+		local size = 20
 
 		function jtarget.DrawSelection()
 			local current_target = jtarget.GetEntity(LocalPlayer())
@@ -117,12 +118,16 @@ if CLIENT then
 				pos = pos:ToScreen()
 				if true or pos.Visible then
 
+					surface.SetMaterial(ring_mat)
+
+					surface.SetDrawColor(255, 255, 255, 200)
+					surface.DrawTexturedRectRotated(pos.x, pos.y, size, size, os.clock()*10)
+
 					if jrpg.IsFriend(current_target) then
 						surface.SetDrawColor(team.GetColor(TEAM_FRIENDS))
 					else
 						surface.SetDrawColor(team.GetColor(TEAM_PLAYERS))
 					end
-					surface.SetMaterial(ring_mat)
 					surface.DrawTexturedRectRotated(pos.x, pos.y, size, size, os.clock()*10)
 				end
 				return
@@ -230,7 +235,7 @@ function jtarget.SetEntity(ply, ent)
 end
 
 function jtarget.GetEntity(ply)
-	if LocalPlayer() == ply and ply.jtarget_ent and ply.jtarget_ent:IsValid() then
+	if CLIENT and LocalPlayer() == ply and ply.jtarget_ent and ply.jtarget_ent:IsValid() then
 		return ply.jtarget_ent
 	end
 	return ply:GetNW2Entity("jtarget")
@@ -279,12 +284,16 @@ if CLIENT then
 				jtarget.StartSelection()
 			end
 
+			if not LocalPlayer():Alive() or ent:GetPos():Distance(LocalPlayer():GetPos()) > 2000 then
+				jtarget.SetEntity(LocalPlayer())
+			end
+
 			mv:SetViewAngles(ang)
 		end
 	end)
 
 	hook.Add("InputMouseApply", "jtarget", function(mv, x, y)
-		if math.abs(x) > 100 or math.abs(y) > 100 then
+		if math.abs(x) > 1000 or math.abs(y) > 1000 then
 			jtarget.SetEntity(LocalPlayer())
 			jtarget.StopSelection()
 		end
