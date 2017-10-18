@@ -696,6 +696,10 @@ if CLIENT then
 		ent.hm_cur_health = cur
 		ent.hm_max_health = max
 
+		if ent == LocalPlayer() and dmg ~= 0 and dmg ~= -1 then
+			return
+		end
+
 		hitmarkers.ShowDamage(ent, dmg, pos)
 	end)
 
