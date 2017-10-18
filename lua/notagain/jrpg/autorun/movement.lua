@@ -16,7 +16,7 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 			ply.sprint_lean = ply.sprint_lean or CurTime() + 2
 
 			if ply.sprint_lean > CurTime() then
-				local lean = (CurTime() - ply.sprint_lean)/2
+				local lean = (CurTime() - ply.sprint_lean) / 2
 				manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_Spine1"), Angle(0, -lean*30, 0))
 			end
 
