@@ -267,7 +267,7 @@ if CLIENT then
 								pitch = math.Rand(pitch[1], pitch[2])
 							end
 
-							EmitSound(path, pos, ply:EntIndex(), CHAN_BODY, data.volume * volume, data.level, SND_NOFLAGS, math.Clamp((pitch / scale) + math.Rand(-10,10), 0, 255))
+							EmitSound(path, pos, ply:EntIndex(), CHAN_BODY, data.volume * volume, 60 or data.level, SND_NOFLAGS, math.Clamp((pitch / scale) + math.Rand(-10,10), 0, 255))
 							ply.realistic_footsteps[which].next_play = RealTime() + 0.1
 							ply.realistic_footsteps_last_foot = which
 
