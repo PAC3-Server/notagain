@@ -225,7 +225,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 
 		if mv:KeyPressed(IN_JUMP) then
 
-			if (mv:KeyDown(IN_ATTACK) or mv:KeyDown(IN_ATTACK2)) and mv:KeyDown(IN_JUMP) then
+			if jtarget.GetEntity(ply):IsValid() and mv:KeyDown(IN_JUMP) then
 				ply.dodge_ang = mv:GetAngles()
 
 				ply.dodge_time2 = dodge_time / math.Clamp(mv:GetVelocity():Length2D() / 200, 0.75, 1.25)
@@ -255,7 +255,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 
 					jattributes.SetStamina(ply, stamina - 15)
 
-					ply:EmitSound("npc/zombie/foot_slide3.wav")
+					ply:EmitSound("npc/zombie/foot_slide3.wav", 70, 100)
 				end
 			end
 		else
