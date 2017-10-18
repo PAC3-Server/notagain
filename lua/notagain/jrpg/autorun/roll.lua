@@ -255,7 +255,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 
 					jattributes.SetStamina(ply, stamina - 15)
 
-					ply:EmitSound("npc/zombie/foot_slide3.wav")
+					ply:EmitSound("npc/zombie/foot_slide3.wav", 70, 100)
 				end
 			end
 		else
