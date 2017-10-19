@@ -284,8 +284,7 @@ if CLIENT then
 			local ent = jtarget.GetEntity(LocalPlayer())
 
 			if not jrpg.IsAlive(ent) then
-				jtarget.SetEntity(LocalPlayer())
-				jtarget.StartSelection()
+				jtarget.Scroll(1)
 			end
 
 			if not LocalPlayer():Alive() or ent:GetPos():Distance(LocalPlayer():GetPos()) > max_distance then
