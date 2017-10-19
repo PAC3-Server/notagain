@@ -91,9 +91,14 @@ function jrpg.GetFriendlyName(ent)
 	return name
 end
 
+local blacklist = {
+	["class C_HL2MPRagdoll"] = true,
+}
+
 function jrpg.IsActor(ent)
 	if not ent or not ent:IsValid() then return false end
 
+	if blacklist[ent:GetClass()] then return end
 	if ent:EntIndex() == -1 then return end
 	if ent:IsWeapon() then return false end
 	if ent:GetParent():IsPlayer() or ent:GetOwner():IsPlayer() then return false end
