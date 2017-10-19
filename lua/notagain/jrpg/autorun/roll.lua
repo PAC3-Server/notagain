@@ -251,7 +251,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 					ply:SetNW2Float("dodge_time", ply.dodge_time)
 					ply:SetNW2Float("dodge_time2", ply.dodge_time2)
 
-					jattributes.SetStamina(ply, jattributes.GetStamina(ply) - 40)
+					jattributes.SetStamina(ply, math.max(jattributes.GetStamina(ply) - 40, 0))
 
 					ply:EmitSound("npc/zombie/foot_slide3.wav", 70, 100)
 				end
@@ -312,7 +312,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 					ply:SetNW2Float("roll_time", ply.roll_time)
 					ply:SetNW2Float("roll_time2", ply.roll_time2)
 
-					jattributes.SetStamina(ply, jattributes.GetStamina(ply) - 30)
+					jattributes.SetStamina(ply, math.max(jattributes.GetStamina(ply) - 30, 0))
 
 					ply:EmitSound("npc/zombie/foot_slide3.wav")
 				end
