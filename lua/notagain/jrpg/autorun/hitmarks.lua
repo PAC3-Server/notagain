@@ -568,12 +568,6 @@ if CLIENT then
 			end
 		end
 
-		if ent:IsNPC() and name == "Roar" or name == "Aggro" then
-			ent.jrpg_focus_me = true
-		else
-			ent.jrpg_focus_me = nil
-		end
-
 		local length = 2
 		table.insert(weapon_info, {name = name, ent = ent, time = RealTime() + length, length = length})
 	end
