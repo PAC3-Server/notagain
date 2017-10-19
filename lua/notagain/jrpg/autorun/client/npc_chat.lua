@@ -11,7 +11,7 @@ hook.Add("NPCSpeak", "npc_chat", function(npc, text)
 	local str = language.GetPhrase(text)
 	if str and str ~= text then
 		str = str:gsub("%b<>", ""):Trim()
-		if str ~= "" then
+		if str ~= "" and not str:find("^%p") then
 			chat.AddText(color, jrpg.GetFriendlyName(npc), color_white, ": ", str)
 		end
 	end
