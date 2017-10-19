@@ -80,9 +80,10 @@ if CLIENT then
 
 	do
 		local ring_mat = CreateMaterial("battlecam_select_ring_" .. os.clock(), "UnlitGeneric", {
-			["$BaseTexture"] = "effects/splashwake3",
+			["$BaseTexture"] = "particle/fire",
 			["$VertexColor"] = 1,
 			["$VertexAlpha"] = 1,
+			["$Additive"] = 1,
 		})
 		local urlimage = requirex("urlimage")
 		ring_mat = urlimage.URLMaterial("https://cdn.discordapp.com/attachments/273575417401573377/306178930208145408/arrow.png")
