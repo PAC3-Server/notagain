@@ -273,6 +273,11 @@ do -- view
 
 					target_fov = target_fov + math.Clamp(smooth_visible*50, -40, 20) - 30
 
+					if ent.jrpg_focus_me then
+						target_roll = -15
+						target_fov = 30
+						target_dir = ent_pos - target_pos
+					end
 				else
 					battlecam.active_target_dist = nil
 					battlecam.active_target_campos = nil
