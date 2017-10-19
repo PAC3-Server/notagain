@@ -272,7 +272,7 @@ do -- view
 					smooth_visible = smooth_visible + ((-visible - smooth_visible) * delta)
 
 					target_fov = target_fov + math.Clamp(smooth_visible*50, -40, 20) - 30
-					battlecam.reset_dir = true
+
 				else
 					battlecam.active_target_dist = nil
 					battlecam.active_target_campos = nil
@@ -301,14 +301,6 @@ do -- view
 							battlecam.last_flip_walk = RealTime() + 0.1
 						end
 					end
-
-
-					if battlecam.reset_dir then
-						battlecam.aim_dir = ply:EyeAngles():Forward()
-						smooth_dir = battlecam.aim_dir * 1
-						smooth_pos = ply:EyePos() + battlecam.aim_dir * - 175
-						battlecam.reset_dir = false
-					end
 				end
 			end
 		end
@@ -330,12 +322,12 @@ do -- view
 
 		-- smoothing
 		smooth_pos = smooth_pos + ((target_pos - smooth_pos) * delta * battlecam.cam_speed)
-		smooth_dir = smooth_dir + ((target_dir - smooth_dir) * delta * battlecam.cam_speed)
+		smooth_dir = smooth_dir + ((target_dir:GetNormalized() - smooth_dir) * delta * battlecam.cam_speed)
 		smooth_fov = smooth_fov + ((target_fov - smooth_fov) * delta * battlecam.cam_speed)
 		smooth_roll = smooth_roll + ((target_roll - smooth_roll) * delta * battlecam.cam_speed)
 
 
-		if battlecam.IsKeyDown("correct_cam") or battlecam.reset_dir then
+		if battlecam.IsKeyDown("correct_cam") then
 			if not jtarget.GetEntity(ply):IsValid() then
 				battlecam.aim_dir = ply:EyeAngles():Forward()
 				smooth_dir = battlecam.aim_dir * 1
