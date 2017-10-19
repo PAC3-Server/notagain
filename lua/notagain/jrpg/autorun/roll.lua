@@ -220,8 +220,6 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 	end
 
 	if can_dodge(ply) then
-		local stamina = jattributes.GetStamina(ply)
-		if stamina < 30 then return end
 
 		if mv:KeyPressed(IN_JUMP) then
 
@@ -253,7 +251,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 					ply:SetNW2Float("dodge_time", ply.dodge_time)
 					ply:SetNW2Float("dodge_time2", ply.dodge_time2)
 
-					jattributes.SetStamina(ply, stamina - 15)
+					jattributes.SetStamina(ply, jattributes.GetStamina(ply) - 40)
 
 					ply:EmitSound("npc/zombie/foot_slide3.wav", 70, 100)
 				end
@@ -267,9 +265,6 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 	end
 
 	if can_roll(ply) then
-
-		local stamina = jattributes.GetStamina(ply)
-		if stamina < 30 then return end
 
 		if mv:KeyPressed(IN_DUCK) or ply.roll_landed then
 			if ply.roll_landed then
@@ -317,7 +312,7 @@ hook.Add("Move", "roll", function(ply, mv, ucmd)
 					ply:SetNW2Float("roll_time", ply.roll_time)
 					ply:SetNW2Float("roll_time2", ply.roll_time2)
 
-					jattributes.SetStamina(ply, stamina - 15)
+					jattributes.SetStamina(ply, jattributes.GetStamina(ply) - 30)
 
 					ply:EmitSound("npc/zombie/foot_slide3.wav")
 				end
