@@ -1,6 +1,8 @@
 jtarget = jtarget or {}
 jtarget.scroll_dir = 0
 
+local max_distance = 700
+
 if CLIENT then
 	function jtarget.GetTargetsOnScreen(prev_target)
 		local ply = LocalPlayer()
@@ -8,14 +10,15 @@ if CLIENT then
 		local found_right = {}
 
 		local center_x = prev_target and prev_target:GetPos():ToScreen().x or ScrW() / 2
-		local ents = ents.FindInSphere(EyePos(), 1000)
+		local ents = ents.FindInSphere(EyePos(), max_distance)
+
 		for _, val in ipairs(ents) do
 			if
 				(not val.Alive or jrpg.IsAlive(val)) and
 				((val:IsPlayer() and val ~= ply) or (not val:IsPlayer() and jrpg.IsActor(val))) and
-				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
-				val ~= prev_target and
-				not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
+				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) --and
+				--val ~= prev_target-- and
+				--not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
 			then
 				local pos = jrpg.FindHeadPos(val)
 				pos.z = pos.z + 10
@@ -284,7 +287,7 @@ if CLIENT then
 				jtarget.StartSelection()
 			end
 
-			if not LocalPlayer():Alive() or ent:GetPos():Distance(LocalPlayer():GetPos()) > 2000 then
+			if not LocalPlayer():Alive() or ent:GetPos():Distance(LocalPlayer():GetPos()) > max_distance then
 				jtarget.SetEntity(LocalPlayer())
 			end
 
