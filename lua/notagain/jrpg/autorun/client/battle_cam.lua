@@ -226,7 +226,7 @@ do -- view
 				if jtarget.GetEntity(ply):IsValid() then
 					jtarget.SetEntity(ply, NULL)
 				else
-					jtarget.StartSelection(input.IsKeyDown(KEY_LSHIFT))
+					jtarget.StartSelection()
 					jtarget.StopSelection()
 				end
 				battlecam.last_target_select = RealTime() + 0.15
