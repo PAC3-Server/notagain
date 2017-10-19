@@ -259,13 +259,13 @@ do -- view
 					offset:Rotate(Angle(0,battlecam.target_cam_rotation.y,0))
 
 					local p = battlecam.target_cam_rotation.p
-					offset.z = p + dist*-30
+					offset.z = p + dist*-5
 
 
-					target_pos = (LerpVector(0 or 0.5, ply_pos, ent_pos) - offset/2) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-enemy_size))
+					target_pos = (LerpVector(0.5, ply_pos, ent_pos) - offset) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-enemy_size))
 
 					lerp_thing = (((target_pos:Distance(ent_pos) - target_pos:Distance(ply_pos)) / offset:Length()) / 1.5) * 0.5 + 0.5
-					target_dir = (LerpVector(0 or lerp_thing, ent_pos, ply_pos) - target_pos)
+					target_dir = (LerpVector(lerp_thing, ent_pos, ply_pos) - target_pos)
 
 					local visible = (battlecam.player_visibility * battlecam.enemy_visibility) * 2 - 1
 
