@@ -259,7 +259,7 @@ do -- view
 					offset:Rotate(Angle(0,battlecam.target_cam_rotation.y,0))
 
 					local p = battlecam.target_cam_rotation.p
-					offset.z = p + dist*-5
+					offset.z = offset.z + p
 
 
 					target_pos = (LerpVector(0.5, ply_pos, ent_pos) - offset) + offset:GetNormalized() * (-enemy_size + (smooth_visible*-enemy_size))
@@ -273,7 +273,9 @@ do -- view
 
 					target_fov = target_fov + math.Clamp(smooth_visible*50, -40, 20) - 30
 
-					if ent.jrpg_focus_me then
+					local name = ent:GetSequenceName(ent:GetSequence())
+
+					if name == "roar" or name == "Aggro" then
 						target_roll = -15
 						target_fov = 30
 						target_dir = ent_pos - target_pos
@@ -287,10 +289,6 @@ do -- view
 
 					local cam_ang = smooth_dir:Angle()
 					cam_ang:Normalize()
-
-					if cam_ang.p >= 89 then
-						cam_ang.y = math.NormalizeAngle(cam_ang.y + 180)
-					end
 
 					local right = cam_ang:Right() * FrameTime() * - battlecam.cam_rotation_velocity.y
 					local up = cam_ang:Up() * FrameTime() * battlecam.cam_rotation_velocity.x
@@ -310,20 +308,17 @@ do -- view
 			end
 		end
 
-		do -- trace block
-			local data = util.TraceHull({
-				mins = Vector(1,1.1)*-10,
-				maxs = Vector(1,1.1)*10,
-				start = ply:NearestPoint(smooth_pos),
+		local data = util.TraceLine({
+				start = ply:EyePos(),
 				endpos = smooth_pos,
-				filter = {ply, ply:GetVehicle(), ply:GetParent()},
+				filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
 				mask =  MASK_VISIBLE,
 			})
 
 			if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
-				smooth_pos = data.HitPos--Lerp(inside_sphere, battlecam.cam_pos, data.HitPos)
+				smooth_pos = data.HitPos
+				--battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - (lerp_thing*2-1)*0.1
 			end
-		end
 
 		-- smoothing
 		smooth_pos = smooth_pos + ((target_pos - smooth_pos) * delta * battlecam.cam_speed)
@@ -337,20 +332,6 @@ do -- view
 				battlecam.aim_dir = ply:EyeAngles():Forward()
 				smooth_dir = battlecam.aim_dir * 1
 				smooth_pos = ply:EyePos() + battlecam.aim_dir * - 175
-			end
-		end
-
-		if not jtarget.GetEntity(ply):IsValid() then
-			local data = util.TraceLine({
-				start = ply:EyePos(),
-				endpos = smooth_pos,
-				filter = ents.FindInSphere(ply:GetPos(), ply:BoundingRadius()),
-				mask =  MASK_VISIBLE,
-			})
-
-			if data.Hit and data.Entity ~= ply and not data.Entity:IsPlayer() and not data.Entity:IsVehicle() then
-				smooth_pos = data.HitPos
-				--battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - (lerp_thing*2-1)*0.1
 			end
 		end
 
@@ -388,7 +369,8 @@ end
 
 do
 	local smooth_dir = Vector()
-	battlecam.target_cam_rotation = Angle()
+	battlecam.target_cam_reset = Angle(-10,10,0)
+	battlecam.target_cam_rotation = battlecam.target_cam_reset * 1
 	battlecam.cam_rotation_velocity = Vector()
 
 	local buttons = {}
@@ -462,7 +444,7 @@ do
 
 		do
 			if input.IsButtonDown(KEY_PAD_5) or input.IsButtonDown(KEY_XBUTTON_STICK2) then
-				battlecam.target_cam_rotation = Angle(-30,0,0)
+				battlecam.target_cam_rotation = battlecam.target_cam_reset * 1
 			end
 
 			if input.IsButtonDown(KEY_XSTICK2_RIGHT) or input.IsButtonDown(KEY_PAD_6) then
