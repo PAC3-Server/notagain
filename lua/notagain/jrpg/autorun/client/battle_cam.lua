@@ -246,6 +246,18 @@ do -- view
 
 				local ent = jtarget.GetEntity(ply)
 
+				local focus = battlecam.focus_ent and battlecam.focus_ent:IsValid()
+
+				if focus then
+					ent = battlecam.focus_ent
+					if battlecam.focus_time then
+						if battlecam.focus_time < RealTime() then
+							ent = jtarget.GetEntity(ply)
+							focus = false
+						end
+					end
+				end
+
 				if ent:IsValid() then
 					local enemy_size = math.min(ent:BoundingRadius() * (ent:GetModelScale() or 1), 200) + 50
 					local ply_pos = ply:EyePos()
@@ -275,10 +287,15 @@ do -- view
 
 					local name = ent:GetSequenceName(ent:GetSequence())
 
-					if name == "roar" or name == "Aggro" then
+					if name == "roar" or name == "Aggro" or focus then
 						target_roll = -15
 						target_fov = 30
 						target_dir = ent_pos - target_pos
+
+						if focus then
+							target_roll = -5
+							target_fov = 10
+						end
 					end
 				else
 					battlecam.active_target_dist = nil
