@@ -16,8 +16,8 @@ if CLIENT then
 			if
 				(not val.Alive or jrpg.IsAlive(val)) and
 				((val:IsPlayer() and val ~= ply) or (not val:IsPlayer() and jrpg.IsActor(val))) and
-				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) --and
-				--val ~= prev_target-- and
+				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
+				val ~= prev_target-- and
 				--not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
 			then
 				local pos = jrpg.FindHeadPos(val)
@@ -285,6 +285,13 @@ if CLIENT then
 
 			if not jrpg.IsAlive(ent) then
 				jtarget.Scroll(1)
+
+				if jtarget.GetEntity(LocalPlayer()) == ent then
+					jtarget.SetEntity(LocalPlayer())
+
+					battlecam.focus_ent = ent.jrpg_rag_ent
+					battlecam.focus_time = RealTime() + 1
+				end
 			end
 
 			if not LocalPlayer():Alive() or ent:GetPos():Distance(LocalPlayer():GetPos()) > max_distance then
