@@ -10,14 +10,16 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 	if not ply:GetNWBool("rpg") then return end
 	local vel = ply:GetVelocity()
 
-	if ply:IsOnGround() then
-		if vel:Length() > 300 then
 
+	if ply:IsOnGround() then
+		local id = ply:LookupBone("ValveBiped.Bip01_Spine1")
+
+		if id and vel:Length() > 300 then
 			ply.sprint_lean = ply.sprint_lean or CurTime() + 2
 
 			if ply.sprint_lean > CurTime() then
 				local lean = (CurTime() - ply.sprint_lean) / 2
-				manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_Spine1"), Angle(0, -lean*30, 0))
+				manip_angles(ply, id, Angle(0, -lean*30, 0))
 			end
 
 			local seq = ply:LookupSequence("run_all_02")
@@ -26,7 +28,7 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 			end
 		else
 			if ply.sprint_lean then
-				manip_angles(ply, ply:LookupBone("ValveBiped.Bip01_Spine1"), Angle(0, 0, 0))
+				manip_angles(ply, id, Angle(0, 0, 0))
 				ply.sprint_lean = nil
 			end
 		end
