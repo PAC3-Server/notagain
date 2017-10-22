@@ -1236,9 +1236,11 @@ function goluwa.CreateEnv()
 					tex.loading = false
 				else
 					env.resource.Download(path, function(path)
-						path = env.GoluwaToGmodPath(path)
+						local path, where = env.GoluwaToGmodPath(path)
 
-						if path:StartWith("materials/") then
+						if where == "DATA" then
+							path = "../data/" .. path
+						elseif path:StartWith("materials/") then
 							path = path:sub(#"materials/" + 1)
 						end
 
