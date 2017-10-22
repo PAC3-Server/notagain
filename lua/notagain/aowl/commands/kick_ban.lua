@@ -6,7 +6,7 @@ aowl.AddCommand("kick=player,string[bye]", function(ply, line, ent, reason)
 
 	aowlMsg("kick", tostring(ply).. " kicked " .. tostring(ent) .. " for " .. reason)
 
-	hook.Run("AowlTargetCommand", ply, "kick", ent, reason)
+	hook.Run("AowlTargetCommand", ply, "kick", ent, {reason = reason})
 
 	return ent:Kick(reason)
 
@@ -56,7 +56,7 @@ aowl.AddCommand("ban=player|string,number[0],string[no reason]", function(ply, l
 		id = id:SteamID()
 	end
 
-	hook.Run("AowlTargetCommand", ply, "ban", id, reason)
+	hook.Run("AowlTargetCommand", ply, "ban", id, {reason = reason, time = length})
 
 	local t = {"banid", length, id}
 	game.ConsoleCommand(table.concat(t, " ") .. "\n")
@@ -73,11 +73,11 @@ aowl.AddCommand("unban=string,string[no reason]", function(ply, line, id, reason
 	local t = {"removeid", id}
 	game.ConsoleCommand(table.concat(t, " ") .. "\n")
 	game.ConsoleCommand("writeid\n")
-	hook.Run("AowlTargetCommand", ply, "unban", id, reason)
+	hook.Run("AowlTargetCommand", ply, "unban", id, {reason = reason})
 end, "developers")
 
 aowl.AddCommand("exit=player_alter,string[no reason]", function(ply, line, ent, reason)
-	hook.Run("AowlTargetCommand", ply, "exit", ent, reason)
+	hook.Run("AowlTargetCommand", ply, "exit", ent, {reason = reason})
 
 	ent:SendLua([[RunConsoleCommand("gamemenucommand","quitnoconfirm")]])
 
