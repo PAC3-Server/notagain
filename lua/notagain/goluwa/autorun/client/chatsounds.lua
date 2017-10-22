@@ -86,9 +86,8 @@ do
 
 	hookAdd("FinishChat", "chatsounds_autocomplete", function()
 		-- in some cases ChatTextChanged is called on FinishChat which adds the hook again
-		hook.Remove("PostRenderVGUI", "chatsounds_autocomplete")
 		timer.Simple(0, function()
-
+			hook.Remove("PostRenderVGUI", "chatsounds_autocomplete")
 		end)
 	end)
 end
