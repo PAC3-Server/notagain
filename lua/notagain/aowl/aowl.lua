@@ -1371,7 +1371,7 @@ do -- groups
 		aowl.AddCommand("rank=player,string_trim", function(player, line, ent, rank)
 			rank = rank:lower()
 			ent:SetUserGroup(rank, true) -- rank == "players") -- shouldn't it force-save no matter what?
-			hook.Run("AowlTargetCommand", player, "rank", ent, rank)
+			hook.Run("AowlTargetCommand", player, "rank", ent, {rank = rank})
 		end, "owners")
 
 		aowl.AddCommand("hiderank=boolean", function(pl, line, administrate)

@@ -36,7 +36,7 @@ end,"developers")
 aowl.AddCommand("cexec|exec=player_admin|player_alter|self,string_rest", function(ply, line, ent, str)
 	ent:SendLua(string.format("LocalPlayer():ConCommand(%q,true)", str))
 	Msg("[cexec] ") print("from ",ply," to ",ent) print(string.format("LocalPlayer():ConCommand(%q,true)", str))
-	hook.Run("AowlTargetCommand", ply, "cexec", ent, str)
+	hook.Run("AowlTargetCommand", ply, "cexec", ent, {code = str})
 end)
 
 aowl.AddCommand("retry|rejoin=player_alter|self", function(ply, line, target)
