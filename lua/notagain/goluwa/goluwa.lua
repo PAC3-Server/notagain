@@ -1747,6 +1747,8 @@ function goluwa.Initialize()
 		goluwa.env.commands.RunString(line, false, false, true)
 	end)
 
+	notagain.loaded_libraries.goluwa = goluwa
+
 	notagain.AutorunDirectory("goluwa")
 	dprint("initializing goluwa took " .. (SysTime() - time) .. " seconds")
 end
@@ -1768,6 +1770,10 @@ if game.IsDedicated() or CLIENT then
 			include("notagain/goluwa/goluwa.lua")
 		end
 	end)
+end
+
+if me then
+	notagain.loaded_libraries.goluwa = goluwa
 end
 
 return goluwa
