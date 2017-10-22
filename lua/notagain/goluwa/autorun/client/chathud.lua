@@ -239,6 +239,4 @@ hookAdd("ChatHudAddText", "chathud", function(...)
 	return false
 end)
 
-hook.Add("Initialize","chathud",function()
-	chathud.Initialize()
-end)
+chathud.Initialize()
