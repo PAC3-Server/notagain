@@ -10,7 +10,9 @@
 
 -- todo: formatting and clientside
 if SERVER then
-    if epoe then
-        debug.getregistry()[1] = function() epoe.api.error(debug.traceback()) end -- barebones just so we have something
-    end
+    debug.getregistry()[1] = function()
+        if epoe then
+            epoe.api.error(debug.traceback())
+        end
+    end -- barebones just so we have something
 end
