@@ -53,7 +53,7 @@ if CLIENT then
             i = i + 1
         end
         local locals = table.ToString(lcls,"Locals",true)
-        local trace = debug.traceback()
+        local trace = debug.traceback(2)
         local tbl = {
             info = {info, info2},
             src = src,
@@ -87,7 +87,7 @@ if SERVER then
             i = i + 1
         end
         local locals = table.ToString(lcls,"Locals",true)
-        local trace = debug.traceback()
+        local trace = debug.traceback(2)
 
         if epoe then
             local api = epoe.api
