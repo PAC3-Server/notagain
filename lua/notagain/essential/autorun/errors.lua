@@ -58,8 +58,10 @@ if SERVER then
             api.MsgC(Color(255,0,0)," ] --")
             api.Msg("\n")
             api.MsgC(Color(0,128,255),src[1])
-            api.Msg("\n")
-            api.MsgC(Color(0,128,255),src[2])
+            if src[2] then
+                api.Msg("\n")
+                api.MsgC(Color(0,128,255),src[2])
+            end
             api.Msg("\n")
             api.MsgN(locals)
             api.error(trace)
