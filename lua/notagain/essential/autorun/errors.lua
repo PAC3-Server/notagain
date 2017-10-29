@@ -47,7 +47,7 @@ if CLIENT then
         while true do
             local n, v = debug.getlocal(2,i)
             if ( n == nil ) then break end
-            n = (n == "(*temporary)") and ">>>>>>>>>>" or n
+            n = (n == "(*temporary)") and "error>>>>>>>>>>" or n
             lcls[n] = v
             i = i + 1
         end
