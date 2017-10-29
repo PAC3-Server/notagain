@@ -37,8 +37,8 @@ if SERVER then
     debug.getregistry()[1] = function(...)
 
         local info = debug.getinfo(2)
-        local fname = tostring(info["name"])
-        local src = {TryGithub(tostring(info["short_src"]), tostring(info["currentline"]), tostring(info["linedefined"]), tostring(info["lastlinedefined"]))}
+        local fname = info["name"]
+        local src = {TryGithub(info["short_src"], info["currentline"], info["linedefined"], info["lastlinedefined"])}
         local i = 1
         local lcls = {}
         while true do
