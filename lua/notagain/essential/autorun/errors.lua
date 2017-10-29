@@ -53,7 +53,7 @@ if SERVER then
 
         if epoe then
             local api = epoe.api
-            api.MsgC(Color(255,0,0),"-- [ERROR from ")
+            api.MsgC(Color(255,0,0),"-- [ ERROR from ")
             api.Msg(fname)
             api.MsgC(Color(255,0,0)," ] --")
             api.Msg("\n")
