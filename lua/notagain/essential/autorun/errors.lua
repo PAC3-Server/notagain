@@ -37,6 +37,7 @@ if SERVER then
     debug.getregistry()[1] = function(...)
 
         local info = debug.getinfo(2)
+        local info2 = debug.getinfo(3)
         local fname = info["name"]
         local src = {TryGithub(info["short_src"], info["currentline"], info["linedefined"], info["lastlinedefined"])}
         local i = 1
@@ -72,7 +73,7 @@ if SERVER then
             print(fname,"\n",src,"\n",locals,"\n",trace) -- fallback????
         end
 
-        hook.Run("LuaError", info, locals, trace)
+        hook.Run("LuaError", {info, info2}, locals, trace)
 
         old_error(...) -- compat??
     end
