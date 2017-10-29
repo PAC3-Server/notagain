@@ -11,9 +11,6 @@ if SERVER then
  		end
  	end
 
-	local geoip		
- 	pcall(function() geoip = requirex("geoip") end)
-
  	util.AddNetworkString(tag)
 
 	gameevent.Listen("player_connect")
@@ -22,14 +19,8 @@ if SERVER then
 		local ip 		= data.address
 		local steamid 	= data.networkid
 
-		if geoip then
-			local geoipres	 = geoip.Get(ip:Split(":")[1])
-			local geoipinfo	 = {geoipres.country_name, geoipres.asn}
+		playerJoin(true, name .. " (" .. steamid .. ") is connecting to the server! [" .. ip .. "]")
 
-			playerJoin(true, name .. " (" .. steamid .. ") is connecting to the server! [" .. ip .. (steamid ~= "BOT" and table.Count(geoipinfo) ~= 0 and " | " .. table.concat(geoipinfo, ", ") .. "]" or "]"))
-		else
-			playerJoin(true, name .. " (" .. steamid .. ") is connecting to the server! [" .. ip .. "]")
-		end
 	end)
 
 	gameevent.Listen("player_disconnect")
@@ -37,7 +28,7 @@ if SERVER then
 		local name 		= data.name
 		local steamid 	= data.networkid
 		local reason 	= data.reason
-		
+
 		playerJoin(false, name .. " (" .. steamid .. ") has left the server! (" .. reason .. ")")
 	end)
 
