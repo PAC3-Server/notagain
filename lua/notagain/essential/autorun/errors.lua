@@ -31,11 +31,48 @@ local function TryGithub(src, line, start, last)
     end
 end
 
+
+if CLIENT then
+    local old_error = debug.getregistry()[1]
+    debug.getregistry()[1] = function(...)
+        local info = debug.getinfo(2)
+        local info2 = debug.getinfo(3)
+        -- hack
+        info["func"] = nil
+        info2["func"] = nil
+        --
+        local fname = info["name"]
+        local src = {TryGithub(info["short_src"], info["currentline"], info["linedefined"], info["lastlinedefined"])}
+        local i = 1
+        local lcls = {}
+        while true do
+            local n, v = debug.getlocal(2,i)
+            if ( n == nil ) then break end
+            n = (n == "(*temporary)") and ">>>>>>>>>>" or n
+            lcls[n] = v
+            i = i + 1
+        end
+        local locals = table.ToString(lcls,"Locals",true)
+        local trace = debug.traceback()
+        local tbl = {
+            info = {info, info2},
+            src = src,
+            locals = locals,
+            trace = trace
+        }
+        net.Start("ClientError")
+            net.WriteUInt(tonumber(util.CRC(trace)) ,32)
+            net.WriteTable(tbl)
+        net.SendToServer()
+    end
+    old_error(...) -- compat??
+end
+
 if SERVER then
+    util.AddNetworkString("ClientError")
     local old_error = debug.getregistry()[1]
 
     debug.getregistry()[1] = function(...)
-
         local info = debug.getinfo(2)
         local info2 = debug.getinfo(3)
         local fname = info["name"]
@@ -54,7 +91,7 @@ if SERVER then
 
         if epoe then
             local api = epoe.api
-            api.MsgC(Color(255,0,0),"-- [ ERROR from ")
+            api.MsgC(Color(255,0,0),"-- [ ERROR BY FUNCTION ")
             api.Msg(fname)
             api.MsgC(Color(255,0,0)," ] --")
             api.Msg("\n")
@@ -74,7 +111,47 @@ if SERVER then
         end
 
         hook.Run("LuaError", {info, info2}, locals, trace)
-
-        old_error(...) -- compat??
     end
+
+    old_error(...) -- compat??
+
+    local last
+    local ids = {}
+    net.Receive("ClientError", function(len, ply)
+        local now = RealTime()
+        local id = net.ReadUInt(32)
+        if ids[id] then return end
+        local payload = net.ReadTable()
+        local info = payload["info"][1]
+        local info2 = payload["info"][2]
+        local fname = info["name"]
+        local src = payload["src"]
+        local locals = payload["locals"]
+        local trace = payload["trace"]
+
+        if epoe then
+            local api = epoe.api
+            api.MsgC(Color(255,0,0),"-- [ CLIENT ERROR BY FUNCTION ")
+            api.Msg(fname)
+            api.MsgC(Color(255,0,0)," FROM ")
+            api.Msg(ply and ply:Nick() or "???")
+            api.MsgC(Color(255,0,0)," ] --")
+            api.Msg("\n")
+            api.MsgC(Color(0,128,255),src[1])
+            if src[2] then
+                api.Msg("\n")
+                api.MsgC(Color(0,128,255),src[2])
+            end
+            api.Msg("\n")
+            api.MsgN(locals)
+            api.error(trace)
+            api.MsgC(Color(255,0,0),"--   --")
+            api.Msg("\n")
+
+        else
+            print(fname,"\n",src,"\n",locals,"\n",trace) -- fallback????
+        end
+        hook.Run("ClientLuaError", ply, {info, info2}, locals, trace)
+        ids[id] = true
+    end)
 end
