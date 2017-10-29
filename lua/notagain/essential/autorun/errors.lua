@@ -44,11 +44,12 @@ if CLIENT then
         local src = {TryGithub(info["short_src"], info["currentline"], info["linedefined"], info["lastlinedefined"])}
         local i = 1
         local lcls = {}
+        local NIL = {}
         while true do
             local n, v = debug.getlocal(2,i)
             if ( n == nil ) then break end
             n = (n == "(*temporary)") and "error>>>>>>>>>>" or n
-            lcls[n] = v
+            lcls[n] = v == nil and NIL or v
             i = i + 1
         end
         local locals = table.ToString(lcls,"Locals",true)
@@ -78,11 +79,12 @@ if SERVER then
         local src = {TryGithub(info["short_src"], info["currentline"], info["linedefined"], info["lastlinedefined"])}
         local i = 1
         local lcls = {}
+        local NIL = {}
         while true do
             local n, v = debug.getlocal(2,i)
             if ( n == nil ) then break end
             n = (n == "(*temporary)") and "error>>>>>>>>>>" or n
-            lcls[n] = v
+            lcls[n] = v == nil and NIL or v
             i = i + 1
         end
         local locals = table.ToString(lcls,"Locals",true)
