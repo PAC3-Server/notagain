@@ -66,7 +66,7 @@ if SERVER then
             api.Msg("\n")
             api.MsgN(locals)
             api.error(trace)
-            api.MsgC(Color(255,0,0),"-- [ ] --")
+            api.MsgC(Color(255,0,0),"--   --")
             api.Msg("\n")
 
         else
