@@ -10,9 +10,13 @@
 
 -- todo: formatting and clientside
 if SERVER then
+    local old_error = debug.getregistry()[1]
+
     debug.getregistry()[1] = function()
         if epoe then
             epoe.api.error(debug.traceback())
         end
     end -- barebones just so we have something
+
+    old_error
 end
