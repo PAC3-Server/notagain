@@ -12,11 +12,11 @@
 if SERVER then
     local old_error = debug.getregistry()[1]
 
-    debug.getregistry()[1] = function()
+    debug.getregistry()[1] = function(...)
         if epoe then
             epoe.api.error(debug.traceback())
         end
+        old_error(...)
     end -- barebones just so we have something
 
-    old_error
 end
