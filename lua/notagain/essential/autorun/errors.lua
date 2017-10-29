@@ -41,7 +41,6 @@ if CLIENT then
         info["func"] = nil
         info2["func"] = nil
         --
-        local fname = info["name"]
         local src = {TryGithub(info["short_src"], info["currentline"], info["linedefined"], info["lastlinedefined"])}
         local i = 1
         local lcls = {}
@@ -82,7 +81,7 @@ if SERVER then
         while true do
             local n, v = debug.getlocal(2,i)
             if ( n == nil ) then break end
-            n = (n == "(*temporary)") and ">>>>>>>>>>" or n
+            n = (n == "(*temporary)") and "error>>>>>>>>>>" or n
             lcls[n] = v
             i = i + 1
         end
