@@ -72,7 +72,7 @@ if SERVER then
             print(fname,"\n",src,"\n",locals,"\n",trace) -- fallback????
         end
 
-        hook.Run("LuaError", {info = info, locals = locals, trace = trace})
+        hook.Run("LuaError", info, locals, trace)
 
         old_error(...) -- compat??
     end
