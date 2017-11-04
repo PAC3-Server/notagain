@@ -4,7 +4,6 @@ resource.AddWorkshop("546392647") -- Media Player
 
 if engine.ActiveGamemode() == "lambda" then return end
 
-resource.AddWorkshop("1132466603") -- StormFox.
 resource.AddWorkshop("104482086") -- Precision Tool (Not on Server).
 
 do
