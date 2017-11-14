@@ -64,6 +64,7 @@ if CLIENT then
             net.WriteUInt(tonumber(util.CRC(trace)) ,32)
             net.WriteTable(tbl)
         net.SendToServer()
+
         old_error(...) -- compat??
     end
 end
@@ -112,9 +113,9 @@ if SERVER then
         end
 
         hook.Run("LuaError", {info, info2}, locals, trace)
-    end
 
-    old_error(...) -- compat??
+        old_error(...) -- compat??
+    end
 
     local ids = {}
     net.Receive("ClientError", function(len, ply)
