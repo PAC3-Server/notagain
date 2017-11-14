@@ -52,7 +52,7 @@ if CLIENT then
             lcls[n] = v == nil and NIL or v
             i = i + 1
         end
-        local locals = table.ToString(lcls,"Locals",true)
+        local locals = pcall(table.ToString(lcls,"Locals",true))
         local trace = debug.traceback("",2)
         local tbl = {
             info = {info, info2},
@@ -88,7 +88,7 @@ if SERVER then
             lcls[n] = v == nil and NIL or v
             i = i + 1
         end
-        local locals = table.ToString(lcls,"Locals",true)
+        local locals = pcall(table.ToString(lcls,"Locals",true))
         local trace = debug.traceback("",2)
 
         if epoe then
