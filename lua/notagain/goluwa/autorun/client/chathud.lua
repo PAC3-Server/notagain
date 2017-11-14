@@ -83,6 +83,8 @@ chathud.emote_shortcuts = chathud.emote_shortcuts or {
 chathud.tags = chathud.tags or {}
 
 function chathud.Initialize()
+	if not EasyChat then print("goluwa chathud requires easychat!") return end
+
 	if chathud.panel:IsValid() then
 		chathud.panel:Remove()
 	end

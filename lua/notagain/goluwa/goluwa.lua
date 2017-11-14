@@ -1336,6 +1336,43 @@ function goluwa.CreateEnv()
 			end
 
 			do
+				local META = env.prototype.CreateTemplate("index_buffer")
+
+				META:StartStorable()
+					META:GetSet("UpdateIndices", true)
+					META:GetSet("IndicesType", "uint16_t")
+					META:GetSet("DrawHint", "dynamic")
+					META:GetSet("Indices")
+				META:EndStorable()
+
+				function render.CreateIndexBuffer()
+					local self = META:CreateObject()
+
+					return self
+				end
+
+				function META:SetIndices(indices)
+				end
+
+				function META:UnreferenceMesh()
+				end
+
+				function META:SetIndex(idx, idx2)
+				end
+
+				function META:GetIndex(idx)
+				end
+
+				function META:LoadIndices(val)
+				end
+
+				function META:UpdateBuffer()
+				end
+
+				META:Register()
+			end
+
+			do
 				local META = env.prototype.CreateTemplate("vertex_buffer")
 
 				META:StartStorable()
@@ -1344,7 +1381,6 @@ function goluwa.CreateEnv()
 					META:GetSet("IndicesType", "uint16_t")
 					META:GetSet("DrawHint", "dynamic")
 					META:GetSet("Vertices")
-					META:GetSet("Indices")
 				META:EndStorable()
 
 				META:Register()
@@ -1356,7 +1392,7 @@ function goluwa.CreateEnv()
 					return self
 				end
 
-				function META:SetBuffersFromTables(vertices, indices, is_valid_table)
+				function META:LoadVertices(vertices, indices, is_valid_table)
 					if type(vertices) == "number" then
 						for i = 1, vertices do
 							self.Vertices.Pointer[i-1] = {
@@ -1528,7 +1564,7 @@ function goluwa.CreateEnv()
 			env.render2d = render2d
 
 			render2d.rectangle = render2d.CreateMesh()
-			render2d.rectangle:SetBuffersFromTables({
+			render2d.rectangle:LoadVertices({
 				{pos = {0, 1, 0}, uv = {0, 0}, color = {1,1,1,1}},
 				{pos = {0, 0, 0}, uv = {0, 1}, color = {1,1,1,1}},
 				{pos = {1, 1, 0}, uv = {1, 0}, color = {1,1,1,1}},
