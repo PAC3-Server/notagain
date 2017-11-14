@@ -5,8 +5,10 @@ local try_restart = false
 
 timer.Create("auto_restart", 2, 0, function()
 	local want_restart = os.time() - tonumber(file.Read("server_last_restart.txt", "DATA") or 0) > (3*60*60)
+	local reason = "???"
 
 	if file.Exists("server_want_restart.txt", "DATA") then
+		reason = file.Read("server_want_restart.txt", "DATA")
 		try_restart = true
 		file.Delete("server_want_restart.txt")
 	end
@@ -24,7 +26,7 @@ timer.Create("auto_restart", 2, 0, function()
 
 		if afk then
 			if not players[1] then
-				if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restarting because of updates...") end
+				if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restart trigger: " .. reason) end
 				file.Write("server_last_restart.txt", tostring(os.time()))
 				game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				return
@@ -33,7 +35,7 @@ timer.Create("auto_restart", 2, 0, function()
 			if not restarting then
 				restarting = true
 				aowl.CountDown(15, "RESTARTING SERVER BECAUSE EVERYONE IS AFK", function()
-					if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restarting because everyone is afk and updates are pending...") end
+					if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restarting because everyone is afk and updates from " .. reason .. " are pending ...") end
 					file.Write("server_last_restart.txt", tostring(os.time()))
 					game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				end)
