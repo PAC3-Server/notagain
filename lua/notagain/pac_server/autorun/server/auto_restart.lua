@@ -24,7 +24,7 @@ timer.Create("auto_restart", 2, 0, function()
 
 		if afk then
 			if not players[1] then
-				if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restarting because of updates") end
+				if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restarting because of updates...") end
 				file.Write("server_last_restart.txt", tostring(os.time()))
 				game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				return
@@ -33,7 +33,7 @@ timer.Create("auto_restart", 2, 0, function()
 			if not restarting then
 				restarting = true
 				aowl.CountDown(15, "RESTARTING SERVER BECAUSE EVERYONE IS AFK", function()
-					if discordrelay and discordrelay.ready then discordrelay.notify("(AUTO) RESTARTING SERVER BECAUSE EVERYONE IS AFK AND UPDATES ARE PENDING") end
+					if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restarting because everyone is afk and updates are pending...") end
 					file.Write("server_last_restart.txt", tostring(os.time()))
 					game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				end)
