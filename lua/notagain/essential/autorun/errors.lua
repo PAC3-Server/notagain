@@ -64,8 +64,8 @@ if CLIENT then
             net.WriteUInt(tonumber(util.CRC(trace)) ,32)
             net.WriteTable(tbl)
         net.SendToServer()
+        old_error(...) -- compat??
     end
-    old_error(...) -- compat??
 end
 
 if SERVER then
@@ -116,10 +116,8 @@ if SERVER then
 
     old_error(...) -- compat??
 
-    local last
     local ids = {}
     net.Receive("ClientError", function(len, ply)
-        local now = RealTime()
         local id = net.ReadUInt(32)
         if ids[id] then return end
         local payload = net.ReadTable()
