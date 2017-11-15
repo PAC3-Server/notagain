@@ -8,31 +8,55 @@
 -- function api.ErrorNoHalt(...)
 -- function api.error(...)
 
--- todo: clientside
-
-local IsOnGithub =  -- todo automate ??????
-{
-    ["notagain"] = true,
-    ["gm-http-discordrelay"] = true,
-    ["easychat"] = true
-}
-
-local function TryGithub(src, line, start, last)
-    local addon = src:match("addons/(.-)/lua/")
-    local path = src:match("/(lua/.+)")
-    if (addon and path) and IsOnGithub[string.lower(addon)] then
-        if start and last then
-            return "Function: https://github.com/PAC3-Server/" .. addon .. "/tree/master/" .. path .. "#L" .. start .. "-L" .. last, "At: https://github.com/PAC3-Server/" .. addon .. "/tree/master/" .. path .. "#L" .. line
-        else
-            return "At: https://github.com/PAC3-Server/" .. addon .. "/tree/master/" .. path .. "#L" .. line
-        end
-    else
-        return "in " .. src .. " at line: " .. line
-    end
-end
-
+local github = {
+        ["pac3"] = {
+            ["url"] = "https://github.com/CapsAdmin/pac3/tree/master/"
+        },
+        ["notagain"] = {
+            ["url"] = "https://github.com/PAC3-Server/notagain/tree/master/"
+        },
+        ["easychat"] = {
+            ["url"] = "https://github.com/PAC3-Server/EasyChat/tree/master/"
+        },
+        ["gm-http-discordrelay"] = {
+            ["url"] = "https://github.com/PAC3-Server/gm-http-discordrelay/tree/master/"
+        },
+        ["includes"] = { -- garry stuff
+            ["url"] = "https://github.com/Facepunch/garrysmod/tree/master/garrysmod/"
+        }
+    }
+    github["vgui"] = github["includes"]
+    github["weapons"] = github["includes"]
+    github["entities"] = github["includes"]
+    github["derma"] = github["includes"]
+    github["menu"] = github["includes"]
+    github["vgui"] = github["includes"]
+    github["weapons"] = github["includes"]
 
 if CLIENT then
+
+    hook.Add("EPOEAddLinkPatterns", "Clickable Errors", function(t)
+        table.insert(t,"(lua/.-):(%d+):?")
+    end)
+
+    hook.Add("EPOEOpenLink", "Clickable Errors", function(l)
+        if not l then return end
+        local yes = false
+        l = l:gsub("(lua/.-):(%d+):?", function(l, n)
+            local n = n or ""
+            local addon = l:match("lua/(.-)/")
+            if addon and github[addon] then
+                yes = true
+                return github[addon].url .. l .. "#L" .. n
+            end
+            return "???"
+        end)
+        if yes then
+            gui.OpenURL(l)
+        end
+        return true
+    end)
+
     --local old_error = debug.getregistry()[1]
     debug.getregistry()[1] = function(...)
         local info = debug.getinfo(2)
@@ -41,7 +65,6 @@ if CLIENT then
         info["func"] = nil
         info2["func"] = nil
         --
-        local src = {TryGithub(info["short_src"], info["currentline"], info["linedefined"], info["lastlinedefined"])}
         local i = 1
         local lcls = {}
         local NIL = {}
@@ -56,7 +79,6 @@ if CLIENT then
         local trace = debug.traceback("",2)
         local tbl = {
             info = {info, info2},
-            src = src,
             locals = locals,
             trace = trace
         }
@@ -77,7 +99,6 @@ if SERVER then
         local info = debug.getinfo(2)
         local info2 = debug.getinfo(3)
         local fname = info["name"]
-        local src = {TryGithub(info["short_src"], info["currentline"], info["linedefined"], info["lastlinedefined"])}
         local i = 1
         local lcls = {}
         local NIL = {}
@@ -96,12 +117,6 @@ if SERVER then
             api.MsgC(Color(255,0,0),"-- [ ERROR BY FUNCTION ")
             api.Msg(fname)
             api.MsgC(Color(255,0,0)," ] --")
-            api.Msg("\n")
-            api.MsgC(Color(0,128,255),src[1])
-            if src[2] then
-                api.Msg("\n")
-                api.MsgC(Color(0,128,255),src[2])
-            end
             api.Msg("\n")
             api.MsgN(locals)
             api.error(trace)
@@ -125,7 +140,6 @@ if SERVER then
         local info = payload["info"][1]
         local info2 = payload["info"][2]
         local fname = info["name"]
-        local src = payload["src"]
         local locals = payload["locals"]
         local trace = payload["trace"]
 
@@ -136,12 +150,6 @@ if SERVER then
             api.MsgC(Color(255,0,0)," FROM ")
             api.Msg(ply and ply:Nick() or "???")
             api.MsgC(Color(255,0,0)," ] --")
-            api.Msg("\n")
-            api.MsgC(Color(0,128,255),src[1])
-            if src[2] then
-                api.Msg("\n")
-                api.MsgC(Color(0,128,255),src[2])
-            end
             api.Msg("\n")
             api.MsgN(locals)
             api.error(trace)
