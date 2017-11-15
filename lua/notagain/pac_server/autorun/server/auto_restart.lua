@@ -2,10 +2,10 @@ if game.SinglePlayer() then return end
 
 local restarting = false
 local try_restart = false
+local reason = "???"
 
 timer.Create("auto_restart", 2, 0, function()
 	local want_restart = os.time() - tonumber(file.Read("server_last_restart.txt", "DATA") or 0) > (3*60*60)
-	local reason = "???"
 
 	if file.Exists("server_want_restart.txt", "DATA") then
 		reason = file.Read("server_want_restart.txt", "DATA")
