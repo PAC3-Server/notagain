@@ -33,7 +33,7 @@ end
 
 
 if CLIENT then
-    local old_error = debug.getregistry()[1]
+    --local old_error = debug.getregistry()[1]
     debug.getregistry()[1] = function(...)
         local info = debug.getinfo(2)
         local info2 = debug.getinfo(3)
@@ -65,13 +65,13 @@ if CLIENT then
             net.WriteTable(tbl)
         net.SendToServer()
 
-        old_error(...) -- compat??
+       -- old_error(...) -- compat??
     end
 end
 
 if SERVER then
     util.AddNetworkString("ClientError")
-    local old_error = debug.getregistry()[1]
+    --local old_error = debug.getregistry()[1]
 
     debug.getregistry()[1] = function(...)
         local info = debug.getinfo(2)
@@ -114,7 +114,7 @@ if SERVER then
 
         hook.Run("LuaError", {info, info2}, locals, trace)
 
-        old_error(...) -- compat??
+       -- old_error(...) -- compat??
     end
 
     local ids = {}
