@@ -137,11 +137,11 @@ if SERVER then
         local id = net.ReadUInt(32)
         if ids[id] then return end
         local payload = net.ReadTable()
-        local info = payload["info"][1]
-        local info2 = payload["info"][2]
-        local fname = info["name"]
-        local locals = payload["locals"]
-        local trace = payload["trace"]
+        local info = payload["info"][1] or {}
+        local info2 = payload["info"][2] or {}
+        local fname = info["name"] or "???"
+        local locals = payload["locals"] or "???"
+        local trace = payload["trace"] or "???"
 
         if epoe then
             local api = epoe.api
@@ -157,7 +157,7 @@ if SERVER then
             api.Msg("\n")
 
         else
-            print(fname,"\n",src,"\n",locals,"\n",trace) -- fallback????
+            print(fname,"\n",locals,"\n",trace) -- fallback????
         end
         hook.Run("ClientLuaError", ply, {info, info2}, locals, trace)
         ids[id] = true
