@@ -43,17 +43,21 @@ aowl.AddCommand("fullupdate|update",function(ply, line)
 end, "localplayer")
 
 aowl.AddCommand("ctp|thirdperson|view|3p", function(ply, line)
-	if ctp.Enabled then
-		ctp.Disable()
+	if ctp then
+		if ctp.Enabled then
+			ctp.Disable()
+		else
+			ctp.Enable()
+		end
 	else
-		ctp.Enable()
+		return false, "Customisable Thirdperson [ctp] not installed!"
 	end
 end, "localplayer")
 
 aowl.AddCommand("g|search", function(ply, line)
 	if line and line ~= "" then
 		local parts = string.Explode(" ", line)
-		gui.OpenURL("https://www.google.com/#q="..table.concat(parts, "+"))
+		gui.OpenURL("https://www.google.com/#q=" .. table.concat(parts, "+"))
 	else
 		gui.OpenURL("www.google.com")
 	end
@@ -62,7 +66,7 @@ end, "localplayer")
 aowl.AddCommand("gwiki",function(ply,line)
 	if line and line ~= "" then
 		local parts = string.Explode(" ", line)
-		gui.OpenURL("http://wiki.garrysmod.com/page/Special:Search?search="..table.concat(parts,"+").."&fulltext=Search")
+		gui.OpenURL("http://wiki.garrysmod.com/page/Special:Search?search=" .. table.concat(parts,"+") .. "&fulltext=Search")
 	else
 		gui.OpenURL("http://wiki.garrysmod.com")
 	end
