@@ -134,7 +134,7 @@ if SERVER then
 
     local ids = {}
     local times = 0
-    local last
+    local last = CurTime()
 
     net.Receive("ClientError", function(len, ply)
         if (CurTime() - last < 5) and times >= 10 then
