@@ -69,21 +69,21 @@ if CLIENT then
         local lcls = {}
         local NIL = {}
         while true do
-            local n, v = debug.getlocal(2,i)
+            local n, v = debug.getlocal(2, i)
             if ( n == nil ) then break end
             n = (n == "(*temporary)") and "error>>>>>>>>>>" or n
             lcls[n] = v == nil and NIL or v
             i = i + 1
         end
-        local locals = table.ToString(lcls,"Locals",true)
-        local trace = debug.traceback("",2)
+        local locals = table.ToString(lcls, "Locals", true)
+        local trace = debug.traceback("", 2)
         local tbl = {
             info = {info, info2},
             locals = locals,
             trace = trace
         }
         net.Start("ClientError")
-            net.WriteUInt(tonumber(util.CRC(trace)) ,32)
+            net.WriteUInt(tonumber(util.CRC(trace)), 32)
             net.WriteTable(tbl)
         net.SendToServer()
 
@@ -103,28 +103,28 @@ if SERVER then
         local lcls = {}
         local NIL = {}
         while true do
-            local n, v = debug.getlocal(2,i)
+            local n, v = debug.getlocal(2, i)
             if ( n == nil ) then break end
             n = (n == "(*temporary)") and "error>>>>>>>>>>" or n
             lcls[n] = v == nil and NIL or v
             i = i + 1
         end
-        local locals = table.ToString(lcls,"Locals",true)
-        local trace = debug.traceback("",2)
+        local locals = table.ToString(lcls, "Locals", true)
+        local trace = debug.traceback("", 2)
 
         if epoe then
             local api = epoe.api
-            api.MsgC(Color(255,0,0),"-- [ ERROR BY FUNCTION ")
+            api.MsgC(Color(255,0,0), "-- [ ERROR BY FUNCTION ")
             api.Msg(fname)
-            api.MsgC(Color(255,0,0)," ] --")
+            api.MsgC(Color(255,0,0), " ] --")
             api.Msg("\n")
             api.MsgN(locals)
             api.error(trace)
-            api.MsgC(Color(255,0,0),"--   --")
+            api.MsgC(Color(255,0,0), "--   --")
             api.Msg("\n")
 
         else
-            print(fname,"\n",src,"\n",locals,"\n",trace) -- fallback????
+            print(fname, "\n", src, "\n", locals, "\n", trace) -- fallback????
         end
 
         hook.Run("LuaError", {info, info2}, locals, trace)
@@ -133,7 +133,16 @@ if SERVER then
     end
 
     local ids = {}
+    local times = 0
+    local last
+
     net.Receive("ClientError", function(len, ply)
+        if (CurTime() - last < 5) and times >= 10 then
+            discordrelay.log(2, "error spam?", ply)
+            last = CurTime()
+            return
+        end
+        times = (CurTime() - last < 5) and (times + 1) or 0
         local id = net.ReadUInt(32)
         if ids[id] then return end
         local payload = net.ReadTable()
@@ -145,21 +154,22 @@ if SERVER then
 
         if epoe then
             local api = epoe.api
-            api.MsgC(Color(255,0,0),"-- [ CLIENT ERROR BY FUNCTION ")
+            api.MsgC(Color(255,0,0), "-- [ CLIENT ERROR BY FUNCTION ")
             api.Msg(fname)
-            api.MsgC(Color(255,0,0)," FROM ")
+            api.MsgC(Color(255,0,0), " FROM ")
             api.Msg(ply and ply:Nick() or "???")
-            api.MsgC(Color(255,0,0)," ] --")
+            api.MsgC(Color(255,0,0), " ] --")
             api.Msg("\n")
             api.MsgN(locals)
             api.error(trace)
-            api.MsgC(Color(255,0,0),"--   --")
+            api.MsgC(Color(255,0,0), "--   --")
             api.Msg("\n")
 
         else
-            print(fname,"\n",locals,"\n",trace) -- fallback????
+            print(fname, "\n", locals, "\n", trace) -- fallback????
         end
         hook.Run("ClientLuaError", ply, {info, info2}, locals, trace)
         ids[id] = true
+        last = CurTime()
     end)
 end
