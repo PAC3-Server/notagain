@@ -75,7 +75,7 @@ if CLIENT then
             lcls[n] = v == nil and NIL or v
             i = i + 1
         end
-        local locals = table.ToString(lcls, "Locals", true)
+        local locals = table.ToString(lcls, "Locals", true) or "???"
         local trace = debug.traceback("", 2)
         local tbl = {
             info = {info, info2},
