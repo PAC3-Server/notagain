@@ -110,6 +110,7 @@ if SERVER then
             i = i + 1
         end
         local locals = table.ToString(lcls, "Locals", true)
+        locals = string.sub(locals, 1, 1000)
         local trace = debug.traceback("", 2)
 
         if epoe then
@@ -138,7 +139,7 @@ if SERVER then
 
     net.Receive("ClientError", function(len, ply)
         if (CurTime() - last < 5) and times >= 10 then
-            discordrelay.log(2, "error spam?", ply)
+            discordrelay.log(2, "error spam?", ply and ply or "???", ply and ply:SteamID() or "")
             last = CurTime()
             return
         end
@@ -146,10 +147,15 @@ if SERVER then
         local id = net.ReadUInt(32)
         if ids[id] then return end
         local payload = net.ReadTable()
-        local info = payload["info"][1] or {}
-        local info2 = payload["info"][2] or {}
+        if not payload or (not istable(payload)) then
+            print("invalid payload?", ply)
+            return
+        end
+        local info = payload["info"] and payload["info"][1] or {}
+        local info2 = payload["info"] and payload["info"][2] or {}
         local fname = info["name"] or "???"
         local locals = payload["locals"] or "???"
+        locals = string.sub(locals, 1, 1000)
         local trace = payload["trace"] or "???"
 
         if epoe then
@@ -157,7 +163,7 @@ if SERVER then
             api.MsgC(Color(255,0,0), "-- [ CLIENT ERROR BY FUNCTION ")
             api.Msg(fname)
             api.MsgC(Color(255,0,0), " FROM ")
-            api.Msg(ply and ply:Nick() or "???")
+            api.Msg(ply and (ply:Nick() .. "/" .. ply:SteamID()) or "???")
             api.MsgC(Color(255,0,0), " ] --")
             api.Msg("\n")
             api.MsgN(locals)
