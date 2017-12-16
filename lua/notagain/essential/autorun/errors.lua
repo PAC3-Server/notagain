@@ -9,173 +9,151 @@
 -- function api.error(...)
 
 local github = {
-        ["pac3"] = {
-            ["url"] = "https://github.com/CapsAdmin/pac3/tree/master/"
-        },
-        ["notagain"] = {
-            ["url"] = "https://github.com/PAC3-Server/notagain/tree/master/"
-        },
-        ["easychat"] = {
-            ["url"] = "https://github.com/PAC3-Server/EasyChat/tree/master/"
-        },
-        ["gm-http-discordrelay"] = {
-            ["url"] = "https://github.com/PAC3-Server/gm-http-discordrelay/tree/master/"
-        },
-        ["includes"] = { -- garry stuff
-            ["url"] = "https://github.com/Facepunch/garrysmod/tree/master/garrysmod/"
-        }
-    }
-    github["vgui"] = github["includes"]
-    github["weapons"] = github["includes"]
-    github["entities"] = github["includes"]
-    github["derma"] = github["includes"]
-    github["menu"] = github["includes"]
-    github["vgui"] = github["includes"]
-    github["weapons"] = github["includes"]
+	["pac3"] = {
+		["url"] = "https://github.com/CapsAdmin/pac3/tree/master/"
+	},
+	["notagain"] = {
+		["url"] = "https://github.com/PAC3-Server/notagain/tree/master/"
+	},
+	["easychat"] = {
+		["url"] = "https://github.com/PAC3-Server/EasyChat/tree/master/"
+	},
+	["gm-http-discordrelay"] = {
+		["url"] = "https://github.com/PAC3-Server/gm-http-discordrelay/tree/master/"
+	},
+	["includes"] = { -- garry stuff
+		["url"] = "https://github.com/Facepunch/garrysmod/tree/master/garrysmod/"
+	}
+}
+github["vgui"] = github["includes"]
+github["weapons"] = github["includes"]
+github["entities"] = github["includes"]
+github["derma"] = github["includes"]
+github["menu"] = github["includes"]
+github["vgui"] = github["includes"]
+github["weapons"] = github["includes"]
+
+local function tostringsafe(obj)
+	local ok, str = pcall(tostring, obj)
+
+	if not ok then
+		return "tostring error: " .. str
+	end
+
+	return str
+end
+
+local max_stack = 2
+
+local function hook(cb)
+	_G.old_glua_error = _G.old_glua_error or debug.getregistry()[1]
+	debug.getregistry()[1] = function(error_message)
+		_G.old_glua_error(error_message)
+
+		local stack = {}
+
+		for i = 2, math.huge do
+			local info = debug.getinfo(i)
+			if not info then break end
+
+			local locals = {}
+			for i2 = 1, math.huge do
+				local k, v = debug.getlocal(i, i2)
+				table.insert(locals, "local " .. k .. " = " .. tostringsafe(v) .. "\n")
+			end
+			info.locals = table.concat(locals)
+
+			table.insert(stack, info)
+
+			if i - 1 == max_stack then
+				break
+			end
+		end
+
+		cb(debug.traceback(error_message, 2), stack)
+	end
+end
 
 if CLIENT then
 
-    hook.Add("EPOEAddLinkPatterns", "Clickable Errors", function(t)
-        table.insert(t,"(lua/.-):(%d+):?")
-    end)
+	hook.Add("EPOEAddLinkPatterns", "Clickable Errors", function(t)
+		table.insert(t,"(lua/.-):(%d+):?")
+	end)
 
-    hook.Add("EPOEOpenLink", "Clickable Errors", function(l)
-        if not l then return end
-        local yes = false
-        l = l:gsub("(lua/.-):(%d+):?", function(l, n)
-            local n = n or ""
-            local addon = l:match("lua/(.-)/")
-            if addon and github[addon] then
-                yes = true
-                return github[addon].url .. l .. "#L" .. n
-            end
-            return "???"
-        end)
-        if yes then
-            gui.OpenURL(l)
-        end
-        return true
-    end)
+	hook.Add("EPOEOpenLink", "Clickable Errors", function(l)
+		if not l then return end
+		local yes = false
+		l = l:gsub("(lua/.-):(%d+):?", function(l, n)
+			local n = n or ""
+			local addon = l:match("lua/(.-)/")
+			if addon and github[addon] then
+				yes = true
+				return github[addon].url .. l .. "#L" .. n
+			end
+			return "???"
+		end)
+		if yes then
+			gui.OpenURL(l)
+		end
+		return true
+	end)
 
-    --local old_error = debug.getregistry()[1]
-    debug.getregistry()[1] = function(...)
-        local info = debug.getinfo(2)
-        local info2 = debug.getinfo(3)
-        -- hack
-        info["func"] = nil
-        info2["func"] = nil
-        --
-        local i = 1
-        local lcls = {}
-        local NIL = {}
-        while true do
-            local n, v = debug.getlocal(2, i)
-            if ( n == nil ) then break end
-            n = (n == "(*temporary)") and "error>>>>>>>>>>" or n
-            lcls[n] = v == nil and NIL or v
-            i = i + 1
-        end
-        local locals = table.ToString(lcls, "Locals", true) or "???"
-        local trace = debug.traceback("", 2)
-        local tbl = {
-            info = {info, info2},
-            locals = locals,
-            trace = trace
-        }
-        net.Start("ClientError")
-            net.WriteUInt(tonumber(util.CRC(trace)), 32)
-            net.WriteTable(tbl)
-        net.SendToServer()
-
-       -- old_error(...) -- compat??
-    end
+	hook(function(error_msg, stack)
+		net.Start("ClientError")
+			net.WriteString(error_msg)
+			net.WriteTable(stack)
+		net.SendToServer()
+	end)
 end
 
 if SERVER then
-    util.AddNetworkString("ClientError")
-    --local old_error = debug.getregistry()[1]
+	util.AddNetworkString("ClientError")
+	--local old_error = debug.getregistry()[1]
 
-    debug.getregistry()[1] = function(...)
-        local info = debug.getinfo(2)
-        local info2 = debug.getinfo(3)
-        local fname = info["name"]
-        local i = 1
-        local lcls = {}
-        local NIL = {}
-        while true do
-            local n, v = debug.getlocal(2, i)
-            if ( n == nil ) then break end
-            n = (n == "(*temporary)") and "error>>>>>>>>>>" or n
-            lcls[n] = v == nil and NIL or v
-            i = i + 1
-        end
-        local locals = table.ToString(lcls, "Locals", true)
-        locals = string.sub(locals, 1, 1000)
-        local trace = debug.traceback("", 2)
+	hook(function(error_msg, stack)
+		if epoe then
+			local api = epoe.api
+			api.MsgC(Color(255,0,0), "-- [ ERROR BY FUNCTION ")
+			api.Msg(stack[1].name)
+			api.MsgC(Color(255,0,0), " ] --")
+			api.Msg("\n")
+			api.MsgN(stack[1].locals)
+			api.error(error_msg)
+			api.MsgC(Color(255,0,0), "--   --")
+			api.Msg("\n")
 
-        if epoe then
-            local api = epoe.api
-            api.MsgC(Color(255,0,0), "-- [ ERROR BY FUNCTION ")
-            api.Msg(fname)
-            api.MsgC(Color(255,0,0), " ] --")
-            api.Msg("\n")
-            api.MsgN(locals)
-            api.error(trace)
-            api.MsgC(Color(255,0,0), "--   --")
-            api.Msg("\n")
+		else
+			print(fname, "\n", src, "\n", stack[1].locals, "\n", error_msg) -- fallback????
+		end
 
-        else
-            print(fname, "\n", src, "\n", locals, "\n", trace) -- fallback????
-        end
+		hook.Run("LuaError", stack, error_msg)
+	end)
 
-        hook.Run("LuaError", {info, info2}, locals, trace)
+	local errored = {}
 
-       -- old_error(...) -- compat??
-    end
+	net.Receive("ClientError", function(len, ply)
+		local msg = net.ReadString()
+		local stack = net.ReadTable()
 
-    local ids = {}
-    local times = 0
-    local last = CurTime()
+		if errored[msg] then return end
+		errored[msg] = true
 
-    net.Receive("ClientError", function(len, ply)
-        if (CurTime() - last < 5) and times >= 10 then
-            discordrelay.log(2, "error spam?", ply and ply or "???", ply and ply:SteamID() or "")
-            last = CurTime()
-            return
-        end
-        times = (CurTime() - last < 5) and (times + 1) or 0
-        local id = net.ReadUInt(32)
-        if ids[id] then return end
-        local payload = net.ReadTable()
-        if not payload or (not istable(payload)) then
-            print("invalid payload?", ply)
-            return
-        end
-        local info = payload["info"] and payload["info"][1] or {}
-        local info2 = payload["info"] and payload["info"][2] or {}
-        local fname = info["name"] or "???"
-        local locals = payload["locals"] or "???"
-        locals = string.sub(locals, 1, 1000)
-        local trace = payload["trace"] or "???"
+		if epoe then
+			local api = epoe.api
+			api.MsgC(Color(255,0,0), "-- [ CLIENT ERROR BY FUNCTION ")
+			api.Msg(stack[1].name or "???")
+			api.MsgC(Color(255,0,0), " FROM ")
+			api.Msg(ply:Nick() "/" ... ply:SteamID())
+			api.MsgC(Color(255,0,0), " ] --")
+			api.Msg("\n")
+			api.MsgN(stack[1].locals or "???")
+			api.error(msg)
+			api.MsgC(Color(255,0,0), "--   --")
+			api.Msg("\n")
 
-        if epoe then
-            local api = epoe.api
-            api.MsgC(Color(255,0,0), "-- [ CLIENT ERROR BY FUNCTION ")
-            api.Msg(fname)
-            api.MsgC(Color(255,0,0), " FROM ")
-            api.Msg(ply and (ply:Nick() .. "/" .. ply:SteamID()) or "???")
-            api.MsgC(Color(255,0,0), " ] --")
-            api.Msg("\n")
-            api.MsgN(locals)
-            api.error(trace)
-            api.MsgC(Color(255,0,0), "--   --")
-            api.Msg("\n")
-
-        else
-            print(fname, "\n", locals, "\n", trace) -- fallback????
-        end
-        hook.Run("ClientLuaError", ply, {info, info2}, locals, trace)
-        ids[id] = true
-        last = CurTime()
-    end)
+		else
+			print(fname, "\n", stack[1].locals, "\n", msg) -- fallback????
+		end
+		hook.Run("ClientLuaError", ply, stack, msg)
+	end)
 end
