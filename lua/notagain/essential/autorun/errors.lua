@@ -143,7 +143,7 @@ if SERVER then
 			api.MsgC(Color(255,0,0), "-- [ CLIENT ERROR BY FUNCTION ")
 			api.Msg(stack[1].name or "???")
 			api.MsgC(Color(255,0,0), " FROM ")
-			api.Msg(ply:Nick() .. "/" ... ply:SteamID())
+			api.Msg(ply:Nick() .. "/" .. ply:SteamID())
 			api.MsgC(Color(255,0,0), " ] --")
 			api.Msg("\n")
 			api.MsgN(stack[1].locals or "???")
