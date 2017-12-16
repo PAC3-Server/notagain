@@ -1,4 +1,4 @@
-avatar = avatar or {}
+local avatar = _G.avatar or {}
 
 avatar.avatars = avatar.avatars or {}
 avatar.steam_avatars = avatar.steam_avatars or {}
@@ -223,4 +223,4 @@ if SERVER then
 	end)
 end
 
-
+_G.avatar = avatar
