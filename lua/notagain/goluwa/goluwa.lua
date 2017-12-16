@@ -956,11 +956,6 @@ function goluwa.CreateEnv()
 	env.commands = env.runfile("engine/lua/libraries/commands.lua")
 	for i, args in ipairs(commands_add_buffer) do env.commands.Add(unpack(args)) end
 
-	env.profiler = env.runfile("engine/lua/libraries/profiler.lua")
-	env.P = env.profiler.ToggleTimer
-	env.I = env.profiler.ToggleInstrumental
-	env.S = env.profiler.ToggleStatistical
-
 	do
 		local window = {}
 
@@ -1039,6 +1034,11 @@ function goluwa.CreateEnv()
 
 		env.system = system
 	end
+
+	env.profiler = env.runfile("engine/lua/libraries/profiler.lua")
+	env.P = env.profiler.ToggleTimer
+	env.I = env.profiler.ToggleInstrumental
+	env.S = env.profiler.ToggleStatistical
 
 	env.event = env.runfile("core/lua/libraries/event.lua")
 	env.runfile("framework/lua/libraries/extensions/event_timers.lua")
