@@ -17,7 +17,7 @@ local tips = {
     ScrW = ScrW(),
 	LeftToSlide = 0,
 	Sentences = {
-		"You can open the PAC editor by pressing "..(string.upper(input.LookupBinding("+menu_context")) or "C").." and click on its icon",
+		"You can open the PAC editor by pressing "..(string.upper(input.LookupBinding("+menu_context") or "C")).." and click on its icon",
 		"To get in RPG mode type !rpg in chat",
 		"You can get access to our discord by typing !discord in chat and use the link in your browser!",
 		"Check the tasks you completed by typing !tasks #me",
