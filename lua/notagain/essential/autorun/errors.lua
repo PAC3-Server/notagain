@@ -65,7 +65,7 @@ local function hook_error(cb)
 				for i = 1, math.huge do
 					local k, v = debug.getlocal(stack_depth, i)
 					if not k then break end
-					table.insert(locals, "local " .. k .. " = " .. tostringsafe(v) .. "\n")
+					table.insert(locals, k .. " = " .. tostringsafe(v) .. "\n")
 				end
 				info.locals = table.concat(locals)
 
