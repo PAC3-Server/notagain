@@ -47,7 +47,7 @@ if CLIENT then
 
         HideUselessStuff()
 
-        timer.Simple(0.1,function() RunConsoleCommand("spawnmenu_reload") end)
+        --timer.Simple(0.1,function() RunConsoleCommand("spawnmenu_reload") end)
 
     end)
 end
