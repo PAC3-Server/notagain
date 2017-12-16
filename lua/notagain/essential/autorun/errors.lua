@@ -45,32 +45,42 @@ end
 
 local max_stack = 2
 
-local function hook(cb)
+local function hook_error(cb)
 	_G.old_glua_error = _G.old_glua_error or debug.getregistry()[1]
 	debug.getregistry()[1] = function(error_message)
 		_G.old_glua_error(error_message)
 
-		local stack = {}
+		local ok, err = pcall(function()
 
-		for i = 2, math.huge do
-			local info = debug.getinfo(i)
-			if not info then break end
+			local stack = {}
 
-			local locals = {}
-			for i2 = 1, math.huge do
-				local k, v = debug.getlocal(i, i2)
-				table.insert(locals, "local " .. k .. " = " .. tostringsafe(v) .. "\n")
+			for stack_depth = 4, math.huge do
+				local info = debug.getinfo(stack_depth)
+				if not info then break end
+
+				info.func = nil
+
+				local locals = {}
+				for i = 1, math.huge do
+					local k, v = debug.getlocal(stack_depth, i)
+					if not k then break end
+					table.insert(locals, "local " .. k .. " = " .. tostringsafe(v) .. "\n")
+				end
+				info.locals = table.concat(locals)
+
+				table.insert(stack, info)
+
+				if stack_depth - 1 == max_stack then
+					break
+				end
 			end
-			info.locals = table.concat(locals)
 
-			table.insert(stack, info)
+			cb(debug.traceback(error_message, 2), stack)
+		end)
 
-			if i - 1 == max_stack then
-				break
-			end
+		if not ok then
+			print(err)
 		end
-
-		cb(debug.traceback(error_message, 2), stack)
 	end
 end
 
@@ -98,7 +108,7 @@ if CLIENT then
 		return true
 	end)
 
-	hook(function(error_msg, stack)
+	hook_error(function(error_msg, stack)
 		net.Start("ClientError")
 			net.WriteString(error_msg)
 			net.WriteTable(stack)
@@ -110,7 +120,7 @@ if SERVER then
 	util.AddNetworkString("ClientError")
 	--local old_error = debug.getregistry()[1]
 
-	hook(function(error_msg, stack)
+	hook_error(function(error_msg, stack)
 		if epoe then
 			local api = epoe.api
 			api.MsgC(Color(255,0,0), "-- [ ERROR BY FUNCTION ")
