@@ -43,6 +43,7 @@ local function tostringsafe(obj)
 	return str
 end
 
+local offset = 3
 local max_stack = 2
 
 local function hook_error(cb)
@@ -54,7 +55,7 @@ local function hook_error(cb)
 
 			local stack = {}
 
-			for stack_depth = 4, math.huge do
+			for stack_depth = offset, math.huge do
 				local info = debug.getinfo(stack_depth)
 				if not info then break end
 
@@ -70,7 +71,7 @@ local function hook_error(cb)
 
 				table.insert(stack, info)
 
-				if stack_depth - 1 == max_stack then
+				if stack_depth == offset + max_stack then
 					break
 				end
 			end
@@ -136,7 +137,7 @@ if SERVER then
 			print(fname, "\n", src, "\n", stack[1].locals, "\n", error_msg) -- fallback????
 		end
 
-		hook.Run("LuaError", stack, error_msg)
+		hook.Run("LuaError", error_msg, stack)
 	end)
 
 	local errored = {}
@@ -164,6 +165,6 @@ if SERVER then
 		else
 			print(fname, "\n", stack[1].locals, "\n", msg) -- fallback????
 		end
-		hook.Run("ClientLuaError", ply, stack, msg)
+		hook.Run("ClientLuaError", msg, stack, ply)
 	end)
 end
