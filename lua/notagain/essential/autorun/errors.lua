@@ -76,7 +76,7 @@ local function hook_error(cb)
 				end
 			end
 
-			cb(debug.traceback(error_message, 3), stack)
+			cb(debug.traceback(error_message, 4), stack)
 		end)
 
 		if not ok then
