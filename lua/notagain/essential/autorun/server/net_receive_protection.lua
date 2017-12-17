@@ -22,7 +22,7 @@ if SERVER then
 			net.old_incoming,
 			function(msg)
 				print("net message " .. id .. " from ", ply, " errored:")
-				ErrorNoHalt(msg .. "\n" .. debug.traceback())
+				ErrorNoHalt(debug.traceback(msg, 2))
 			end, length, ply
 		)}
 
