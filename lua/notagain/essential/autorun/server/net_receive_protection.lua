@@ -1,40 +1,35 @@
 if SERVER then
-	net.old_incoming = net.old_incoming or net.Incoming
+	local SysTime = SysTime
+	local RealTime = RealTime
 
-	local last_receive_error = {}
-	local last_print_suppress = {}
-
-	function net.Incoming(length, ply, ...)
-		if ... then
-			ErrorNoHalt("net.Incoming called with more than 2 arguments? skipping pcall protection")
-			return net.old_incoming(length, ply, ...)
-		end
-
-		if last_receive_error[ply] and last_receive_error[ply] + 1 > SysTime() then
-			if not last_print_suppress[ply] or last_print_suppress[ply] < RealTime() then
-				print("last message from ", ply, "errored less than a second ago, supressing net message")
-				last_print_suppress[ply] = RealTime() + 1
+	function net.Incoming(length, ply)
+		if (ply.net_incoming_last_error or 0) + 1 > SysTime() then
+			if (ply.net_incoming_last_print_suppress or 0) < RealTime() then
+				MsgN(("suppressing net message from %s (%s) because of lua error less than a second ago"):format(tostring(ply), ply:SteamID()))
+				ply.net_incoming_last_print_suppress = RealTime() + 1
 			end
-			return
+		else
+			local i = net.ReadHeader()
+			local id = util.NetworkIDToString(i)
+
+			if id then
+				local func = net.Receivers[id:lower()]
+
+				if func then
+					local ok = xpcall(
+						func,
+						function(msg)
+							ErrorNoHalt(debug.traceback(("net message %q (%s) from %s (%s) errored:"):format(id, string.NiceSize(length), tostring(ply), ply:SteamID())))
+						end,
+						length - 16,
+						ply
+					)
+
+					if not ok then
+						ply.net_incoming_last_error = SysTime()
+					end
+				end
+			end
 		end
-
-		local tbl = {xpcall(
-			net.old_incoming,
-			function(msg)
-				print("net message " .. id .. " from ", ply, " errored:")
-				ErrorNoHalt(debug.traceback(msg, 2))
-			end, length, ply
-		)}
-
-		if tbl[1] then
-			return unpack(tbl, 2)
-		end
-
-		last_receive_error[ply] = SysTime()
-	end
-
-	if player.GetAll()[1] then
-		util.AddNetworkString("test_error")
-		net.Receive("test_error", function() error("!!!") end)
 	end
 end
