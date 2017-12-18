@@ -231,7 +231,6 @@ do
 
 		function ENT:SetProjectileData(attacker, pos, dir, dmg, wep)
 			wep = wep or attacker:GetActiveWeapon()
-			self:SetOwner(attacker)
 
 			self:SetDamage(dmg or 1)
 			self.dir = dir

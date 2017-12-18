@@ -440,11 +440,7 @@ function SWEP:ThrowAnimation(left_hand)
 	self.Owner:AddVCDSequenceToGestureSlot(left_hand and GESTURE_SLOT_GRENADE or GESTURE_SLOT_ATTACK_AND_RELOAD, self.Owner:LookupSequence("zombie_attack_0" .. (left_hand and 3 or 2)), 0.25, true)
 end
 
-function SWEP:PrimaryAttack()
-	if self:GetNextPrimaryFire() > CurTime() or not self.wepstats then return end
-
-	self:SetNextPrimaryFire(CurTime() + 0.6)
-
+function SWEP:Cast(target)
 	if SERVER then
 		if jattributes.DrainMana(self.Owner, self, 50) == false then return end
 
@@ -465,9 +461,16 @@ function SWEP:PrimaryAttack()
 		local bone_id = self.Owner:LookupBone(self.left_hand_anim and "ValveBiped.Bip01_L_Hand" or "ValveBiped.Bip01_R_Hand")
 
 		local ent = ents.Create("jprojectile_bullet")
-		ent:SetOwner(self.Owner)
+
 		if CPPI then ent:CPPISetOwner(self.Owner) end
 		ent:SetProjectileData(self.Owner, self.Owner:GetShootPos(), self.Owner:GetAimVector(), 50, self)
+
+		if target then
+			ent:SetOwner()
+			ent.pos = self:GetOwner()
+			ent.lpos = Vector(0,0,50)
+		end
+
 		ent:Spawn()
 
 		if bone_id then
@@ -490,8 +493,16 @@ function SWEP:PrimaryAttack()
 	end
 end
 
-function SWEP:SecondaryAttack()
+function SWEP:PrimaryAttack()
+	if self:GetNextPrimaryFire() > CurTime() or not self.wepstats then return end
 
+	self:SetNextPrimaryFire(CurTime() + 0.6)
+
+	self:Cast()
+end
+
+function SWEP:SecondaryAttack()
+	self:Cast(self:GetOwner())
 end
 
 weapons.Register(SWEP, SWEP.ClassName)
