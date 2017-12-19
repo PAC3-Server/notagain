@@ -26,7 +26,7 @@ timer.Create("auto_restart", 2, 0, function()
 
 		if afk then
 			if not players[1] then
-				if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restart trigger: " .. (reason and reason or (want_restart and "last restart was over 6 hours ago")) or "???") end
+				if discordrelay and discordrelay.ready then discordrelay.notify("Auto Restart trigger: pending updates from " .. (reason and reason or (want_restart and "last restart was over 6 hours ago")) or "???") end
 				file.Write("server_last_restart.txt", tostring(os.time()))
 				game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				return
