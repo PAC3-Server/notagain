@@ -10,7 +10,7 @@ local function tostringx(obj)
 
 		return '"' .. obj .. '"'
 	elseif t == "Player" then
-		return "Player("..obj:EntIndex()..") -- " .. obj:SteamID64()
+		return "Player("..obj:UserID()..") -- " .. obj:Nick() .. " / " .. obj:SteamID64()
 	elseif t == "Entity" then
 		return "Entity("..obj:EntIndex()..")"
 	elseif t == "function" then
@@ -30,7 +30,7 @@ local function tostringx(obj)
 				end
 			end
 
-			return "function(" .. table.concat(params, ", ") .. ") end -- " .. info.source .. ":" .. info.linedefined
+			return "function(" .. table.concat(params, ", ") .. ") end" -- " .. info.source .. ":" .. info.linedefined
 		end
 	end
 
@@ -42,6 +42,58 @@ local function tostringx(obj)
 
 	return str
 end
+
+local function line_from_info(info, line)
+	local lua
+	if info.source:find("<", nil, true) then
+		lua = file.Read(info.source:match("%<(.-)%>"), "MOD") -- luadata
+	elseif info.source:sub(1,1) == "@" then
+		lua = file.Read(info.source:sub(2), "LUA") or file.Read(info.source:sub(2), "MOD")
+	end
+
+	if lua then
+		local lines = lua:Split("\n")
+		return lines[line]
+	end
+end
+
+
+local function func_line_from_info(info, line_override, fallback_info)
+	if info.source then
+		local line = line_from_info(info, line_override or info.linedefined)
+		if line and line:find("%b()") then
+			return line:Trim() .. " -- inlined function " .. (info.name or fallback_info or "__UNKNOWN__")
+		end
+	end
+
+	local str = "function " .. (info.name or fallback_info or "__UNKNOWN__")
+	str = str .. "("
+
+	local arg_line = {}
+
+	if info.isvararg then
+		table.insert(arg_line, "...")
+	else
+		for i = 1, info.nparams do
+			local key, val = debug.getlocal(info.func, i)
+
+			if not key then break end
+
+			if key == "(*temporary)" then
+				table.insert(arg_line, tostringx(val))
+			elseif key:sub(1, 1) ~= "(" then
+				table.insert(arg_line, key)
+			end
+		end
+	end
+
+	str = str .. table.concat(arg_line, ", ")
+
+	str = str .. ")"
+
+	return str
+end
+
 
 return function(offset, check_level)
 	offset = offset or 0
@@ -61,8 +113,15 @@ return function(offset, check_level)
 	local for_gen
 	local generator
 
+
+	do
+		local info = debug.getinfo(max_level)
+		extra_indent = extra_indent + 1
+		str = str .. func_line_from_info(info) .. "\n"
+	end
+
 	for level = max_level, min_level, -1 do
-		local info = debug.getinfo(level-1)
+		local info = debug.getinfo(level - 1)
 		if not info then break end
 
 		if check_level and check_level(info, level) ~= nil then break end
@@ -122,50 +181,12 @@ return function(offset, check_level)
 			end
 		end
 
-		do
-			local info = debug.getinfo(level)
-			if info and info.source and info.source:sub(1,1) == "@" then
-				local lua = file.Read(info.source:sub(2), "LUA") or file.Read(info.source:sub(2), "MOD")
-				if lua then
-					local lines = lua:Split("\n")
-					if lines[info.currentline] then
-						str = str .. t .. "-- " .. lines[info.currentline]:Trim() .. "\n"
-					end
-				end
-			end
-		end
-
-		if info.proper_name then
-			str = str .. t .. "function " .. (info.name or "__UNKNOWN__")
+		if level == max_level then
+			local name = info.name
+			info = debug.getinfo(level)
+			str = str .. t .. func_line_from_info(info, info.currentline, name)
 		else
-			str = str .. t .. "function " .. (info.name or "__UNKNOWN__")
-			str = str .. "("
-
-			if info.isvararg then
-				str = str .. "..."
-			else
-				for i = 1, info.nparams do
-					local key, val = debug.getlocal(info.func, i)
-
-					if not key then break end
-
-					if key == "(*temporary)" then
-						str = str .. tostringx(val) .. ", "
-					elseif key:sub(1, 1) ~= "(" then
-						str = str .. key .. ", "
-					end
-				end
-			end
-
-			if str:sub(#str, #str) == ", " then
-				str = str:sub(0, -3)
-			end
-		end
-
-		if info.source:sub(1, 1) == "@" then
-			str = str .. ") -- " .. info.source:sub(2) .. ":" .. info.linedefined
-		else
-			str = str .. ")"
+			str = str .. t .. func_line_from_info(info, info.currentline)
 		end
 
 		str = str .. "\n"

@@ -18,7 +18,7 @@ local function hook_error(cb)
 				stack[i + 1] = info
 			end
 
-			cb(error_message, debug_traceback2(4), stack)
+			cb(error_message, debug_traceback2(6), stack)
 		end)
 
 		if not ok then
