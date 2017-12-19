@@ -304,7 +304,7 @@ do
 			if self.damaged or self:GetParent():IsValid() then return end
 
 			local ply = self:GetOwner()
-			if ply:IsValid() then
+			if ply:IsValid() and self.rand_dir then
 				local pos = self.pos
 
 				if IsEntity(pos) and pos:IsValid() then
