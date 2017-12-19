@@ -201,7 +201,8 @@ do
 			end
 			]]
 
-			local f = (self.life_time - RealTime()) / self:GetLifeTime()
+			local f = math.max(self.life_time - RealTime(), 0)
+			f = f / self:GetLifeTime()
 			if self:GetLifeTime() == 0 then f = 1 end
 			f = f ^ 0.25
 
