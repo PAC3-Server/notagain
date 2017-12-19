@@ -189,8 +189,32 @@ do
 
 		ENT.RenderGroup = RENDERGROUP_TRANSLUCENT
 
+		local function isnumbervalid(num)
+			return
+				num and
+				num ~= inf and
+				num ~= ninf and
+				(num >= 0 or num <= 0)
+		end
+
 		function ENT:DrawTranslucent()
 			if self.damaged or not self.pixvis then return end
+
+			local pos = self:GetPos()
+
+			if
+				not isnumbervalid(pos.x) or
+				not isnumbervalid(pos.y) or
+				not isnumbervalid(pos.z)
+			then
+				print("projectile has infinite position?")
+				print("==========")
+				print(self:GetPos())
+				print(self:GetAngles())
+				print(self:GetOwner())
+				print("==========")
+				return
+			end
 
 			--[[
 			if self:GetLocalPos():Distance(EyePos()) < 40 then
