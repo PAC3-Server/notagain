@@ -359,7 +359,7 @@ do
 		})
 
 		function jdmg.types.holy.draw_projectile(ent, dmg, simple, vis)
-			local size = dmg / 100
+			local size = math.max(dmg, 1) / 100
 
 			render.SetMaterial(jfx.materials.glow)
 			render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(color.r, color.g, color.b, 255))
