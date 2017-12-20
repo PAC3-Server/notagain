@@ -59,6 +59,14 @@ end
 
 
 local function func_line_from_info(info, line_override, fallback_info)
+	if info.namewhat == "metamethod" then
+		if info.name == "__add" then
+			print(debug.getlocal(info.func, 0), "!")
+			print(debug.getlocal(info.func, 1), "!")
+			return "+"
+		end
+	end
+
 	if info.source then
 		local line = line_from_info(info, line_override or info.linedefined)
 		if line and line:find("%b()") then
@@ -66,7 +74,12 @@ local function func_line_from_info(info, line_override, fallback_info)
 		end
 	end
 
+	if info.source == "=[C]" then
+		return "function " .. (info.name or fallback_info or "__UNKNOWN__") .. "(=[C])"
+	end
+
 	local str = "function " .. (info.name or fallback_info or "__UNKNOWN__")
+
 	str = str .. "("
 
 	local arg_line = {}
@@ -108,15 +121,15 @@ return function(offset, check_level)
 		max_level = level
 	end
 
-	local extra_indent = 0
+	local extra_indent = 3
 	local for_loop
 	local for_gen
 	local generator
 
-
 	do
 		local info = debug.getinfo(max_level)
 		extra_indent = extra_indent + 1
+		str = str .. (max_level-min_level+1) .. ": "
 		str = str .. func_line_from_info(info) .. "\n"
 	end
 
@@ -181,15 +194,19 @@ return function(offset, check_level)
 			end
 		end
 
-		if level == max_level then
-			local name = info.name
-			info = debug.getinfo(level)
-			str = str .. t .. func_line_from_info(info, info.currentline, name)
-		else
-			str = str .. t .. func_line_from_info(info, info.currentline)
-		end
+		str = str .. (level-min_level) .. ": "
+		t = t:sub(4)
+		str = str .. t .. func_line_from_info(info)
 
 		str = str .. "\n"
+	end
+
+	do
+		local level = min_level - 1
+		local t = (" "):rep(-level + max_level + extra_indent - 2)
+
+		local info = debug.getinfo(level)
+		str = str .. ">>" .. t .. func_line_from_info(info, info.currentline) .. " <<\n"
 	end
 
 	return str
