@@ -58,7 +58,7 @@ local function line_from_info(info, line)
 end
 
 
-local function func_line_from_info(info, line_override, fallback_info)
+local function func_line_from_info(info, line_override, fallback_info, nocomment)
 	if info.namewhat == "metamethod" then
 		if info.name == "__add" then
 			print(debug.getlocal(info.func, 0), "!")
@@ -70,7 +70,7 @@ local function func_line_from_info(info, line_override, fallback_info)
 	if info.source then
 		local line = line_from_info(info, line_override or info.linedefined)
 		if line and line:find("%b()") then
-			return line:Trim() .. " -- inlined function " .. (info.name or fallback_info or "__UNKNOWN__")
+			return line:Trim() .. (nocomment and "" or " -- inlined function " .. (info.name or fallback_info or "__UNKNOWN__"))
 		end
 	end
 
@@ -191,6 +191,14 @@ return function(offset, check_level)
 		if not info.name then
 			if level == max_level then
 				info.name = "main"
+			end
+		end
+
+		do
+			local info = debug.getinfo(level)
+			if info.source ~= "=[C]" then
+				str = str .. "\n"
+				str = str .. t .. func_line_from_info(info, info.currentline, nil, true) .. " >> \n"
 			end
 		end
 
