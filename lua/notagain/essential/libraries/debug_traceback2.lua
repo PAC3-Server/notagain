@@ -45,15 +45,30 @@ end
 
 local function line_from_info(info, line)
 	local lua
-	if info.source:find("<", nil, true) then
-		lua = file.Read(info.source:match("%<(.-)%>"), "MOD") -- luadata
-	elseif info.source:sub(1,1) == "@" then
-		lua = file.Read(info.source:sub(2), "LUA") or file.Read(info.source:sub(2), "MOD")
+	if file then
+		if info.source:find("<", nil, true) then
+			lua = file.Read(info.source:match("%<(.-)%>"), "MOD") -- luadata
+		elseif info.source:sub(1,1) == "@" then
+			lua = file.Read(info.source:sub(2), "LUA") or file.Read(info.source:sub(2), "MOD")
+		end
+	else
+		if info.source:sub(1,1) == "@" then
+			local f = io.open(info.source:sub(2), "r")
+			if f then
+				lua = f:read("*all")
+				f:close()
+			end
+		end
 	end
 
 	if lua then
-		local lines = lua:Split("\n")
-		return lines[line]
+		local i = 1
+		for str in (lua .. "\n"):gmatch("(.-)\n") do
+			if line == i then
+				return str
+			end
+			i = i + 1
+		end
 	end
 end
 
@@ -70,7 +85,8 @@ local function func_line_from_info(info, line_override, fallback_info, nocomment
 	if info.source then
 		local line = line_from_info(info, line_override or info.linedefined)
 		if line and line:find("%b()") then
-			return line:Trim() .. (nocomment and "" or " -- inlined function " .. (info.name or fallback_info or "__UNKNOWN__"))
+			line = line:gsub("^%s*", ""):reverse():gsub("^%s*", ""):reverse() -- trim
+			return line .. (nocomment and "" or " -- inlined function " .. (info.name or fallback_info or "__UNKNOWN__"))
 		end
 	end
 
@@ -107,7 +123,6 @@ local function func_line_from_info(info, line_override, fallback_info, nocomment
 	return str
 end
 
-
 return function(offset, check_level)
 	offset = offset or 0
 	local str = ""
@@ -116,30 +131,46 @@ return function(offset, check_level)
 	local min_level = offset
 
 	for level = min_level, math.huge do
-		local info = debug.getinfo(level)
-		if not info then break end
+		if not debug.getinfo(level) then
+			break
+		end
 		max_level = level
 	end
 
 	local extra_indent = 3
 	local for_loop
 	local for_gen
-	local generator
-
-	do
-		local info = debug.getinfo(max_level)
-		extra_indent = extra_indent + 1
-		str = str .. (max_level-min_level+1) .. ": "
-		str = str .. func_line_from_info(info) .. "\n"
-	end
 
 	for level = max_level, min_level, -1 do
-		local info = debug.getinfo(level - 1)
+		local info = debug.getinfo(level)
 		if not info then break end
 
 		if check_level and check_level(info, level) ~= nil then break end
 
-		local t = (" "):rep(-level + max_level + extra_indent)
+		local normalized_level = -level + max_level
+
+		local t = (" "):rep(normalized_level + extra_indent)
+
+		if level == max_level then
+			str = str .. normalized_level .. ": "
+			str = str .. func_line_from_info(info) .. "\n"
+		elseif level == min_level then
+			str = str .. ">>" .. t .. func_line_from_info(info, info.currentline) .. " <<\n"
+		else
+			if info.source ~= "=[C]" then
+				str = str .. "\n"
+				local info = debug.getinfo(level+1) or info
+				str = str .. t .. func_line_from_info(info, info.currentline, nil, true) .. " >> \n"
+			end
+
+			str = str .. normalized_level .. ": "
+			t = t:sub(4)
+			str = str .. t .. func_line_from_info(info)
+			str = str .. "\n"
+			extra_indent = extra_indent + 1
+		end
+
+		local t = (" "):rep(normalized_level + extra_indent)
 
 		for i = 1, math.huge do
 			local key, val = debug.getlocal(level, i)
@@ -147,7 +178,6 @@ return function(offset, check_level)
 
 			if key == "(for generator)" then
 				for_gen = ""
-				generator = val
 			elseif key == "(for state)" then
 			elseif key == "(for control)" then
 
@@ -176,9 +206,8 @@ return function(offset, check_level)
 							str = str .. t .. for_gen .. "\n"
 
 							extra_indent = extra_indent + 1
-							t = (" "):rep(-level + max_level + extra_indent)
+							t = (" "):rep(normalized_level + extra_indent)
 
-							generator = nil
 							for_gen = nil
 						end
 					else
@@ -187,34 +216,6 @@ return function(offset, check_level)
 				end
 			end
 		end
-
-		if not info.name then
-			if level == max_level then
-				info.name = "main"
-			end
-		end
-
-		do
-			local info = debug.getinfo(level)
-			if info.source ~= "=[C]" then
-				str = str .. "\n"
-				str = str .. t .. func_line_from_info(info, info.currentline, nil, true) .. " >> \n"
-			end
-		end
-
-		str = str .. (level-min_level) .. ": "
-		t = t:sub(4)
-		str = str .. t .. func_line_from_info(info)
-
-		str = str .. "\n"
-	end
-
-	do
-		local level = min_level - 1
-		local t = (" "):rep(-level + max_level + extra_indent - 2)
-
-		local info = debug.getinfo(level)
-		str = str .. ">>" .. t .. func_line_from_info(info, info.currentline) .. " <<\n"
 	end
 
 	return str
