@@ -154,9 +154,7 @@ return function(offset, check_level)
 		if level == max_level then
 			str = str .. normalized_level .. ": "
 			str = str .. func_line_from_info(info) .. "\n"
-		elseif level == min_level then
-			str = str .. ">>" .. t .. func_line_from_info(info, info.currentline) .. " <<\n"
-		else
+		elseif level ~= min_level then
 			if info.source ~= "=[C]" then
 				str = str .. "\n"
 				local info = debug.getinfo(level+1) or info
@@ -215,6 +213,10 @@ return function(offset, check_level)
 					end
 				end
 			end
+		end
+
+		if level == min_level then
+			str = str .. ">>" .. t:sub(3) .. func_line_from_info(info, info.currentline) .. " <<\n"
 		end
 	end
 
