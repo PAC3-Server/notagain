@@ -14,6 +14,19 @@ SWEP.UseHands = true
 SWEP.is_jsword = true
 --ryoku pure vanguard judge phalanx
 SWEP.MoveSet = "phalanx"
+SWEP.MoveSet2 = {
+	light = {
+		{
+			seq = "phalanx_b_s1_t3",
+			duration = 0.5,
+			min = 0,
+			max = 0.7,
+
+			damage_frac = 0.3,
+			damage_ang = Angle(45,-90,0),
+		}
+	}
+}
 
 hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	local self = ply:GetActiveWeapon()
