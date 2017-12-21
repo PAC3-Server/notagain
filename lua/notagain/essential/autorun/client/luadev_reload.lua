@@ -19,6 +19,7 @@ local function check_dir(dir, cb, what, lib)
 
 		if last[path] ~= time then
 			if last[path] then
+				print(path, " changed")
 				local code = file.Read(path, "MOD")
 				if lib then
 					if isfunction(lib) then
