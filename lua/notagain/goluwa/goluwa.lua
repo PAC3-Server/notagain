@@ -1774,12 +1774,19 @@ function goluwa.InitializeGUI()
 end
 
 function goluwa.Initialize()
-	dprint("initializing goluwa ...")
-	local time = SysTime()
-	goluwa.env = goluwa.CreateEnv()
-	_G.goluwa = goluwa
+	hook.Add("Think", "goluwa_init", function()
+		if not LocalPlayer():IsValid() then return end
 
-	timer.Simple(2, function()
+		dprint("initializing goluwa ...")
+		local time = SysTime()
+		goluwa.env = goluwa.CreateEnv()
+		_G.goluwa = goluwa
+
+		notagain.loaded_libraries.goluwa = goluwa
+
+		notagain.AutorunDirectory("goluwa")
+		dprint("initializing goluwa took " .. (SysTime() - time) .. " seconds")
+
 		if GetConVar("sv_allowcslua"):GetBool() or LocalPlayer():IsAdmin() then
 			concommand.Add("goluwa", function(ply, cmd, args, line)
 				goluwa.env.commands.RunString(line, false, false, true)
@@ -1789,12 +1796,9 @@ function goluwa.Initialize()
 				RunString(file.Read("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD"))
 			end
 		end
+
+		hook.Remove("Think", "goluwa_init")
 	end)
-
-	notagain.loaded_libraries.goluwa = goluwa
-
-	notagain.AutorunDirectory("goluwa")
-	dprint("initializing goluwa took " .. (SysTime() - time) .. " seconds")
 end
 
 function goluwa.SetEnv()
