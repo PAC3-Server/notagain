@@ -1779,8 +1779,16 @@ function goluwa.Initialize()
 	goluwa.env = goluwa.CreateEnv()
 	_G.goluwa = goluwa
 
-	concommand.Add("goluwa", function(ply, cmd, args, line)
-		goluwa.env.commands.RunString(line, false, false, true)
+	timer.Simple(2, function()
+		if GetConVar("sv_allowcslua"):GetBool() or LocalPlayer():IsAdmin() then
+			concommand.Add("goluwa", function(ply, cmd, args, line)
+				goluwa.env.commands.RunString(line, false, false, true)
+			end)
+
+			if file.Exists("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD") then
+				RunString(file.Read("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD"))
+			end
+		end
 	end)
 
 	notagain.loaded_libraries.goluwa = goluwa
