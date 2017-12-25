@@ -1787,14 +1787,14 @@ function goluwa.Initialize()
 		notagain.AutorunDirectory("goluwa")
 		dprint("initializing goluwa took " .. (SysTime() - time) .. " seconds")
 
-		if GetConVar("sv_allowcslua"):GetBool() or LocalPlayer():IsAdmin() then
-			concommand.Add("goluwa", function(ply, cmd, args, line)
+		concommand.Add("goluwa", function(ply, cmd, args, line)
+			if GetConVar("sv_allowcslua"):GetBool() or LocalPlayer():IsAdmin() then
 				goluwa.env.commands.RunString(line, false, false, true)
-			end)
-
-			if file.Exists("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD") then
-				RunString(file.Read("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD"))
 			end
+		end)
+
+		if file.Exists("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD") then
+			RunString(file.Read("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD"))
 		end
 
 		hook.Remove("Think", "goluwa_init")
