@@ -1793,7 +1793,7 @@ function goluwa.Initialize()
 			end
 		end)
 
-		if file.Exists("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD") then
+		if file.Exists("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD") and not render3d then
 			RunString(file.Read("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD"))
 		end
 
