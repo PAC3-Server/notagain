@@ -11,7 +11,9 @@ function aowl.SetFriend(a, b, is_friend)
 		is_friend = -1
 	end
 
-	a:SetNW2Int("friends_set_override_" .. b:UniqueID(), is_friend)
+	local uid = b:IsPlayer() and b:UniqueID() or b:EntIndex()
+
+	a:SetNW2Int("friends_set_override_" .. uid, is_friend)
 
 	if CPPI then
 		hook.Run("CPPIFriendsChanged", ply, {b})
@@ -19,7 +21,9 @@ function aowl.SetFriend(a, b, is_friend)
 end
 
 function aowl.GetFriend(a, b)
-	local num = a:GetNW2Int("friends_set_override_" .. b:UniqueID(), -1)
+	local uid = b:IsPlayer() and b:UniqueID() or b:EntIndex()
+
+	local num = a:GetNW2Int("friends_set_override_" .. uid, -1)
 
 	if num == 1 then
 		return true
@@ -27,7 +31,7 @@ function aowl.GetFriend(a, b)
 		return false
 	end
 
-	return a:GetNW2Bool("friends_set_" .. b:UniqueID(), false)
+	return a:GetNW2Bool("friends_set_" .. uid, false)
 end
 
 function META:IsFriend(ply)
