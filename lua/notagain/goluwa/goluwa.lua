@@ -1036,6 +1036,7 @@ function goluwa.CreateEnv()
 	end
 
 	env.profiler = env.runfile("engine/lua/libraries/profiler.lua")
+	env.runfile("engine/lua/libraries/extensions/profiler.lua")
 	env.P = env.profiler.ToggleTimer
 	env.I = env.profiler.ToggleInstrumental
 	env.S = env.profiler.ToggleStatistical
