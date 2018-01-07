@@ -162,7 +162,7 @@ local player_line = {
 			if num == MOUSE_RIGHT then
 
 				self.Menu = vgui.Create("DMenu")
-				self.Menu:SetPos(gui.MouseX,gui.MouseY)
+				self.Menu:SetPos(gui.MouseX(),gui.MouseY())
 				self.Menu:SetAutoDelete(true)
 
 				if aowl then
