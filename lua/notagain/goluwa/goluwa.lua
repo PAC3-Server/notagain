@@ -84,7 +84,7 @@ local function download_paths(paths, cb)
 	end
 end
 function goluwa.Update(cb)
-	local prev_commit = file.Read("goluwa/prev_commit.txt", "DATA")
+	local prev_commit = file.Read("goluwa/previous_commit.txt", "DATA")
 
 	if
 		not prev_commit or
@@ -114,7 +114,7 @@ function goluwa.Update(cb)
 
 				local head = body:match('^.-"sha":%s-"(.-)"')
 				dprint("last commit is: " .. head)
-				file.Write("goluwa/prev_commit.txt", head)
+				file.Write("goluwa/previous_commit.txt", head)
 			end)
 
 			local paths = {}
@@ -150,7 +150,7 @@ function goluwa.Update(cb)
 				end
 
 				head = body:match('^.-"sha":%s-"(.-)"')
-				file.Write("goluwa/prev_commit.txt", head)
+				file.Write("goluwa/previous_commit.txt", head)
 
 				if head == prev_commit then
 					dprint("everything is already up to date")
