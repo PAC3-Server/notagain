@@ -1,6 +1,7 @@
 local msgpack = requirex("msgpack")
 local prettytext = CLIENT and requirex("pretty_text")
 local common_audio = CLIENT and requirex("common_audio")
+local unzip = CLIENT and requirex("unzip")
 
 AddCSLuaFile()
 
@@ -12,180 +13,103 @@ local function dprint(...)
 	print("goluwa: ", ...)
 end
 
-local next_print = 0
+do
+	local function delete_directory(dir)
+		local files, folders = file.Find(dir .. "*", "DATA")
 
-local function download_path(path, cb)
-	do -- create directories
-		local done = {}
-		local dir = (path:match("(.+)/.-%.lua") or path)
-		if not dir:EndsWith("/") then
-			dir = dir .. "/"
+		for k,v in ipairs(files) do
+			file.Delete(dir .. v)
 		end
-		if not done[dir] then
-			local folder_path = ""
-			for folder in dir:gmatch("(.-/)") do
-				folder_path = folder_path .. folder
-				if not done[folder_path] then
-					file.CreateDir("goluwa/goluwa/" .. folder_path)
-					done[folder_path] = true
-				end
-			end
-			done[dir] = true
+
+		for k,v in ipairs(folders) do
+			delete_directory(dir .. v .. "/")
+		end
+
+		if not file.Find(dir .. "*", "DATA")[0] then
+			file.Delete(dir)
 		end
 	end
 
-	local function download(lua, _,_, code)
-		if code == 200 then
-			file.Write("goluwa/goluwa/" .. path:gsub("%.", "^") .. ".txt", lua)
-			cb()
-		else
-			dprint(lua)
-			dprint(path .. " failed to download with error code: " .. code)
-
-			if code == 503 then
-				dprint("trying " .. path .. " again because it timed out")
-				http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, download)
-			end
-		end
-	end
-
-	http.Fetch("https://raw.githubusercontent.com/CapsAdmin/goluwa/master/" .. path, download)
-end
-
-local function download_paths(paths, cb)
-	local count = table.Count(paths)
-
-	if count == 0 then
-		cb()
-		return
-	end
-
-	local left = count
-
-	dprint("downloading " .. count .. " files")
-
-	if count < 10 then
-		for path in pairs(paths) do
-			print(path)
-		end
-	end
-
-	for path in pairs(paths) do
-		download_path(path, function()
-			left = left - 1
-			if left == 0 then
-				dprint("finished downloading all files")
-				cb()
-			elseif next_print < RealTime() then
-				dprint(left .. " files left")
-				next_print = RealTime() + 0.5
-			end
-		end)
-	end
-end
-function goluwa.Update(cb)
-	local prev_commit = file.Read("goluwa/previous_commit.txt", "DATA")
-
-	if
-		not prev_commit or
-		not file.IsDir("goluwa/", "DATA") or
-		not file.IsDir("goluwa/goluwa", "DATA") or
-		not file.IsDir("goluwa/goluwa/core", "DATA") or
-		not file.Exists("goluwa/goluwa/github_recursive.txt", "DATA")
-	then
-		http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/git/trees/master?recursive=1", function(body, _,_, code)
+	local function redownload(tag, cb)
+		tag = tag or "master"
+		http.Fetch("https://gitlab.com/CapsAdmin/goluwa/repository/" .. tag .. "/archive.zip", function(data, _, _, code)
 			if code ~= 200 then
-				ErrorNoHalt("goluwa: " .. body)
+				ErrorNoHalt("goluwa: " .. data)
 				return
 			end
 
-			file.CreateDir("goluwa/")
-			file.CreateDir("goluwa/goluwa/")
+			file.Write("goluwa_zip.dat", data)
 
-			file.Write("goluwa/goluwa/github_recursive.txt", body)
+			delete_directory("goluwa/goluwa/")
 
-			dprint("downloading files for first time")
+			local done = {}
 
-			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits", function(body, _,_, code)
-				if code ~= 200 then
-					ErrorNoHalt("goluwa: " .. body)
-					return
-				end
+			for i,v in ipairs(unzip("goluwa_zip.dat")) do
+				local path = v.file_name:match(".-/(.+)")
+				if path and path:EndsWith(".lua") then
 
-				local head = body:match('^.-"sha":%s-"(.-)"')
-				dprint("last commit is: " .. head)
-				file.Write("goluwa/previous_commit.txt", head)
-			end)
+					local dir = (path:match("(.+)/.-%.lua") or path)
+					if not dir:EndsWith("/") then
+						dir = dir .. "/"
+					end
+					if not done[dir] then
+						local folder_path = ""
+						for folder in dir:gmatch("(.-/)") do
+							folder_path = folder_path .. folder
+							if not done[folder_path] then
+								file.CreateDir("goluwa/goluwa/" .. folder_path)
+								done[folder_path] = true
+							end
+						end
+						done[dir] = true
+					end
 
-			local paths = {}
-
-			for path in body:gmatch('"path":%s-"(.-/lua/libraries/.-)"') do
-				if path:EndsWith(".lua") then
-					paths[path] = path
+					file.Write("goluwa/goluwa/" .. path:gsub("%.", "^") .. ".txt", v.file_content)
 				end
 			end
 
-			download_paths(paths, cb)
+			file.Delete("goluwa_zip.dat")
+
+			cb()
 		end)
-	else
-		local tbl = util.JSONToTable(file.Read("goluwa/goluwa/github_recursive.txt", "DATA"))
-		local paths = {}
+	end
 
-		for _, info in pairs(tbl.tree) do
-			if info.path:find("lua/libraries/", nil, true) then
-				if info.path:EndsWith(".lua") and not file.Exists("goluwa/goluwa/" .. info.path:gsub("%.", "^") .. ".txt", "DATA") then
-					paths[info.path] = info.path
-					dprint("downloading " .. info.path .. " becasue it's missing")
-				end
+	function goluwa.Update(cb)
+		http.Fetch("https://gitlab.com/api/v4/projects/CapsAdmin%2Fgoluwa/repository/tags", function(data, _, _, code)
+			if code ~= 200 then
+				ErrorNoHalt("goluwa: " .. data)
+				return
 			end
-		end
 
-		download_paths(paths, function()
-			local head = ""
-			http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/commits/HEAD", function(body, _,_, code)
-				if code ~= 200 then
-					dprint(body)
+			local tags = util.JSONToTable(data)
+			local tag = tags and tags[1]
+
+			if tag then
+				if file.Read("goluwa/update_id.txt", "DATA") == tag.commit.id then
 					cb()
-					return
+				else
+					dprint("release tag id is different, redownloading")
+					redownload(tag.commit.id, cb)
 				end
-
-				head = body:match('^.-"sha":%s-"(.-)"')
-				file.Write("goluwa/previous_commit.txt", head)
-
-				if head == prev_commit then
-					dprint("everything is already up to date")
-					cb()
-					return
-				end
-
-
-				http.Fetch("https://api.github.com/repos/CapsAdmin/goluwa/compare/" .. prev_commit .. "..." .. head, function(body, _,_, code)
+				file.Write("goluwa/update_id.txt", tag.commit.id)
+			else
+				dprint("no release tag found, assume rolling release")
+				http.Fetch("https://gitlab.com/api/v4/projects/CapsAdmin%2Fgoluwa/repository/commits", function(data, _, _, code)
 					if code ~= 200 then
-						dprint(body)
-						cb()
+						ErrorNoHalt("goluwa: " .. data)
 						return
 					end
 
-					local tbl = util.JSONToTable(body)
+					local commits = util.JSONToTable(data)
 
-					local paths = {}
-
-					for _, info in pairs(tbl.files) do
-						if info.filename:find("lua/libraries/", nil, true) then
-							if info.status == "modified" or info.status == "added" then
-								paths[info.filename] = info.filename
-								dprint(info.filename .. " was modified")
-							elseif info.status == "renamed" then
-								dprint(info.previous_filename .. " was renamed to " .. info.filename)
-
-								file.Delete("goluwa/goluwa/" .. info.previous_filename:gsub("%.", "^") .. ".txt")
-							end
-						end
+					if file.Read("goluwa/update_id.txt") == commits[1].id then
+						cb()
+					else
+						dprint("last commit is different, redownloading")
+						redownload("master", cb)
 					end
-
-					download_paths(paths, cb)
 				end)
-			end)
+			end
 		end)
 	end
 end
