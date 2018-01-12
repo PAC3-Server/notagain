@@ -1,4 +1,4 @@
-if game.SinglePlayer() then return end
+if not game.IsDedicated() then return end
 
 local restarting = false
 local try_restart = false
