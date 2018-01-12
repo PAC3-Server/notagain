@@ -956,6 +956,10 @@ function goluwa.CreateEnv()
 			return xpcall(func, system.OnError, ...)
 		end
 
+		function system.GetFFIBuildLibrary()
+			return false
+		end
+
 		env.system = system
 	end
 
