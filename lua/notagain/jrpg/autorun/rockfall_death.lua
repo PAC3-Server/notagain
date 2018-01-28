@@ -30,70 +30,72 @@ if CLIENT then
 				local life_time = 2
 
 				local ent = ents.CreateClientProp()
-				SafeRemoveEntityDelayed(ent, life_time)
+				if ent:IsValid() then
+					SafeRemoveEntityDelayed(ent, life_time)
 
-				local time = RealTime()
-				local s
-				local rand = math.random() * 500
-				ent.RenderOverride = function()
-					--s = s or ent:GetPos()
-					s = s or ent:GetModelScale()
-					local fade = RealTime() - time
-					fade = math.Clamp((-fade + life_time) / life_time, 0, 1)
+					local time = RealTime()
+					local s
+					local rand = math.random() * 500
+					ent.RenderOverride = function()
+						--s = s or ent:GetPos()
+						s = s or ent:GetModelScale()
+						local fade = RealTime() - time
+						fade = math.Clamp((-fade + life_time) / life_time, 0, 1)
 
-					local scale = (math.min((fade ^ 0.5) + 0.5, 1) - 0.5)
+						local scale = (math.min((fade ^ 0.5) + 0.5, 1) - 0.5)
 
-					ent:SetModelScale(scale * s)
+						ent:SetModelScale(scale * s)
 
-					--s = s + normal * FrameTime() * ((-fade+1) ^ 10) * -(500 + rand)
-					--ent:SetPos(s)
-					ent:DrawModel()
+						--s = s + normal * FrameTime() * ((-fade+1) ^ 10) * -(500 + rand)
+						--ent:SetPos(s)
+						ent:DrawModel()
+					end
+
+					ent:SetModel(table.Random(rocks))
+
+					if math.random() > 0.7 then
+						ent:SetPos(trace.HitPos)
+						ent:SetAngles(trace.HitNormal:Angle() )
+
+						ent:SetModelScale(scale * math.Rand(0.3, 0.5)/2)
+						ent:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+						ent:PhysicsInitBox(Vector(1,1,1) * -5*scale, Vector(1,1,1) * 5*scale)
+
+						local phys = ent:GetPhysicsObject()
+						phys:Wake()
+						phys:AddVelocity((normal*2 + VectorRand()) * 100 * scale)
+						phys:AddAngleVelocity(VectorRand()*200)
+						phys:SetMaterial("default_silent")
+					else
+						ent:SetAngles((trace.HitPos - origin):AngleEx(Vector(0,1,0)))
+						ent:SetModelScale((math.Rand(0.25, 1) + (offset:Length()/200)) * scale * 0.35)
+						ent:SetPos(trace.HitPos)
+					end
+
+					local trace_check = trace.Hit and trace.HitTexture ~= "**empty**" -- Check if we're actually hitting a texture that exists.
+					local color = Vector(0,0,0)
+
+					if trace_check then
+						color = render.GetSurfaceColor(trace.HitPos + normal, trace.HitPos + (normal * -100))
+					end
+
+					ent:SetColor(Color(color.x*255, color.y*255, color.z*255))
+
+					local p = emitter:Add("particle/smokesprites_000" .. math.random(1,6), trace.HitPos)
+					local s = math.Rand(70,130)
+					p:SetStartSize(s)
+					p:SetEndSize(s)
+					p:SetStartAlpha(math.random(100,200))
+					p:SetEndAlpha(0)
+					--p:SetLighting(true)
+					p:SetVelocity(VectorRand()*100)
+					--p:SetGravity(physenv.GetGravity()*0.05)
+					p:SetRoll(math.random()*360)
+					p:SetAirResistance(50)
+					p:SetLifeTime(1)
+					p:SetDieTime(math.Rand(2,5))
+					p:SetColor(color.x*255, color.y*255, color.z*255)
 				end
-
-				ent:SetModel(table.Random(rocks))
-
-				if math.random() > 0.7 then
-					ent:SetPos(trace.HitPos)
-					ent:SetAngles(trace.HitNormal:Angle() )
-
-					ent:SetModelScale(scale * math.Rand(0.3, 0.5)/2)
-					ent:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
-					ent:PhysicsInitBox(Vector(1,1,1) * -5*scale, Vector(1,1,1) * 5*scale)
-
-					local phys = ent:GetPhysicsObject()
-					phys:Wake()
-					phys:AddVelocity((normal*2 + VectorRand()) * 100 * scale)
-					phys:AddAngleVelocity(VectorRand()*200)
-					phys:SetMaterial("default_silent")
-				else
-					ent:SetAngles((trace.HitPos - origin):AngleEx(Vector(0,1,0)))
-					ent:SetModelScale((math.Rand(0.25, 1) + (offset:Length()/200)) * scale * 0.35)
-					ent:SetPos(trace.HitPos)
-				end
-
-				local trace_check = trace.Hit and trace.HitTexture ~= "**empty**" -- Check if we're actually hitting a texture that exists.
-				local color = Vector(0,0,0)
-
-				if trace_check then 
-					color = render.GetSurfaceColor(trace.HitPos + normal, trace.HitPos + (normal * -100))
-				end
-				
-				ent:SetColor(Color(color.x*255, color.y*255, color.z*255))
-
-				local p = emitter:Add("particle/smokesprites_000" .. math.random(1,6), trace.HitPos)
-				local s = math.Rand(70,130)
-				p:SetStartSize(s)
-				p:SetEndSize(s)
-				p:SetStartAlpha(math.random(100,200))
-				p:SetEndAlpha(0)
-				--p:SetLighting(true)
-				p:SetVelocity(VectorRand()*100)
-				--p:SetGravity(physenv.GetGravity()*0.05)
-				p:SetRoll(math.random()*360)
-				p:SetAirResistance(50)
-				p:SetLifeTime(1)
-				p:SetDieTime(math.Rand(2,5))
-				p:SetColor(color.x*255, color.y*255, color.z*255)
 			end
 		end
 

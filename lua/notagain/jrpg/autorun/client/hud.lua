@@ -242,9 +242,14 @@ hook.Add("HUDPaint", "jhud", function()
 			render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
 		end
 
-		surface.SetMaterial(background_wing)
-		surface.SetDrawColor(255,255,255,255)
-		surface.DrawTexturedRect(x-130*S,y-150*S,background_wing:GetInt("$realwidth")*S,background_wing:GetInt("$realheight")*S)
+		do
+			local w, h = background_wing:GetInt("$realwidth"), background_wing:GetInt("$realheight")
+			if w and h then
+				surface.SetMaterial(background_wing)
+				surface.SetDrawColor(255,255,255,255)
+				surface.DrawTexturedRect(x-130*S,y-150*S,w*S,h*S)
+			end
+		end
 
 
 		if true then

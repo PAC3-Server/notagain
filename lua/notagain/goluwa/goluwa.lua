@@ -1565,6 +1565,10 @@ function goluwa.CreateEnv()
 					return obj, self:GetTextSize(str)
 				end
 
+				function obj:GetName()
+					return options.font
+				end
+
 				return obj
 			end
 
