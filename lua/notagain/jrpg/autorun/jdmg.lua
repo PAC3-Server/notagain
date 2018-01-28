@@ -389,67 +389,69 @@ do
 					local life_time = 2
 
 					local feather = ents.CreateClientProp()
-					SafeRemoveEntityDelayed(feather, life_time)
+					if feather:IsValid() then
+						SafeRemoveEntityDelayed(feather, life_time)
 
-					feather:SetModel("models/pac/default.mdl")
-					feather:SetPos(ent:GetPos() + (VectorRand()*size))
-					feather:SetAngles(VectorRand():Angle())
-					feather:SetModelScale(size)
+						feather:SetModel("models/pac/default.mdl")
+						feather:SetPos(ent:GetPos() + (VectorRand()*size))
+						feather:SetAngles(VectorRand():Angle())
+						feather:SetModelScale(size)
 
-					feather:SetRenderMode(RENDERMODE_TRANSADD)
+						feather:SetRenderMode(RENDERMODE_TRANSADD)
 
-					feather.life_time = RealTime() + life_time
-					feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
-					feather:PhysicsInitSphere(5)
-					local phys = feather:GetPhysicsObject()
-					phys:Wake()
-					phys:EnableGravity(false)
-					phys:AddVelocity(VectorRand()*20)
-					phys:AddAngleVelocity(VectorRand()*20)
+						feather.life_time = RealTime() + life_time
+						feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+						feather:PhysicsInitSphere(5)
+						local phys = feather:GetPhysicsObject()
+						phys:Wake()
+						phys:EnableGravity(false)
+						phys:AddVelocity(VectorRand()*20)
+						phys:AddAngleVelocity(VectorRand()*20)
 
-					local m = Matrix()
-					m:Translate(Vector(0,20,0)*size)
-					m:Scale(Vector(1,1,1))
-					feather:EnableMatrix("RenderMultiply", m)
+						local m = Matrix()
+						m:Translate(Vector(0,20,0)*size)
+						m:Scale(Vector(1,1,1))
+						feather:EnableMatrix("RenderMultiply", m)
 
-					feather.RenderOverride = function()
-						local f = (feather.life_time - RealTime()) / 2
-						if f <= 0 then return end
-						local f2 = math.sin((-f+1)*math.pi)
+						feather.RenderOverride = function()
+							local f = (feather.life_time - RealTime()) / 2
+							if f <= 0 then return end
+							local f2 = math.sin((-f+1)*math.pi)
 
 
-						render.SuppressEngineLighting(true)
-						render.SetColorModulation(color.r/200, color.g/200, color.b/200)
-						render.SetBlend(f2)
+							render.SuppressEngineLighting(true)
+							render.SetColorModulation(color.r/200, color.g/200, color.b/200)
+							render.SetBlend(f2)
 
-						render.MaterialOverride(feather_mat)
-						render.SetMaterial(feather_mat)
-						render.CullMode(MATERIAL_CULLMODE_CW)
-						feather:DrawModel()
-						render.CullMode(MATERIAL_CULLMODE_CCW)
-						feather:DrawModel()
-						render.MaterialOverride()
-						render.SuppressEngineLighting(false)
+							render.MaterialOverride(feather_mat)
+							render.SetMaterial(feather_mat)
+							render.CullMode(MATERIAL_CULLMODE_CW)
+							feather:DrawModel()
+							render.CullMode(MATERIAL_CULLMODE_CCW)
+							feather:DrawModel()
+							render.MaterialOverride()
+							render.SuppressEngineLighting(false)
+
+							local phys = feather:GetPhysicsObject()
+							phys:AddVelocity(Vector(0,0,-FrameTime()*100)*size)
+
+							local vel = phys:GetVelocity()
+
+							if vel.z < 0 then
+								local delta= FrameTime()*2
+								phys:AddVelocity(Vector(-vel.x*delta,-vel.y*delta,-vel.z*delta*2)*size)
+							end
+						end
+
+						feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+						feather:PhysicsInitSphere(5)
 
 						local phys = feather:GetPhysicsObject()
-						phys:AddVelocity(Vector(0,0,-FrameTime()*100)*size)
-
-						local vel = phys:GetVelocity()
-
-						if vel.z < 0 then
-							local delta= FrameTime()*2
-							phys:AddVelocity(Vector(-vel.x*delta,-vel.y*delta,-vel.z*delta*2)*size)
-						end
+						phys:EnableGravity(false)
+						phys:AddVelocity(Vector(math.Rand(-1, 1), math.Rand(-1, 1), math.Rand(1, 2))*20*size)
+						phys:AddAngleVelocity(VectorRand()*50)
+						feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
 					end
-
-					feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
-					feather:PhysicsInitSphere(5)
-
-					local phys = feather:GetPhysicsObject()
-					phys:EnableGravity(false)
-					phys:AddVelocity(Vector(math.Rand(-1, 1), math.Rand(-1, 1), math.Rand(1, 2))*20*size)
-					phys:AddAngleVelocity(VectorRand()*50)
-					feather:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
 
 					ent.next_emit = RealTime() + math.random()*0.25
 				end
@@ -1015,47 +1017,48 @@ do
 					local life_time = 2
 
 					local ice = ents.CreateClientProp()
-					SafeRemoveEntityDelayed(ice, life_time)
+					if ice:IsValid() then
+						SafeRemoveEntityDelayed(ice, life_time)
 
-					ice:SetModel(table.Random(rocks))
+						ice:SetModel(table.Random(rocks))
 
-					ice:SetPos(ent:GetPos())
-					ice:SetAngles(VectorRand():Angle())
-					ice:SetModelScale(math.Rand(0.1, 0.2)*0.3)
+						ice:SetPos(ent:GetPos())
+						ice:SetAngles(VectorRand():Angle())
+						ice:SetModelScale(math.Rand(0.1, 0.2)*0.3)
 
-					ice:SetRenderMode(RENDERMODE_TRANSADD)
+						ice:SetRenderMode(RENDERMODE_TRANSADD)
 
-					ice.life_time = RealTime() + life_time
-					ice:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
-					ice:PhysicsInitSphere(5)
-					local phys = ice:GetPhysicsObject()
-					phys:Wake()
-					phys:EnableGravity(false)
-					phys:AddVelocity(VectorRand()*20)
-					phys:AddAngleVelocity(VectorRand()*20)
-
-					ice.RenderOverride = function()
-
-						local f = (ice.life_time - RealTime()) / life_time
-						local f2 = math.sin(f*math.pi) ^ 0.5
-
-						local c = Vector(color.r/255, color.g/255, color.b/255)*5*(f2^0.5)
-						ice_mat:SetVector("$CloakColorTint", c)
-						ice_mat:SetFloat("$CloakFactor", 0.5*(f2))
-						ice_mat:SetFloat("$RefractAmount", -f+1)
-
-						render.MaterialOverride(ice_mat)
-							render.SetBlend(f2)
-								render.SetColorModulation(c.x, c.y, c.z)
-									ice:DrawModel()
-								render.SetColorModulation(1,1,1)
-							render.SetBlend(1)
-						render.MaterialOverride()
-
+						ice.life_time = RealTime() + life_time
+						ice:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
+						ice:PhysicsInitSphere(5)
 						local phys = ice:GetPhysicsObject()
-						phys:AddVelocity(phys:GetVelocity()*-FrameTime()*2 + Vector(0,0,-FrameTime()*(-f+1)*30))
-					end
+						phys:Wake()
+						phys:EnableGravity(false)
+						phys:AddVelocity(VectorRand()*20)
+						phys:AddAngleVelocity(VectorRand()*20)
 
+						ice.RenderOverride = function()
+
+							local f = (ice.life_time - RealTime()) / life_time
+							local f2 = math.sin(f*math.pi) ^ 0.5
+
+							local c = Vector(color.r/255, color.g/255, color.b/255)*5*(f2^0.5)
+							ice_mat:SetVector("$CloakColorTint", c)
+							ice_mat:SetFloat("$CloakFactor", 0.5*(f2))
+							ice_mat:SetFloat("$RefractAmount", -f+1)
+
+							render.MaterialOverride(ice_mat)
+								render.SetBlend(f2)
+									render.SetColorModulation(c.x, c.y, c.z)
+										ice:DrawModel()
+									render.SetColorModulation(1,1,1)
+								render.SetBlend(1)
+							render.MaterialOverride()
+
+							local phys = ice:GetPhysicsObject()
+							phys:AddVelocity(phys:GetVelocity()*-FrameTime()*2 + Vector(0,0,-FrameTime()*(-f+1)*30))
+						end
+					end
 					ent.next_emit = RealTime() + 0.02
 				end
 			end
