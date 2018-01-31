@@ -181,7 +181,7 @@ end
 if CLIENT then
 	net.Receive(SWEP.ClassName, function()
 		local wep = net.ReadEntity()
-		if not wep:IsValid() then return end
+		if not wep:IsValid() or not wep.Attack then return end
 		local light = net.ReadBool()
 		local delay = net.ReadFloat()
 		wep:Attack(light and "light" or "heavy")
