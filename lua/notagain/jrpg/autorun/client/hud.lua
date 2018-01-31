@@ -400,9 +400,14 @@ hook.Add("HUDPaint", "jhud", function()
 	surface.DisableClipping(false)
 	render.SetStencilEnable(false)
 
-	surface.SetMaterial(foreground_line)
-	surface.SetDrawColor(255,255,255,255)
-	surface.DrawTexturedRect(x-90*S,y+65*S,foreground_line:GetInt("$realwidth")*S,foreground_line:GetInt("$realheight")*S)
+	do
+		local w, h = foreground_line:GetInt("$realwidth"), foreground_line:GetInt("$realheight")
+		if w and h then
+			surface.SetMaterial(foreground_line)
+			surface.SetDrawColor(255,255,255,255)
+			surface.DrawTexturedRect(x-90*S,y+65*S,w*S,h*S)
+		end
+	end
 
 	local i = 0
 
