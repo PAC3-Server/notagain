@@ -1,3 +1,5 @@
+if engine.ActiveGamemode() ~= "sandbox" then return end
+
 -- Original cl_godmode: https://github.com/PAC3-Server/notagain/commit/8b141b0760c620045593701f89869f289b985e0b
 
 local help = [[(o)ff = disable, (a)ll = godmode, (w)orld = no world damage, (e)nemy = no non-friend damage, (f)riend = no friend damage, (n)pc = no npc damage, (s)elf = no self damage

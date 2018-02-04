@@ -1,4 +1,5 @@
 if not game.IsDedicated() then return end
+if engine.ActiveGamemode() ~= "sandbox" then return end
 
 local restarting = false
 local try_restart = false
