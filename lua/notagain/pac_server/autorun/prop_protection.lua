@@ -1,3 +1,5 @@
+if engine.ActiveGamemode() ~= "sandbox" then return end
+
 proptect = {}
 proptect.Version = 1.7
 

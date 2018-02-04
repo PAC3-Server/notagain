@@ -1,3 +1,5 @@
+if engine.ActiveGamemode() ~= "sandbox" then return end
+
 local tag = "groundSit"
 
 if SERVER then

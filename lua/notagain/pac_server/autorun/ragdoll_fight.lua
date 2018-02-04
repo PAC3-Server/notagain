@@ -1,3 +1,5 @@
+if engine.ActiveGamemode() ~= "sandbox" then return end
+
 AddCSLuaFile()
 
 for i = 1, 2 do

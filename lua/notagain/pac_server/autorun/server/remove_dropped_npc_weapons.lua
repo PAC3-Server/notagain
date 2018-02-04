@@ -1,3 +1,5 @@
+if engine.ActiveGamemode() ~= "sandbox" then return end
+
 hook.Add("OnNPCKilled", "removed_dropped_npc_weapons", function(npc)
 	for _, ent in ipairs(ents.FindInSphere(npc:GetPos(), 200)) do
 		if ent:GetOwner() == npc and (ent:IsWeapon() or ent:GetClass():StartWith("item_")) then

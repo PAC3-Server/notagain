@@ -1,3 +1,5 @@
+if engine.ActiveGamemode() ~= "sandbox" then return end
+
 timer.Create("unlimited_ammo", 0.25, 0, function()
 	for _, ply in pairs(player.GetAll()) do
 		if ply.infammo == nil or ply.infammo then
