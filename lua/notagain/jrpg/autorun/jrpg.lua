@@ -113,8 +113,25 @@ function jrpg.IsActor(ent)
 	if ent:GetParent():IsPlayer() or ent:GetOwner():IsPlayer() then return false end
 	if ent:GetParent():IsNPC() or ent:GetOwner():IsNPC() then return false end
 
-	if ent:IsNPC() or ent:IsPlayer() or ent:GetBoneCount() > 1 then
-		return true
+	local bone_count = ent:GetBoneCount() or 0
+
+	if ent:IsNPC() or ent:IsPlayer() or bone_count > 1 then
+
+		local found = false
+
+		for i = 0, bone_count do
+			local name = ent:GetBoneName(i)
+			if name then
+				name = name:lower()
+
+				if name:find("head", nil, true) or name:find("neck", nil, true) then
+					found = true
+					break
+				end
+			end
+		end
+
+		return found
 	end
 
 	if ent:GetMaxHealth() > 1 then
@@ -187,7 +204,7 @@ function jrpg.FindHeadPos(ent)
 	if not ent.bc_head or ent.bc_last_mdl ~= ent:GetModel() then
 		for i = 0, ent:GetBoneCount() or 0 do
 			local name = ent:GetBoneName(i):lower()
-			if name:find("head") then
+			if name:find("head", nil, true) then
 				ent.bc_head = i
 				ent.bc_last_mdl = ent:GetModel()
 				break
