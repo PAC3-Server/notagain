@@ -189,8 +189,11 @@ hook.Add("Move", hook_key, function(ply, data)
 end)
 
 hook.Add("Initialize", hook_key, function()
-	function GAMEMODE:StartMove() end
-	function GAMEMODE:FinishMove() end
+
+	if engine.ActiveGamemode() == "sandbox" then
+		function GAMEMODE:StartMove() end
+		function GAMEMODE:FinishMove() end
+	end
 
 	if SERVER then
 		RunConsoleCommand("sv_airaccelerate", "1000000")
