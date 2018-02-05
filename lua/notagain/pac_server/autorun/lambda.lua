@@ -11,3 +11,13 @@ hook.Add("PlayerSpawn", "pac_server_lambda", function(ply)
 		end
 	end)
 end)
+
+if CLIENT then
+	GAMEMODE.OldShouldDrawCrosshair = GAMEMODE.OldShouldDrawCrosshair or GAMEMODE.ShouldDrawCrosshair
+	function GAMEMODE:ShouldDrawCrosshair()
+		if battlecam.IsEnabled() then
+			return false
+		end
+		return self:OldShouldDrawCrosshair()
+	end
+end
