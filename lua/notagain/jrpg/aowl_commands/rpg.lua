@@ -56,10 +56,3 @@ aowl.AddCommand("element", function(ply, _, ...)
 		end
 	end
 end)
-
-hook.Add("PlayerSpawn", "rpg_loadout", function(ply)
-	if not ply:GetNWBool("rpg") then return end
-	timer.Simple(0.1, function()
-		jrpg.Loadout(ply)
-	end)
-end)
