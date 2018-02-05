@@ -115,6 +115,8 @@ function chathud.Initialize()
 		markup:Draw()
 	end
 
+	EasyChat.ChatHUD.Frame:SetVisible(true) -- FIX ME
+
 	hookAdd("HUDPaint", "chathud", function()
 		if chathud.panel:IsVisible() and EasyChat.ChatHUD.Frame:IsVisible() then
 			surface.DisableClipping(true)
