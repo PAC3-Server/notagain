@@ -1,3 +1,5 @@
+if engine.ActiveGamemode() ~= "sandbox" then return end
+
 if CLIENT then
 	local hide_tabs = {
 		["#spawnmenu.category.dupes"] = true,
