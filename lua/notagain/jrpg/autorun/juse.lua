@@ -14,12 +14,29 @@ if SERVER then
 								if jrpg.IsFriend(ply, ent) then
 									val = ent
 								end
-							elseif name:find("button") or name:find("door") or name == "func_movelinear" or savetable.m_toggle_state or savetable.m_eDoorState then
+							elseif
+								name ~= "trigger_push" and
+								(
+									name:find("button") or
+									name:find("door") or
+									name == "func_movelinear" or
+									savetable.m_toggle_state or
+									savetable.m_eDoorState or
+									name == "item_healthcharger" or
+									name == "item_suitcharger"
+								)
+							then
 								val = ent
 							end
 
 							if val then
-								table.insert(found, {ent = val, dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())})
+								local dist = ent:NearestPoint(ply:EyePos()):Distance(ply:EyePos())
+								-- this means we're inside which can be confusing for invisible triggers
+								if dist == 0 then
+									dist = 9999
+								end
+
+								table.insert(found, {ent = val, dist = dist})
 							end
 						end
 					end
@@ -50,8 +67,6 @@ if SERVER then
 								text = "open"
 							end
 						else
-							button:Use(ply, ply, USE_TOGGLE, 1)
-							button:Use(ply, ply, USE_ON, 1)
 							text = "use"
 						end
 					end
@@ -66,7 +81,6 @@ if SERVER then
 		if key ~= IN_USE then return end
 		local button = ply:GetNWEntity("juse_ent")
 		if button:IsValid() then
-
 			local savetable = button:GetSaveTable()
 
 			if savetable.m_toggle_state then
@@ -98,6 +112,7 @@ if SERVER then
 
 	hook.Add("PlayerUse", "juse", function(ply, ent)
 		if ply:GetNWEntity("juse_ent") == ent then
+			if ent:GetClass() == "item_suitcharger" or ent:GetClass() == "item_healthcharger" then return end
 			return false
 		end
 	end)
@@ -137,6 +152,7 @@ if CLIENT then
 
 	hook.Add("HUDPaint", "juse", function()
 		if jtarget.GetEntity(LocalPlayer()):IsValid() then return end
+		if jchat.IsActive() then return end
 
 		local ent = LocalPlayer():GetNWEntity("juse_ent")
 
