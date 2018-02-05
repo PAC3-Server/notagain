@@ -148,11 +148,12 @@ if SERVER then
 			ply:SetHealth(ply:GetMaxHealth())
 			jattributes.SetMana(ply, jattributes.GetMaxMana(ply))
 			jattributes.SetStamina(ply, jattributes.GetMaxStamina(ply))
-			if gmod.GetGamemode().Name == "Sandbox" then
+
+			if engine.ActiveGamemode() == "sandbox" then
 				jrpg.Loadout(ply)
+				ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
+				ply:ChatPrint("RPG: Enabled")
 			end
-			ply:SendLua([[if battlecam and not battlecam.IsEnabled() then battlecam.Enable() end]])
-			ply:ChatPrint("RPG: Enabled")
 
 			if ply.SetSuperJumpMultiplier then
 				ply:SetSuperJumpMultiplier(1)
