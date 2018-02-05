@@ -1,7 +1,9 @@
 if engine.ActiveGamemode() ~= "lambda" then return end
 
 hook.Add("PlayerSpawn", "pac_server_lambda", function(ply)
-	jrpg.SetRPG(ply, true)
+	if SERVER then
+		jrpg.SetRPG(ply, true)
+	end
 
 	timer.Simple(0, function()
 		if ply:IsValid() then
