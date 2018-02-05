@@ -31,6 +31,15 @@ function jrpg.Loadout(ply)
 	ply:SelectWeapon("weapon_jsword_virtuouscontract")
 end
 
+if engine.ActiveGamemode() == "sandbox" then
+	hook.Add("PlayerSpawn", "rpg_loadout", function(ply)
+		if not ply:GetNWBool("rpg") then return end
+		timer.Simple(0.1, function()
+			jrpg.Loadout(ply)
+		end)
+	end)
+end
+
 do
 	local male_bbox = Vector(22.291288, 20.596443, 72.959808)
 	local female_bbox = Vector(21.857199, 20.744711, 71.528900)
