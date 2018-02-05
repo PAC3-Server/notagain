@@ -1,10 +1,20 @@
 if engine.ActiveGamemode() ~= "lambda" then return end
 
-local META = FindMetaTable("Player")
+timer.Simple(0, function()
+	local META = FindMetaTable("Player")
+	function META:SetSpectator() end
 
-function META:SetSpectator()
+	if CLIENT then
+		GAMEMODE.OldShouldDrawCrosshair = GAMEMODE.OldShouldDrawCrosshair or GAMEMODE.ShouldDrawCrosshair
 
-end
+		function GAMEMODE:ShouldDrawCrosshair()
+			if battlecam.IsEnabled() then
+				return false
+			end
+			return self:OldShouldDrawCrosshair()
+		end
+	end
+end)
 
 hook.Add("PlayerSpawn", "pac_server_lambda", function(ply)
 	if SERVER then
@@ -17,13 +27,3 @@ hook.Add("PlayerSpawn", "pac_server_lambda", function(ply)
 		end
 	end)
 end)
-
-if CLIENT then
-	GAMEMODE.OldShouldDrawCrosshair = GAMEMODE.OldShouldDrawCrosshair or GAMEMODE.ShouldDrawCrosshair
-	function GAMEMODE:ShouldDrawCrosshair()
-		if battlecam.IsEnabled() then
-			return false
-		end
-		return self:OldShouldDrawCrosshair()
-	end
-end
