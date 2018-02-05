@@ -1,3 +1,5 @@
+if engine.ActiveGamemode() ~= "sandbox" then return end
+
 local default = 1.5
 local hook_key = "bhop"
 
@@ -189,11 +191,8 @@ hook.Add("Move", hook_key, function(ply, data)
 end)
 
 hook.Add("Initialize", hook_key, function()
-
-	if engine.ActiveGamemode() == "sandbox" then
-		function GAMEMODE:StartMove() end
-		function GAMEMODE:FinishMove() end
-	end
+	function GAMEMODE:StartMove() end
+	function GAMEMODE:FinishMove() end
 
 	if SERVER then
 		RunConsoleCommand("sv_airaccelerate", "1000000")
