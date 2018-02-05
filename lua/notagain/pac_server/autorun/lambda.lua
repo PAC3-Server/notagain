@@ -1,5 +1,11 @@
 if engine.ActiveGamemode() ~= "lambda" then return end
 
+local META = FindMetaTable("Player")
+
+function META:SetSpectator()
+
+end
+
 hook.Add("PlayerSpawn", "pac_server_lambda", function(ply)
 	if SERVER then
 		jrpg.SetRPG(ply, true)
