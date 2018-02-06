@@ -144,6 +144,9 @@ local function TempColor(r,g,b,a)
 end
 
 hook.Add("HUDPaint", "jrpg_items", function()
+	local S = ScrW() / 1920
+	S = S * 0.9
+
 	for _, ent in ipairs(entities) do
 		if not ent:IsValid() then
 			remove_ent(ent)
@@ -153,10 +156,15 @@ hook.Add("HUDPaint", "jrpg_items", function()
 		if ent:GetMoveType() ~= MOVETYPE_VPHYSICS then continue end
 
 		local pos = ent:WorldSpaceCenter() + Vector(0,0,math.min(ent:BoundingRadius()*1.5, 20))
+		local wpos = pos
 		local dist = pos:Distance(EyePos())
 		pos = pos:ToScreen()
 		if pos.visible and dist < 200 then
-			surface.SetAlphaMultiplier((-(dist/200) + 1) ^ 0.25)
+			local dir = (wpos - EyePos()):GetNormal()
+			local alpha = math.Clamp(dir:Dot(EyeVector()) + 0.01, 0, 1)^10
+			alpha = alpha * (-(dist/200) + 1) ^ 0.25
+
+			if alpha < 0.001 then continue end
 
 			local color = get_color(ent)
 			color = color * 1.5
@@ -176,30 +184,33 @@ hook.Add("HUDPaint", "jrpg_items", function()
 				name = name:Replace("CLASSNAME", class_name)
 			end
 
-			local w,h = prettytext.GetTextSize(name, "Square721 BT",40, 800, 5)
-			local bg_width = w + 100
-			surface.SetDrawColor(0,0,0,200)
+			local border = 6*S
+
+			local w,h = prettytext.GetTextSize(name, "Square721 BT",40*S, 800, 5)
+			local bg_width = w + 100*S
+			surface.SetDrawColor(0,0,0,200*alpha)
 			surface.SetMaterial(gradient)
-			surface.DrawTexturedRect(pos.x - bg_width, pos.y, bg_width * 2, h)
+			surface.DrawTexturedRect(pos.x - bg_width, pos.y-border/2, bg_width * 2, h+border)
 
-			prettytext.Draw(name, pos.x - w / 2, pos.y, "Square721 BT",40, 800, 5, TempColor(color.r, color.g, color.b, 255), true)
+			prettytext.Draw(name, pos.x - w / 2, pos.y, "Square721 BT",40*S, 800, 5, TempColor(color.r, color.g, color.b, 255*alpha), true)
 
-			local border = 18
+			local border = 18*S
 			local x = pos.x
-			local y = pos.y + 40
+			local y = pos.y + 45*S
 			local key = input.LookupBinding("+use"):upper() or input.LookupBinding("+use")
 			local str = key .. "  TAKE"
-			local w,h = prettytext.GetTextSize(str, "Square721 BT",20, 800, 5)
-			local key_width = prettytext.GetTextSize(key or "E", "Square721 BT",20, 800, 5)
-			local bg_width = w + 100
+			local w,h = prettytext.GetTextSize(str, "Square721 BT",20*S, 800, 5)
+			local key_width = prettytext.GetTextSize(key or "E", "Square721 BT",20*S, 800, 5)
+			local bg_width = w + 100*S
 
-			surface.SetDrawColor(255,255,255,255)
-			draw.RoundedBox(4, x - 27 - border / 2, y + border / 2 - 8, border, border, TempColor(25,25,25,255))
-			prettytext.Draw(str, x - w / 2, y, "Square721 BT", 20, 800, 5)
+			surface.SetDrawColor(255,255,255,255*alpha)
+			draw.RoundedBox(4, x - 28*S - border / 2, y + border / 2 - 8 * S, border, border, TempColor(25,25,25,255*alpha))
+			prettytext.Draw(str, x - w / 2, y, "Square721 BT", 20*S, 800, 5, TempColor(255,255,255,255*alpha))
 
-			surface.SetDrawColor(0,0,0,200)
+			local border = 6*S
+			surface.SetDrawColor(0,0,0,200*alpha)
 			surface.SetMaterial(gradient)
-			surface.DrawTexturedRect(x - bg_width, y, bg_width * 2, h)
+			surface.DrawTexturedRect(x - bg_width, y+border/2 - 8*S/2, bg_width * 2, h+border)
 
 			surface.SetAlphaMultiplier(1)
 		end
