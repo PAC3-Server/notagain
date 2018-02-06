@@ -134,8 +134,8 @@ function jrpg.IsActor(ent)
 		return found
 	end
 
-	if ent:GetMaxHealth() > 1 then
-		return true
+	if ent:GetMaxHealth() < 1 then
+		return false
 	end
 
 	return false
