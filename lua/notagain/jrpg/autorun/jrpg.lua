@@ -113,9 +113,13 @@ function jrpg.IsActor(ent)
 	if ent:GetParent():IsPlayer() or ent:GetOwner():IsPlayer() then return false end
 	if ent:GetParent():IsNPC() or ent:GetOwner():IsNPC() then return false end
 
+	if ent:IsNPC() or ent:IsPlayer() then
+		return true
+	end
+
 	local bone_count = ent:GetBoneCount() or 0
 
-	if ent:IsNPC() or ent:IsPlayer() or bone_count > 1 then
+	if bone_count > 1 then
 
 		local found = false
 
@@ -123,7 +127,6 @@ function jrpg.IsActor(ent)
 			local name = ent:GetBoneName(i)
 			if name then
 				name = name:lower()
-
 				if name:find("head", nil, true) or name:find("neck", nil, true) then
 					found = true
 					break
