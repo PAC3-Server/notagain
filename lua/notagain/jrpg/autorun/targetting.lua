@@ -17,8 +17,8 @@ if CLIENT then
 				(not val.Alive or jrpg.IsAlive(val)) and
 				((val:IsPlayer() and val ~= ply) or (not val:IsPlayer() and jrpg.IsActor(val))) and
 				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
-				val ~= prev_target-- and
-				--not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
+				val ~= prev_target and
+				not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
 			then
 				local pos = jrpg.FindHeadPos(val)
 				pos.z = pos.z + 10
