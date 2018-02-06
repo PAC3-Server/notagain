@@ -231,7 +231,7 @@ function prettytext.DrawText(tbl)
 		end
 	end
 
-	surface_SetTextColor(background_color)
+	surface_SetTextColor(background_color.r, background_color.g, background_color.b, (background_color.a/255 * (foreground_color.a/255)^8)*170)
 
 	for _ = 1, tbl.blur_overdraw or 2 do
 		surface_SetTextPos(x, y)
