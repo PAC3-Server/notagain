@@ -413,15 +413,19 @@ do
 		end
 	end
 
-	local smooth_x = 0
-	local smooth_y = 0
+	local smooth_x
+	local smooth_y
 	local last_select = 0
 
 	function battlecam.InputMouseApply(ucmd, x, y, ang)
 		if not LocalPlayer():Alive() then return end
+		if x == 0 and y == 0 then smooth_x = nil smooth_y = nil return end
 
-		smooth_x = smooth_x + ((x - smooth_x) * FrameTime() * 10)
-		smooth_y = smooth_y + ((y - smooth_y) * FrameTime() * 10)
+		smooth_x = smooth_x or x
+		smooth_y = smooth_y or y
+
+		smooth_x = smooth_x + ((x - smooth_x) * FrameTime() * 20)
+		smooth_y = smooth_y + ((y - smooth_y) * FrameTime() * 20)
 
 		battlecam.cam_rotation_velocity.y = smooth_x / 100
 		battlecam.cam_rotation_velocity.x = smooth_y / 100
