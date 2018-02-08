@@ -149,6 +149,40 @@ local friendly_npcs = {
 	monster_barney = true,
 }
 
+function jrpg.GetRoomSize(pos, filter)
+	local is_player
+	if type(pos) == "Player" then
+		if jrpg.last_room_size_time and jrpg.last_room_size_time > RealTime() then
+			return jrpg.last_room_size or 30
+		end
+		filter = pos
+		pos = pos:EyePos()
+		is_player = true
+	end
+
+	local samples = 100
+	local t = {}
+	t.start = pos
+	t.filter = filter
+
+	local dist = 0
+
+	for i = 1, samples do
+		t.endpos = pos + VectorRand() * 1000
+		local res = util.TraceLine(t)
+		dist = dist + res.HitPos:Distance(pos)
+	end
+
+	dist = dist / samples
+
+	if is_player then
+		jrpg.last_room_size = dist
+		jrpg.last_room_size_time = RealTime() + 1
+	end
+
+	return dist
+end
+
 if CLIENT then
 	function jrpg.IsFriend(ent)
 		if ent:IsPlayer() and engine.ActiveGamemode() == "lambda" then
