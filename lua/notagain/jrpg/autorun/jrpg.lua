@@ -102,6 +102,7 @@ end
 
 local blacklist = {
 	["class C_HL2MPRagdoll"] = true,
+	["npc_furniture"] = true,
 }
 
 function jrpg.IsActor(ent)
