@@ -151,6 +151,10 @@ local friendly_npcs = {
 
 if CLIENT then
 	function jrpg.IsFriend(ent)
+		if ent:IsPlayer() and engine.ActiveGamemode() == "lambda" then
+			return true
+		end
+
 		return ent == LocalPlayer() or ent:IsPlayer() and (ent.CanAlter and (LocalPlayer():CanAlter(ent) and ent:CanAlter(LocalPlayer()))) or IsFriendEntityName(ent:GetClass()) or friendly_npcs[ent:GetClass()]
 	end
 end
