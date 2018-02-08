@@ -258,6 +258,8 @@ do -- view
 					end
 				end
 
+				local room_size = math.Clamp(math.Round(jrpg.GetRoomSize(ply)/50)*50, 50, 300)
+
 				if ent:IsValid() then
 					local enemy_size = math.min(ent:BoundingRadius() * (ent:GetModelScale() or 1), 200) + 50
 					local ply_pos = ply:EyePos()
@@ -301,7 +303,7 @@ do -- view
 					battlecam.active_target_dist = nil
 					battlecam.active_target_campos = nil
 
-					local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / 240 * (ply:GetModelScale() or 1)), 0, 1) ^ 10 - 0.05, 0)
+					local inside_sphere = math.max(math.Clamp((smooth_pos:Distance(ply:EyePos()) / room_size * (ply:GetModelScale() or 1)), 0, 1) ^ 10 - 0.05, 0)
 					target_pos = Lerp(inside_sphere, smooth_pos, ply:EyePos())
 
 					local cam_ang = smooth_dir:Angle()
@@ -310,8 +312,8 @@ do -- view
 					local right = cam_ang:Right() * FrameTime() * - battlecam.cam_rotation_velocity.y
 					local up = cam_ang:Up() * FrameTime() * battlecam.cam_rotation_velocity.x
 
-					smooth_pos = smooth_pos + right*1500 + up*1500
-					smooth_dir = smooth_dir - right*8 - up*8
+					smooth_pos = smooth_pos + right*room_size*4.5 + up*room_size*4.5
+					smooth_dir = smooth_dir - right*room_size/50 - up*room_size/50
 
 					do
 						local hack = math.min((battlecam.cam_pos * Vector(1,1,0)):Distance(ply:EyePos() * Vector(1,1,0)) / 300, 1) ^ 1.5
