@@ -1268,9 +1268,11 @@ do -- status
 end
 
 if CLIENT then
-	local active = {}
+	local low_health = jdmg.lowhealth_entities or {}
+	local active = jdmg.active_entities or {}
 
-	local aaaaa
+	jdmg.lowhealth_entities = low_health
+	jdmg.active_entities = active
 
 	local function render_jdmg()
 		cam.Start3D()
@@ -1317,10 +1319,59 @@ if CLIENT then
 		render.ModelMaterialOverride()
 		render.SetBlend(1)
 
+		cam.End3D()
+
 		if not active[1] then
 			hook.Remove("RenderScreenspaceEffects", "jdmg")
 		end
+	end
+
+	local lowhealth_mat = create_overlay_material("models/effects/portalfunnel2_sheet")
+
+	local function render_lowhealth()
+		cam.Start3D()
+
+		for i = #low_health, 1, -1 do
+			local ent = low_health[i]
+
+			if not ent:IsValid() then
+				table.remove(low_health, i)
+				break
+			end
+
+			local f = (ent:Health() / ent:GetMaxHealth())
+
+			if f > 0.25 or f <= 0 then
+				table.remove(low_health, i)
+				break
+			end
+
+			f = f*4
+			local rate = ((-f+1) * 10) + 1
+			print(rate)
+
+			local t = RealTime()*rate%1
+			t = -t + 1
+			t = t ^ 0.5
+			local s = t
+
+			render.SetColorModulation(s*4,s,s)
+			render.SetBlend(s)
+
+			draw_model(ent)
+
+		end
+
 		cam.End3D()
+
+		if not low_health[1] then
+			print("removing: ", ent)
+			hook.Remove("RenderScreenspaceEffects", "jdmg_lowhealth")
+		end
+	end
+
+	if low_health[1] then
+		hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", render_lowhealth)
 	end
 
 	function jdmg.DamageEffect(ent, type, duration, strength, pow)
@@ -1341,6 +1392,15 @@ if CLIENT then
 
 		if #active == 1 then
 			hook.Add("RenderScreenspaceEffects", "jdmg", render_jdmg)
+		end
+
+		if ent:IsValid() and ent.Health and ent:Health() / ent:GetMaxHealth() < 0.25 then
+			print("adding: ", ent)
+			table.insert(low_health, ent)
+
+			if low_health[1] then
+				hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", render_lowhealth)
+			end
 		end
 	end
 
@@ -1383,7 +1443,7 @@ if SERVER then
 			net.WriteVector(pos or vector_origin)
 		net.Broadcast()
 
-		if ent:IsNPC() and type ~= "heal" then
+		if type ~= "heal" and ent.AddGesture then
 			ent:AddGesture(ACT_GESTURE_FLINCH_BLAST)
 		end
 	end
