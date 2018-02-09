@@ -28,16 +28,12 @@ local function hook_error(cb)
 end
 
 if CLIENT then
-	local last_send = 0
 	hook_error(function(msg, traceback, stack)
-		if last_send > SysTime() then return end
-
-		net.Start("client_lua_error")
+		net.Start("client_lua_error", true)
 			net.WriteString(msg)
 			net.WriteString(traceback)
 			net.WriteTable(stack)
 		net.SendToServer()
-		last_send = SysTime() + 0.5
 	end)
 end
 
