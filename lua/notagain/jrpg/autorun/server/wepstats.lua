@@ -650,14 +650,14 @@ do -- effects
 			wepstats.Register(META)
 		end
 
-		local function basic_elemental(name, type, on_damage, adjectives, names, dont_copy)
+		function wepstats.AddBasicElemental(name, on_damage, adjectives, names, dont_copy)
 			local META = {}
 			META.ClassName = name
 			META.Positive = true
 			META.Chance = 0.5
 			META.Adjectives = adjectives
 			META.Names = names
-			META.Elemental = type
+			META.Elemental = true
 
 			function META:OnAttach()
 				self.Weapon:SetNWBool("wepstats_elemental", true)
@@ -670,10 +670,11 @@ do -- effects
 			end
 
 			function META:OnDamage(attacker, victim, dmginfo)
-				if type ~= JDMG_HEAL then
+				if name ~= "heal" then
 					dmginfo = self:CopyDamageInfo(dmginfo)
 				end
-				dmginfo:SetDamageCustom(type)
+
+				dmginfo:SetDamageCustom(jdmg.enums[name])
 				dmginfo:SetDamage(dmginfo:GetDamage() * self:GetStatusMultiplier())
 
 				if on_damage then
@@ -686,96 +687,7 @@ do -- effects
 			wepstats.Register(META)
 		end
 
-		basic_elemental("fire", JDMG_FIRE, function(self, attacker, victim)
-			victim:Ignite((self:GetStatusMultiplier()-1)*10, victim:BoundingRadius() * 2)
-		end, {"hot", "molten", "burning", "flaming"}, {"fire", "flames"})
-		basic_elemental("lightning", JDMG_LIGHTNING, function(self, attacker, victim, dmginfo)
-			jdmg.SetStatus(victim, "lightning", true)
 
-			local time = CurTime() + 5
-
-			local id = "poison_"..tostring(attacker)..tostring(victim)
-
-			timer.Create(id, 0.2, 0, function()
-				if not victim:IsValid() then
-					timer.Remove(id)
-					return
-				end
-
-				if victim.GetActiveWeapon then
-					local wep = victim:GetActiveWeapon()
-					if wep and wep:IsValid() then
-						wep:SetNextPrimaryFire(CurTime()+math.random())
-						wep:SetNextSecondaryFire(CurTime()+math.random())
-					end
-				end
-
-				if (not victim:IsPlayer() or not victim:Alive()) or time < CurTime() then
-					timer.Remove(id)
-					jdmg.SetStatus(victim, "lightning", false)
-				end
-			end)
-		end, {"shocking", "electrical", "electrifying"}, {"lightning", "thunder", "zeus"})
-		basic_elemental("dark", JDMG_DARK, nil, {"eerie", "ghastly", "cursed", "evil", "darkened", "haunted", "scary", "corrupt", "malicious", "unpleasant", "hateful", "wrathful", "ill"}, {"misery", "sin", "suffering", "darkness", "evil", "hades", "corruption", "heinousness"})
-		basic_elemental("holy", JDMG_HOLY, nil, {"angelic", "divine", "spiritual", "sublime", "celestial", "spirited"}, {"light", "holyness"})
-		basic_elemental("water", JDMG_WATER, nil, {"soggy", "doused", "soaked", "rainy", "misty", "wet"}, {"water", "rain", "aqua", "h2o"})
-		basic_elemental("wind", JDMG_WIND, nil, {"windy", "stormy", "gusty", "drafty", "airy", "windswept"}, {"wind", "ozone", "breath", "whiff"})
-		basic_elemental("heal", JDMG_HEAL, function(self, attacker, victim, dmginfo)
-			local amt = dmginfo:GetDamage(), victim:GetMaxHealth()
-			victim:SetHealth(math.min(victim:Health() + amt))
-			dmginfo:SetDamage(-amt)
-		end, {"healing", "curative", "medicinal"}, {"health", "wellbeing", "healthiness"})
-		basic_elemental("poison", JDMG_POISON, function(self, attacker, victim, dmginfo)
-			local dmg = dmginfo:GetDamage()
-			jdmg.SetStatus(victim, "poison", true)
-
-			local time = CurTime() + 5
-
-			local id = "poison_"..tostring(attacker)..tostring(victim)
-
-			timer.Create(id, 0.5, 0, function()
-				if not attacker:IsValid() or not victim:IsValid() then
-					timer.Remove(id)
-					return
-				end
-
-				local dmginfo = DamageInfo()
-				dmginfo:SetDamage(dmg * self:GetStatusMultiplier() * 0.2)
-				dmginfo:SetDamageCustom(JDMG_POISON)
-				dmginfo:SetDamagePosition(victim:WorldSpaceCenter())
-				dmginfo:SetAttacker(attacker)
-
-				self:TakeDamageInfo(victim, dmginfo)
-
-				if (not victim:IsPlayer() or not victim:Alive()) or time < CurTime() then
-					timer.Remove(id)
-					jdmg.SetStatus(victim, "poison", false)
-				end
-			end)
-
-		end, {"poisonous", "venomous", "toxic", "infected", "diseased"}, {"poison", "venom", "infection", "illness", "sickness"})
-		basic_elemental("ice", JDMG_ICE, function(self, attacker, victim, dmginfo)
-			if victim.GetLaggedMovementValue then
-				if victim:GetLaggedMovementValue() == 0 then return end
-				victim:SetLaggedMovementValue(victim:GetLaggedMovementValue() * 0.9)
-				if victim:GetLaggedMovementValue() < 0.5 then
-					victim:EmitSound("weapons/icicle_freeze_victim_01.wav")
-					victim:SetLaggedMovementValue(0)
-					if victim.Freeze then
-						victim:Freeze(true)
-					end
-				end
-				timer.Create("ice_freeze_"..tostring(attacker)..tostring(victim), 3, 1, function()
-					if victim:IsValid() then
-						victim:SetLaggedMovementValue(1)
-						victim:EmitSound("weapons/icicle_melt_01.wav")
-						if victim.Freeze then
-							victim:Freeze(false)
-						end
-					end
-				end)
-			end
-		end, {"cold", "frozen", "freezing", "chilled", "iced", "arctic", "frosted"}, {"ice", "glacier", "snow"})
 	end
 end
 

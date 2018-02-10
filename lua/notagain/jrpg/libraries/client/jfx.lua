@@ -325,4 +325,49 @@ do
 	jfx.materials.glow2 = Material("sprites/light_ignorez")
 end
 
+function jfx.DrawModel(ent)
+	if ent.pacDrawModel then
+		ent:pacDrawModel(true)
+	else
+		ent:DrawModel()
+	end
+end
+
+jfx.emitter = ParticleEmitter(vector_origin)
+
+function jfx.CreateOverlayMaterial(tex, override)
+	override = override or {}
+	return jfx.CreateMaterial(table.Merge({
+		Name = "fire",
+		Shader = "VertexLitGeneric",
+		Additive = 1,
+		Translucent = 1,
+
+		Phong = 1,
+		PhongBoost = 0.5,
+		PhongExponent = 0.4,
+		PhongFresnelRange = Vector(0,0.5,1),
+		PhongTint = Vector(1,1,1),
+
+
+		Rimlight = 1,
+		RimlightBoost = 50,
+		RimlightExponent = 5,
+		BaseTexture = tex,
+
+
+		BaseTextureTransform = "center .5 .5 scale 0.25 0.25 rotate 90 translate 0 0",
+
+		Proxies = {
+
+			Equals = {
+				SrcVar1 = "$color",
+				ResultVar = "$phongtint",
+			},
+		},
+
+		BumpMap = "dev/bump_normal",
+	}, override))
+end
+
 return jfx
