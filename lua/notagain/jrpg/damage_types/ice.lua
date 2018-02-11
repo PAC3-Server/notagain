@@ -5,16 +5,7 @@ META.Names = {"ice", "glacier", "snow"}
 META.Color = Color(150, 200, 255)
 
 function META:OnDamage(self, attacker, victim, dmginfo)
-	--- hmm
-	victim.jdmg_freeze = (victim.jdmg_freeze or 1) * 0.9
-
-	if victim.jdmg_freeze < 0.5 then
-		jdmg.SetStatus(victim, "frozen", 10)
-	end
-
-	if victim.SetLaggedMovementValue then
-		victim:SetLaggedMovementValue(victim.jdmg_freeze)
-	end
+	jdmg.AddStatus(victim, "frozen", dmginfo:GetDamage() / 100)
 end
 
 if CLIENT then

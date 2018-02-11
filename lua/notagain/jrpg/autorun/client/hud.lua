@@ -423,6 +423,42 @@ hook.Add("HUDPaint", "jhud", function()
 			end
 		end
 	end
+
+	local size = 16
+	local fade = 1
+	local h = 72
+	local w = 190
+	local statuses = jdmg.GetStatuses and jdmg.GetStatuses(ply) or {}
+	for _, status in pairs(statuses) do
+		local fade = fade * status:GetAmount()
+		fade = fade ^ 0.25
+
+		if status.Negative then
+			surface.SetDrawColor(150, 0, 0, 255*fade)
+		elseif status.Positive then
+			surface.SetDrawColor(0, 0, 150, 255*fade)
+		else
+			surface.SetDrawColor(0, 0, 0, 255*fade)
+		end
+		draw.NoTexture()
+		draw_rect(x+w-size,y+h,size,size)
+
+		surface.SetDrawColor(255, 255, 255, 255*fade)
+		surface.SetMaterial(border)
+		draw_rect(x+w-size,y+h,size,size, 0, 1, 64,border_size/1.5, border:GetTexture("$BaseTexture"):Width(), true)
+
+		surface.SetDrawColor(255, 255, 255, 255*fade)
+		surface.SetMaterial(status.Icon)
+		draw_rect(x+w-size,y+h,size,size)
+		draw_rect(x+w-size,y+h,size,size)
+
+		surface.SetDrawColor(0, 0, 0, 200)
+		draw.NoTexture()
+		draw_rect(x+w-size,y+h,size*status:GetAmount(),size)
+
+
+		x = x - size - 5
+	end
 end)
 
 hook.Add("HUDShouldDraw", "jhud", function(what)

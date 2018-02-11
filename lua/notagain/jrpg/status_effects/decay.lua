@@ -17,12 +17,10 @@ if CLIENT then
 	local mat = jfx.CreateOverlayMaterial("effects/filmscan256", {Additive = 0, RimlightBoost = 1})
 	local dark = Material("effects/bluespark")
 
-	function META:DrawOverlay(ent, f)
+	function META:DrawOverlay(ent)
+		local f = self:GetAmount()
 		local s = f
 		local t = RealTime()
-		local m = Matrix()
-		m:Scale(Vector(1,1,1) + (VectorRand()*0.1) * f)
-		ent:EnableMatrix("RenderMultiply", m)
 
 		render.ModelMaterialOverride(mat)
 		render.SetColorModulation(-s,-s,-s)
@@ -35,33 +33,32 @@ if CLIENT then
 		mat:SetMatrix("$BaseTextureTransform", m)
 
 		jfx.DrawModel(ent)
-
-		ent:DisableMatrix("RenderMultiply")
 	end
 
 	function META:OnStart(ent)
 		if ent ~= LocalPlayer() then return end
 
-		local time = RealTime() + self.duration
 		hook.Add("RenderScreenspaceEffects", "jdmg_decay", function()
-			local f = (time - RealTime()) / self.duration
-			f = math.Clamp(math.sin(f * math.pi), 0, 1) ^ 0.01
+			local f = self:GetAmount()
+			f = math.Clamp(math.sin(f * math.pi), 0, 1)
 
 			local hm = math.abs(math.sin(RealTime())^50)
-			if f > 0.99 then
-				DrawMaterialOverlay("models/shadertest/shader4", f*hm*0.02)
-			end
+			DrawColorModify({
+				[ "$pp_colour_brightness" ] = hm,
+				[ "$pp_colour_colour" ] = -f+1,
+				[ "$pp_colour_contrast" ] = 1,
+			})
 		end)
 		local played = false
 		local function setup_fog()
-			local f = (time - RealTime()) / self.duration
-			f = math.Clamp(math.sin(f * math.pi), 0, 1) ^ 0.01
+			local f = self:GetAmount()
+			f = math.Clamp(math.sin(f * math.pi), 0, 1) ^ 0.5
 
 			render.FogMode(1)
 			render.FogStart(-7000*f)
 			render.FogEnd(500*f)
 			render.FogMaxDensity(0.995*f)
-			local hm = Lerp(f, 100, math.abs(math.sin(time + 0.3)^50*100))
+			local hm = Lerp(f, 100, math.abs(math.sin(RealTime() + 0.3)^50*100))
 
 			if hm > 50 then
 				if not played then
