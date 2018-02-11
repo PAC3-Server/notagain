@@ -4,8 +4,13 @@ META.Names = {"health", "wellbeing", "healthiness"}
 META.Adjectives = {"healing", "curative", "medicinal"}
 
 function META:OnDamage(self, attacker, victim, dmginfo)
-	local amt = dmginfo:GetDamage(), victim:GetMaxHealth()
-	victim:SetHealth(math.min(victim:Health() + amt))
+	local health = victim:Health()
+	local max_health = victim:GetMaxHealth()
+	if not attacker:IsNPC() or not attacker:IsPlayer() then
+		if max_health == health or max_health == 0 or health == 0 then return end
+	end
+	local amt = math.min(health + dmginfo:GetDamage(), max_health)
+	victim:SetHealth(amt)
 	dmginfo:SetDamage(-amt)
 end
 

@@ -91,32 +91,11 @@ end
 
 if SERVER then
 	function META:OnDamage(self, attacker, victim, dmginfo)
-		local dmg = dmginfo:GetDamage()
-		jdmg.SetStatus(victim, "poison", true)
-
-		local time = CurTime() + 5
-
-		local id = "poison_"..tostring(attacker)..tostring(victim)
-
-		timer.Create(id, 0.5, 0, function()
-			if not attacker:IsValid() or not victim:IsValid() then
-				timer.Remove(id)
-				return
-			end
-
-			local dmginfo = DamageInfo()
-			dmginfo:SetDamage(dmg * self:GetStatusMultiplier() * 0.2)
-			dmginfo:SetDamageCustom(JDMG_POISON)
-			dmginfo:SetDamagePosition(victim:WorldSpaceCenter())
-			dmginfo:SetAttacker(attacker)
-
-			self:TakeDamageInfo(victim, dmginfo)
-
-			if (not victim:IsPlayer() or not victim:Alive()) or time < CurTime() then
-				timer.Remove(id)
-				jdmg.SetStatus(victim, "poison", false)
-			end
-		end)
+		jdmg.SetStatus(victim, "poison", 10, {
+			attacker = dmginfo:GetAttacker(),
+			weapon = dmginfo:GetInflictor(),
+			potency = 10,
+		})
 	end
 end
 

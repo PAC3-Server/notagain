@@ -2,27 +2,18 @@ local META = {}
 META.Name = "ice"
 META.Adjectives = {"cold", "frozen", "freezing", "chilled", "iced", "arctic", "frosted"}
 META.Names = {"ice", "glacier", "snow"}
+META.Color = Color(150, 200, 255)
 
 function META:OnDamage(self, attacker, victim, dmginfo)
-	if victim.GetLaggedMovementValue then
-		if victim:GetLaggedMovementValue() == 0 then return end
-		victim:SetLaggedMovementValue(victim:GetLaggedMovementValue() * 0.9)
-		if victim:GetLaggedMovementValue() < 0.5 then
-			victim:EmitSound("weapons/icicle_freeze_victim_01.wav")
-			victim:SetLaggedMovementValue(0)
-			if victim.Freeze then
-				victim:Freeze(true)
-			end
-		end
-		timer.Create("ice_freeze_"..tostring(attacker)..tostring(victim), 3, 1, function()
-			if victim:IsValid() then
-				victim:SetLaggedMovementValue(1)
-				victim:EmitSound("weapons/icicle_melt_01.wav")
-				if victim.Freeze then
-					victim:Freeze(false)
-				end
-			end
-		end)
+	--- hmm
+	victim.jdmg_freeze = (victim.jdmg_freeze or 1) * 0.9
+
+	if victim.jdmg_freeze < 0.5 then
+		jdmg.SetStatus(victim, "frozen", 10)
+	end
+
+	if victim.SetLaggedMovementValue then
+		victim:SetLaggedMovementValue(victim.jdmg_freeze)
 	end
 end
 
@@ -36,7 +27,7 @@ if CLIENT then
 		CloakPassEnabled = 1,
 		RefractAmount = 1,
 	})
-	META.Color = Color(255, 255, 255)
+
 	function META:DrawOverlay(ent, f, s, t)
 		local pos = ent:NearestPoint(ent:WorldSpaceCenter()+VectorRand()*100)
 
@@ -58,7 +49,7 @@ if CLIENT then
 		local c = Vector(self.Color.r/255, self.Color.g/255, self.Color.b/255)*5*(f^0.15)
 		ice_mat:SetVector("$CloakColorTint", c)
 		ice_mat:SetFloat("$CloakFactor", f^0.15)
-		ice_mat:SetFloat("$RefractAmount", -f+1)
+		ice_mat:SetFloat("$RefractAmount", -(f^0.1)+1)
 		render.ModelMaterialOverride(ice_mat)
 		render.SetColorModulation(c.r,c.g, c.b)
 		render.SetBlend(f)

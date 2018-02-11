@@ -1,168 +1,8 @@
 jdmg = jdmg or {}
 
-local jfx
+jdmg.types = jdmg.types or {}
 
-if CLIENT then
-	jfx = requirex("jfx")
-end
-
-jdmg.statuses = {}
-
-do
-	do
-		jdmg.statuses.error = {}
-		if CLIENT then
-			jdmg.statuses.error.icon = jfx.CreateMaterial({
-				Shader = "UnlitGeneric",
-				BaseTexture = "error",
-				VertexAlpha = 1,
-				VertexColor = 1,
-				Additive = 1,
-				BaseTextureTransform = "center .5 .5 scale 0.7 0.5 rotate 90 translate 0 0",
-			})
-		end
-	end
-
-	do
-		jdmg.statuses.poison = {}
-		jdmg.statuses.poison.negative = true
-		if CLIENT then
-			jdmg.statuses.poison.icon = jfx.CreateMaterial({
-				Shader = "UnlitGeneric",
-				BaseTexture = "sprites/greenspit1",
-				VertexAlpha = 1,
-				VertexColor = 1,
-				Additive = 1,
-				BaseTextureTransform = "center .5 .5 scale 0.7 0.7 rotate 0 translate 0 0",
-			})
-		end
-	end
-
-	do
-		jdmg.statuses.fire = {}
-		jdmg.statuses.fire.negative = true
-		if CLIENT then
-			jdmg.statuses.fire.icon = jfx.CreateMaterial({
-				Shader = "UnlitGeneric",
-				BaseTexture = "editor/env_fire",
-				VertexAlpha = 1,
-				VertexColor = 1,
-				BaseTextureTransform = "center 0.45 .1 scale 0.75 0.75 rotate 0 translate 0 0",
-			})
-		end
-	end
-
-	do
-		jdmg.statuses.confused = {}
-		jdmg.statuses.confused.negative = true
-		if CLIENT then
-			jdmg.statuses.confused.icon = jfx.CreateMaterial({
-				Shader = "UnlitGeneric",
-				BaseTexture = "editor/choreo_manager",
-				VertexAlpha = 1,
-				VertexColor = 1,
-				BaseTextureTransform = "center 0.45 .1 scale 0.9 0.9 rotate 0 translate 0 -0.05",
-			})
-		end
-	end
-
-	do
-		jdmg.statuses.lightning = {}
-		jdmg.statuses.lightning.negative = true
-		if CLIENT then
-			jdmg.statuses.lightning.icon = jfx.CreateMaterial({
-				Shader = "UnlitGeneric",
-				BaseTexture = "editor/choreo_manager",
-				VertexAlpha = 1,
-				VertexColor = 1,
-				BaseTextureTransform = "center 0.45 .1 scale 0.9 0.9 rotate 0 translate 0 -0.05",
-			})
-		end
-	end
-
-	do
-		jdmg.statuses.frozen = {}
-		jdmg.statuses.frozen.negative = true
-		if CLIENT then
-			jdmg.statuses.frozen.icon = jfx.CreateMaterial({
-				Shader = "UnlitGeneric",
-				BaseTexture = "editor/env_particles",
-				VertexAlpha = 1,
-				VertexColor = 1,
-				BaseTextureTransform = "center 0.45 .1 scale 0.9 0.9 rotate 0 translate 0 -0.05",
-			})
-
-			jdmg.statuses.frozen.on_set = function(self, ent, b)
-				if ent ~= LocalPlayer() then return end
-				local t = RealTime()
-				if b then
-					local time = 0
-					hook.Add("RenderScreenspaceEffects", "jdmg_decay", function()
-						time = time + FrameTime()
-						local f = math.min(time, 1) ^ 0.5
-						if f ~= 1 then return end
-
-						local hm = math.abs(math.sin(RealTime())^50)
-						DrawMaterialOverlay("models/shadertest/shader4", hm*0.02)
-					end)
-					local played = false
-					local function setup_fog()
-						local f = math.min(time, 1) ^ 0.5
-
-						render.FogMode(1)
-						render.FogStart(-7000*f)
-						render.FogEnd(500*f)
-						render.FogMaxDensity(0.995*f)
-						local hm = Lerp(f, 100, math.abs(math.sin(time + 0.3)^50*100))
-
-						if hm > 50 then
-							if not played then
-								ent:EmitSound("npc/strider/strider_step4.wav", 75, 70)
-								played = true
-							end
-						else
-							played = false
-						end
-
-						render.FogColor(hm,hm,hm)
-
-						return true
-					end
-
-					self.old_hooks_world = {}
-					if hook.GetTable().SetupWorldFog then
-						for k,v in pairs(hook.GetTable().SetupWorldFog) do self.old_hooks_world[k] = v hook.Remove("SetupWorldFog", k,v) end
-					end
-
-					self.old_hooks_skybox = {}
-					if hook.GetTable().SetupSkyboxFog then
-						for k,v in pairs(hook.GetTable().SetupSkyboxFog) do self.old_hooks_skybox[k] = v hook.Remove("SetupSkyboxFog", k,v) end
-					end
-
-					hook.Add("SetupWorldFog", "jdmg_decay", setup_fog)
-					hook.Add("SetupSkyboxFog", "jdmg_decay", setup_fog)
-				else
-					hook.Remove("RenderScreenspaceEffects", "jdmg_decay")
-					hook.Remove("SetupWorldFog", "jdmg_decay")
-					hook.Remove("SetupSkyboxFog", "jdmg_decay")
-
-					for k, v in pairs(self.old_hooks_world) do hook.Add("SetupWorldFog", k, v) end
-					for k, v in pairs(self.old_hooks_skybox) do hook.Add("SetupSkyboxFog", k, v) end
-				end
-			end
-		end
-	end
-end
-
-jdmg.types = {}
-
-if CLIENT then
-	for k,v in pairs(jdmg.types) do
-		if not v.draw_projectile then
-			v.draw_projectile = jdmg.types.generic.draw_projectile
-		end
-	end
-end
+local jfx = CLIENT and requirex("jfx")
 
 function jdmg.BuildEnums()
 	local magic = 2523
@@ -188,24 +28,15 @@ function jdmg.GetDamageType(dmginfo)
 end
 
 do -- status
-	for name, status in pairs(jdmg.statuses) do
-		status.name = name
-		status.__index = status
-	end
+	jdmg.statuses = {}
 
-	for _, ent in pairs(ents.GetAll()) do
-		if ent.jdmg_statuses then
-			for i, v in ipairs(ent.jdmg_statuses) do
-				if ent.jdmg_statuses[i].on_set then
-					ent.jdmg_statuses[i]:on_set(ent, false)
-				end
-				ent.jdmg_statuses[i] = setmetatable({}, jdmg.statuses[v.name])
+	function jdmg.RegisterStatusEffect(META)
+		META.__index = META
 
-				if ent.jdmg_statuses[i].on_set then
-					ent.jdmg_statuses[i]:on_set(ent, true)
-				end
-			end
-		end
+		function META:GetAttacker() return self.attacker or NULL end
+		function META:GetWeapon() return self.weapon or NULL end
+
+		jdmg.statuses[META.Name] = META
 	end
 
 	function jdmg.GetStatuses(ent)
@@ -213,58 +44,141 @@ do -- status
 		return ent.jdmg_statuses
 	end
 
+	jdmg.active_status = jdmg.active_status or {}
+
+	local function set_status(ent, status, time, userdata)
+		if not jdmg.statuses[status] then ErrorNoHalt("unknown status type " .. status) return end
+
+		ent.jdmg_statuses = ent.jdmg_statuses or {}
+
+		local obj = setmetatable(userdata, jdmg.statuses[status])
+		obj.duration = time
+
+		ent.jdmg_statuses[status] = {
+			stop_time = RealTime() + time,
+			duration = time,
+			status = obj,
+		}
+
+		table.insert(jdmg.active_status, ent)
+
+		local next_think = 0
+		hook.Add("RenderScreenspaceEffects", "jdmg_status_overlay", function()
+			cam.Start3D()
+			for i = #jdmg.active_status, 1, -1 do
+				local ent = jdmg.active_status[i]
+				if ent:IsValid() and ent.jdmg_statuses and next(ent.jdmg_statuses) then
+					for key, info in pairs(ent.jdmg_statuses) do
+						if info.status.DrawOverlay then
+							info.status:DrawOverlay(ent, (info.stop_time - RealTime()) / info.duration)
+						end
+					end
+				else
+					table.remove(jdmg.active_status, i)
+
+					if not jdmg.active_status[1] then
+						hook.Remove("Think", "jdmg_status_update")
+					end
+				end
+			end
+
+			cam.End3D()
+		end)
+
+		hook.Add("Think", "jdmg_status_update", function()
+			local time = RealTime()
+			if next_think < time then
+
+				for i = #jdmg.active_status, 1, -1 do
+					local ent = jdmg.active_status[i]
+					if ent:IsValid() and ent.jdmg_statuses and next(ent.jdmg_statuses) then
+
+						for key, info in pairs(ent.jdmg_statuses) do
+							if info.stop_time < time then
+								if info.status.OnStop then
+									info.status:OnStop(ent)
+								end
+
+								ent.jdmg_statuses[key] = nil
+							else
+								if not info.status.started then
+									if info.status.OnStart then
+										info.status:OnStart(ent)
+									end
+									info.status.started = true
+								end
+
+								if info.status.Think then
+									if not info.status.last_run or info.status.last_run < time then
+										info.status:Think(ent, (info.stop_time - time) / info.duration, info.stop_time - time)
+										info.status.last_run = time + (info.status.Rate or 0)
+									end
+								end
+							end
+						end
+
+					else
+						table.remove(jdmg.active_status, i)
+
+						if not jdmg.active_status[1] then
+							hook.Remove("Think", "jdmg_status_update")
+						end
+					end
+				end
+
+				next_think = time + 0.05
+			end
+		end)
+	end
+
 	if CLIENT then
 		net.Receive("jdmg_status", function()
 			local ent = net.ReadEntity()
 			if not ent:IsValid() then return end
 			local status = net.ReadString()
-			local b = net.ReadBool()
+			local time = net.ReadDouble()
+			local userdata = net.ReadTable()
 
-			ent.jdmg_statuses = ent.jdmg_statuses or {}
-
-			if b then
-				for i, v in ipairs(ent.jdmg_statuses) do
-					if v.name == status then
-						return
-					end
-				end
-
-				local status = jdmg.statuses[status]
-				if status then
-					status.__index = status
-					status = setmetatable({}, status)
-
-					if status.on_set then
-						status:on_set(ent, true)
-					end
-
-					table.insert(ent.jdmg_statuses, status)
-				end
-			else
-				for i, v in ipairs(ent.jdmg_statuses) do
-					if v.name == status then
-						if v.on_set then
-							v:on_set(ent, false)
-						end
-						table.remove(ent.jdmg_statuses, i)
-						break
-					end
-				end
-			end
+			set_status(ent, status, time, userdata)
 		end)
 	end
 
 	if SERVER then
 		util.AddNetworkString("jdmg_status")
 
-		function jdmg.SetStatus(ent, status, b)
+		function jdmg.SetStatus(ent, status, time, userdata)
+			userdata = userdata or {}
 
-			net.Start("jdmg_status", true)
+			net.Start("jdmg_status")
 				net.WriteEntity(ent)
 				net.WriteString(status)
-				net.WriteBool(b)
+				net.WriteDouble(time)
+				net.WriteTable(userdata)
 			net.Broadcast()
+
+			set_status(ent, status, time, userdata)
 		end
+	end
+
+	do
+		local META = {}
+		META.Name = "error"
+		META.Negative = true
+
+		if CLIENT then
+			local jfx = requirex("jfx")
+
+			META.Icon = jfx.CreateMaterial({
+				Shader = "UnlitGeneric",
+				BaseTexture = "error",
+				VertexAlpha = 1,
+				VertexColor = 1,
+				Additive = 1,
+				BaseTextureTransform = "center .5 .5 scale 0.7 0.5 rotate 90 translate 0 0",
+			})
+		end
+
+		jdmg.RegisterStatusEffect(META)
 	end
 end
 
@@ -376,7 +290,7 @@ if CLIENT then
 	end
 
 	function jdmg.DamageEffect(ent, type, duration, strength, pow)
-		type = jdmg.types[type] or types.generic
+		type = jdmg.types[type] or jdmg.types.generic
 		duration = duration or 1
 		strength = strength or 1
 		pow = pow or 3
@@ -513,7 +427,7 @@ function jdmg.RegisterDamageType(META)
 		data.think = META.SoundThink and function(...) META:SoundThink(...) end
 		data.draw = META.DrawOverlay and function(...) META:DrawOverlay(...) end
 		data.color = META.Color
-		data.draw_projectile = META.DrawProjectile and function(...) META:DrawProjectile(...) end
+		data.draw_projectile = function(...) (META.DrawProjectile or jdmg.types.generic.DrawProjectile)(META, ...) end
 	end
 
 	if SERVER then
@@ -523,13 +437,46 @@ function jdmg.RegisterDamageType(META)
 	jdmg.BuildEnums()
 end
 
-local dir = "notagain/jrpg/autorun/damage_types/"
-for _, name in pairs((file.Find(dir .. "*.lua", "LUA"))) do
-	local path = dir .. name
+do
+	local dir = "notagain/jrpg/damage_types/"
+	for _, name in pairs((file.Find(dir .. "*.lua", "LUA"))) do
+		local path = dir .. name
 
-	timer.Simple(0, function() include(path) end)
+		timer.Simple(0, function() include(path) end)
 
-	if SERVER then
-		AddCSLuaFile(path)
+		if SERVER then
+			AddCSLuaFile(path)
+		end
+	end
+
+	if CLIENT then
+		notagain.extra_reload_directories = notagain.extra_reload_directories or {}
+
+		table.insert(notagain.extra_reload_directories, {
+			dir = "notagain/jrpg/damage_types/",
+			type = "shared",
+		})
+	end
+end
+
+do
+	local dir = "notagain/jrpg/status_effects/"
+	for _, name in pairs((file.Find(dir .. "*.lua", "LUA"))) do
+		local path = dir .. name
+
+		timer.Simple(0, function() include(path) end)
+
+		if SERVER then
+			AddCSLuaFile(path)
+		end
+	end
+
+	if CLIENT then
+		notagain.extra_reload_directories = notagain.extra_reload_directories or {}
+
+		table.insert(notagain.extra_reload_directories, {
+			dir = "notagain/jrpg/status_effects/",
+			type = "shared",
+		})
 	end
 end

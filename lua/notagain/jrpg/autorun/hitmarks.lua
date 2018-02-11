@@ -62,10 +62,12 @@ if CLIENT then
 		y = y + 5
 		if is_health then
 			local statuses = jdmg.GetStatuses and jdmg.GetStatuses(ent) or {}
-			for i, status in ipairs(statuses) do
-				if status.negative then
+
+			for _, data in pairs(statuses) do
+				local status = data.status
+				if status.Negative then
 					surface.SetDrawColor(150, 0, 0, 255*fade)
-				elseif status.positive then
+				elseif status.Positive then
 					surface.SetDrawColor(0, 0, 150, 255*fade)
 				else
 					surface.SetDrawColor(0, 0, 0, 255*fade)
@@ -78,7 +80,7 @@ if CLIENT then
 				draw_rect(x+w-size,y+h,size,size, 0, 1, 64,border_size/1.5, border:GetTexture("$BaseTexture"):Width(), true)
 
 				surface.SetDrawColor(255, 255, 255, 255*fade)
-				surface.SetMaterial(status.icon)
+				surface.SetMaterial(status.Icon)
 				draw_rect(x+w-size,y+h,size,size)
 				draw_rect(x+w-size,y+h,size,size)
 
