@@ -451,13 +451,12 @@ end
 local emitter_viewmodel = ParticleEmitter(vector_origin)
 emitter_viewmodel:SetNoDraw(true)
 
-hook.Add("RenderScreenspaceEffects", "jrpg_items", function()
+hook.Add("RenderScreenspaceEffects", "jrpg_items", jrpg.SafeDraw(cam.Start3D, cam.End3D, function()
 	if not LocalPlayer():GetNWBool("rpg") then return end
 
 	render.UpdateScreenEffectTexture()
 	local time = RealTime()
 
-	cam.Start3D()
 	for _, ent in ipairs(entities) do
 		if not ent:IsValid() then
 			remove_ent(ent)
@@ -491,11 +490,10 @@ hook.Add("RenderScreenspaceEffects", "jrpg_items", function()
 		local distance = pos:Distance(EyePos())
 		draw_glow(ent, time, distance, wm and 5 or radius, vis * (wm and 0.25 or 1), color, nil, wm)
 	end
-	cam.End3D()
 
 	render.SetColorModulation(1,1,1)
 	render.ModelMaterialOverride()
-end)
+end))
 
 
 local suppress = false

@@ -1,5 +1,13 @@
 jrpg = jrpg or {}
 
+function jrpg.SafeDraw(pre, post, draw)
+	return function(...)
+		pre()
+		xpcall(draw, ErrorNoHalt, ...)
+		post()
+	end
+end
+
 function jrpg.IsAlive(ent)
 	if ent.Alive then
 		if ent:IsPlayer() then

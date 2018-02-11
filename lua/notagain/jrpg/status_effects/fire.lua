@@ -7,10 +7,9 @@ if CLIENT then
 
 	META.Icon = jfx.CreateMaterial({
 		Shader = "UnlitGeneric",
-		BaseTexture = "editor/env_fire",
+		BaseTexture = "http://wow.zamimg.com/images/wow/icons/large/inv_summerfest_firespirit.jpg",
 		VertexAlpha = 1,
 		VertexColor = 1,
-		BaseTextureTransform = "center 0.45 .1 scale 0.75 0.75 rotate 0 translate 0 0",
 	})
 end
 

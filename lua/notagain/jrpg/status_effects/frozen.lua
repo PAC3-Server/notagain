@@ -7,10 +7,9 @@ if CLIENT then
 
 	META.Icon = jfx.CreateMaterial({
 		Shader = "UnlitGeneric",
-		BaseTexture = "editor/env_particles",
+		BaseTexture = "http://wow.zamimg.com/images/wow/icons/large/creatureportrait_creature_iceblock.jpg",
 		VertexAlpha = 1,
 		VertexColor = 1,
-		BaseTextureTransform = "center 0.45 .1 scale 0.75 0.75 rotate 0 translate 0 0",
 	})
 
 	local ice_mat = jfx.CreateMaterial({
@@ -20,7 +19,9 @@ if CLIENT then
 		RefractAmount = 1,
 	})
 
-	function META:DrawOverlay(ent, f)
+	function META:DrawOverlay(ent)
+		local f = self:GetAmount()
+
 		f = f * 0.1
 		local pos = ent:NearestPoint(ent:WorldSpaceCenter()+VectorRand()*100)
 
@@ -51,50 +52,79 @@ if CLIENT then
 end
 
 if SERVER then
-	function META:OnStart(ent)
-		ent:EmitSound("weapons/icicle_freeze_victim_01.wav")
+	local function freeze(ent, b, f)
+		if b then
+			if ent.Freeze then
+				ent:Freeze(true)
+			end
 
-		if ent.SetLaggedMovementValue then
-			ent:SetLaggedMovementValue(0)
-		end
-		if ent.Freeze then
-			ent:Freeze(true)
-		end
+			if ent.SetCondition then
+				ent:SetCondition(67) -- COND_NPC_FREEZE
+				ent:SetPlaybackRate(0)
 
-		if ent.SetCondition then
-			ent:SetCondition(67) -- COND_NPC_FREEZE
-			ent:SetPlaybackRate(0)
-			ent:SetBloodColor(BLOOD_COLOR_MECH)
+				if SERVER then
+					if ent.SetTarget then
+						--ent:SetTarget(game.GetWorld())
+						--ent:StopMoving()
+					--	ent:SetEnemy(game.GetWorld(), true)
+					end
+				end
+			end
+		else
+			if ent.Freeze then
+				ent:Freeze(false)
+			end
+			if ent.SetCondition then
+				ent:SetCondition(68) -- COND_NPC_UNFREEZE
+				ent:SetPlaybackRate(1)
+			end
 		end
 	end
 
+	META.Rate = 0
+
 	function META:Think(ent)
-		ent:SetPlaybackRate(0)
-		ent:SetCycle(0.5)
-		if SERVER then
-			if ent.SetTarget then
-				ent:SetTarget(game.GetWorld())
-				ent:StopMoving()
-				ent:SetEnemy(game.GetWorld(), true)
+		local f = self:GetAmount()
+
+		if f > 0.75 then
+			if ent.SetLaggedMovementValue then
+				ent:SetLaggedMovementValue(0)
+			else
+				freeze(ent, true)
+			end
+			self.played_unfreeze_sound = false
+			if not self.played_freeze_sound then
+				ent:EmitSound("weapons/icicle_freeze_victim_01.wav")
+				self.played_freeze_sound = true
+			end
+			return
+		else
+			self.played_freeze_sound = false
+			if not self.played_unfreeze_sound then
+				ent:EmitSound("weapons/icicle_melt_01.wav")
+				self.played_unfreeze_sound = true
+			end
+		end
+
+
+		if ent.SetLaggedMovementValue then
+			ent:SetLaggedMovementValue(-f+1)
+		else
+			local time = RealTime()
+			if not self.next_freeze or self.next_freeze < time then
+				freeze(ent, self.freeze, f)
+				self.freeze = not self.freeze
+				self.next_freeze = time + (-f+1)*0.1
 			end
 		end
 	end
 
 	function META:OnStop(ent)
-		ent:EmitSound("weapons/icicle_melt_01.wav")
-
 		if ent.SetLaggedMovementValue then
 			ent:SetLaggedMovementValue(1)
+		else
+			freeze(ent, false)
 		end
-		if ent.Freeze then
-			ent:Freeze(false)
-		end
-		if ent.SetCondition then
-			ent:SetCondition(68) -- COND_NPC_UNFREEZE
-			ent:SetPlaybackRate(1)
-		end
-
-		ent.jdmg_freeze = nil
 	end
 end
 

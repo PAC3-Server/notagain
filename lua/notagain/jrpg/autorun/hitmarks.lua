@@ -32,6 +32,21 @@ if CLIENT then
 		["$VertexColor"] = 1,
 	})
 
+	local function draw_pie( x, y, radius, seg )
+		local cir = {}
+
+		table.insert( cir, { x = x, y = y, u = 0.5, v = 0.5 } )
+		for i = 0, seg do
+			local a = math.rad( ( i / seg ) * -360 )
+			table.insert( cir, { x = x + math.sin( a ) * radius, y = y + math.cos( a ) * radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+		end
+
+		local a = math.rad( 0 ) -- This is needed for non absolute segment counts
+		table.insert( cir, { x = x + math.sin( a ) * radius, y = y + math.cos( a ) * radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
+
+		surface.DrawPoly( cir )
+	end
+
 	local function draw_health_bar(ent, x,y, w,h, health, last_health, fade, border_size, skew, r,g,b, is_health)
 		surface.SetDrawColor(200, 200, 200, 50*fade)
 		draw.NoTexture()
@@ -63,8 +78,10 @@ if CLIENT then
 		if is_health then
 			local statuses = jdmg.GetStatuses and jdmg.GetStatuses(ent) or {}
 
-			for _, data in pairs(statuses) do
-				local status = data.status
+			for _, status in pairs(statuses) do
+				local fade = fade * status:GetAmount()
+				fade = fade ^ 0.25
+
 				if status.Negative then
 					surface.SetDrawColor(150, 0, 0, 255*fade)
 				elseif status.Positive then
@@ -83,6 +100,11 @@ if CLIENT then
 				surface.SetMaterial(status.Icon)
 				draw_rect(x+w-size,y+h,size,size)
 				draw_rect(x+w-size,y+h,size,size)
+
+				surface.SetDrawColor(0, 0, 0, 200)
+				draw.NoTexture()
+				draw_rect(x+w-size,y+h,size*status:GetAmount(),size)
+
 
 				x = x - 24 - 5
 			end

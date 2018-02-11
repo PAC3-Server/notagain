@@ -35,6 +35,22 @@ do -- status
 
 		function META:GetAttacker() return self.attacker or NULL end
 		function META:GetWeapon() return self.weapon or NULL end
+		function META:GetAmount()
+			local target = self.entity:GetNWFloat("jdmg_status_" .. META.Name, 0)
+
+			if SERVER then
+				return target
+			end
+
+			if target == 0 then return target end
+
+			self.smooth_amount = self.smooth_amount or target
+			self.smooth_amount = self.smooth_amount + ((target - self.smooth_amount) * FrameTime() * 5)
+
+			return self.smooth_amount
+		end
+		function META:SetAmount(amt) return self.entity:SetNWFloat("jdmg_status_" .. META.Name, amt) end
+		function META:AddAmount(amt) self:SetAmount(self:GetAmount() + amt) end
 
 		jdmg.statuses[META.Name] = META
 	end
@@ -46,45 +62,45 @@ do -- status
 
 	jdmg.active_status = jdmg.active_status or {}
 
-	local function set_status(ent, status, time, userdata)
+	local function set_status(ent, status, userdata, b)
 		if not jdmg.statuses[status] then ErrorNoHalt("unknown status type " .. status) return end
 
 		ent.jdmg_statuses = ent.jdmg_statuses or {}
 
-		local obj = setmetatable(userdata, jdmg.statuses[status])
-		obj.duration = time
+		if not b and ent.jdmg_statuses[status] then
+			if ent.jdmg_statuses[status].OnStop then
+				ent.jdmg_statuses[status]:OnStop(ent)
+			end
+			ent.jdmg_statuses[status] = nil
+			return
+		end
 
-		ent.jdmg_statuses[status] = {
-			stop_time = RealTime() + time,
-			duration = time,
-			status = obj,
-		}
+		ent.jdmg_statuses[status] = setmetatable(userdata, jdmg.statuses[status])
+		ent.jdmg_statuses[status].entity = ent
 
 		table.insert(jdmg.active_status, ent)
 
-		local next_think = 0
-		hook.Add("RenderScreenspaceEffects", "jdmg_status_overlay", function()
-			cam.Start3D()
-			for i = #jdmg.active_status, 1, -1 do
-				local ent = jdmg.active_status[i]
-				if ent:IsValid() and ent.jdmg_statuses and next(ent.jdmg_statuses) then
-					for key, info in pairs(ent.jdmg_statuses) do
-						if info.status.DrawOverlay then
-							info.status:DrawOverlay(ent, (info.stop_time - RealTime()) / info.duration)
+		if CLIENT then
+			hook.Add("RenderScreenspaceEffects", "jdmg_status_overlay", jrpg.SafeDraw(cam.Start3D, cam.End3D, function()
+				for i = #jdmg.active_status, 1, -1 do
+					local ent = jdmg.active_status[i]
+					if ent:IsValid() and ent.jdmg_statuses and next(ent.jdmg_statuses) then
+						for key, status in pairs(ent.jdmg_statuses) do
+							if status.DrawOverlay then
+								status:DrawOverlay(ent)
+							end
+						end
+					else
+						table.remove(jdmg.active_status, i)
+
+						if not jdmg.active_status[1] then
+							hook.Remove("Think", "jdmg_status_update")
 						end
 					end
-				else
-					table.remove(jdmg.active_status, i)
-
-					if not jdmg.active_status[1] then
-						hook.Remove("Think", "jdmg_status_update")
-					end
 				end
-			end
-
-			cam.End3D()
-		end)
-
+			end))
+		end
+		local next_think = 0
 		hook.Add("Think", "jdmg_status_update", function()
 			local time = RealTime()
 			if next_think < time then
@@ -93,27 +109,44 @@ do -- status
 					local ent = jdmg.active_status[i]
 					if ent:IsValid() and ent.jdmg_statuses and next(ent.jdmg_statuses) then
 
-						for key, info in pairs(ent.jdmg_statuses) do
-							if info.stop_time < time then
-								if info.status.OnStop then
-									info.status:OnStop(ent)
-								end
+						for key, status in pairs(ent.jdmg_statuses) do
+							if SERVER then
+								if status:GetAmount() < 0.001 then
+									status:SetAmount(0)
 
-								ent.jdmg_statuses[key] = nil
-							else
-								if not info.status.started then
-									if info.status.OnStart then
-										info.status:OnStart(ent)
+									if status.OnStop then
+										status:OnStop(ent)
 									end
-									info.status.started = true
-								end
 
-								if info.status.Think then
-									if not info.status.last_run or info.status.last_run < time then
-										info.status:Think(ent, (info.stop_time - time) / info.duration, info.stop_time - time)
-										info.status.last_run = time + (info.status.Rate or 0)
-									end
+									ent.jdmg_statuses[key] = nil
+
+									net.Start("jdmg_status")
+										net.WriteEntity(ent)
+										net.WriteString(status.Name)
+										net.WriteBool(false)
+										net.WriteTable({})
+									net.Broadcast()
+
+									return
 								end
+							end
+
+							if not status.started then
+								if status.OnStart then
+									status:OnStart(ent)
+								end
+								status.started = true
+							end
+
+							if status.Think then
+								if not status.last_run or status.last_run < time then
+									status:Think(ent, status:GetAmount())
+									status.last_run = time + (status.Rate or 0)
+								end
+							end
+
+							if SERVER then
+								status:SetAmount(status:GetAmount() - FrameTime() * 0.5)
 							end
 						end
 
@@ -136,27 +169,49 @@ do -- status
 			local ent = net.ReadEntity()
 			if not ent:IsValid() then return end
 			local status = net.ReadString()
-			local time = net.ReadDouble()
+			local b = net.ReadBool()
 			local userdata = net.ReadTable()
 
-			set_status(ent, status, time, userdata)
+			set_status(ent, status, userdata, b)
 		end)
 	end
 
 	if SERVER then
 		util.AddNetworkString("jdmg_status")
 
-		function jdmg.SetStatus(ent, status, time, userdata)
+		function jdmg.SetStatus(ent, status, amt, userdata)
 			userdata = userdata or {}
 
 			net.Start("jdmg_status")
 				net.WriteEntity(ent)
 				net.WriteString(status)
-				net.WriteDouble(time)
+				net.WriteBool(true)
 				net.WriteTable(userdata)
 			net.Broadcast()
 
-			set_status(ent, status, time, userdata)
+			set_status(ent, status, userdata, true)
+
+			if jdmg.GetStatuses(ent)[status] then
+				jdmg.GetStatuses(ent)[status]:SetAmount(amt)
+			end
+		end
+
+		function jdmg.AddStatus(ent, status, amt, userdata)
+
+			if not jdmg.GetStatuses(ent)[status] then
+				userdata = userdata or {}
+
+				net.Start("jdmg_status")
+					net.WriteEntity(ent)
+					net.WriteString(status)
+					net.WriteBool(true)
+					net.WriteTable(userdata)
+				net.Broadcast()
+
+				set_status(ent, status, userdata, true)
+			end
+
+			jdmg.GetStatuses(ent)[status]:AddAmount(amt)
 		end
 	end
 
@@ -190,7 +245,6 @@ if CLIENT then
 	jdmg.active_entities = active
 
 	local function render_jdmg()
-		cam.Start3D()
 		local time = RealTime()
 		for i = #active, 1, -1 do
 			local data = active[i]
@@ -236,8 +290,6 @@ if CLIENT then
 		render.ModelMaterialOverride()
 		render.SetBlend(1)
 
-		cam.End3D()
-
 		if not active[1] then
 			hook.Remove("RenderScreenspaceEffects", "jdmg")
 		end
@@ -246,8 +298,6 @@ if CLIENT then
 	local lowhealth_mat = jfx.CreateOverlayMaterial("models/effects/portalfunnel2_sheet")
 
 	local function render_lowhealth()
-		cam.Start3D()
-
 		for i = #low_health, 1, -1 do
 			local ent = low_health[i]
 
@@ -278,15 +328,13 @@ if CLIENT then
 
 		end
 
-		cam.End3D()
-
 		if not low_health[1] then
 			hook.Remove("RenderScreenspaceEffects", "jdmg_lowhealth")
 		end
 	end
 
 	if low_health[1] then
-		hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", render_lowhealth)
+		hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_lowhealth))
 	end
 
 	function jdmg.DamageEffect(ent, type, duration, strength, pow)
@@ -306,14 +354,14 @@ if CLIENT then
 		})
 
 		if #active == 1 then
-			hook.Add("RenderScreenspaceEffects", "jdmg", render_jdmg)
+			hook.Add("RenderScreenspaceEffects", "jdmg", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_jdmg))
 		end
 
 		if ent:IsValid() and ent.Health and ent:Health() / ent:GetMaxHealth() < 0.25 then
 			table.insert(low_health, ent)
 
 			if low_health[1] then
-				hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", render_lowhealth)
+				hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_lowhealth))
 			end
 		end
 	end

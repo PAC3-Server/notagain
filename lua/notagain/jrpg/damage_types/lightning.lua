@@ -6,31 +6,7 @@ META.DamageTranslate = {
 	DMG_SHOCK = true,
 }
 function META:OnDamage(self, attacker, victim, dmginfo)
-	jdmg.SetStatus(victim, "lightning", true)
-
-	local time = CurTime() + 5
-
-	local id = "poison_"..tostring(attacker)..tostring(victim)
-
-	timer.Create(id, 0.2, 0, function()
-		if not victim:IsValid() then
-			timer.Remove(id)
-			return
-		end
-
-		if victim.GetActiveWeapon then
-			local wep = victim:GetActiveWeapon()
-			if wep and wep:IsValid() then
-				wep:SetNextPrimaryFire(CurTime()+math.random())
-				wep:SetNextSecondaryFire(CurTime()+math.random())
-			end
-		end
-
-		if (not victim:IsPlayer() or not victim:Alive()) or time < CurTime() then
-			timer.Remove(id)
-			jdmg.SetStatus(victim, "lightning", false)
-		end
-	end)
+	jdmg.SetStatus(victim, "lightning", dmginfo:GetDamage()/50)
 end
 
 if CLIENT then

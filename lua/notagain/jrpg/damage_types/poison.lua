@@ -91,10 +91,9 @@ end
 
 if SERVER then
 	function META:OnDamage(self, attacker, victim, dmginfo)
-		jdmg.SetStatus(victim, "poison", 10, {
+		jdmg.AddStatus(victim, "poison", dmginfo:GetDamage()/100, {
 			attacker = dmginfo:GetAttacker(),
 			weapon = dmginfo:GetInflictor(),
-			potency = 10,
 		})
 	end
 end

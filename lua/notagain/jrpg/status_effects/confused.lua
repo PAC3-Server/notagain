@@ -7,11 +7,24 @@ if CLIENT then
 
 	META.Icon = jfx.CreateMaterial({
 		Shader = "UnlitGeneric",
-		BaseTexture = "editor/choreo_manager",
+		BaseTexture = "http://wow.zamimg.com/images/wow/icons/large/ability_monk_blackoutkick.jpg",
 		VertexAlpha = 1,
 		VertexColor = 1,
-		BaseTextureTransform = "center 0.45 .1 scale 0.9 0.9 rotate 0 translate 0 -0.05",
 	})
+end
+
+function META:Think(ent)
+	local wep = ent:GetActiveWeapon()
+	if wep and wep:IsValid() then
+		local f = self:GetAmount()
+		local t = CurTime()
+		wep:SetNextPrimaryFire(t + math.random() * f)
+		wep:SetNextSecondaryFire(t + math.random() * f)
+	end
+end
+
+if CLIENT then
+
 end
 
 jdmg.RegisterStatusEffect(META)
