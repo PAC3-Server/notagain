@@ -7,10 +7,13 @@ function META:OnDamage(self, attacker, victim, dmginfo)
 	local health = victim:Health()
 	local max_health = victim:GetMaxHealth()
 	if not attacker:IsNPC() or not attacker:IsPlayer() then
-		if max_health == health or max_health == 0 or health == 0 then return end
+		if max_health == health or max_health == 0 or health == 0 then
+			dmginfo:SetDamage(0)
+			return
+		end
 	end
-	local amt = math.min(health + dmginfo:GetDamage(), max_health)
-	victim:SetHealth(amt)
+	local amt = dmginfo:GetDamage()
+	victim:SetHealth(math.min(health + amt, victim:GetMaxHealth()))
 	dmginfo:SetDamage(-amt)
 end
 
