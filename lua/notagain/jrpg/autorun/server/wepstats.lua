@@ -252,10 +252,14 @@ do
 		self:OnDetach()
 	end
 
-	function BASE:TakeDamageInfo(ent, dmginfo)
+	function wepstats.TakeDamageInfo(ent, dmginfo)
 		wepstats.suppress_events = true
 		ent:TakeDamageInfo(dmginfo)
 		wepstats.suppress_events = false
+	end
+
+	function BASE:TakeDamageInfo(ent, dmginfo)
+		wepstats.TakeDamageInfo(ent, dmginfo)
 	end
 
 	function BASE:CopyDamageInfo(dmginfo)
@@ -269,7 +273,9 @@ do
 		copy:SetDamageForce(dmginfo:GetDamageForce())
 		copy:SetDamagePosition(dmginfo:GetDamagePosition())
 		copy:SetDamageType(dmginfo:GetDamageType())
-		copy:SetInflictor(dmginfo:GetInflictor())
+		if dmginfo:GetInflictor():IsValid() then
+			copy:SetInflictor(dmginfo:GetInflictor())
+		end
 		--copy:SetMaxDamage(dmginfo:GetMaxDamage())
 		copy:SetReportedPosition(dmginfo:GetReportedPosition())
 

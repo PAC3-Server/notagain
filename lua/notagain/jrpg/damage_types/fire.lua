@@ -2,7 +2,7 @@ local META = {}
 META.Name = "fire"
 
 function META:OnDamage(self, attacker, victim)
-	victim:Ignite((self:GetStatusMultiplier()-1)*10, victim:BoundingRadius() * 2)
+	jdmg.SetStatus(victim, "fire", 3)
 end
 
 META.Adjectives = {"hot", "molten", "burning", "flaming"}
