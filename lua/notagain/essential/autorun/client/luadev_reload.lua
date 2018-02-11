@@ -1,6 +1,8 @@
 local luadev = requirex("luadev")
 local last = {}
 
+notagain.extra_reload_directories = notagain.extra_reload_directories or {}
+
 local find_cache = {}
 local function find(path)
 	if not find_cache[path] then
@@ -12,6 +14,7 @@ end
 
 local function check_dir(dir, cb, what, lib)
 	for _, path in ipairs(find(dir .. "*")) do
+
 		local name = path:match("(.+)%.lua")
 		path = dir .. path
 
@@ -106,6 +109,12 @@ concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 					for _, info in ipairs(lib.notagain_monitor_directories) do
 						check_dir(addon_dir .. info.dir, callback, info.what, info.lib)
 					end
+				end
+			end
+
+			if notagain.extra_reload_directories[1] then
+				for _, info in pairs(notagain.extra_reload_directories) do
+					check_dir(addon_dir .. info.dir, callback, info.type or "shared")
 				end
 			end
 		end)
