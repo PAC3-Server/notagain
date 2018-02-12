@@ -7,14 +7,7 @@ end
 
 webaudio.sample_rate = nil
 webaudio.speed_of_sound = 340.29 -- metres per
-
-if webaudio.browser_panel and webaudio.browser_panel:IsValid() then
-	webaudio.browser_panel:Remove()
-	webaudio.browser_panel = nil
-end
-
-webaudio.browser_state = "uninitialized"
-webaudio.volume = 1
+webaudio.buffer_size = CreateClientConVar("webaudio_buffer_size", "2048", true)
 
 local function dprint(str)
     if webaudio.debug  then
@@ -23,6 +16,20 @@ local function dprint(str)
         Msg("\n")
     end
 end
+
+cvars.AddChangeCallback("webaudio_buffer_size", function(_,_,val)
+	dprint("buffer size changed to " .. val)
+	webaudio.Shutdown()
+	webaudio.Initialize()
+end)
+
+if webaudio.browser_panel and webaudio.browser_panel:IsValid() then
+	webaudio.browser_panel:Remove()
+	webaudio.browser_panel = nil
+end
+
+webaudio.browser_state = "uninitialized"
+webaudio.volume = 1
 
 local script_queue
 
@@ -87,6 +94,16 @@ do
 	end
 end
 
+function webaudio.Shutdown()
+	webaudio.browser_state = "uninitialized"
+	if webaudio.browser_panel then
+		webaudio.browser_panel:Remove()
+	end
+	webaudio.browser_panel = nil
+	hook.Remove("RenderScene", "webaudio2")
+	hook.Remove("Think", "webaudio2")
+end
+
 function webaudio.Initialize()
 	if webaudio.browser_state ~= "uninitialized" then return end
 
@@ -131,26 +148,7 @@ function webaudio.Initialize()
 		end
 	end)
 
-	file.Write("webaudio_html.txt", webaudio.html)
-	webaudio.browser_panel:OpenURL("asset://garrysmod/data/webaudio_html.txt")
-
-	hook.Add("RenderScene", "webaudio2", function(pos, ang)
-		webaudio.eye_pos = pos
-		webaudio.eye_ang = ang
-	end)
-
-	hook.Add("Think", "webaudio2", webaudio.Update)
-end
-
--- Audio
-function webaudio.SetVolume(vol)
-	if webaudio.volume ~= vol then
-		webaudio.volume = vol
-		run_javascript(string.format("gain.gain.value = %f", vol))
-	end
-end
-
-webaudio.html = [==[
+	file.Write("webaudio_html.txt", [==[
 <script>
 /*jslint bitwise: true */
 
@@ -180,11 +178,11 @@ function open()
     if (typeof AudioContext != "undefined")
     {
         audio = new AudioContext();
-        processor = audio.createScriptProcessor(2048, 0, 0);
+        processor = audio.createScriptProcessor(]==] .. webaudio.buffer_size:GetInt() .. [==[, 0, 0);
         gain = audio.createGain();
     } else {
         audio = new webkitAudioContext();
-        processor = audio.createJavaScriptNode(2048, 0, 0);
+        processor = audio.createJavaScriptNode(]==] .. webaudio.buffer_size:GetInt() .. [==[, 0, 0);
         gain = audio.createGainNode();
     }
 
@@ -508,7 +506,24 @@ open();
 
 </script>
 
-]==]
+]==])
+	webaudio.browser_panel:OpenURL("asset://garrysmod/data/webaudio_html.txt")
+
+	hook.Add("RenderScene", "webaudio2", function(pos, ang)
+		webaudio.eye_pos = pos
+		webaudio.eye_ang = ang
+	end)
+
+	hook.Add("Think", "webaudio2", webaudio.Update)
+end
+
+-- Audio
+function webaudio.SetVolume(vol)
+	if webaudio.volume ~= vol then
+		webaudio.volume = vol
+		run_javascript(string.format("gain.gain.value = %f", vol))
+	end
+end
 
 webaudio.streams = setmetatable({}, {__mode = "kv"})
 
