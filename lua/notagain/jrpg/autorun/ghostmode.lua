@@ -230,6 +230,19 @@ if CLIENT then
 			local ent = ply:GetNW2Entity("ghost_fairy")
 			if ent:IsValid() then
 
+				if not ply.ghostmode_hide_hud then
+					ply.ghostmode_hide_hud = true
+					ent:CallOnRemove(Tag, function()
+						hook.Remove("HUDShouldDraw", Tag)
+						ply.ghostmode_hide_hud = nil
+					end)
+					hook.Add("HUDShouldDraw",Tag,function(name)
+						if name == "CHudDamageIndicator" and LocalPlayer():GetNWBool("rpg") and not LocalPlayer():Alive() then
+							return false
+						end
+					end)
+				end
+
 				render.RenderView({
 					drawhud = false,
 					drawmonitors = true,
@@ -358,11 +371,4 @@ if CLIENT then
 			end
 		end
     end)
-
-    hook.Add("HUDShouldDraw",Tag,function(name)
-        if name == "CHudDamageIndicator" and LocalPlayer():GetNWBool("rpg") and not LocalPlayer():Alive() then
-            return false
-        end
-    end)
-
 end
