@@ -1,5 +1,28 @@
 if engine.ActiveGamemode() ~= "sandbox" then return end
 
+local added = {}
+
+local real_hook_Add = hook.Add
+local real_hook_Remove = hook.Add
+
+local hook = {Add = function(event, id, func)
+	table.insert(added, {event, id, func})
+end}
+
+local function ENABLE_HOOKS(b)
+	if b then
+		for i,v in ipairs(added) do
+			real_hook_Add(unpack(v))
+		end
+	else
+		for i,v in ipairs(added) do
+			real_hook_Remove(v[1], v[2])
+		end
+	end
+end
+
+local HOOK_REF = 0
+
 AddCSLuaFile()
 
 for i = 1, 2 do
@@ -3925,6 +3948,20 @@ local player_styles = {
 	"i eat steroids", "drop 2k or die", "windows 10"
 }
 
+if CLIENT then
+	function ENT:Initialize()
+		HOOK_REF = HOOK_REF + 1
+		ENABLE_HOOKS(true)
+	end
+
+	function ENT:OnRemove()
+
+		HOOK_REF = HOOK_REF - 1
+		if HOOK_REF == 0 then
+			ENABLE_HOOKS(false)
+		end
+	end
+end
 
 if SERVER then
 
@@ -4051,7 +4088,8 @@ util.AddNetworkString( "RagdollFightArenaSendMessage" )
 		--just to be sure
 		constraint.Weld( self, game.GetWorld(), 0, 0, 0, false, false )
 
-
+		HOOK_REF = HOOK_REF + 1
+		ENABLE_HOOKS(true)
 	end
 
 	function ENT:Use( activator, caller, useType, value )
@@ -4091,6 +4129,10 @@ util.AddNetworkString( "RagdollFightArenaSendMessage" )
 			self:RemovePlayer( 2 )
 		end
 
+		HOOK_REF = HOOK_REF - 1
+		if HOOK_REF == 0 then
+			ENABLE_HOOKS(false)
+		end
 	end
 
 	function ENT:SendMessage( txt, dur, t )
