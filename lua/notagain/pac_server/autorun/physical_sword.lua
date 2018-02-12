@@ -50,22 +50,7 @@ if CLIENT then
 		self.last_pos = pos
 	end
 
-	function ENT:Initialize()
-		self.wind_snd = CreateSound(self, "weapons/tripwire/ropeshoot.wav")
-		self.wind_snd:Play()
-	end
-
-	function ENT:Think()
-		local len = self:GetVelocity():Length()
-		self.wind_snd:ChangePitch(math.Clamp(len/10, 50, 255), 0)
-		self.wind_snd:ChangeVolume(math.Clamp((len/1000) ^ 2, 0, 1), 0)
-	end
-
-	function ENT:OnRemove()
-		self.wind_snd:Stop()
-	end
-
-	hook.Add("CreateMove", "physical_sword", function(ucmd)
+	local function create_move(ucmd)
 		local ply = LocalPlayer()
 
 		local ok = false
@@ -84,7 +69,31 @@ if CLIENT then
 		else
 			ply.prev_ang = nil
 		end
-	end)
+	end
+
+	local ref = 0
+
+	function ENT:Initialize()
+		self.wind_snd = CreateSound(self, "weapons/tripwire/ropeshoot.wav")
+		self.wind_snd:Play()
+
+		ref = ref + 1
+		hook.Add("CreateMove", "physical_sword", create_move)
+	end
+
+	function ENT:Think()
+		local len = self:GetVelocity():Length()
+		self.wind_snd:ChangePitch(math.Clamp(len/10, 50, 255), 0)
+		self.wind_snd:ChangeVolume(math.Clamp((len/1000) ^ 2, 0, 1), 0)
+	end
+
+	function ENT:OnRemove()
+		self.wind_snd:Stop()
+		ref = ref - 1
+		if ref == 0 then
+			hook.Remove("CreateMove", "physical_sword")
+		end
+	end
 end
 
 if SERVER then
@@ -99,6 +108,13 @@ if SERVER then
 		"models/mechanics/solid_steel/i_beam_32.mdl",
 	}
 
+	local function move(ply, mov)
+		local cmd = ply:GetCurrentCommand()
+
+		ply.ps_mousevel = Angle(cmd:GetMouseY(), -cmd:GetMouseX(), 0) * 0.05
+	end
+
+	local ref = 0
 
 	function ENT:Initialize()
 		self:SetModel("models/props_c17/signpole001.mdl")--table.Random(models))
@@ -107,6 +123,19 @@ if SERVER then
 		self:StartMotionController()
 		self:GetPhysicsObject():SetMass(50)
 		self:GetPhysicsObject():SetMaterial("jeeptire")
+
+		ref = ref + 1
+		hook.Add("Move", "physical_sword", move)
+	end
+
+	function ENT:OnRemove()
+		self:Drop()
+
+		ref = ref - 1
+
+		if ref == 0 then
+			hook.Remove("Move", "physical_sword")
+		end
 	end
 
 	function ENT:Think()
@@ -186,10 +215,6 @@ if SERVER then
 		if owner:IsValid() then
 			owner.physical_sword = NULL
 		end
-	end
-
-	function ENT:OnRemove()
-		self:Drop()
 	end
 
 	local params = {}
@@ -316,12 +341,6 @@ if SERVER then
 		--ang.r = 0
 		--owner:SetEyeAngles(ang)
 	end
-
-	hook.Add("Move", "physical_sword", function(ply, mov)
-		local cmd = ply:GetCurrentCommand()
-
-		ply.ps_mousevel = Angle(cmd:GetMouseY(), -cmd:GetMouseX(), 0) * 0.05
-	end)
 end
 
 scripted_ents.Register(ENT, "physical_sword", true)
