@@ -1,5 +1,7 @@
 friends = friends or {}
 
+local is_friend_cache = setmetatable({}, {__mode = "kv"})
+
 local META = FindMetaTable("Player")
 
 function aowl.SetFriend(a, b, is_friend)
@@ -18,20 +20,32 @@ function aowl.SetFriend(a, b, is_friend)
 	if CPPI then
 		hook.Run("CPPIFriendsChanged", ply, {b})
 	end
+
+	is_friend_cache[a] = nil
+	is_friend_cache[b] = nil
 end
 
-function aowl.GetFriend(a, b)
-	local uid = b:IsPlayer() and b:UniqueID() or b:EntIndex()
+do
+	local function is_friend(a, b)
+		local uid = b:IsPlayer() and b:UniqueID() or b:EntIndex()
 
-	local num = a:GetNW2Int("friends_set_override_" .. uid, -1)
+		local num = a:GetNW2Int("friends_set_override_" .. uid, -1)
 
-	if num == 1 then
-		return true
-	elseif num == 0 then
-		return false
+		if num == 1 then
+			return true
+		elseif num == 0 then
+			return false
+		end
+
+		return a:GetNW2Bool("friends_set_" .. uid, false)
 	end
 
-	return a:GetNW2Bool("friends_set_" .. uid, false)
+	function aowl.GetFriend(a, b)
+		if is_friend_cache[a] and is_friend_cache[a][b] then return is_friend_cache[a][b] end
+
+		is_friend_cache[a] = is_friend_cache[a] or {}
+		is_friend_cache[a][b] = is_friend(a, b)
+	end
 end
 
 function META:IsFriend(ply)
