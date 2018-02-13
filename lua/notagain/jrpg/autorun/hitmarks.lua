@@ -881,7 +881,7 @@ if SERVER then
 
 	timer.Create("hitmarker", 1, 0, function()
 		for _, ent in ipairs(ents.GetAll()) do
-			if ent:IsPlayer() or ent:IsNPC() then
+			if ent.GetMaxHealth then
 				if ent.hm_last_health ~= ent:Health() then
 					local diff = ent:Health() - (ent.hm_last_health or 0)
 					if diff > 0 then
