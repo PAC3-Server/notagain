@@ -142,7 +142,7 @@ if CLIENT then
 			surface.SetMaterial(avatar.npc_avatars[ply])
 			surface.DrawTexturedRect(x, y, size, size)
 
-			surface.SetMaterial(border)
+			render.SetMaterial(border)
 			draw_rect(x,y,size,size, 0, 4, 70, 5, border:GetTexture("$BaseTexture"):Width(), true)
 		else
 			if not avatar.steam_avatars[ply] then
@@ -158,8 +158,9 @@ if CLIENT then
 			pnl:SetSize(size, size)
 			pnl:PaintManual()
 
-			surface.SetMaterial(border)
-			surface.SetDrawColor(255,255,255,255)
+			render.SetMaterial(border)
+			render.SetColorModulation(255,255,255,255)
+			render.SetBlend(1)
 			draw_rect(x,y,size,size, 0, 4, 70, 5, border:GetTexture("$BaseTexture"):Width(), true)
 		end
 	end

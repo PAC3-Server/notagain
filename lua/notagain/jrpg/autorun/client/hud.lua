@@ -27,19 +27,19 @@ local last_hp_timer = 0
 local border_size = 2
 local skew = -40
 local health_height = 18
+local no_texture = Material("vgui/white")
 
 function jhud.DrawBar(x,y,w,h,cur,max,border_size, r,g,b)
 	local skew = skew/1.5
-	surface.SetMaterial(border)
-	surface.SetDrawColor(255,255,255,255)
-	surface.SetDrawColor(0,0,0,250)
-	draw.NoTexture()
+	render.SetMaterial(border)
+	render.SetColorModulation(0,0,0,0.980)
+	render.SetMaterial(no_texture)
 	draw_rect(x,y,w,h, skew)
-	surface.SetDrawColor(r,g,b,255)
-	surface.SetMaterial(gradient)
+	render.SetColorModulation(r,g,b,1)
+	render.SetMaterial(gradient)
 	draw_rect(x,y,w * (cur/max),h, skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
-	surface.SetMaterial(border)
-	surface.SetDrawColor(255,255,255,255)
+	render.SetMaterial(border)
+	render.SetColorModulation(1,1,1,1)
 	draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 end
 
@@ -144,24 +144,25 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	if not txt then
 		skew = skew / 1.5
 	end
-	surface.SetMaterial(border)
-	surface.SetDrawColor(255,255,255,255)
+
+	render.SetMaterial(border)
+	render.SetColorModulation(1,1,1,1)
 
 	if txt then
 		--draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 		draw_rect(x-5,y,w+10,h, skew, 0, 70, border_size*3, border:GetTexture("$BaseTexture"):Width(), false)
 	end
 
-	surface.SetDrawColor(0,0,0,250)
-	draw.NoTexture()
+	render.SetColorModulation(0,0,0,0.980)
+	render.SetMaterial(no_texture)
 	draw_rect(x,y,w,h, skew)
 
-	surface.SetDrawColor(r,g,b,255)
-	surface.SetMaterial(gradient)
+	render.SetMaterial(gradient)
+	render.SetColorModulation(r/255,g/255,b/255,1)
 	draw_rect(x,y,w * math.min(cur/max, 1),h, skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
 
-	surface.SetMaterial(border)
-	surface.SetDrawColor(255,255,255,255)
+	render.SetMaterial(border)
+	render.SetColorModulation(1,1,1,1)
 	draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 
 	if real_cur then
