@@ -137,6 +137,7 @@ local background_glow = CreateMaterial(tostring({}), "UnlitGeneric", {
 
 local background_wing = Material("materials/pac_server/jrpg/wing.png", "smooth")
 local foreground_line = Material("materials/pac_server/jrpg/line.png", "smooth")
+local surface = surface
 
 local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center_number)
 	local skew = skew
@@ -173,8 +174,15 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 			weight = 1000,
 			blur_size = 4,
 			blur_overdraw = 3,
-			foreground_color = Color(230, 230, 230, 255),
-			background_color = Color(r/2,g/2,b/2,255),
+			foreground_color_r = 230,
+			foreground_color_g = 230,
+			foreground_color_b = 230,
+			foreground_color_a = 255,
+
+			background_color_r = r/2,
+			background_color_g = g/2,
+			background_color_b = b/2,
+			background_color_a = 255,
 			x_align = center_number and -0.5 or 0.25,
 			y_align = center_number and -0.5 or -0.2,
 		})
@@ -190,8 +198,14 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 			weight = 0,
 			blur_size = 4,
 			blur_overdraw = 3,
-			foreground_color = Color(230, 230, 230, 255),
-			background_color = Color(r/5,g/5,b/5,255),
+			foreground_color_r = 230,
+			foreground_color_g = 230,
+			foreground_color_b = 230,
+			foreground_color_a = 255,
+			background_color_r = r/5,
+			background_color_g = g/5,
+			background_color_b = b/5,
+			background_color_a = 255,
 			x_align = -1,
 			y_align = -0.15,
 		})
