@@ -236,6 +236,20 @@ do
 	function SWEP:SecondaryAttack() end
 
 	if SERVER then
+		local shields = {}
+
+		function SWEP:Initialize()
+			table.insert(shields, self)
+
+			hook.Add("Think", "shield", function()
+				for _, self in ipairs(shields) do
+					if self.is_shield then
+						self:GlobalThink()
+					end
+				end
+			end)
+		end
+
 		function SWEP:PrimaryAttack()
 			local ply = self:GetOwner()
 
@@ -284,6 +298,17 @@ do
 			local ply = self.Owner
 
 			SafeRemoveEntity(ply:GetNWEntity("shield"))
+
+			for i,v in ipairs(shields) do
+				if v == self then
+					table.remove(shields, i)
+					break
+				end
+			end
+
+			if not shields[1] then
+				hook.Remove("Think", "shields")
+			end
 		end
 
 		function SWEP:Deploy()
@@ -315,14 +340,6 @@ do
 				self:HideShield()
 			end
 		end
-
-		hook.Add("Think", "shield", function()
-			for _, self in ipairs(ents.GetAll()) do
-				if self.is_shield then
-					self:GlobalThink()
-				end
-			end
-		end)
 	end
 
 	weapons.Register(SWEP, SWEP.ClassName)

@@ -23,7 +23,7 @@ if CLIENT then
 	timer.Create("afk", 0.25, 0, function()
 		local time = RealTime()
 
-		for i = 0, 256 do
+		for i = KEY_FIRST, KEY_LAST do
 			local is_down = input.IsKeyDown(i)
 			if last_keys[i] ~= is_down then
 				last_moved = time
