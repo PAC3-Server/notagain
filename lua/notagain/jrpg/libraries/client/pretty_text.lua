@@ -11,14 +11,19 @@ local function create_fonts(font, size, weight, blursize)
 		weight = weight,
 		antialias = true,
 	})
-	surface.CreateFont(blur, {
-		font = font,
-		size = size,
-		weight = weight,
-		blursize = blursize / 2,
-		outline = true,
-		antialias = true,
-	})
+
+	if blursize >= 1 then
+		surface.CreateFont(blur, {
+			font = font,
+			size = size,
+			weight = weight,
+			blursize = blursize / 2,
+			outline = true,
+			antialias = true,
+		})
+	else
+		blur = main
+	end
 
 	return {
 		main = main,
@@ -118,7 +123,7 @@ function prettytext.DrawText(tbl)
 
 	alpha = alpha ^ 2
 
-	surface.SetAlphaMultiplier(alpha)
+	--surface.SetAlphaMultiplier(alpha)
 
 	if background_color == true then
 		hsv_cache[foreground_color.r] = hsv_cache[foreground_color.r] or {}
@@ -267,7 +272,9 @@ function prettytext.DrawText(tbl)
 	end
 
 	-- draw text1
-	surface_SetFont(fonts[font][size][weight][blur_size].main)
+	if blur_size > 1 then
+		surface_SetFont(fonts[font][size][weight][blur_size].main)
+	end
 	surface_SetTextColor(foreground_color)
 	surface_SetTextPos(x, y)
 	surface_DrawText(text)
@@ -287,7 +294,7 @@ function prettytext.DrawText(tbl)
 		render_PopFilterMin()
 	end
 
-	surface.SetAlphaMultiplier(1)
+	--surface.SetAlphaMultiplier(1)
 
 	return w, h
 end

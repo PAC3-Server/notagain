@@ -237,7 +237,7 @@ if CLIENT then
 						ply.ghostmode_hide_hud = nil
 					end)
 					hook.Add("HUDShouldDraw",Tag,function(name)
-						if name == "CHudDamageIndicator" and LocalPlayer():GetNWBool("rpg") and not LocalPlayer():Alive() then
+						if name == "CHudDamageIndicator" and jrpg.enabled and not LocalPlayer():Alive() then
 							return false
 						end
 					end)
@@ -278,7 +278,7 @@ if CLIENT then
 			ply:SetupBones()
 		end
 
-		if LocalPlayer():GetNWBool("rpg") and not LocalPlayer():Alive() then
+		if jrpg.enabled and not LocalPlayer():Alive() then
 
 			sound = sound or CreateSound(LocalPlayer(), "ambient/levels/citadel/citadel_hub_ambience1.mp3")
 			sound:Play()
