@@ -46,27 +46,26 @@ if CLIENT then
 
 		surface.DrawPoly( cir )
 	end
-
+	local no_texture = Material("vgui/white")
 	local function draw_health_bar(ent, x,y, w,h, health, last_health, fade, border_size, skew, r,g,b, is_health)
-		surface.SetDrawColor(200, 200, 200, 50*fade)
-		draw.NoTexture()
+		render.SetColorModulation(0.1, 0.1, 0.1, 0.20*fade)
+		render.SetMaterial(no_texture)
 		draw_rect(x,y,w,h, skew)
 
-		surface.SetMaterial(gradient)
-
-		surface.SetDrawColor(is_health and 200 or 50, 50, 50, 255*fade)
+		render.SetMaterial(gradient)
+		render.SetColorModulation(is_health and 0.784 or 0.20, 0.20, 0.20, fade)
 
 		for _ = 1, 2 do
 			draw_rect(x,y,w*last_health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
 
-		surface.SetDrawColor(r,g,b, 255*fade)
+		render.SetColorModulation(r/255,g/255,b/255, fade)
 		for _ = 1, 2 do
 			draw_rect(x,y,w*health,h, skew, 0, 70, 5, gradient:GetTexture("$BaseTexture"):Width())
 		end
 
-		surface.SetDrawColor(150, 150, 150, 255*fade)
-		surface.SetMaterial(border)
+		render.SetColorModulation(0.588, 0.588, 0.588, fade)
+		render.SetMaterial(border)
 
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew, 1, 64,border_size, border:GetTexture("$BaseTexture"):Width(), true)
@@ -83,26 +82,26 @@ if CLIENT then
 				fade = fade ^ 0.25
 
 				if status.Negative then
-					surface.SetDrawColor(150, 0, 0, 255*fade)
+					render.SetColorModulation(0.588, 0, 0, fade)
 				elseif status.Positive then
-					surface.SetDrawColor(0, 0, 150, 255*fade)
+					render.SetColorModulation(0, 0, 0.588, fade)
 				else
-					surface.SetDrawColor(0, 0, 0, 255*fade)
+					render.SetColorModulation(0, 0, 0, fade)
 				end
-				draw.NoTexture()
+				render.SetMaterial(no_texture)
 				draw_rect(x+w-size,y+h,size,size)
 
-				surface.SetDrawColor(255, 255, 255, 255*fade)
-				surface.SetMaterial(border)
+				render.SetColorModulation(1, 1, 1, fade)
+				render.SetMaterial(border)
 				draw_rect(x+w-size,y+h,size,size, 0, 1, 64,border_size/1.5, border:GetTexture("$BaseTexture"):Width(), true)
 
-				surface.SetDrawColor(255, 255, 255, 255*fade)
-				surface.SetMaterial(status.Icon)
+				render.SetColorModulation(1, 1, 1, fade)
+				render.SetMaterial(status.Icon)
 				draw_rect(x+w-size,y+h,size,size)
 				draw_rect(x+w-size,y+h,size,size)
 
-				surface.SetDrawColor(0, 0, 0, 200)
-				draw.NoTexture()
+				render.SetColorModulation(0, 0, 0, 0.78)
+				render.SetMaterial(no_texture)
 				draw_rect(x+w-size,y+h,size*status:GetAmount(),size)
 
 
@@ -122,19 +121,19 @@ if CLIENT then
 
 	local function draw_weapon_info(x,y, w,h, color, fade)
 		local skew = 0
-		surface.SetDrawColor(25, 25, 25, 200*fade)
-		draw.NoTexture()
+		render.SetColorModulation(0.098, 0.098, 0.098, 0.78*fade)
+		render.SetMaterial(no_texture)
 		draw_rect(x,y,w,h, skew)
 
-		surface.SetMaterial(gradient)
+		render.SetMaterial(gradient)
+		render.SetColorModulation(color.r/255, color.g/255, color.b/255, (color.a/255) * fade)
 
-		surface.SetDrawColor(color.r, color.g, color.b, color.a * fade)
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew)
 		end
 
-		surface.SetDrawColor(200, 200, 200, 255*fade)
-		surface.SetMaterial(border)
+		render.SetColorModulation(0.78, 0.78, 0.78, fade)
+		render.SetMaterial(border)
 
 		for _ = 1, 2 do
 			draw_rect(x,y,w,h, skew, 3, 64,3, border:GetTexture("$BaseTexture"):Width(), true)
