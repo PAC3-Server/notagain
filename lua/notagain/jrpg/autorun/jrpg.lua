@@ -219,6 +219,7 @@ if SERVER then
 			hook.Run("OnRPGDisabled",ply)
 		end
 		if ply:GetNWBool("rpg") then
+			ply:SendLua([[jrpg.enabled = true]])
 			jattributes.SetTable(ply, {mana = 75, stamina = 25, health = 100})
 			jlevel.LoadStats(ply)
 			ply:SetHealth(ply:GetMaxHealth())
@@ -235,6 +236,7 @@ if SERVER then
 				ply:SetSuperJumpMultiplier(1)
 			end
 		else
+			ply:SendLua([[jrpg.enabled = false]])
 			jattributes.Disable(ply)
 			ply:SetHealth(100) -- fix to no health after removing rpg
 			ply:SetMaxHealth(100)

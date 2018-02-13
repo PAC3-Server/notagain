@@ -68,15 +68,11 @@ local render_ModelMaterialOverride = render.ModelMaterialOverride
 local render_SetColorModulation = render.SetColorModulation	local def = Vector(67,67,67)
 
 local function get_color(ent)
-	if not LocalPlayer():GetNWBool("rpg") then
-		return Vector(100, 100, 100)
-	end
-
 	local color = ent:GetNWVector("wepstats_color", def)
 
 	if color.r < 0 then
 		color = color * 1
-		local c = HSVToColor((os.clock()*200)%360, 1, 1)
+		local c = HSVToColor((RealTime()*200)%360, 1, 1)
 		color.r = c.r
 		color.g = c.g
 		color.b = c.b
@@ -169,7 +165,7 @@ hook.Add("HUDPaint", "jrpg_items", function()
 			local color = get_color(ent)
 			color = color * 1.5
 
-			local name = LocalPlayer():GetNWBool("rpg") and ent:GetNWString("wepstats_name", ent:GetClass()) or ent:GetClass()
+			local name = jrpg.enabled and ent:GetNWString("wepstats_name", ent:GetClass()) or ent:GetClass()
 			local class_name = ent:GetClass()
 
 			if language.GetPhrase(class_name) and language.GetPhrase(class_name) ~= class_name then
@@ -267,16 +263,25 @@ local function draw_glow(ent, time, distance, radius, vis, color, vm, wm)
 
 	local glow = math_sin(time*5)*0.5+0.5
 	render_SetMaterial(glare2_mat)
-	render_DrawSprite(pos, r*10, r*10, TempColor(color.r, color.g, color.b, vis*170*glow))
-	render_DrawSprite(pos, r*20, r*20, TempColor(color.r, color.g, color.b, vis*170*(glow+0.25)))
-	render_DrawSprite(pos, r*30, r*30, TempColor(color.r, color.g, color.b, vis*120*(glow+0.5)))
+	local c = TempColor(color.r, color.g, color.b)
+
+	c.a = vis*170*glow
+	render_DrawSprite(pos, r*10, r*10, c)
+
+	c.a = vis*170*(glow+0.25)
+	render_DrawSprite(pos, r*20, r*20, c)
+
+	c.a = vis*120*(glow+0.5)
+	render_DrawSprite(pos, r*30, r*30, c)
 
 	if not vm then
 		cam_IgnoreZ(false)
 	end
 
 	render_SetMaterial(glare_mat)
-	render_DrawSprite(pos, r*180, r*50, TempColor(color.r, color.g, color.b, vis*20))
+
+	c.a = vis*20
+	render_DrawSprite(pos, r*180, r*50, c)
 
 	if distance < 1500 then
 
@@ -413,35 +418,38 @@ local function draw_glow(ent, time, distance, radius, vis, color, vm, wm)
 
 	local vel_len = vel:Length()
 	local fade = fade * ent.jrpg_item_random
+	local items = ent.jrpg_items_random
 
 	for i2 = 1, max_outter do
-		ent.jrpg_items_random[i2] = ent.jrpg_items_random[i2] or math.Rand(-1,1)
+		items[i2] = items[i2] or math.random()*2-1
 		local f2 = i2/4
-		f2=f2*5+ent.jrpg_items_random[i2]
+		f2=f2*5+items[i2]
 
 		local offset = pos * 1
+
+		local huh = -(radius/13)*math_abs(math_sin(f2 + time/5)*100)
 
 		render_StartBeam(max_inner)
 			for i = 1, max_inner do
 				local f = i/max_inner
 				local s = math_sin(f*math_pi*2)
 
-
 				if i ~= 1 then
-					local up_mult = -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2])
-					local right_mult = -math_sin(f2+time+s*30/max_inner*ent.jrpg_items_random[i2])
-					local forward_mult = -(radius/13)*math_abs(math_sin(f2 + time/5)*100)*f*0.5 / (1+vel_len/100)
+					local up_mult = -math_sin(f2+time+s*30/max_inner*items[i2])
+					local right_mult = -math_sin(f2+time+s*30/max_inner*items[i2])
+					local forward_mult = huh*f*0.5 / (1+vel_len/100)
 
 					offset.x = pos.x + (up.x * up_mult + right.x * right_mult + forward.x * forward_mult) * fade
 					offset.y = pos.y + (up.y * up_mult + right.y * right_mult + forward.y * forward_mult) * fade
 					offset.z = pos.z + (up.z * up_mult + right.z * right_mult + forward.z * forward_mult) * fade
 				end
 
+				c.a = 255*f
 				render_AddBeam(
 					offset,
 					(-f+1)*radius,
-					(f*0.3-time*0.1 + ent.jrpg_items_random[i2]),
-					TempColor(color.r, color.g, color.b, 255*f)
+					(f*0.3-time*0.1 + items[i2]),
+					c
 				)
 			end
 		render_EndBeam()
@@ -452,7 +460,7 @@ local emitter_viewmodel = ParticleEmitter(vector_origin)
 emitter_viewmodel:SetNoDraw(true)
 
 hook.Add("RenderScreenspaceEffects", "jrpg_items", jrpg.SafeDraw(cam.Start3D, cam.End3D, function()
-	if not LocalPlayer():GetNWBool("rpg") then return end
+	if not jrpg.enabled then return end
 
 	render.UpdateScreenEffectTexture()
 	local time = RealTime()
@@ -462,8 +470,6 @@ hook.Add("RenderScreenspaceEffects", "jrpg_items", jrpg.SafeDraw(cam.Start3D, ca
 			remove_ent(ent)
 			break
 		end
-
-		local color = get_color(ent)
 
 		local wm = false
 
@@ -488,7 +494,7 @@ hook.Add("RenderScreenspaceEffects", "jrpg_items", jrpg.SafeDraw(cam.Start3D, ca
 		if vis == 0 and util_PixelVisible(pos, radius*5, ent.jrpg_items_pixvis2) == 0 then continue end
 
 		local distance = pos:Distance(EyePos())
-		draw_glow(ent, time, distance, wm and 5 or radius, vis * (wm and 0.25 or 1), color, nil, wm)
+		draw_glow(ent, time, distance, wm and 5 or radius, vis * (wm and 0.25 or 1), get_color(ent), nil, wm)
 	end
 
 	render.SetColorModulation(1,1,1)
@@ -498,11 +504,13 @@ end))
 
 local suppress = false
 hook.Add("PreDrawPlayerHands", "jrpg_items", function(hands, ent, ply, wep)
-	if not LocalPlayer():GetNWBool("rpg") then return end
+	if not jrpg.enabled then return end
+
 	render.ModelMaterialOverride()
 end)
 hook.Add("PreDrawViewModel", "jrpg_items", function(ent, ply, wep)
-	if not LocalPlayer():GetNWBool("rpg") then return end
+	if not jrpg.enabled then return end
+
 	if not wep then return end
 	if suppress then return end
 

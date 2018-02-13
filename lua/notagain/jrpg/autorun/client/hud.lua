@@ -466,7 +466,7 @@ hook.Add("HUDShouldDraw", "jhud", function(what)
 		return false
 	end
 
-	if LocalPlayer():GetNWBool("rpg") and (what == "CHudBattery" or what == "CHudAmmo" or what == "CHudSecondaryAmmo") then
+	if jrpg.enabled and (what == "CHudBattery" or what == "CHudAmmo" or what == "CHudSecondaryAmmo") then
 		return false
 	end
 end)

@@ -1,4 +1,87 @@
-function cracer()
+local perfutil = _G.perfutil or {}
+
+function perfutil.CheckGlobals(b)
+	if b then
+		setmetatable(_G, {
+			__index = function(_, key)
+				print("_G." .. key)
+			end,
+			__newindex = function(_, key, val)
+				print("_G." .. key .. " = " .. tostring(val))
+			end,
+		})
+	else
+		setmetatable(_G, nil)
+	end
+end
+
+do
+	perfutil.old_hooks = perfutil.old_hooks or {}
+
+	function perfutil.DisableHooks()
+		for event_name, functions in pairs(hook.GetTable()) do
+			perfutil.old_hooks[event_name] = perfutil.old_hooks[event_name] or {}
+			for id, func in pairs(functions) do
+				hook.Remove(event_name, id)
+				perfutil.old_hooks[event_name][id] = perfutil.old_hooks[event_name][id] or func
+			end
+		end
+	end
+
+	function perfutil.EnableHooks()
+		for event_name, functions in pairs(perfutil.old_hooks) do
+			for id, func in pairs(functions) do
+				hook.Add(event_name, id, func)
+			end
+		end
+
+		perfutil.old_hooks = {}
+	end
+end
+
+
+do
+	perfutil.old_gamemode = perfutil.old_gamemode or {}
+
+	function perfutil.DisableGamemode()
+		for key, val in pairs(GAMEMODE) do
+			if type(val) == "function" then
+				perfutil.old_gamemode[key] = perfutil.old_gamemode[key] or val
+				GAMEMODE[key] = function() end
+			end
+		end
+	end
+
+	function perfutil.EnableGamemode()
+		for key, val in pairs(perfutil.old_gamemode) do
+			if type(val) == "function" then
+				GAMEMODE[key] = val
+			end
+		end
+
+		perfutil.old_gamemode = {}
+	end
+end
+
+function perfutil.SetEngineEvents(b)
+	if b then
+		perfutil.EnableGamemode()
+		perfutil.EnableHooks()
+	else
+		perfutil.DisableGamemode()
+		perfutil.DisableHooks()
+	end
+end
+
+do
+	local b = true
+	concommand.Add("perfutil_toggle_engine_events", function()
+		b = not b
+		perfutil.SetEngineEvents(b)
+	end)
+end
+
+function perfutil.CRacer()
 	if not C_INJECTED then
 		local TIME = util.TimerCycle
 		local select = select
@@ -136,3 +219,5 @@ function cracer()
 		end
 	end)
 end
+
+_G.perfutil = perfutil
