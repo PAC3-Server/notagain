@@ -4,16 +4,9 @@ for i = 1, 6 do
 	mesh[i] = {x = 0, y = 0, u = 0, v = 0}
 end
 
+local surface_DrawPoly = surface.DrawPoly
+
 local function draw_rectangle(x,y, w,h, u1,v1,u2,v2, sx,sy)
-	u1 = u1 or 0
-	v1 = v1 or 0
-
-	u2 = u2 or 1
-	v2 = v2 or 1
-
-	sx = sx or 1
-	sy = sy or 1
-
 	-- scale uv coordinates where sx and sy are maybe texture size
 	u1 = u1 / sx
 	v1 = v1 / sy
@@ -64,7 +57,7 @@ local function draw_rectangle(x,y, w,h, u1,v1,u2,v2, sx,sy)
 	mesh[6].u = u2
 	mesh[6].v = v1
 
-	surface.DrawPoly(mesh)
+	surface_DrawPoly(mesh)
 end
 
 local function draw_sliced_texture(x,y,w,h, uv_size, corner_size, size, dont_draw_center)
@@ -150,17 +143,27 @@ local function draw_sliced_texture(x,y,w,h, uv_size, corner_size, size, dont_dra
 	)
 end
 
-local function skew_matrix(m, x, y)
-	x = math.rad(x)
-	y = math.rad(y or x)
+local math_rad = math.rad
+local math_tan = math.tan
+local temp_matrix = Matrix()
 
-	local skew = Matrix()
+local function skew_matrix(m, x, y)
+	x = math_rad(x)
+	y = math_rad(y or x)
+
+	local skew = temp_matrix
+	--skew:Identity()
 	skew:SetField(1,1, 1)
-	skew:SetField(1,2, math.tan(x))
-	skew:SetField(2,1, math.tan(y))
+	skew:SetField(1,2, math_tan(x))
+	skew:SetField(2,1, math_tan(y))
 	skew:SetField(2,2, 1)
 	m:Set(m * skew)
 end
+
+local cam_PushModelMatrix = cam.PushModelMatrix
+local cam_PopModelMatrix = cam.PopModelMatrix
+
+local temp_matrix = Matrix()
 
 return function(x,y,w,h, skew, border, uv_size, corner_size, texture_size, dont_draw_center)
 	border = border or 0
@@ -169,7 +172,8 @@ return function(x,y,w,h, skew, border, uv_size, corner_size, texture_size, dont_
 	local m
 
 	if skew ~= 0 then
-		m = Matrix()
+		m = temp_matrix
+		m:Identity()
 		m:Translate(Vector(x + w/2,y + h/2))
 		skew_matrix(m, skew, 0)
 		m:Translate(-Vector(x + w/2,y + h/2))
@@ -181,16 +185,16 @@ return function(x,y,w,h, skew, border, uv_size, corner_size, texture_size, dont_
 	h = h + border * 2
 
 	if m then
-		cam.PushModelMatrix(m)
+		cam_PushModelMatrix(m)
 	end
 
 	if uv_size then
 		draw_sliced_texture(x,y,w,h, uv_size, corner_size, texture_size, dont_draw_center)
 	else
-		draw_rectangle(x,y,w,h)
+		draw_rectangle(x,y,w,h, 0,0,1,1, 1,1)
 	end
 
 	if m then
-		cam.PopModelMatrix()
+		cam_PopModelMatrix()
 	end
 end

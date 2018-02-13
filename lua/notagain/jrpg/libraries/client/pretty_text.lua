@@ -108,6 +108,9 @@ local function skew_matrix(m, x, y)
 	m:Set(m * temp_matrix2)
 end
 
+local temp_fg = Color(255, 255, 255, 255)
+local temp_bg = Color(255, 255, 255, 255)
+
 function prettytext.DrawText(tbl)
 
 	local text = tbl.text or "nil"
@@ -117,6 +120,23 @@ function prettytext.DrawText(tbl)
 	local size = tbl.size or 14
 	local weight = tbl.weight or 0
 	local blur_size = tbl.blur_size or 1
+
+	if tbl.foreground_color_r then
+		temp_fg.r = tbl.foreground_color_r
+		temp_fg.g = tbl.foreground_color_g
+		temp_fg.b = tbl.foreground_color_b
+		temp_fg.a = tbl.foreground_color_a
+		tbl.foreground_color = temp_fg
+	end
+
+	if tbl.background_color_r then
+		temp_bg.r = tbl.background_color_r
+		temp_bg.g = tbl.background_color_g
+		temp_bg.b = tbl.background_color_b
+		temp_bg.a = tbl.background_color_a
+		tbl.background_color = temp_bg
+	end
+
 	local foreground_color = tbl.foreground_color or default_foreground_color
 	local background_color = tbl.background_color or default_background_color
 	local alpha = (tbl.alpha or 1) * (foreground_color.a / 255)
