@@ -4,6 +4,7 @@ if not enabled:GetBool() then return end
 local surface = surface
 local draw = draw
 local Color = Color
+local DisableClipping = DisableClipping
 
 SKIN = {}
 
