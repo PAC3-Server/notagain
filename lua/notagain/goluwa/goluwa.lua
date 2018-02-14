@@ -224,11 +224,19 @@ function goluwa.CreateEnv()
 				end
 			end
 
+			if path:StartWith("lua/") then
+				local relative = debug.getinfo(2).source:match("@(.+)")
+				local addon_dir = relative:match("^(.-/)")
+
+				if file.Exists(goluwa.lua_dir .. addon_dir .. path, goluwa.lua_dir_where) then
+					return execute(goluwa.lua_dir .. addon_dir .. path, addon_dir .. original_path,  ...)
+				end
+			end
+
 			if file.Exists(goluwa.lua_dir .. path, goluwa.lua_dir_where) then
 				return execute(goluwa.lua_dir .. path, original_path,  ...)
 			else
 				local relative = debug.getinfo(2).source:match("@(.+)")
-
 				if relative then
 					local dir = relative:match("(.+/).-%.lua")
 
@@ -452,9 +460,6 @@ function goluwa.CreateEnv()
 
 	env.io = {}
 	env.runfile("core/lua/libraries/platforms/gmod/io.lua", env.io)
-
-	env.fs.createdir("data/goluwa")
-	env.fs.createdir("data/goluwa/goluwa")
 
 	do
 		env._OLD_G = {}
@@ -742,6 +747,12 @@ function goluwa.CreateEnv()
 
 		env.gfx = env.runfile("framework/lua/libraries/graphics/gfx/gfx.lua")
 		env.runfile("engine/lua/libraries/graphics/gfx/markup.lua")
+
+		env.io.stdin = env.io.open("stdin", "r")
+		env.io.stdout = env.io.open("stdout", "w")
+
+		env.fs.createdir("data/goluwa")
+		env.fs.createdir("data/goluwa/goluwa")
 
 		env.window.Open()
 
