@@ -74,11 +74,15 @@ do
 	end
 
 	function goluwa.Update(cb)
+		file.CreateDir("goluwa")
+
 		if file.IsDir("addons/goluwa", "MOD") then
 			goluwa.addon_directory = true
 			cb()
 			return
 		end
+
+		file.CreateDir("goluwa/goluwa")
 
 		http.Fetch("https://gitlab.com/api/v4/projects/CapsAdmin%2Fgoluwa/repository/tags", function(data, _, _, code)
 			if code ~= 200 then
@@ -90,7 +94,10 @@ do
 			local tag = tags and tags[1]
 
 			if tag then
-				if file.Read("goluwa/update_id.txt", "DATA") == tag.commit.id then
+				if not file.IsDir("goluwa/goluwa", "DATA") or not file.IsDir("goluwa/goluwa/core", "DATA") then
+					dprint("missing goluwa directory, redownloading")
+					redownload(tag.commit.id, cb)
+				elseif file.Read("goluwa/update_id.txt", "DATA") == tag.commit.id then
 					cb()
 				else
 					dprint("release tag id is different, redownloading")
@@ -750,9 +757,6 @@ function goluwa.CreateEnv()
 
 		env.io.stdin = env.io.open("stdin", "r")
 		env.io.stdout = env.io.open("stdout", "w")
-
-		env.fs.createdir("data/goluwa")
-		env.fs.createdir("data/goluwa/goluwa")
 
 		env.window.Open()
 
