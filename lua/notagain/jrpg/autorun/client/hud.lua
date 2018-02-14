@@ -31,15 +31,20 @@ local no_texture = Material("vgui/white")
 
 function jhud.DrawBar(x,y,w,h,cur,max,border_size, r,g,b)
 	local skew = skew/1.5
-	render.SetMaterial(border)
-	render.SetColorModulation(0,0,0,0.980)
+
+	render.SetColorModulation(0,0,0)
+	render.SetBlend(0.980)
 	render.SetMaterial(no_texture)
 	draw_rect(x,y,w,h, skew)
-	render.SetColorModulation(r,g,b,1)
+
+	render.SetColorModulation(r,g,b)
 	render.SetMaterial(gradient)
+	render.SetBlend(1)
 	draw_rect(x,y,w * (cur/max),h, skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
+
 	render.SetMaterial(border)
-	render.SetColorModulation(1,1,1,1)
+	render.SetColorModulation(1,1,1)
+	render.SetBlend(1)
 	draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 end
 
@@ -101,7 +106,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		local real_cur = ply:Health()
 		local cur = smooth(math.max(real_cur, 0), "health"..ply:EntIndex())
 		local max = ply:GetMaxHealth()
-		jhud.DrawBar(x, y, width,health_height,cur,max,border_size, 50,160,50)
+		jhud.DrawBar(x, y, width,health_height,cur,max,border_size, 0.19607843137254902, 0.6274509803921568, 0.19607843137254902)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
@@ -109,7 +114,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		local real_cur = math.Round(ply:GetMana())
 		local cur = smooth(real_cur, "mana"..ply:EntIndex())
 		local max = ply:GetMaxMana()
-		jhud.DrawBar(x,y,width,health_height,cur,max,border_size, 50,50,175)
+		jhud.DrawBar(x,y,width,health_height,cur,max,border_size, 0.1960784313725490, 0.19607843137254902, 0.68627450980392157)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
@@ -117,7 +122,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		local real_cur = ply:GetStamina()
 		local cur = smooth(real_cur, "stamina"..ply:EntIndex())
 		local max = ply:GetMaxStamina()
-		jhud.DrawBar(x,y,width,health_height,cur,max,border_size, 150,150,50)
+		jhud.DrawBar(x,y,width,health_height,cur,max,border_size, 0.5882352941176470, 0.58823529411764708, 0.19607843137254902)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
@@ -146,23 +151,26 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	end
 
 	render.SetMaterial(border)
-	render.SetColorModulation(1,1,1,1)
+	render.SetBlend(1)
+	render.SetColorModulation(1,1,1)
 
 	if txt then
 		--draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 		draw_rect(x-5,y,w+10,h, skew, 0, 70, border_size*3, border:GetTexture("$BaseTexture"):Width(), false)
 	end
 
-	render.SetColorModulation(0,0,0,0.980)
+	render.SetBlend(0.980)
+	render.SetColorModulation(0,0,0)
 	render.SetMaterial(no_texture)
 	draw_rect(x,y,w,h, skew)
 
+	render.SetBlend(1)
 	render.SetMaterial(gradient)
-	render.SetColorModulation(r/255,g/255,b/255,1)
+	render.SetColorModulation(r/255,g/255,b/255)
 	draw_rect(x,y,w * math.min(cur/max, 1),h, skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
 
 	render.SetMaterial(border)
-	render.SetColorModulation(1,1,1,1)
+	render.SetColorModulation(1,1,1)
 	draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 
 	if real_cur then
@@ -448,29 +456,32 @@ hook.Add("HUDPaint", "jhud", function()
 		local fade = fade * status:GetAmount()
 		fade = fade ^ 0.25
 
+		render.SetBlend(fade)
 		if status.Negative then
-			surface.SetDrawColor(150, 0, 0, 255*fade)
+			render.SetColorModulation(0.58, 0, 0)
 		elseif status.Positive then
-			surface.SetDrawColor(0, 0, 150, 255*fade)
+			render.SetColorModulation(0, 0, 0.58)
 		else
-			surface.SetDrawColor(0, 0, 0, 255*fade)
+			render.SetColorModulation(0, 0, 0)
 		end
-		draw.NoTexture()
+		render.SetMaterial(no_texture)
 		draw_rect(x+w-size,y+h,size,size)
 
-		surface.SetDrawColor(255, 255, 255, 255*fade)
-		surface.SetMaterial(border)
+		render.SetBlend(fade)
+		render.SetColorModulation(1,1,1)
+		render.SetMaterial(border)
 		draw_rect(x+w-size,y+h,size,size, 0, 1, 64,border_size/1.5, border:GetTexture("$BaseTexture"):Width(), true)
 
-		surface.SetDrawColor(255, 255, 255, 255*fade)
-		surface.SetMaterial(status.Icon)
+		render.SetBlend(fade)
+		render.SetColorModulation(1,1,1)
+		render.SetMaterial(status.Icon)
 		draw_rect(x+w-size,y+h,size,size)
 		draw_rect(x+w-size,y+h,size,size)
 
-		surface.SetDrawColor(0, 0, 0, 200)
-		draw.NoTexture()
+		render.SetBlend(0.784)
+		render.SetColorModulation(0, 0, 0)
+		render.SetMaterial(no_texture)
 		draw_rect(x+w-size,y+h,size*status:GetAmount(),size)
-
 
 		x = x - size - 5
 	end
