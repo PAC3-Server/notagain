@@ -29,7 +29,9 @@ function META:Think(ent)
 			local rand_ang = Angle(math.Rand(-1,1)*f, math.Rand(-1,1)*f, 0)
 			ent:SetEyeAngles(ent:EyeAngles() + rand_ang)
 		else
-			ent:SetCycle((ent:GetCycle() or 0) + math.random()*f)
+			if CLIENT then
+				ent:SetCycle((ent:GetCycle() or 0) + math.random()*f)
+			end
 		end
 
 		if SERVER then
