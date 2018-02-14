@@ -34,11 +34,16 @@ local function load_path(path)
 	return nil, var
 end
 
-local function run_func(path, ...)
+local function run_func(path, func, ...)
 	local OLD = _G.AddCSLuaFile
 	_G.AddCSLuaFile = function(...) if not ... then OLD(debug.getinfo(2).source:match("@.-lua/(.+)") or path) return end return OLD(...) end
 
-	local res = {pcall(...)}
+	local err
+	local res = {xpcall(func, function(msg) err = msg .. "\n" .. debug.traceback() end, ...)}
+
+	if err then
+		res[2] = err
+	end
 
 	_G.AddCSLuaFile = OLD
 
