@@ -1,5 +1,13 @@
 local perfutil = _G.perfutil or {}
 
+function perfutil.ExperimentalDisable()
+	matproxy.Call = function() end
+	matproxy.Init = function() end
+	GAMEMODE.PreDrawViewModel = function() end
+	GAMEMODE.HUDSHouldDraw = function() end
+	hook.Remove( "PlayerTick", "TickWidgets")
+end
+
 function perfutil.CheckGlobals(b)
 	if b then
 		setmetatable(_G, {
