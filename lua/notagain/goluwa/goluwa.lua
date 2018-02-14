@@ -1,5 +1,4 @@
 local msgpack = requirex("msgpack")
-local prettytext = CLIENT and requirex("pretty_text")
 local common_audio = CLIENT and requirex("common_audio")
 local unzip = CLIENT and requirex("unzip")
 
@@ -75,6 +74,12 @@ do
 	end
 
 	function goluwa.Update(cb)
+		if file.IsDir("addons/goluwa", "MOD") then
+			goluwa.addon_directory = true
+			cb()
+			return
+		end
+
 		http.Fetch("https://gitlab.com/api/v4/projects/CapsAdmin%2Fgoluwa/repository/tags", function(data, _, _, code)
 			if code ~= 200 then
 				ErrorNoHalt("goluwa: " .. data)
@@ -119,453 +124,131 @@ function goluwa.CreateEnv()
 	env._G = env
 
 	env.e = {}
+	env.gmod = setmetatable({}, {
+		__index = function(_, key)
+			return _G[key]
+		end
+	})
+
+	env.PLATFORM = "gmod"
 
 	do
-		do -- _G
-			function env.loadstring(str, chunkname)
-				local var = CompileString(str, chunkname or "loadstring", false)
-				if type(var) == "string" then
-					return nil, var, 2
-				end
-				return setfenv(var, env)
+		local allowed = {
+			[".txt"] = true,
+			[".jpg"] = true,
+			[".png"] = true,
+			[".vtf"] = true,
+			[".dat"] = true,
+		}
+
+		function env.GoluwaToGmodPath(path)
+			if path:StartWith("/") then
+				path = path:sub(2)
 			end
 
-			function env.loadfile(path)
-				if not file.Exists(path, "LUA") then
-					return nil, path .. ": No such file", 2
-				end
-				local lua = file.Read(path, "LUA")
+			local where = "GAME"
 
-				return env.loadstring(lua, path)
+			if path:StartWith("data/") then
+				path = path:sub(6)
+				where = "DATA"
+
+				if not file.IsDir(path, where) then
+					local dir, file_name = path:match("(.+/)(.+)")
+
+					if not dir then
+						dir = ""
+						file_name = path
+					end
+
+					if not allowed[path:sub(-4)] then
+						file_name = file_name:gsub("%.", "%^")
+						file_name = file_name .. ".dat"
+					end
+
+					return dir .. file_name, where
+				end
 			end
 
-			function env.dofile(filename)
-				return assert(env.loadfile(filename))()
+			return path, where
+		end
+	end
+
+	do
+		local function execute(full_path, chunk_name, ...)
+			local lua = file.Read(full_path, goluwa.lua_dir_where)
+			local func = CompileString(lua, chunk_name, false)
+			if type(func) == "function" then
+				setfenv(func, env)
+				return func(...)
+			else
+				MsgN(func)
 			end
 		end
 
-		do -- os
-			local os = {}
+		function env.runfile(path, ...)
+			local original_path = path
 
-			function os.getenv(var)
-				var = tostring(var):lower()
+			if path:EndsWith("*") then
+				if env.dont_include_multiple_files then return end
 
-				if var == "path" then
-					return (util.RelativePathToFull("lua/includes/init.lua"):gsub("\\", "/"):gsub("lua/includes/init.lua", ""))
-				end
+				local dir = path:sub(0, -2)
 
-				if var == "username" then
-					return SERVER and "server" or LocalPlayer():Nick()
-				end
-			end
+				if not file.IsDir(goluwa.lua_dir .. dir, goluwa.lua_dir_where) then
+					local relative = debug.getinfo(2).source:match("@(.+)")
 
-			function os.setlocale(...)
-				dprint("os.setlocale: ", ...)
-			end
-
-			function os.execute(...)
-				dprint("os.execute: ", ...)
-			end
-
-			function os.exit(...)
-				dprint("os.exit: ", ...)
-			end
-
-			os.clock = _G.os.clock
-			os.date = _G.os.date
-			os.difftime = _G.os.difftime
-			os.time = _G.os.time
-
-			env.os = os
-		end
-
-		do -- io
-			local io = {}
-
-			do -- file
-				env.e.DATA_FOLDER = "/data/goluwa/data/"
-				env.e.USERDATA_FOLDER = "/data/goluwa/userdata/"
-				env.e.ROOT_FOLDER = notagain.addon_dir .. "lua/notagain/goluwa/goluwa/"
-				env.e.SRC_FOLDER = env.e.ROOT_FOLDER
-				env.e.BIN_FOLDER = "bin/"
-
-				local function dprint(...)
-					if goluwa.debugfs then
-						print(...)
+					if relative then
+						dir = relative:match("(.+/).-%.lua") .. dir
 					end
 				end
 
-				local function uncache(path)
-					dprint("uncaching " .. path)
-					env.fs.find_cache[path:match("(.+/)")] = nil
-					env.fs.get_attributes_cache[path] = nil
-				end
+				local files = file.Find(goluwa.lua_dir .. dir .. "*", goluwa.lua_dir_where)
 
-				local allowed = {
-					[".txt"] = true,
-					[".jpg"] = true,
-					[".png"] = true,
-					[".vtf"] = true,
-					[".dat"] = true,
-				}
+				for _, name in pairs(files) do
+					local path = dir
 
-				function env.GoluwaToGmodPath(path)
-					if path:StartWith("/") then
-						path = path:sub(2)
-					end
-
-					local where = "GAME"
-
-					if path:StartWith("data/") then
-						path = path:sub(6)
-						where = "DATA"
-
-						if not file.IsDir(path, where) then
-							local dir, file_name = path:match("(.+/)(.+)")
-
-							if not dir then
-								dir = ""
-								file_name = path
-							end
-
-							if not allowed[path:sub(-4)] then
-								file_name = file_name:gsub("%.", "%^")
-								file_name = file_name .. ".dat"
-							end
-
-							return dir .. file_name, where
-						end
-					end
-
-					return path, where
-				end
-
-				local fs = {}
-
-				fs.find_cache = {}
-				fs.get_attributes_cache = {}
-
-				function fs.find(path)
-					dprint("fs.find: ", path)
-
-					if path:startswith("/") then
-						path = path:sub(2)
-					end
-
-					local original_path = path
-
-					dprint("fs.find: is " .. path .. " cached?")
-
-					if fs.find_cache[path] then
-						dprint("yes!")
-						return fs.find_cache[path]
-					end
-
-					if path:endswith("/") then
-						path = path .. "*"
-					end
-
-					local where = "GAME"
-
-					if path:StartWith("data/") then
-						path = path:sub(6)
-						where = "DATA"
-					end
-
-					local out
-
-					local files, dirs = file.Find(path, where)
-
-					if files then
-						if where == "DATA" then
-							for i, name in ipairs(files) do
-								local new_name, count = name:gsub("%^", "%.")
-
-								if count > 0 then
-									files[i] = new_name:sub(0, -5)
-								end
-							end
-						end
-
-						out = table.Add(files, dirs)
-					end
-
-					fs.find_cache[original_path] = out
-					dprint("fs.find: caching results for dir " .. path)
-
-					return out or {}
-				end
-
-				function fs.getcd()
-					dprint("fs.getcd")
-					return ""
-				end
-
-				function fs.setcd(path)
-					dprint("fs.setcd: ", path)
-				end
-
-				function fs.createdir(path)
-					dprint("fs.createdir: ", path)
-
-					local path, where = env.GoluwaToGmodPath(path)
-
-					file.CreateDir(path, where)
-				end
-
-				function fs.getattributes(path)
-					dprint("fs.getattributes: ", path)
-					local original_path = path
-
-					if fs.get_attributes_cache[path] ~= nil then
-						return fs.get_attributes_cache[path]
-					end
-
-					local path, where = env.GoluwaToGmodPath(path)
-
-					if file.Exists(path, where) then
-						local size = file.Size(path, where)
-						local time = file.Time(path, where)
-						local type = file.IsDir(path, where) and "directory" or "file"
-
-						dprint("\t", size)
-						dprint("\t", time)
-						dprint("\t", type)
-
-						local res = {
-							creation_time = time,
-							last_accessed = time,
-							last_modified = time,
-							last_changed = time,
-							size = size,
-							type = type,
-						}
-
-						fs.get_attributes_cache[original_path] = res
-
-						return res
+					if goluwa.lua_dir_where == "DATA" then
+						path = path .. name:gsub("%^lua%.txt", ".lua")
 					else
-						dprint("\t" .. path .. " " .. where .. " does not exist")
+						path = path .. name
 					end
 
-					fs.get_attributes_cache[original_path] = false
-
-					return false
+					execute(goluwa.lua_dir .. dir .. name, path,  ...)
 				end
 
-				env.fs = fs
+				return
+			end
 
-				fs.createdir("data/goluwa")
-				fs.createdir("data/goluwa/goluwa")
-
-				function env.os.remove(path)
-					uncache(path)
-
-					local path, where = env.GoluwaToGmodPath(path)
-
-					if file.Exists(path, where) then
-						file.Delete(path, where)
-						return true
-					end
-
-					return nil, filename .. ": No such file or directory", 2
-				end
-
-				function env.os.rename(a, b)
-					uncache(a)
-					uncache(b)
-
-					local a, where_a = env.GoluwaToGmodPath(a)
-					local b, where_b = env.GoluwaToGmodPath(b)
-
-
-					dprint("os.rename: " .. a .. " >> " .. b)
-
-					if file.Exists(a, where_a) then
-						local str = file.Read(a, where_a)
-						dprint("file.Read", a, where_a, type(str), str and #str)
-
-						if not str then return nil, a .. ": exists but file.Read returns nil" end
-
-						dprint("file.Delete", a, where_a)
-						file.Delete(a, where_a)
-
-						dprint("file.Write", b, #str)
-						file.Write(b, str)
-						return true
-					end
-
-					return nil, a .. ": No such file or directory", 2
-				end
-
-				function env.os.tmpname()
-					return "os_tmpname_" .. util.CRC(RealTime())
-				end
-
-				local META = {}
-				META.__index = META
-
-				function META:__tostring()
-					return ("file (%p)"):format(self)
-				end
-
-				function META:write(...)
-
-					local str = ""
-
-					for i = 1, select("#", ...) do
-						str = str .. tostring((select(i, ...)))
-					end
-
-					dprint("file " .. self.__path .. ":write: ", #str)
-
-					self.__file:Write(str)
-
-					if self.uncache_on_write then
-						uncache(self.uncache_on_write)
-					end
-				end
-
-				local function read(self, format)
-					if type(format) == "number" then
-						return self.__file:Read(format)
-					elseif format:sub(1, 2) == "*a" then
-						return self.__file:Read(self.__file:Size())
-					elseif format:sub(1, 2) == "*l" then
-						local str = ""
-						for i = 1, self.__file:Size() do
-							local char = self.__file:Read(1)
-							if char == "\n" then break end
-							str = str .. char
-						end
-						return str ~= "" and str or nil
-					elseif format:sub(1, 2) == "*n" then
-						local str = self.__file:Read(1)
-						if tonumber(str) then
-							return tonumber(str)
-						end
-					end
-				end
-
-				function META:read(...)
-					dprint("file " .. self.__path .. ":read: ", ...)
-
-					local args = {}
-
-					for i = 1, select("#", ...) do
-						args[i] = read(self, select(i, ...))
-					end
-
-					return unpack(args)
-				end
-
-				function META:close()
-					self.__file:Close()
-				end
-
-				function META:flush()
-					self.__file:Flush()
-				end
-
-				function META:seek(whence, offset)
-					offset = offset or 0
-
-					if whence == "set" then
-						self.__file:Seek(offset)
-					elseif whence == "end" then
-						self.__file:Seek(self.__file:Size())
-					elseif whence == "cur" then
-						self.__file:Seek(self.__file:Tell() + offset)
-					end
-
-					return self.__file:Tell()
-				end
-
-				function META:lines()
-					return function()
-						return self:Read("*line")
-					end
-				end
-
-				function META:setvbuf()
-
-				end
-
-				function io.open(path, mode)
-					mode = mode or "r"
-
-					local original_path = path
-
-					local self = setmetatable({}, META)
-
-					local path, where = env.GoluwaToGmodPath(path)
-
-					local f = file.Open(path, mode, where)
-					dprint("file.Open: ", f, path, mode, where)
-
-					if not f then
-						return nil, path .. " " .. mode .. " " .. where .. ": No such file", 2
-					end
-
-					if mode:find("w") then
-						self.uncache_on_write = original_path
-					end
-
-					self.__file = f
-					self.__path = path
-					self.__mode = mode
-
-					return self
+			if goluwa.lua_dir_where == "DATA" then
+				if not path:EndsWith(".txt") then
+					path = path:gsub("%.", "^") .. ".txt"
 				end
 			end
 
-			io.stdin = io.open("stdin", "r")
-			io.stdout = io.open("stdout", "w")
+			if file.Exists(goluwa.lua_dir .. path, goluwa.lua_dir_where) then
+				return execute(goluwa.lua_dir .. path, original_path,  ...)
+			else
+				local relative = debug.getinfo(2).source:match("@(.+)")
 
-			local current_file = io.stdin
+				if relative then
+					local dir = relative:match("(.+/).-%.lua")
 
-			function io.input(var)
-				if io.type(var) == "file" then
-					current_file = var
-				else
-					current_file = io.open(var)
+					if file.Exists(goluwa.lua_dir .. dir .. path, goluwa.lua_dir_where) then
+						return execute(goluwa.lua_dir .. dir .. path, dir .. original_path, ...)
+					end
 				end
-
-				return current_file
 			end
 
-			function io.type(var)
-				if getmetatable(var) == META then
-					return "file"
-				end
-
-				return nil
-			end
-
-			function io.write(...)
-				local str = ""
-
-				for i = 1, select("#", ...) do
-					str = str .. tostring(select(i, ...))
-				end
-
-				Msg(str)
-			end
-
-			function io.read(...) return current_file:read(...) end
-
-			function io.lines(...) return current_file:lines(...) end
-
-			function io.flush(...) return current_file:flush(...) end
-
-			function io.popen(...) dprint("io.popen: ", ...) end
-
-			function io.close(...) return current_file:close(...) end
-
-			function io.tmpfile(...) return io.open(os.tmpname(), "w")  end
-
-			env.io = io
+			print("[goluwa] runfile: unable to find " .. original_path)
 		end
+	end
+
+	do
+
+		env.e.DATA_FOLDER = "/data/goluwa/data/"
+		env.e.USERDATA_FOLDER = "/data/goluwa/userdata/"
+		env.e.ROOT_FOLDER = notagain.addon_dir .. "lua/notagain/goluwa/goluwa/"
+		env.e.SRC_FOLDER = env.e.ROOT_FOLDER
+		env.e.BIN_FOLDER = "bin/"
 
 		do -- require
 			local stdlibs =
@@ -636,6 +319,12 @@ function goluwa.CreateEnv()
 			env.type = type
 			env.unpack = unpack
 			env.xpcall = xpcall
+
+			env.os = {}
+			env.os.clock = _G.os.clock
+			env.os.date = _G.os.date
+			env.os.difftime = _G.os.difftime
+			env.os.time = _G.os.time
 
 			env.coroutine = {}
 			env.coroutine.create = coroutine.create
@@ -756,6 +445,17 @@ function goluwa.CreateEnv()
 		end
 	end
 
+	env.runfile("core/lua/libraries/platforms/gmod/globals.lua")
+	env.fs = env.runfile("core/lua/libraries/platforms/gmod/filesystem.lua")
+
+	env.runfile("core/lua/libraries/platforms/gmod/os.lua", env.os)
+
+	env.io = {}
+	env.runfile("core/lua/libraries/platforms/gmod/io.lua", env.io)
+
+	env.fs.createdir("data/goluwa")
+	env.fs.createdir("data/goluwa/goluwa")
+
 	do
 		env._OLD_G = {}
 		local done = {[env._G] = true, [env.package.loaded] = true}
@@ -794,61 +494,6 @@ function goluwa.CreateEnv()
 		env.von = false
 	end
 
-	local function execute(full_path, chunk_name, ...)
-		if chunk_name:EndsWith(".txt") then debug.Trace() end
-		local lua = file.Read(full_path, "DATA")
-		local func = CompileString(lua, chunk_name, false)
-		if type(func) == "function" then
-			setfenv(func, env)
-			return func(...)
-		else
-			MsgN(func)
-		end
-	end
-
-	function env.runfile(path, ...)
-		local original_path = path
-
-		if path:EndsWith("*") then
-			if env.dont_include_multiple_files then return end
-
-			local dir = path:sub(0, -2)
-
-			if not file.IsDir("goluwa/goluwa/" .. dir, "DATA") then
-				local relative = debug.getinfo(2).source:match("@(.+)")
-
-				if relative then
-					dir = relative:match("(.+/).-%.lua") .. dir
-				end
-			end
-
-			local files = file.Find("goluwa/goluwa/" .. dir .. "*", "DATA")
-
-			for _, name in pairs(files) do
-				execute("goluwa/goluwa/" .. dir .. name, dir .. name:gsub("%^lua%.txt", ".lua"),  ...)
-			end
-
-			return
-		end
-
-		if not path:EndsWith(".txt") then
-			path = path:gsub("%.", "^") .. ".txt"
-		end
-		if file.Exists("goluwa/goluwa/" .. path, "DATA") then
-			return execute("goluwa/goluwa/" .. path, original_path,  ...)
-		else
-			local relative = debug.getinfo(2).source:match("@(.+)")
-
-			if relative then
-				local dir = relative:match("(.+/).-%.lua")
-
-				if file.Exists("goluwa/goluwa/" .. dir .. path, "DATA") then
-					return execute("goluwa/goluwa/" .. dir .. path, dir .. original_path, ...)
-				end
-			end
-		end
-	end
-
 	local commands_add_buffer = {}
 	env.commands = {Add = function(...) table.insert(commands_add_buffer, {...}) end}
 
@@ -880,89 +525,9 @@ function goluwa.CreateEnv()
 	env.commands = env.runfile("engine/lua/libraries/commands.lua")
 	for i, args in ipairs(commands_add_buffer) do env.commands.Add(unpack(args)) end
 
-	do
-		local window = {}
+	env.window = env.runfile("framework/lua/libraries/graphics/window.lua")
 
-		function window.SetClipboard(str)
-			SetClipboardText(str)
-		end
-
-		function window.GetClipboard()
-			ErrorNoHalt("NYI")
-		end
-
-		function window.GetMousePosition()
-			return env.Vec2(gui.MousePos())
-		end
-
-		function window.GetMouseTrapped()
-			return false
-		end
-
-		function window.SetMouseTrapped(b)
-			gui.EnableScreenClicker(not b)
-		end
-
-		function window.SetCursor(cursor)
-
-		end
-
-		function window.GetCursor()
-			return "normal"
-		end
-
-		function window.GetSize()
-			return env.Vec2(ScrW(), ScrH())
-		end
-
-		env.window = window
-
-		local wnd = {}
-		for k,v in pairs(env.window) do
-			wnd[k] = function(self, ...) return v(...) end
-		end
-		goluwa.window = wnd
-	end
-
-	do
-		local system = {}
-
-		function system.GetFrameNumber()
-			return FrameNumber()
-		end
-
-		function system.GetElapsedTime()
-			return RealTime()
-		end
-
-		function system.GetFrameTime()
-			return FrameTime()
-		end
-
-		function system.GetTime()
-			return SysTime()
-		end
-
-		function system.OpenURL(url)
-			gui.OpenURL(url)
-		end
-
-		function system.OnError(...)
-			print(...)
-			debug.Trace()
-		end
-
-		function system.pcall(func, ...)
-			return xpcall(func, system.OnError, ...)
-		end
-
-		function system.GetFFIBuildLibrary()
-			return false
-		end
-
-		env.system = system
-	end
-
+	env.system = env.runfile("core/lua/libraries/system.lua")
 	env.profiler = env.runfile("core/lua/libraries/profiler.lua")
 	env.runfile("engine/lua/libraries/extensions/profiler.lua")
 	env.P = env.profiler.ToggleTimer
@@ -982,7 +547,13 @@ function goluwa.CreateEnv()
 
 	hook.Add("Think", "goluwa", function()
 		env.event.UpdateTimers()
-		env.event.Call("Update", FrameTime())
+		env.event.Call("Update", env.system.GetFrameTime())
+	end)
+
+	hook.Add("PreRender", "goluwa", function()
+		env.system.SetFrameNumber(FrameNumber())
+		env.system.SetElapsedTime(RealTime())
+		env.system.SetFrameTime(FrameTime())
 	end)
 
 	env.expression = env.runfile("engine/lua/libraries/expression.lua")
@@ -1047,6 +618,10 @@ function goluwa.CreateEnv()
 
 	env.resource = env.runfile("framework/lua/libraries/sockets/resource.lua")
 
+	env.input = env.runfile("framework/lua/libraries/input.lua")
+	env.language = env.runfile("engine/lua/libraries/language.lua")
+	env.L = env.language.LanguageString
+
 	do
 		local backend = CreateClientConVar("goluwa_audio_backend", "webaudio")
 
@@ -1085,14 +660,9 @@ function goluwa.CreateEnv()
 	end
 
 	do -- rendering
-		local cam_PushModelMatrix = cam.PushModelMatrix
-		local cam_PopModelMatrix = cam.PopModelMatrix
-
-		local get_world_matrix
-
 		do
 			local temp = {{}, {}, {}, {}}
-			get_world_matrix = function()
+			function env.GetGmodWorldMatrix()
 				local m = env.render2d.GetWorldMatrix()
 
 				temp[1][1] = m.m00
@@ -1119,344 +689,13 @@ function goluwa.CreateEnv()
 			end
 		end
 
-		do
-			local render = {}
-
-			local loading_material = Material("gui/progress_cog.png")
-
-			function render.CreateTextureFromPath(path, gmod_path)
-				local tex = {}
-				tex.mat = loading_material
-				tex.loading = true
-
-				function tex:IsValid()
-					return true
-				end
-
-				function tex:IsLoading()
-					return self.loading
-				end
-
-				function tex:GetSize()
-					if self:IsLoading() then
-						return env.Vec2(16, 16)
-					end
-
-					return env.Vec2(self.width, self.height)
-				end
-
-				function tex:SetMinFilter() end
-				function tex:SetMagFilter() end
-
-				function tex:GetPixelColor(x,y)
-					local c = self.tex:GetColor(x,y)
-					return env.Color(c.r/255, c.g/255, c.b/255, c.a/255)
-				end
-
-				if gmod_path then
-					tex.mat = Material(path)
-
-					tex.tex = tex.mat:GetTexture("$basetexture")
-
-					tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
-					tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
-					tex.Size = env.Vec2(tex.width, tex.height)
-
-					tex.loading = false
-				else
-					env.resource.Download(path, function(path)
-						local path, where = env.GoluwaToGmodPath(path)
-
-						if where == "DATA" then
-							path = "../data/" .. path
-						elseif path:StartWith("materials/") then
-							path = path:sub(#"materials/" + 1)
-						end
-
-						if path:endswith(".vtf") then
-							tex.mat = CreateMaterial("goluwa_" .. path, "UnlitGeneric", {
-								["$basetexture"] = path:sub(0, -5),
-								["$translucent"] = 1,
-								["$vertexcolor"] = 1,
-								["$vertexalpha"] = 1,
-							})
-						else
-							tex.mat = Material(path, "unlitgeneric mips noclamp")
-						end
-
-						tex.tex = tex.mat:GetTexture("$basetexture")
-
-						tex.width = tex.mat:GetInt("$realwidth") or tex.tex:GetMappingWidth()
-						tex.height = tex.mat:GetInt("$realheight") or tex.tex:GetMappingHeight()
-						tex.Size = env.Vec2(tex.width, tex.height)
-
-						tex.loading = false
-					end)
-				end
-
-				return tex
-			end
-
-			function render.SetPresetBlendMode()
-
-			end
-
-			function render.SetBlendMode()
-
-			end
-
-			function render.SetStencil() end
-			function render.GetStencil() end
-			function render.StencilFunction() end
-			function render.StencilOperation() end
-			function render.StencilMask() end
-
-			render.white_texture = render.CreateTextureFromPath("vgui/white", true)
-			render.loading_texture = render.CreateTextureFromPath("gui/progress_cog.png", true)
-			render.error_texture = render.CreateTextureFromPath("error", true)
-
-			function render.GetLoadingTexture()
-				return render.loading_texture
-			end
-
-			function render.GetWhiteTexture()
-				return render.white_texture
-			end
-
-			function render.GetErrorTexture()
-				return render.error_texture
-			end
-
-			function render.GetWindow()
-				return goluwa.window
-			end
-
-			function render.CreateBlankTexture()
-			end
-
-			function render.IsExtensionSupported()
-				return false
-			end
-
-			function render.CreateFrameBuffer(size, textures, id_override)
-				local fb = {}
-				function fb:Begin()
-
-				end
-
-				function fb:End()
-
-				end
-
-				function fb:GetTexture()
-
-				end
-
-				function fb:SetTexture()
-
-				end
-				function fb:Clear() end
-				function fb:ClearStencil() end
-				return fb
-			end
-
-			function render.GetFrameBuffer()
-				return render.CreateFrameBuffer()
-			end
-
-			do
-				local META = env.prototype.CreateTemplate("index_buffer")
-
-				META:StartStorable()
-					META:GetSet("UpdateIndices", true)
-					META:GetSet("IndicesType", "uint16_t")
-					META:GetSet("DrawHint", "dynamic")
-					META:GetSet("Indices")
-				META:EndStorable()
-
-				function render.CreateIndexBuffer()
-					local self = META:CreateObject()
-
-					return self
-				end
-
-				function META:SetIndices(indices)
-				end
-
-				function META:UnreferenceMesh()
-				end
-
-				function META:SetIndex(idx, idx2)
-				end
-
-				function META:GetIndex(idx)
-				end
-
-				function META:LoadIndices(val)
-				end
-
-				function META:UpdateBuffer()
-				end
-
-				META:Register()
-			end
-
-			do
-				local META = env.prototype.CreateTemplate("vertex_buffer")
-
-				META:StartStorable()
-					META:GetSet("UpdateIndices", true)
-					META:GetSet("Mode", "triangles")
-					META:GetSet("IndicesType", "uint16_t")
-					META:GetSet("DrawHint", "dynamic")
-					META:GetSet("Vertices")
-				META:EndStorable()
-
-				META:Register()
-
-				function render.CreateVertexBuffer(mesh_layout, vertices, indices, is_valid_table)
-					local self = META:CreateObject()
-					self.Vertices = {Pointer = {}}
-
-					return self
-				end
-
-				function META:LoadVertices(vertices, indices, is_valid_table)
-					if type(vertices) == "number" then
-						for i = 1, vertices do
-							self.Vertices.Pointer[i-1] = {
-								pos = {
-									[0] = 0,
-									[1] = 0,
-								},
-								uv = {
-									[0] = 0,
-									[1] = 0,
-								},
-								color = {
-									[0] = 0,
-									[1] = 0,
-									[2] = 0,
-									[3] = 0,
-								}
-							}
-						end
-						self.vertices_length = vertices
-					else
-						for i, vertex in ipairs(vertices) do
-							self.Vertices.Pointer[i-1] = {
-								pos = {
-									[0] = vertex.pos[1],
-									[1] = vertex.pos[2],
-								},
-								uv = {
-									[0] = vertex.uv[1],
-									[1] = vertex.uv[2],
-								},
-								color = {
-									[0] = vertex.color[1],
-									[1] = vertex.color[2],
-									[2] = vertex.color[3],
-									[3] = vertex.color[4],
-								}
-							}
-						end
-						self.vertices_length = #vertices
-					end
-				end
-
-				local max_vertices = 32768
-
-				function META:UpdateBuffer()
-					if self.vertices_length == 0 then return end
-					local chunks = {}
-
-					for chunk_i = 1, math.ceil(self.vertices_length/max_vertices) do
-						local vertices = {}
-						for i = 0, max_vertices - 1 do
-							local vertex = self.Vertices.Pointer[i + ((chunk_i - 1) * max_vertices)]
-							if not vertex then break end
-							i = i + 1
-							vertices[i] = vertices[i] or {}
-
-							vertices[i].x = vertex.pos[0]
-							vertices[i].y = vertex.pos[1]
-
-							vertices[i].u = vertex.uv[0]
-							vertices[i].v = -vertex.uv[1]+1
-
-							vertices[i].r = vertex.color[0] or 1
-							vertices[i].g = vertex.color[1] or 1
-							vertices[i].b = vertex.color[2] or 1
-							vertices[i].a = vertex.color[3] or 1
-						end
-						chunks[chunk_i] = vertices
-					end
-					self.chunks = chunks
-				end
-
-				local MATERIAL_TRIANGLES = MATERIAL_TRIANGLES
-				local mesh_Begin = mesh.Begin
-				local mesh_End = mesh.End
-				local mesh_TexCoord = mesh.TexCoord
-				local mesh_Color = mesh.Color
-				local mesh_AdvanceVertex = mesh.AdvanceVertex
-				local mesh_Position = mesh.Position
-				local temp_vector = Vector(0,0,0)
-
-				function META:Draw()
-					if self.vertices_length == 0 then return end
-
-					cam_PushModelMatrix(get_world_matrix())
-						for i, vertices in ipairs(self.chunks) do
-							mesh_Begin(MATERIAL_TRIANGLES, #vertices / 3)
-							for i, vertex in ipairs(vertices) do
-
-								temp_vector.x = vertex.x
-								temp_vector.y = vertex.y
-								mesh_Position(temp_vector)
-								mesh_TexCoord(0, vertex.u, vertex.v)
-
-								local r,g,b,a = vertex.r, vertex.g, vertex.b, vertex.a
-
-								r = r * env.render2d.shader.global_color.r
-								g = g * env.render2d.shader.global_color.g
-								b = b * env.render2d.shader.global_color.b
-								a = a * env.render2d.shader.global_color.a * env.render2d.shader.alpha_multiplier
-
-								r = r * 255
-								g = g * 255
-								b = b * 255
-								a = a * 255
-
-								mesh_Color(r,g,b,a)
-
-								mesh_AdvanceVertex()
-							end
-							mesh_End()
-						end
-					cam_PopModelMatrix()
-				end
-			end
-
-			local ScrW = ScrW
-			function render.GetWidth()
-				return ScrW()
-			end
-
-			local ScrH = ScrH
-			function render.GetHeight()
-				return ScrH()
-			end
-
-			function render.GetScreenSize()
-				return env.Vec2(ScrW(), ScrH())
-			end
-
-			env.render = render
-		end
-
 		env.camera = env.runfile("framework/lua/libraries/graphics/camera.lua")
+		env.render = env.runfile("framework/lua/libraries/graphics/render/render.lua")
+		env.render.GenerateTextures = function()
+			env.render.white_texture = env.render.CreateTextureFromPath("vgui/white", true)
+			env.render.loading_texture = env.render.CreateTextureFromPath("gui/progress_cog.png", true)
+			env.render.error_texture = env.render.CreateTextureFromPath("error", true)
+		end
 
 		do
 			local render2d = env.runfile("framework/lua/libraries/graphics/render2d/render2d.lua")
@@ -1468,112 +707,23 @@ function goluwa.CreateEnv()
 				hsv_mult = env.Vec3(1,1,1),
 			}
 
-			function render2d.shader:GetMeshLayout() end
-
-			local surface_SetDrawColor = surface.SetDrawColor
-			local render_SetColorModulation = render.SetColorModulation
-			local render_SetBlend = render.SetBlend
-			local render_SetMaterial = render.SetMaterial
-			local surface_SetMaterial = surface.SetMaterial
-			local surface_SetAlphaMultiplier = surface.SetAlphaMultiplier
-
-			function render2d.shader:Bind()
-				--surface_SetDrawColor(self.global_color.r*255,self.global_color.g*255,self.global_color.b*255,self.global_color.a*255)
-				--if env.VERTEX_BUFFER_TYPE == "poly" then
-					--surface_SetMaterial(self.tex.mat)
-				--else
-					--render_SetColorModulation(self.global_color.r, self.global_color.g, self.global_color.b)
-					--render_SetBlend(self.global_color.a * self.alpha_multiplier)
-					render_SetMaterial(self.tex.mat)
-				--end
-			--	surface_SetAlphaMultiplier(self.alpha_multiplier)
+			function render2d.shader:GetMeshLayout()
+				return {}
 			end
 
+			local render_SetMaterial = render.SetMaterial
+
+			function render2d.shader:Bind()
+				render_SetMaterial(self.tex.mat)
+			end
 
 			env.render2d = render2d
-
-			render2d.rectangle = render2d.CreateMesh()
-			render2d.rectangle:LoadVertices({
-				{pos = {0, 1, 0}, uv = {0, 0}, color = {1,1,1,1}},
-				{pos = {0, 0, 0}, uv = {0, 1}, color = {1,1,1,1}},
-				{pos = {1, 1, 0}, uv = {1, 0}, color = {1,1,1,1}},
-
-				{pos = {1, 0, 0}, uv = {1, 1}, color = {1,1,1,1}},
-				{pos = {1, 1, 0}, uv = {1, 0}, color = {1,1,1,1}},
-				{pos = {0, 0, 0}, uv = {0, 1}, color = {1,1,1,1}},
-			})
-
-			render2d.SetRectUV()
-			render2d.SetRectColors()
-
 		end
 
 		do
-			local fonts = {}
-
-			function fonts.CreateFont(options)
-				local obj = {}
-
-				local temp_color = Color(255, 255, 255, 255)
-
-				function obj:DrawString(str, x, y, w)
-					local r,g,b,a = env.render2d.GetColor()
-
-					cam_PushModelMatrix(get_world_matrix())
-						temp_color.r = r * 255
-						temp_color.g = g * 255
-						temp_color.b = b * 255
-						temp_color.a = a * 255 * env.render2d.GetAlphaMultiplier()
-
-						prettytext.DrawText({
-							text = str,
-							x = x,
-							y = y,
-							font = options.font,
-							size = options.size,
-							weight = options.weight,
-							blur_size = options.blur_size,
-							foreground_color = temp_color,
-							background_color = options.background_color,
-							blur_overdraw = options.blur_overdraw,
-							shadow_x = options.shadow_x or options.shadow,
-							shadow_y = options.shadow_y,
-						})
-					cam_PopModelMatrix()
-				end
-
-				function obj:GetTextSize(str)
-					return prettytext.GetTextSize(str, options.font, options.size, options.weight, options.blur_size)
-				end
-
-				function obj:IsReady()
-					return true
-				end
-
-				function obj:CompileString(data)
-					local str = ""
-					for i = 3, #data, 3 do
-						str = str .. data[i]
-					end
-
-					local obj = {}
-
-					function obj.Draw()
-						self:DrawString(str)
-					end
-
-					return obj, self:GetTextSize(str)
-				end
-
-				function obj:GetName()
-					return options.font
-				end
-
-				return obj
-			end
-
-			fonts.default_font = fonts.CreateFont({
-				font = name,
+			env.fonts = env.runfile("framework/lua/libraries/graphics/fonts/fonts.lua")
+			env.fonts.Initialize()
+			env.fonts.default_font = env.fonts.CreateFont({
 				size = 16,
 				weight = 600,
 				blur_size = 2,
@@ -1581,19 +731,35 @@ function goluwa.CreateEnv()
 				blur_overdraw = 10,
 			})
 
-			function fonts.GetDefaultFont()
-				return fonts.default_font
+			function env.fonts.GetDefaultFont()
+				return env.fonts.default_font
 			end
 
-			function fonts.FindFont()
-				return fonts.default_font
+			function env.fonts.FindFont()
+				return env.fonts.default_font
 			end
-
-			env.fonts = fonts
 		end
 
 		env.gfx = env.runfile("framework/lua/libraries/graphics/gfx/gfx.lua")
 		env.runfile("engine/lua/libraries/graphics/gfx/markup.lua")
+
+		env.window.Open()
+
+		env.render2d.rectangle = env.render2d.CreateMesh({})
+		env.render2d.rectangle:LoadVertices({
+			{pos = {0, 1, 0}, uv = {0, 0}, color = {1,1,1,1}},
+			{pos = {0, 0, 0}, uv = {0, 1}, color = {1,1,1,1}},
+			{pos = {1, 1, 0}, uv = {1, 0}, color = {1,1,1,1}},
+
+			{pos = {1, 0, 0}, uv = {1, 1}, color = {1,1,1,1}},
+			{pos = {1, 1, 0}, uv = {1, 0}, color = {1,1,1,1}},
+			{pos = {0, 0, 0}, uv = {0, 1}, color = {1,1,1,1}},
+		})
+
+		env.render2d.SetRectUV()
+		env.render2d.SetRectColors()
+
+
 		env.gfx.ninepatch_poly = env.gfx.CreatePolygon2D(9 * 6)
 		env.gfx.ninepatch_poly.vertex_buffer:SetDrawHint("dynamic")
 	end
@@ -1605,98 +771,10 @@ end
 function goluwa.InitializeGUI()
 	local env = goluwa.env
 
-	env.input = env.runfile("framework/lua/libraries/input.lua")
-	env.language = env.runfile("engine/lua/libraries/language.lua")
-	env.L = env.language.LanguageString
-
 	env.gui = env.runfile("engine/lua/libraries/graphics/gui/gui.lua")
 	env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
 	env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
 	env.gui.Initialize()
-
-	local keys = {}
-	local key_trigger = env.input.SetupInputEvent("Key")
-	local function key_input(key, press)
-		env.event.Call("WindowKeyInput", goluwa.window, key, press)
-		if key_trigger(key, press) ~= false then
-			env.event.Call("KeyInput", key, press)
-		end
-
-		if press then
-			local char = key
-
-			-- etc
-			if system.GetCountry() == "NO" then
-				if key == "`" then
-					char = "|"
-				elseif key == "SEMICOLON" then
-					char = "ø"
-				elseif key == "'" then
-					char = "æ"
-				elseif key == "[" then
-					char = "å"
-				end
-			end
-
-			if input.IsShiftDown() then
-				char = env.utf8.upper(char)
-			end
-
-			if env.utf8.length(char) == 1 then
-				env.event.Call("WindowCharInput", goluwa.window, char)
-				env.event.Call("CharInput", char)
-			end
-		end
-	end
-
-	local buttons = {}
-	local mouse_trigger = env.input.SetupInputEvent("Mouse")
-
-	local translate = {
-		MOUSE1 = "button_1",
-		MOUSE2 = "button_2",
-		MOUSE3 = "button_3",
-		MOUSE4 = "button_4",
-	}
-
-	local function mouse_input(btn, press)
-		btn = translate[btn] or btn
-
-		env.event.Call("WindowMouseInput", goluwa.window, btn, press)
-		if mouse_trigger(btn, press) ~= false then
-			env.event.Call("MouseInput", btn, press)
-		end
-	end
-
-	hook.Add("Think", "goluwa_keys", function()
-		for i = KEY_FIRST, KEY_LAST do
-			if input.IsKeyDown(i) then
-				if not keys[i] then
-					key_input(input.GetKeyName(i), true)
-				end
-				keys[i] = true
-			else
-				if keys[i] then
-					key_input(input.GetKeyName(i), false)
-				end
-				keys[i] = false
-			end
-		end
-
-		for i = MOUSE_FIRST, MOUSE_LAST do
-			if input.IsMouseDown(i) then
-				if not buttons[i] then
-					mouse_input(input.GetKeyName(i), true)
-				end
-				buttons[i] = true
-			else
-				if buttons[i] then
-					mouse_input(input.GetKeyName(i), false)
-				end
-				buttons[i] = false
-			end
-		end
-	end)
 
 	hook.Add("HUDPaint", "goluwa_2d", function()
 		local dt = FrameTime()
@@ -1709,6 +787,16 @@ end
 function goluwa.Initialize()
 	hook.Add("Think", "goluwa_init", function()
 		if not LocalPlayer():IsValid() then return end
+
+		hook.Remove("Think", "goluwa_init")
+
+		if file.IsDir("addons/goluwa", "MOD") then
+			goluwa.lua_dir = "addons/goluwa/"
+			goluwa.lua_dir_where = "MOD"
+		else
+			goluwa.lua_dir = "goluwa/goluwa/"
+			goluwa.lua_dir_where = "DATA"
+		end
 
 		dprint("initializing goluwa ...")
 		local time = SysTime()
@@ -1729,8 +817,6 @@ function goluwa.Initialize()
 		if file.Exists("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD") and not render3d then
 			RunString(file.Read("addons/zerobrane_bridge/lua/autorun/zerobrane_bridge.lua", "MOD"))
 		end
-
-		hook.Remove("Think", "goluwa_init")
 	end)
 end
 
