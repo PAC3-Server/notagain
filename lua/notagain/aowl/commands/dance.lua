@@ -8,83 +8,121 @@ end
 
 local function set_dancing(ply, b)
 	ply:SetNWBool(tag, b)
+
+	if SERVER then
+		if b then
+			hook.Add("PlayerDeath", tag, function(ply)
+				if is_dancing(ply) then
+					set_dancing(ply, false)
+				end
+			end)
+
+			net.Start(tag)
+				net.WriteBool(true)
+			net.Broadcast()
+		else
+			for k,v in ipairs(player.GetAll()) do
+				if v:GetNWBool(tag) then
+					return
+				end
+			end
+
+			net.Start(tag)
+				net.WriteBool(false)
+			net.Broadcast()
+			hook.Remove("PlayerDeath", tag)
+		end
+	end
 end
 
 if CLIENT then
 	local bpm = CreateClientConVar(tag .. "_bpm", 120, true, true)
 
-	hook.Add("ShouldDrawLocalPlayer", tag, function(ply)
-		if is_dancing(ply) then
-			return true
-		end
-	end)
+	net.Receive(tag, function()
+		local b = net.ReadBool()
 
-	hook.Add("CalcView", tag, function(ply, pos)
-		if not is_dancing(ply) then return end
+		if b then
+			hook.Add("ShouldDrawLocalPlayer", tag, function(ply)
+				if is_dancing(ply) then
+					return true
+				end
+			end)
 
-		local pos = pos + ply:GetAimVector() * -100
-		local ang = (ply:EyePos() - pos):Angle()
+			hook.Add("CalcView", tag, function(ply, pos)
+				if not is_dancing(ply) then return end
 
-		return {
-			origin = pos,
-			angles = ang,
-		}
-	end)
+				local pos = pos + ply:GetAimVector() * -100
+				local ang = (ply:EyePos() - pos):Angle()
 
-	local beats = {}
-	local suppress = false
-	local last
+				return {
+					origin = pos,
+					angles = ang,
+				}
+			end)
 
-	hook.Add("CreateMove", tag, function(cmd)
-		if is_dancing(LocalPlayer()) then
-			if cmd:KeyDown(IN_JUMP) then
-				if not suppress then
-					local time = RealTime()
-					last = last or time
-					table.insert(beats, time - last)
-					last = time
+			local beats = {}
+			local suppress = false
+			local last
 
-					local temp = 0
-					for k,v in pairs(beats) do temp = temp + v end
-					temp = temp / #beats
-					temp = 1 / temp
+			hook.Add("CreateMove", tag, function(cmd)
+				if is_dancing(LocalPlayer()) then
+					if cmd:KeyDown(IN_JUMP) then
+						if not suppress then
+							local time = RealTime()
+							last = last or time
+							table.insert(beats, time - last)
+							last = time
 
-					if #beats > 5 then
-						table.remove(beats, 1)
+							local temp = 0
+							for k,v in pairs(beats) do temp = temp + v end
+							temp = temp / #beats
+							temp = 1 / temp
+
+							if #beats > 5 then
+								table.remove(beats, 1)
+							end
+
+							RunConsoleCommand(tag .. "_bpm", (temp * 60))
+							RunConsoleCommand(tag .. "_setrate", bpm:GetInt())
+
+							suppress = true
+						end
+					else
+						suppress = false
+					end
+					cmd:SetButtons(0)
+				end
+			end)
+
+			hook.Add("CalcMainActivity", tag, function(ply)
+				if is_dancing(ply) then
+					local bpm = (ply:GetNWBool(tag .. "_bpm") or 120) / 94
+					local time = (RealTime() / 10) * bpm
+					time = time%2
+					if time > 1 then
+						time = -time + 2
 					end
 
-					RunConsoleCommand(tag .. "_bpm", (temp * 60))
-					RunConsoleCommand(tag .. "_setrate", bpm:GetInt())
+					time = time * 0.8
+					time = time + 0.11
 
-					suppress = true
+					ply:SetCycle(time)
+
+					return 0, ply:LookupSequence("taunt_dance")
 				end
-			else
-				suppress = false
-			end
-			cmd:SetButtons(0)
-		end
-	end)
-
-	hook.Add("CalcMainActivity", tag, function(ply)
-		if is_dancing(ply) then
-			local bpm = (ply:GetNWBool(tag .. "_bpm") or 120) / 94
-			local time = (RealTime() / 10) * bpm
-			time = time%2
-			if time > 1 then
-				time = -time + 2
-			end
-
-			time = time * 0.8
-			time = time + 0.11
-
-			ply:SetCycle(time)
-
-			return 0, ply:LookupSequence("taunt_dance")
+			end)
+		else
+			hook.Remove("CalcMainActivity", tag)
+			hook.Remove("CreateMove", tag)
+			hook.Remove("CalcView", tag)
+			hook.Remove("ShouldDrawLocalPlayer", tag)
 		end
 	end)
 end
 
 if SERVER then
+	util.AddNetworkString(tag)
+
 	concommand.Add(tag .. "_setrate", function(ply, _, args)
 		ply:SetNWBool(tag .. "_bpm", tonumber(args[1]))
 	end)
@@ -95,12 +133,6 @@ if SERVER then
 			set_dancing(ply, true)
 		else
 			aowl.Message(ply, "Dance mode disabled.")
-			set_dancing(ply, false)
-		end
-	end)
-
-	hook.Add("PlayerDeath", tag, function(ply)
-		if is_dancing(ply) then
 			set_dancing(ply, false)
 		end
 	end)

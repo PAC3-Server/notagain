@@ -635,6 +635,29 @@ hook.Add("ScoreboardShow","rpg_scoreboard",function()
 
 		return false
 	end
+
+	hook.Add("KeyRelease","rpg_scoreboard",function(_,key)
+		if not IsValid(_G.SCOREBOARD) or not _G.SCOREBOARD:IsVisible() then return end
+		if not cv_scoreboard_mouse:GetBool() and key == IN_ATTACK2 then
+			gui.EnableScreenClicker(true)
+		end
+	end)
+
+	hook.Add("PreRender", "rpg_scoreboard", function()
+		if screen_width ~= _G.ScrW() or screen_height ~= _G.ScrH() then
+			screen_width = _G.ScrW()
+			screen_height = _G.ScrH()
+			if _G.SCOREBOARD and IsValid(_G.SCOREBOARD) then
+				_G.SCOREBOARD:Remove()
+				selected_player = LocalPlayer()
+				ply_lines = {}
+				local sc = vgui.Create("Scoreboard")
+				_G.SCOREBOARD = sc
+				sc:Hide()
+			end
+		end
+	end)
+
 end)
 
 hook.Add("ScoreboardHide","rpg_scoreboard",function()
@@ -647,26 +670,7 @@ hook.Add("ScoreboardHide","rpg_scoreboard",function()
 			_G.STATUS:Remove()
 		end
 	end
-end)
 
-hook.Add("KeyRelease","rpg_scoreboard",function(_,key)
-	if not IsValid(_G.SCOREBOARD) or not _G.SCOREBOARD:IsVisible() then return end
-	if not cv_scoreboard_mouse:GetBool() and key == IN_ATTACK2 then
-		gui.EnableScreenClicker(true)
-	end
-end)
-
-hook.Add("PreRender", "rpg_scoreboard", function()
-    if screen_width ~= _G.ScrW() or screen_height ~= _G.ScrH() then
-		screen_width = _G.ScrW()
-		screen_height = _G.ScrH()
-		if _G.SCOREBOARD and IsValid(_G.SCOREBOARD) then
-			_G.SCOREBOARD:Remove()
-			selected_player = LocalPlayer()
-			ply_lines = {}
-			local sc = vgui.Create("Scoreboard")
-			_G.SCOREBOARD = sc
-			sc:Hide()
-		end
-	end
+	hook.Remove("KeyRelease", "rpg_scoreboard")
+	hook.Remove("PreRender", "rpg_scoreboard")
 end)

@@ -21,26 +21,35 @@ function META:GetRagdollOwner(...)
 end
 
 if CLIENT then
-	hook.Add("CalcView", "serverside_ragdoll", function(ply, origin, angles)
-		local ent = ply:GetNWEntity("serverside_ragdoll")
-		if ent:IsValid() then
-			ent.serverside_ragdoll_origin = ent.serverside_ragdoll_origin or origin
-			local pos = ent.serverside_ragdoll_origin
-			local dir = ent:GetPos() - pos
-			local dist = dir:Length()
+	net.Receive("serverside_ragdoll", function()
+		local b = net.ReadBool()
+		if b then
+			hook.Add("CalcView", "serverside_ragdoll", function(ply, origin, angles)
+				local ent = ply:GetNWEntity("serverside_ragdoll")
+				if ent:IsValid() then
+					ent.serverside_ragdoll_origin = ent.serverside_ragdoll_origin or origin
+					local pos = ent.serverside_ragdoll_origin
+					local dir = ent:GetPos() - pos
+					local dist = dir:Length()
 
-			return {
-				origin = pos,
-				angles = dir:Angle(),
-				fov = math.max((-math.min(dist / 1000, 1)+1) * 70, 5)
-			}
+					return {
+						origin = pos,
+						angles = dir:Angle(),
+						fov = math.max((-math.min(dist / 1000, 1)+1) * 70, 5)
+					}
+				else
+					ent.serverside_ragdoll_origin = nil
+				end
+			end)
 		else
-			ent.serverside_ragdoll_origin = nil
+			hook.Remove("CalcView", "serverside_ragdoll")
 		end
 	end)
 end
 
 if SERVER then
+	util.AddNetworkString("serverside_ragdoll")
+
 	hook.Add("DoPlayerDeath", "serverside_ragdoll", function(ply, attacker, dmginfo)
 		if not dmginfo:GetDamageForce():IsZero() then
 			local force = dmginfo:GetDamageForce()
@@ -72,6 +81,9 @@ if SERVER then
 						local phys = ent:GetPhysicsObjectNum(i)
 						phys:SetVelocity(ply.serverside_ragdoll_vel or ply:GetVelocity())
 					end
+					net.Start("serverside_ragdoll")
+						net.WriteBool(true)
+					net.Send(ply)
 				end
 				ply.serverside_ragdoll_vel = nil
 			end
@@ -86,6 +98,9 @@ if SERVER then
 			end
 		end
 		ply:SetShouldServerRagdoll(true)
+		net.Start("serverside_ragdoll")
+			net.WriteBool(false)
+		net.Send(ply)
 	end)
 
 	hook.Add("PlayerDisconnected", "serverside_ragdoll", function(ply)
