@@ -49,18 +49,11 @@ if SERVER then
 		end
 	end
 
-	jlevel.stats = {
-		health = function(val) return val + 25 end,
-		mana = function(val) return val + 10 end,
-		stamina = function(val) return val + 5 end,
-		speed = function(val) return val + 5 end,
-	}
-
 	function jlevel.LevelAttribute(ent, what)
 		if not jlevel.stats[what] then return false end
 
 		if ent:GetNWInt("jlevel_attribute_points", 0) >= 1 then
-			jattributes.SetAttribute(ent, what, jlevel.stats[what](jattributes.GetAttribute(ent, what)))
+			jattributes.SetAttribute(ent, what, jattributes.LevelAttribute(ent, what))
 			ent:SetNWInt("jlevel_attribute_points", ent:GetNWInt("jlevel_attribute_points", 0) - 1)
 			ent:SetPData("jlevel_attribute_points", ent:GetNWInt("jlevel_attribute_points", 0))
 			ent:SetPData("jlevel_stat_" .. what, jattributes.GetAttribute(ent, what))
