@@ -178,16 +178,29 @@ jrpg.AddHook("OnEntityCreated", "jrpg_isalive", function(ent)
 	end
 end)
 
-function jrpg.Loadout(ply)
-	ply:Give("weapon_shield_soldiers")
-	ply:Give("potion_health")
-	ply:Give("potion_mana")
-	ply:Give("potion_stamina")
-	ply:Give("weapon_magic")
-	ply:Give("weapon_jsword_virtuouscontract")
-	ply:Give("magic")
 
-	ply:SelectWeapon("weapon_jsword_virtuouscontract")
+
+if SERVER then
+
+	function jrpg.Loadout(ply)
+		ply:Give("weapon_shield_soldiers")
+		ply:Give("potion_health")
+		ply:Give("potion_mana")
+		ply:Give("potion_stamina")
+		ply:Give("weapon_magic")
+		ply:Give("weapon_jsword_virtuouscontract")
+
+		ply:SelectWeapon("weapon_jsword_virtuouscontract")
+
+		ply:SetWalkSpeed(100)
+		ply:SetRunSpeed(200)
+		ply:SetDuckSpeed(0.5)
+		ply:SetUnDuckSpeed(0.5)
+	end
+
+	jrpg.AddPlayerHook("PlayerLoadout", "loadout", function(ply)
+		jrpg.Loadout(ply)
+	end)
 end
 
 if engine.ActiveGamemode() == "sandbox" then

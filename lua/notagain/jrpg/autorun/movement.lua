@@ -236,12 +236,3 @@ if CLIENT then
 		return calc_duck(ply)
 	end)
 end
-
-if SERVER then
-	jrpg.AddPlayerHook("PlayerLoadout", "movement", function(ply)
-		ply:SetWalkSpeed(100)
-		ply:SetRunSpeed(200)
-		ply:SetDuckSpeed(0.5)
-		ply:SetUnDuckSpeed(0.5)
-	end)
-end
