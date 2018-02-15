@@ -67,8 +67,10 @@ if SERVER then
 		ply:SetNWInt("jlevel_attribute_points", tonumber(ply:GetPData("jlevel_attribute_points")))
 		ply:SetNWInt("jlevel_next_level", 500 * ply:GetNWInt("jlevel_level", 0) ^ 1.5)
 
-		for stat in pairs(jattributes.types) do
-			jattributes.SetAttribute(ply, stat, tonumber(ply:GetPData("jlevel_stat_" .. stat, 0)))
+		for stat, data in pairs(jattributes.types) do
+			local saved = tonumber(ply:GetPData("jlevel_stat_" .. stat, data.init))
+			if saved < data.init then saved = data.init end -- fix bad stats
+			jattributes.SetAttribute(ply, stat, saved)
 		end
 	end
 
