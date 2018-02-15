@@ -38,7 +38,7 @@ end
 jattributes.types = {
 	health = {
 		init = 100,
-		on_level = function(val) return val + 25 end,
+		on_level = function(ent, val) return val + 25 end,
 		on_apply = function(ent, stats)
 			ent.jattributes_base_health = ent.jattributes_base_health or ent:GetMaxHealth()
 			ent:SetMaxHealth(ent.jattributes_base_health + stats.health)
@@ -52,7 +52,7 @@ jattributes.types = {
 	},
 	stamina = {
 		init = 25,
-		on_level = function(val) return val + 5 end,
+		on_level = function(ent, val) return val + 5 end,
 		on_receive_damage = function(stats, dmginfo, victim)
 		--	jattributes.SetStamina(victim, math.max(jattributes.GetStamina(victim) - dmginfo:GetDamage(), 0))
 		end,
@@ -102,7 +102,7 @@ jattributes.types = {
 	},
 	mana = {
 		init = 75,
-		on_level = function(val) return val + 10 end,
+		on_level = function(ent, val) return val + 10 end,
 		on_fire_bullet = function(attacker, data, stats)
 			local wep = attacker:GetActiveWeapon()
 			local dmg = get_damage(wep) or data.Damage
@@ -132,7 +132,7 @@ jattributes.types = {
 	},
 	physical_attack = {
 		init = 1,
-		on_level = function(val) return val + 0.2 end,
+		on_level = function(ent, val) return val + 0.2 end,
 		on_give_damage = function(stats, dmginfo)
 			if not jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() * stats.physical_attack)
@@ -141,7 +141,7 @@ jattributes.types = {
 	},
 	physical_defense = {
 		init = 1,
-		on_level = function(val) return val + 0.2 end,
+		on_level = function(ent, val) return val + 0.2 end,
 		on_receive_damage = function(stats, dmginfo)
 			if not jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() / stats.physical_defense)
@@ -159,7 +159,7 @@ jattributes.types = {
 	},
 	magic_defense = {
 		init = 1,
-		on_level = function(val) return val + 0.2 end,
+		on_level = function(ent, val) return val + 0.2 end,
 		on_receive_damage = function(stats, dmginfo)
 			if jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() / stats.magic_defense)
@@ -168,7 +168,7 @@ jattributes.types = {
 	},
 	jump = {
 		init = 1,
-		on_level = function(val) return val + 0.2 end,
+		on_level = function(ent, val) return val + 0.2 end,
 		on_apply = function(ent, stats)
 			if ent:IsPlayer() then
 				ent.jattributes_base_jump_power = ent.jattributes_base_jump_power or ent:GetJumpPower()
@@ -186,7 +186,7 @@ jattributes.types = {
 	},
 	speed = {
 		init = 0,
-		on_level = function(val) return val + 30 end,
+		on_level = function(ent, val) return val + 30 end,
 		on_apply = function(ent, stats)
 			if ent:IsPlayer() then
 				ent.jattributes_base_walk_speed = ent.jattributes_base_walk_speed or ent:GetWalkSpeed()
@@ -247,6 +247,14 @@ if SERVER then
 		end
 
 		return jattributes.types[type].init
+	end
+
+	function jattributes.LevelAttribute(ent, type)
+		local cur = jattributes.GetAttribute(ent, type)
+
+		if ent.jattributes then
+			jattributes.SetAttribute(ent, type, jattributes.types[type].on_level(ent, cur))
+		end
 	end
 
 	function jattributes.Disable(ent)

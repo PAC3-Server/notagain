@@ -64,6 +64,10 @@ function jrpg.SetRPG(ply, b, cheat)
 		ply:SetNWBool("jrpg", b)
 
 		if b then
+			if engine.ActiveGamemode() == "sandbox" then
+				jrpg.Loadout(ply)
+			end
+
 			jattributes.SetTable(ply)
 			jlevel.LoadStats(ply)
 
@@ -78,10 +82,6 @@ function jrpg.SetRPG(ply, b, cheat)
 
 			hook.Run("OnRPGEnabled", ply, cheat)
 			ply:SendLua([[jrpg.SetRPG(LocalPlayer(), true)]])
-
-			if engine.ActiveGamemode() == "sandbox" then
-				jrpg.Loadout(ply)
-			end
 		else
 			jattributes.Disable(ply)
 
