@@ -249,7 +249,9 @@ if CLIENT then
 					temp_mat:SetTexture("$basetexture", render.GetScreenEffectTexture())
 					surface.SetMaterial(temp_mat)
 					surface.DrawTexturedRectUV(0,0,ScrW(),ScrH(),1,0,0,1)
-					hook.GetTable().RenderScreenspaceEffects.fairy_sunbeams() -- :(
+					if jrpg.DrawFairySunbeams and render.SupportsPixelShaders_2_0() then
+						jrpg.DrawFairySunbeams()
+					end
 				cam.End2D()
 
 				return true

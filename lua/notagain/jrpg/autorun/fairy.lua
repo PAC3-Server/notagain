@@ -9,6 +9,14 @@ ENT.Visibility = 0
 
 if CLIENT then
 
+	function jrpg.DrawFairySunbeams()
+		local ents = ents.FindByClass(ENT.ClassName)
+		local count = #ents
+		for key, ent in ipairs(ents) do
+			ent:DrawSunbeams(ent:GetPos(), 0.05/count, 0.025)
+		end
+	end
+
 	local function VectorRandSphere()
 		return Angle(math.Rand(-180,180), math.Rand(-180,180), math.Rand(-180,180)):Up()
 	end
@@ -203,13 +211,7 @@ if CLIENT then
 		self.pixvis = util.GetPixelVisibleHandle()
 
 		if render.SupportsPixelShaders_2_0() then
-			jrpg.AddHook("RenderScreenspaceEffects", "fairy_sunbeams", function()
-				local ents = ents.FindByClass(ENT.ClassName)
-				local count = #ents
-				for key, ent in ipairs(ents) do
-					ent:DrawSunbeams(ent:GetPos(), 0.05/count, 0.025)
-				end
-			end)
+			jrpg.AddHook("RenderScreenspaceEffects", "fairy_sunbeams", jrpg.DrawFairySunbeams)
 		end
 	end
 
