@@ -250,11 +250,9 @@ if SERVER then
 	end
 
 	function jattributes.LevelAttribute(ent, type)
-		local cur = jattributes.GetAttribute(ent, type)
-
-		if ent.jattributes then
-			jattributes.SetAttribute(ent, type, jattributes.types[type].on_level(ent, cur))
-		end
+		print(ent, type, jattributes.types[type].on_level)
+		print(ent, jattributes.GetAttribute(ent, type))
+		jattributes.SetAttribute(ent, type, jattributes.types[type].on_level(ent, jattributes.GetAttribute(ent, type)))
 	end
 
 	function jattributes.Disable(ent)
