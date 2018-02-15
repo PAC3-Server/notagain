@@ -28,7 +28,7 @@ SWEP.MoveSet2 = {
 	}
 }
 
-hook.Add("Move", SWEP.ClassName, function(ply, mv)
+jrpg.AddHook("Move", SWEP.ClassName, function(ply, mv)
 	local self = ply:GetActiveWeapon()
 	if not self.is_jsword then return end
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
@@ -48,7 +48,7 @@ hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	end
 end)
 
-hook.Add("CalcMainActivity", SWEP.ClassName, function(ply)
+jrpg.AddHook("CalcMainActivity", SWEP.ClassName, function(ply)
 	local self = ply:GetActiveWeapon()
 	if not self.is_jsword then return end
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
@@ -66,7 +66,7 @@ local function manip_pos(ply, id, pos)
 	end
 end
 
-hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
+jrpg.AddHook("UpdateAnimation", SWEP.ClassName, function(ply)
 	if ply.sword_bone_hack then
 		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Head1"), Vector(0,0,0))
 		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Neck1"), Vector(0,0,0))
@@ -189,7 +189,7 @@ if CLIENT then
 
 	local suppress_player_draw = false
 
-	hook.Add("PrePlayerDraw", SWEP.ClassName, function(ply)
+	jrpg.AddHook("PrePlayerDraw", SWEP.ClassName, function(ply)
 		if suppress_player_draw then
 			return true
 		end
@@ -198,7 +198,7 @@ if CLIENT then
 	local emitter = ParticleEmitter(vector_origin)
 	local mute_sounds = false
 	local volume = 1
-	hook.Add("EntityEmitSound", SWEP.ClassName, function(data)
+	jrpg.AddHook("EntityEmitSound", SWEP.ClassName, function(data)
 		if mute_sounds then
 			data.Pitch = math.Rand(105,200)
 			data.Volume = math.Clamp(math.Rand(0.25, 1) * volume/2^2, 0, 1)
@@ -316,7 +316,7 @@ function SWEP:Initialize()
 	--self:SetModelScale(1.25)
 end
 
-hook.Add("ShouldCollide", SWEP.ClassName, function(a, b)
+jrpg.AddHook("ShouldCollide", SWEP.ClassName, function(a, b)
 	if a.is_sword_phys and b:IsWorld() then return false end
 	if a.is_sword_phys and b.is_shield_ent and a:GetOwner() == b:GetOwner() then return  false end
 end)

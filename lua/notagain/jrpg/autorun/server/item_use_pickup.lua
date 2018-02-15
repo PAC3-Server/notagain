@@ -1,4 +1,4 @@
-hook.Add("KeyPress", "item_use_pickup", function(ply, key)
+jrpg.AddHook("KeyPress", "item_use_pickup", function(ply, key)
 	if not ply.item_use_pickup then return end
 	if key == IN_USE then
 		local found = {}
@@ -96,5 +96,5 @@ local function disallow(ply, wep)
 	return false
 end
 
-hook.Add("PlayerCanPickupItem", "item_use_pickup", disallow)
-hook.Add("PlayerCanPickupWeapon", "item_use_pickup", disallow)
+jrpg.AddHook("PlayerCanPickupItem", "item_use_pickup", disallow)
+jrpg.AddHook("PlayerCanPickupWeapon", "item_use_pickup", disallow)

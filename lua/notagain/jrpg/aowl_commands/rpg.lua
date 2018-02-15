@@ -1,5 +1,13 @@
-aowl.AddCommand("rpg=boolean", function(ply, _, cheat)
-	jrpg.SetRPG(ply,not ply:GetNWBool("rpg",false), cheat)
+aowl.AddCommand("rpg=boolean", function(ply, cheat)
+	local b = not jrpg.IsEnabled(ply)
+
+	jrpg.SetRPG(ply, b, cheat)
+
+	if b then
+		ply:ChatPrint("JRPG: Enabled")
+	else
+		ply:ChatPrint("JRPG: Disabled")
+	end
 end)
 
 aowl.AddCommand("level=string", function(ply, what)

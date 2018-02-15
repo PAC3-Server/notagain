@@ -78,9 +78,9 @@ if SERVER then
 		end
 	end
 
-	hook.Add("EntityTakeDamage", "jlevel", function(victim, dmginfo)
+	jrpg.AddHook("EntityTakeDamage", "jlevel", function(victim, dmginfo)
 		local attacker = dmginfo:GetAttacker()
-		if not attacker:GetNWBool("rpg") then return end
+		if not jrpg.IsEnabled(attacker) then return end
 
 		if attacker:IsPlayer() then
 			local dmg = dmginfo:GetDamage()
@@ -90,12 +90,12 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("EntityRemoved", "jlevel", function(ent)
+	jrpg.AddHook("EntityRemoved", "jlevel", function(ent)
 		if not ent:IsNPC() or ent:Health() > 0 then return end
 
 		if ent.jlevel_attackers then
 			for attacker, dmg in pairs(ent.jlevel_attackers) do
-				if attacker:IsValid() and attacker:IsPlayer() and dmg ~= 0 and attacker:GetNWBool("rpg") then
+				if attacker:IsValid() and attacker:IsPlayer() and dmg ~= 0 and jrpg.IsEnabled(attacker) then
 					local xp = math.min(dmg, ent:GetMaxHealth())
 					jlevel.GiveXP(attacker, xp)
 					hitmarkers.ShowXP(ent, xp)

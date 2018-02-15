@@ -18,7 +18,7 @@ do
 
 
 	if CLIENT then
-		hook.Add("RenderScreenspaceEffects", "potion_overload", function()
+		jrpg.AddHook("RenderScreenspaceEffects", "potion_overload", function()
 			local factor, color = get_effect(LocalPlayer())
 
 			if not factor then return end
@@ -128,7 +128,7 @@ do
 			end
 		end
 
-		hook.Add("Think", "potion_overload", function()
+		jrpg.AddHook("Think", "potion_overload", function()
 			if math.random() > 0.94 then
 				for key, ply in ipairs(player.GetAll()) do
 					calc(ply, "hp_overload")
@@ -138,7 +138,7 @@ do
 			end
 		end)
 
-		hook.Add("PlayerSay", "potion_overload", function(ply, text)
+		jrpg.AddHook("PlayerSay", "potion_overload", function(ply, text)
 			local factor = get_effect(ply)
 
 			-- drunk?
@@ -244,7 +244,7 @@ do
 			},
 		})
 
-		hook.Add("UpdateAnimation", "potion", function(ply)
+		jrpg.AddHook("UpdateAnimation", "potion", function(ply)
 			local self = ply:GetActiveWeapon()
 			if not self.is_potion then return end
 
@@ -264,7 +264,7 @@ do
 
 		local suppress_player_draw = false
 
-		hook.Add("PrePlayerDraw", "potion", function(ply)
+		jrpg.AddHook("PrePlayerDraw", "potion", function(ply)
 			if suppress_player_draw and ply == LocalPlayer() then
 				return true
 			end
@@ -407,8 +407,7 @@ end)
 
 if SERVER then
 
-	hook.Add("PlayerSpawn", "potion", function(ply)
-		if not ply:GetNWBool("rpg") then return end
+	jrpg.AddPlayerHook("PlayerSpawn", "potion", function(ply)
 		ply:SetNWFloat("hp_overload", 0)
 		ply:SetNWFloat("mp_overload", 0)
 		ply:SetNWFloat("sp_overload", 0)

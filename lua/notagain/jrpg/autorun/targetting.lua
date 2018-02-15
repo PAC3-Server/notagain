@@ -14,7 +14,7 @@ if CLIENT then
 
 		for _, val in ipairs(ents) do
 			if
-				(not val.Alive or jrpg.IsAlive(val)) and
+				(not val.Alive or jrpg.IsActorAlive(val)) and
 				((val:IsPlayer() and val ~= ply) or (not val:IsPlayer() and jrpg.IsActor(val))) and
 				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
 				val ~= prev_target and
@@ -194,7 +194,7 @@ if CLIENT then
 		jtarget.Scroll(-1)
 		jtarget.friends_only = friends_only
 
-		hook.Add("HUDShouldDraw", "jtarget", function(what)
+		jrpg.AddHook("HUDShouldDraw", "jtarget", function(what)
 			if what == "JHitmarkers" and jtarget.GetEntity(LocalPlayer()):IsValid() then
 				return false
 			end
@@ -203,14 +203,14 @@ if CLIENT then
 
 	function jtarget.StopSelection()
 		jtarget.selecting = false
-		hook.Remove("HUDShouldDraw", "jtarget")
+		jrpg.RemoveHook("HUDShouldDraw", "jtarget")
 	end
 
 	function jtarget.IsSelecting()
 		return jtarget.selecting
 	end
 
-	hook.Add("HUDPaint", "jtarget", jtarget.DrawSelection)
+	jrpg.AddHook("HUDPaint", "jtarget", jtarget.DrawSelection)
 end
 
 jtarget.prev_target = NULL
@@ -276,14 +276,14 @@ local function get_aim_angles(ply)
 end
 
 if CLIENT then
-	hook.Add("CreateMove", "jtarget", function(mv)
+	jrpg.AddHook("CreateMove", "jtarget", function(mv)
 		local ang = get_aim_angles(LocalPlayer())
 
 		if ang then
 
 			local ent = jtarget.GetEntity(LocalPlayer())
 
-			if not jrpg.IsAlive(ent) then
+			if not jrpg.IsActorAlive(ent) then
 				jtarget.Scroll(1)
 
 				if jtarget.GetEntity(LocalPlayer()) == ent then
@@ -302,7 +302,7 @@ if CLIENT then
 		end
 	end)
 
-	hook.Add("InputMouseApply", "jtarget", function(mv, x, y)
+	jrpg.AddHook("InputMouseApply", "jtarget", function(mv, x, y)
 		if math.abs(x) > 1000 or math.abs(y) > 1000 then
 			jtarget.SetEntity(LocalPlayer())
 			jtarget.StopSelection()
@@ -310,7 +310,7 @@ if CLIENT then
 	end)
 end
 
-hook.Add("Move", "jtarget", function(ply)
+jrpg.AddHook("Move", "jtarget", function(ply)
 	local ang = get_aim_angles(ply)
 
 	if ang then

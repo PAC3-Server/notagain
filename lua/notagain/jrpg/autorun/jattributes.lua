@@ -260,7 +260,7 @@ if SERVER then
 		return ent.jattributes or {}
 	end
 
-	hook.Add("EntityTakeDamage", "jattributes", function(victim, dmginfo)
+	jrpg.AddHook("EntityTakeDamage", "jattributes", function(victim, dmginfo)
 		local attacker = dmginfo:GetAttacker()
 		if not attacker:IsPlayer() and not attacker:IsNPC() then return end
 
@@ -285,7 +285,7 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("EntityFireBullets", "jattributes", function(ply, data)
+	jrpg.AddHook("EntityFireBullets", "jattributes", function(ply, data)
 		for type, info in pairs(jattributes.types) do
 			if info.on_fire_bullet and ply.jattributes and ply.jattributes[type] then
 				local b = info.on_fire_bullet(ply, data, ply.jattributes)
@@ -296,7 +296,7 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("PlayerPostThink", "jattributes", function(ply)
+	jrpg.AddHook("PlayerPostThink", "jattributes", function(ply)
 		local wep = ply:GetActiveWeapon()
 
 		if not wep:IsValid() then return end
@@ -317,9 +317,9 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("PlayerSpawn", "jattributes", function(ply)
+	jrpg.AddPlayerHook("PlayerSpawn", "jattributes", function(ply)
 		timer.Simple(0, function()
-			if not ply:IsValid() or not ply.jattributes or not ply:GetNWBool("rpg") then return end
+			if not ply:IsValid() or not ply.jattributes then return end
 			for type, info in pairs(jattributes.types) do
 				if info.on_apply and ply.jattributes[type] then
 					info.on_apply(ply, ply.jattributes)
@@ -384,7 +384,7 @@ if SERVER then
 			return not ent.jattributes_regen_stamina_timer or ent.jattributes_regen_stamina_timer < CurTime()
 		end
 
-		timer.Create("jattributes_stamina", 0.05, 0, function()
+		jrpg.CreateTimer("jattributes_stamina", 0.05, 0, function()
 			for _, ply in ipairs(player.GetAll()) do
 				if ply.rpg_cheat then
 					jattributes.SetStamina(ply, 9999)
@@ -425,7 +425,7 @@ function  jattributes.GetStamina(ent)
 end
 
 function jattributes.HasStamina(ent)
-	return ent:GetNWBool("rpg",false) and ent:GetNWFloat("jattributes_stamina", -1) ~= -1
+	return jrpg.IsEnabled(ent) and ent:GetNWFloat("jattributes_stamina", -1) ~= -1
 end
 
 function jattributes.GetMaxStamina(ent)
@@ -441,7 +441,7 @@ function  jattributes.GetMana(ent)
 end
 
 function jattributes.HasMana(ent)
-	return ent:GetNWBool("rpg",false) and ent:GetNWFloat("jattributes_mana", -1) ~= -1
+	return jrpg.IsEnabled(ent) and ent:GetNWFloat("jattributes_mana", -1) ~= -1
 end
 
 PLAYER.GetMana = jattributes.GetMana

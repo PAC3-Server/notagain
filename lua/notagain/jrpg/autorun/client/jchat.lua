@@ -17,20 +17,20 @@ function jchat.Start(stop_cb)
 		jchat.Stop()
 	end
 
-	hook.Add("CalcView", "jchat", jchat.CalcView)
-	hook.Add("RenderScreenspaceEffects", "jchat", jchat.RenderScreenspaceEffects)
+	jrpg.AddHook("CalcView", "jchat", jchat.CalcView)
+	jrpg.AddHook("RenderScreenspaceEffects", "jchat", jchat.RenderScreenspaceEffects)
 
 	local ok = os.clock() + 0.25
 
-	hook.Add("KeyPress", "jchat", function(ply, key)
+	jrpg.AddHook("KeyPress", "jchat", function(ply, key)
 		if key == IN_USE and jchat.HasPlayer(LocalPlayer()) then
 			if ok > os.clock() then return end
 			jchat.Stop()
-			hook.Remove("KeyPress", "jchat")
+			jrpg.RemoveHook("KeyPress", "jchat")
 		end
 	end)
 
-	hook.Add("HUDShouldDraw", "jchat", function(str)
+	jrpg.AddHook("HUDShouldDraw", "jchat", function(str)
 		if jchat.show_chat then return end
 
 		if str ~= "CHudWeaponSelection" and str ~= "CHudGMod" and str ~= "CHudChat" then
@@ -38,13 +38,13 @@ function jchat.Start(stop_cb)
 		end
 	end)
 
-	hook.Add("ShouldDrawLocalPlayer", "jchat", function()
+	jrpg.AddHook("ShouldDrawLocalPlayer", "jchat", function()
 		if jchat.HasPlayer(LocalPlayer()) then
 			return true
 		end
 	end)
 
-	hook.Add("NPCSpeak", "jchat", function(npc, str)
+	jrpg.AddHook("NPCSpeak", "jchat", function(npc, str)
 		if jchat.CanChat(npc) and not jchat.HasPlayer(npc) then
 			jchat.AddPlayer(npc)
 		end
@@ -58,14 +58,14 @@ function jchat.Start(stop_cb)
 		end
 	end)
 
-	hook.Add("OnPlayerChat", "jchat", function(ply, str)
+	jrpg.AddHook("OnPlayerChat", "jchat", function(ply, str)
 		if not ply:IsValid() then return end
 		if jchat.HasPlayer(ply) then
 			jchat.PlayerSay(ply, str)
 		end
 	end)
 
-	timer.Create("jchat_check_players", 0.2, 0, function()
+	jrpg.CreateTimer("jchat_check_players", 0.2, 0, function()
 		for ply in pairs(jchat.players) do
 			if not jchat.CanChat(ply) then
 				jchat.RemovePlayer(ply)
@@ -83,13 +83,13 @@ function jchat.Stop()
 	jchat.players = {}
 	jchat.active_player = NULL
 
-	hook.Remove("CalcView", "jchat")
-	hook.Remove("RenderScreenspaceEffects", "jchat")
+	jrpg.RemoveHook("CalcView", "jchat")
+	jrpg.RemoveHook("RenderScreenspaceEffects", "jchat")
 
-	hook.Remove("HUDShouldDraw", "jchat")
-	hook.Remove("OnPlayerChat", "jchat")
-	hook.Remove("ShouldDrawLocalPlayer", "jchat")
-	timer.Remove("jchat_check_players")
+	jrpg.RemoveHook("HUDShouldDraw", "jchat")
+	jrpg.RemoveHook("OnPlayerChat", "jchat")
+	jrpg.RemoveHook("ShouldDrawLocalPlayer", "jchat")
+	jrpg.RemoveTimer("jchat_check_players")
 
 	jchat.active = false
 
@@ -488,7 +488,7 @@ end
 do
 	local self_chat = false
 
-	hook.Add("ChatTextChanged", "jchat", function()
+	jrpg.AddHook("ChatTextChanged", "jchat", function()
 		jchat.show_chat = true
 
 		if jchat.IsActive() then return end
@@ -502,7 +502,7 @@ do
 		self_chat = true
 	end)
 
-	hook.Add("FinishChat", "jchat", function()
+	jrpg.AddHook("FinishChat", "jchat", function()
 		timer.Simple(0, function()
 			jchat.show_chat = nil
 		end)
@@ -517,7 +517,7 @@ do
 end
 
 
-hook.Add("PlayerUsedEntity", "jchat", function(ply, ent)
+jrpg.AddHook("PlayerUsedEntity", "jchat", function(ply, ent)
 	if not battlecam.IsEnabled() then return end
 	if jtarget.GetEntity(LocalPlayer()):IsValid() then return end
 

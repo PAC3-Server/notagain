@@ -34,11 +34,11 @@ if CLIENT then
 		set_from_string(str)
 	end, "cl_avatar")
 
-	hook.Add("OnEntityCreated", "avatar", function(ent)
+	jrpg.AddHook("OnEntityCreated", "avatar", function(ent)
 		if ent == LocalPlayer() then
 			set_from_string(cvar:GetString())
 			RunConsoleCommand("request_avatars")
-			hook.Remove("OnEntityCreated", "avatar")
+			jrpg.RemoveHook("OnEntityCreated", "avatar")
 		end
 	end)
 

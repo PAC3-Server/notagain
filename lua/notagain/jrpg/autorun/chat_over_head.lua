@@ -59,12 +59,12 @@ if CLIENT then
 
 	local wrote = ""
 
-	hook.Add("FinishChat", "coh", function()
+	jrpg.AddHook("FinishChat", "coh", function()
 		send_text(wrote, false, input.IsKeyDown(KEY_ENTER) or input.IsKeyDown(KEY_PAD_ENTER))
 		wrote = ""
 	end)
 
-	hook.Add("ChatTextChanged", "coh", function(text)
+	jrpg.AddHook("ChatTextChanged", "coh", function(text)
 		wrote = text
 		send_text(text, true)
 	end)
@@ -82,7 +82,7 @@ if CLIENT then
 	local blursize = 6
 	local shadow_size = 10
 
-	hook.Add("PostDrawTranslucentRenderables", "coh", function()
+	jrpg.AddHook("PostDrawTranslucentRenderables", "coh", function()
 		if hook.Run("HUDShouldDraw", "ChatOverHead") == false then return end
 
 		for _, ply in ipairs(player.GetAll()) do

@@ -81,7 +81,7 @@ do -- status
 		table.insert(jdmg.active_status, ent)
 
 		if CLIENT then
-			hook.Add("RenderScreenspaceEffects", "jdmg_status_overlay", jrpg.SafeDraw(cam.Start3D, cam.End3D, function()
+			jrpg.AddHook("RenderScreenspaceEffects", "jdmg_status_overlay", jrpg.SafeDraw(cam.Start3D, cam.End3D, function()
 				for i = #jdmg.active_status, 1, -1 do
 					local ent = jdmg.active_status[i]
 					if ent:IsValid() and ent.jdmg_statuses and next(ent.jdmg_statuses) then
@@ -94,14 +94,14 @@ do -- status
 						table.remove(jdmg.active_status, i)
 
 						if not jdmg.active_status[1] then
-							hook.Remove("Think", "jdmg_status_update")
+							jrpg.RemoveHook("RenderScreenspaceEffects", "jdmg_status_overlay")
 						end
 					end
 				end
 			end))
 		end
 		local next_think = 0
-		hook.Add("Think", "jdmg_status_update", function()
+		jrpg.AddHook("Think", "jdmg_status_update", function()
 			local time = RealTime()
 			if next_think < time then
 
@@ -154,7 +154,7 @@ do -- status
 						table.remove(jdmg.active_status, i)
 
 						if not jdmg.active_status[1] then
-							hook.Remove("Think", "jdmg_status_update")
+							jrpg.RemoveHook("Think", "jdmg_status_update")
 						end
 					end
 				end
@@ -269,7 +269,7 @@ if CLIENT then
 					end
 				end
 
-				if not jrpg.IsAlive(data.ent) then
+				if not jrpg.IsActorAlive(data.ent) then
 					if data.ent:IsPlayer() then
 						local rag = data.ent:GetRagdollEntity()
 						if IsValid(rag) then
@@ -291,7 +291,7 @@ if CLIENT then
 		render.SetBlend(1)
 
 		if not active[1] then
-			hook.Remove("RenderScreenspaceEffects", "jdmg")
+			jrpg.RemoveHook("RenderScreenspaceEffects", "jdmg")
 		end
 	end
 
@@ -329,12 +329,12 @@ if CLIENT then
 		end
 
 		if not low_health[1] then
-			hook.Remove("RenderScreenspaceEffects", "jdmg_lowhealth")
+			jrpg.RemoveHook("RenderScreenspaceEffects", "jdmg_lowhealth")
 		end
 	end
 
 	if low_health[1] then
-		hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_lowhealth))
+		jrpg.AddHook("RenderScreenspaceEffects", "jdmg_lowhealth", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_lowhealth))
 	end
 
 	function jdmg.DamageEffect(ent, type, duration, strength, pow)
@@ -354,14 +354,14 @@ if CLIENT then
 		})
 
 		if #active == 1 then
-			hook.Add("RenderScreenspaceEffects", "jdmg", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_jdmg))
+			jrpg.AddHook("RenderScreenspaceEffects", "jdmg", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_jdmg))
 		end
 
 		if ent:IsValid() and ent.Health and ent:Health() / ent:GetMaxHealth() < 0.25 then
 			table.insert(low_health, ent)
 
 			if low_health[1] then
-				hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_lowhealth))
+				jrpg.AddHook("RenderScreenspaceEffects", "jdmg_lowhealth", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_lowhealth))
 			end
 		end
 	end
@@ -422,7 +422,7 @@ if SERVER then
 		end
 	end
 
-	hook.Add("EntityTakeDamage", "jdmg", function(ent, dmginfo)
+	jrpg.AddHook("EntityTakeDamage", "jdmg", function(ent, dmginfo)
 		if ent:GetNoDraw() then return end
 
 		local pos = ent:WorldToLocal(dmginfo:GetDamagePosition())

@@ -3,8 +3,8 @@ local prettytext = requirex("pretty_text")
 local function show_name(area_name)
 	local duration = 5
 	local time = RealTime() + duration
-	hook.Remove("HUDPaint", "")
-	hook.Add("HUDPaint", "newarea", function()
+	jrpg.RemoveHook("HUDPaint", "")
+	jrpg.AddHook("HUDPaint", "newarea", function()
 		local f = math.max((time - RealTime()) / duration, 0)
 		local x, y = ScrW()/2, ScrH()/4
 
@@ -34,20 +34,20 @@ local function show_name(area_name)
 		surface.DrawRect(x - w, y + h/2.75, w*2, height)
 
 		if f <= 0 then
-			hook.Remove("HUDPaint", "newarea")
+			jrpg.RemoveHook("HUDPaint", "newarea")
 		end
 
 	end)
 end
 
 local function handle(ent, area_name)
-	if ent == LocalPlayer() and ent:GetNWBool("rpg") then
+	if ent == LocalPlayer() and jrpg.IsEnabled(ent) then
 		show_name(area_name or "OverWorld")
 	end
 end
 
-hook.Add("MD_OnAreaEntered","area_notification", handle)
-hook.Add("MD_OnOverWorldEntered","area_notification", handle)
+jrpg.AddHook("MD_OnAreaEntered","area_notification", handle)
+jrpg.AddHook("MD_OnOverWorldEntered","area_notification", handle)
 
 if LocalPlayer():IsValid() then
 	show_name("Ash Lake")

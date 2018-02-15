@@ -119,7 +119,7 @@ end
 if SERVER then
 	util.AddNetworkString("rockfall_death")
 
-	hook.Add("RealisticFallDamage", "rockfall_death", function(ply, info, speed, fall_dmg, trace_res, trace_params)
+	jrpg.AddHook("RealisticFallDamage", "rockfall_death", function(ply, info, speed, fall_dmg, trace_res, trace_params)
 		if speed < 2000 then return end
 
 		info:SetDamageForce(Vector(0,0,0))

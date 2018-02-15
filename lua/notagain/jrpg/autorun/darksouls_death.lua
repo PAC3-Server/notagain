@@ -81,8 +81,8 @@ if CLIENT then
 
             timer.Simple(5,function()
                 if ply == LocalPlayer() then
-                    hook.Remove("HUDPaintBackground", "darksouls_death")
-                    hook.Remove("HUDShouldDraw", "darksouls_death")
+                    jrpg.RemoveHook("HUDPaintBackground", "darksouls_death")
+                    jrpg.RemoveHook("HUDShouldDraw", "darksouls_death")
                     death_music:FadeOut(2)
                 end
             end)
@@ -90,12 +90,12 @@ if CLIENT then
 
 		if ply == LocalPlayer() then
 			local time = RealTime()
-			hook.Add("HUDShouldDraw", "darksouls_death", function(str)
+			jrpg.AddHook("HUDShouldDraw", "darksouls_death", function(str)
 				if str == "CHudDamageIndicator" then
 					return false
 				end
 			end)
-			hook.Add("HUDPaintBackground", "darksouls_death", function()
+			jrpg.AddHook("HUDPaintBackground", "darksouls_death", function()
 				local f = math.min(RealTime() - time, 1)
 
 				surface.SetDrawColor(0, 0, 0, math.max(255*f, 0, 255))
@@ -117,8 +117,8 @@ if CLIENT then
 				cam.PopModelMatrix()
 
 				if ply:Alive() and f > 0.25 then
-					hook.Remove("HUDPaintBackground", "darksouls_death")
-					hook.Remove("HUDShouldDraw", "darksouls_death")
+					jrpg.RemoveHook("HUDPaintBackground", "darksouls_death")
+					jrpg.RemoveHook("HUDShouldDraw", "darksouls_death")
 					death_music:FadeOut(2)
 				end
 			end)
@@ -129,7 +129,7 @@ end
 if SERVER then
 	util.AddNetworkString("darksouls_death")
 
-	hook.Add("RealisticFallDamage", "darksouls_death", function(ply, info, speed, fall_dmg, trace_res, trace_params)
+	jrpg.AddHook("RealisticFallDamage", "darksouls_death", function(ply, info, speed, fall_dmg, trace_res, trace_params)
 		if trace_res.HitNormal.z ~= 1 then return end
 		if info:GetDamage() > ply:GetMaxHealth()*2 then return end
 
