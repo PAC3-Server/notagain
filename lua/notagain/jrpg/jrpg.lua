@@ -18,7 +18,7 @@ end
 function jrpg.AddPlayerHook(name, id, func)
 	jrpg.AddHook(name, id, function(ply, ...)
 		if jrpg.IsEnabled(ply) then
-			func(ply, ...)
+			return func(ply, ...)
 		end
 	end)
 end
