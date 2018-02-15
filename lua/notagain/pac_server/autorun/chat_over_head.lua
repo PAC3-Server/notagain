@@ -16,59 +16,6 @@ if SERVER then
 end
 
 if CLIENT then
-	local history_time = 8
-
-	local function add_text(ply, str, change, entered)
-		ply.coh_text_history = ply.coh_text_history or {}
-
-		if #ply.coh_text_history > 10 then
-			table.remove(ply.coh_text_history)
-		end
-
-		if change then
-			if ply.coh_text_history[1] and ply.coh_text_history[1].time ~= 0 then
-				table.insert(ply.coh_text_history, 1, {str = str, time = 0})
-			end
-			ply.coh_text_history[1] = {str = str, time = 0}
-		elseif str == "" then
-			table.remove(ply.coh_text_history, 1)
-		else
-			table.remove(ply.coh_text_history, 1)
-			table.insert(ply.coh_text_history, 1, {str = str, time = RealTime() + history_time, entered = entered})
-		end
-	end
-
-	net.Receive("coh",function(len)
-		local ply = net.ReadEntity()
-		if ply:IsValid() then
-			local str = net.ReadString()
-			local change = net.ReadBool()
-			local entered = net.ReadBool()
-
-			add_text(ply, str, change, entered)
-		end
-	end)
-
-	local function send_text(str, change, entered)
-		net.Start("coh", true)
-			net.WriteString(str)
-			net.WriteBool(change)
-			net.WriteBool(entered)
-		net.SendToServer()
-	end
-
-	local wrote = ""
-
-	jrpg.AddHook("FinishChat", "coh", function()
-		send_text(wrote, false, input.IsKeyDown(KEY_ENTER) or input.IsKeyDown(KEY_PAD_ENTER))
-		wrote = ""
-	end)
-
-	jrpg.AddHook("ChatTextChanged", "coh", function(text)
-		wrote = text
-		send_text(text, true)
-	end)
-
 	local background_color = Color(20,20,20,250)
 	local border_color = Color(150,150,150,255)
 	local border_size = 10
@@ -82,12 +29,16 @@ if CLIENT then
 	local blursize = 6
 	local shadow_size = 10
 
-	jrpg.AddHook("PostDrawTranslucentRenderables", "coh", function()
+	local function DrawChatOverHead()
 		if hook.Run("HUDShouldDraw", "ChatOverHead") == false then return end
+
+		local ok = false
 
 		for _, ply in ipairs(player.GetAll()) do
 			if ply.coh_text_history and ply.coh_text_history[1] and (ply ~= LocalPlayer() or ply:ShouldDrawLocalPlayer()) then
 				--for i, data in ipairs(ply.coh_text_history) do
+
+				ok = true
 				for i = #ply.coh_text_history, 1, -1 do
 					local data = ply.coh_text_history[i]
 					local text = data.str
@@ -183,5 +134,66 @@ if CLIENT then
 				end
 			end
 		end
+
+		if not ok then
+			hook.Remove("PostDrawTranslucentRenderables", "coh")
+		end
+	end
+
+
+	local history_time = 8
+
+	local function add_text(ply, str, change, entered)
+		ply.coh_text_history = ply.coh_text_history or {}
+
+		if #ply.coh_text_history > 10 then
+			table.remove(ply.coh_text_history)
+		end
+
+		if change then
+			if ply.coh_text_history[1] and ply.coh_text_history[1].time ~= 0 then
+				table.insert(ply.coh_text_history, 1, {str = str, time = 0})
+			end
+			ply.coh_text_history[1] = {str = str, time = 0}
+		elseif str == "" then
+			table.remove(ply.coh_text_history, 1)
+		else
+			table.remove(ply.coh_text_history, 1)
+			table.insert(ply.coh_text_history, 1, {str = str, time = RealTime() + history_time, entered = entered})
+		end
+
+
+		hook.Add("PostDrawTranslucentRenderables", "coh", DrawChatOverHead)
+	end
+
+	net.Receive("coh",function(len)
+		local ply = net.ReadEntity()
+		if ply:IsValid() then
+			local str = net.ReadString()
+			local change = net.ReadBool()
+			local entered = net.ReadBool()
+
+			add_text(ply, str, change, entered)
+		end
+	end)
+
+	local function send_text(str, change, entered)
+		net.Start("coh", true)
+			net.WriteString(str)
+			net.WriteBool(change)
+			net.WriteBool(entered)
+		net.SendToServer()
+	end
+
+	local wrote = ""
+
+	hook.Add("FinishChat", "coh", function()
+		send_text(wrote, false, input.IsKeyDown(KEY_ENTER) or input.IsKeyDown(KEY_PAD_ENTER))
+		wrote = ""
+	end)
+
+	hook.Add("ChatTextChanged", "coh", function(text)
+		wrote = text
+		send_text(text, true)
 	end)
 end
