@@ -64,7 +64,7 @@ function jrpg.SetRPG(ply, b, cheat)
 		ply:SetNWBool("jrpg", b)
 
 		if b then
-			jattributes.SetTable(ply, {mana = 75, stamina = 25, health = 100})
+			jattributes.SetTable(ply)
 			jlevel.LoadStats(ply)
 
 			ply:SetHealth(ply:GetMaxHealth())

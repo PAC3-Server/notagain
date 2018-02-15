@@ -53,6 +53,7 @@ if SERVER then
 		health = function(val) return val + 25 end,
 		mana = function(val) return val + 10 end,
 		stamina = function(val) return val + 5 end,
+		speed = function(val) return val + 5 end,
 	}
 
 	function jlevel.LevelAttribute(ent, what)
