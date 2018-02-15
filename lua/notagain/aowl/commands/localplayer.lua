@@ -5,19 +5,27 @@ do -- mute
 		local ent = net.ReadEntity()
 		ent:SetMuted(true)
 		ent.aowl_muted = true
+
+		hook.Add("OnPlayerChat","aowl_mute",function(ply)
+			if ply.aowl_muted then
+				return true
+			end
+		end)
 	end, "localplayer")
 
 	aowl.AddCommand("unmute|unblock=player",function(ply,line,target)
 		local ent = net.ReadEntity()
 		ent:SetMuted(false)
 		ent.aowl_muted = nil
-	end, "localplayer")
 
-	hook.Add("OnPlayerChat","aowl_mute",function(ply)
-		if ply.aowl_muted then
-			return true
+		for k,v in ipairs(player.GetAll()) do
+			if v.aowl_muted then
+				return
+			end
 		end
-	end)
+
+		hook.Remove("OnPlayerChat","aowl_mute")
+	end, "localplayer")
 end
 
 aowl.AddCommand("fakedie=string[],string[],boolean", function(ply, line, killer, icon, swap)

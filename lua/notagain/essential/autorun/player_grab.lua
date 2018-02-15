@@ -26,6 +26,72 @@ if CLIENT then
 	CreateClientConVar(tag .. "_dont_touch_me", "0", true, true)
 end
 
+local function CanPlayerSuicide(ply)
+	if ply:IsBeingPhysgunned() then
+		return false
+	end
+end
+
+local function PlayerDeath(ply)
+	if ply:IsBeingPhysgunned() then
+		return false
+	end
+end
+
+local function PlayerNoClip(ply)
+	if ply:IsBeingPhysgunned() then
+		return false
+	end
+end
+
+local Move
+
+do -- throw
+	local function GetAverage(tbl)
+		if #tbl == 1 then return tbl[1] end
+
+		local average = vector_origin
+
+		for key, vec in pairs(tbl) do
+			average = average + vec
+		end
+
+		return average / #tbl
+	end
+
+	local function CalcVelocity(self, pos)
+		self._pos_velocity = self._pos_velocity or {}
+
+		if #self._pos_velocity > 10 then
+			table.remove(self._pos_velocity, 1)
+		end
+
+		table.insert(self._pos_velocity, pos)
+
+		return GetAverage(self._pos_velocity)
+	end
+
+	Move = function(ply, data)
+
+		if ply:IsBeingPhysgunned() then
+			local vel = CalcVelocity(ply, data:GetOrigin())
+			if vel:Length() > 10 then
+				data:SetVelocity((data:GetOrigin() - vel) * 8)
+			end
+
+			local owner = ply:GetOwner()
+
+			if owner:IsPlayer() then
+				if owner:KeyDown(IN_USE) then
+					local ang = ply:GetAngles()
+					ply:SetEyeAngles(Angle(ang.p, ang.y, 0))
+				end
+			end
+		end
+
+	end
+end
+
 hook.Add("PhysgunPickup", tag, function(ply, ent)
 	local canphysgun = ent:IsPlayer() and not ent:IsPhysgunImmune() and not ent:IsBeingPhysgunned()
 	if not canphysgun then return end
@@ -59,6 +125,11 @@ hook.Add("PhysgunPickup", tag, function(ply, ent)
 	ent:SetMoveType(MOVETYPE_NONE)
 	ent:SetOwner(ply)
 
+	hook.Add("CanPlayerSuicide", tag, CanPlayerSuicide)
+	hook.Add("PlayerDeath", tag, PlayerDeath)
+	hook.Add("PlayerNoClip", tag, PlayerNoClip)
+	hook.Add("Move", tag, Move)
+
 	return true
 end)
 
@@ -71,71 +142,11 @@ hook.Add("PhysgunDrop", tag, function(ply, ent)
 		ent:SetOwner()
 		hook.Run("PhysgunThrowPlayer", ply, ent)
 
+		hook.Remove("CanPlayerSuicide", tag)
+		hook.Remove("PlayerDeath", tag)
+		hook.Remove("PlayerNoClip", tag)
+		hook.Remove("Move", tag)
+
 		return true
 	end
 end)
-
--- attempt to stop suicides during physgun
-hook.Add("CanPlayerSuicide", tag, function(ply)
-	if ply:IsBeingPhysgunned() then
-		return false
-	end
-end)
-
-hook.Add("PlayerDeath", tag, function(ply)
-	if ply:IsBeingPhysgunned() then
-		return false
-	end
-end)
-
-hook.Add("PlayerNoClip", tag, function(ply)
-	if ply:IsBeingPhysgunned() then
-		return false
-	end
-end)
-
-do -- throw
-	local function GetAverage(tbl)
-		if #tbl == 1 then return tbl[1] end
-
-		local average = vector_origin
-
-		for key, vec in pairs(tbl) do
-			average = average + vec
-		end
-
-		return average / #tbl
-	end
-
-	local function CalcVelocity(self, pos)
-		self._pos_velocity = self._pos_velocity or {}
-
-		if #self._pos_velocity > 10 then
-			table.remove(self._pos_velocity, 1)
-		end
-
-		table.insert(self._pos_velocity, pos)
-
-		return GetAverage(self._pos_velocity)
-	end
-
-	hook.Add("Move", tag, function(ply, data)
-
-		if ply:IsBeingPhysgunned() then
-			local vel = CalcVelocity(ply, data:GetOrigin())
-			if vel:Length() > 10 then
-				data:SetVelocity((data:GetOrigin() - vel) * 8)
-			end
-
-			local owner = ply:GetOwner()
-
-			if owner:IsPlayer() then
-				if owner:KeyDown(IN_USE) then
-					local ang = ply:GetAngles()
-					ply:SetEyeAngles(Angle(ang.p, ang.y, 0))
-				end
-			end
-		end
-
-	end)
-end
