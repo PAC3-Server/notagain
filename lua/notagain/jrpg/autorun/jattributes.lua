@@ -35,10 +35,10 @@ local function get_damage(wep)
 	return dmg
 end
 
-
 jattributes.types = {
 	health = {
-		default = 0,
+		init = 100,
+		on_level = function(val) return val + 25 end,
 		on_apply = function(ent, stats)
 			ent.jattributes_base_health = ent.jattributes_base_health or ent:GetMaxHealth()
 			ent:SetMaxHealth(ent.jattributes_base_health + stats.health)
@@ -51,7 +51,8 @@ jattributes.types = {
 		end,
 	},
 	stamina = {
-		default = 0,
+		init = 25,
+		on_level = function(val) return val + 5 end,
 		on_receive_damage = function(stats, dmginfo, victim)
 		--	jattributes.SetStamina(victim, math.max(jattributes.GetStamina(victim) - dmginfo:GetDamage(), 0))
 		end,
@@ -100,7 +101,8 @@ jattributes.types = {
 		end,
 	},
 	mana = {
-		default = 0,
+		init = 75,
+		on_level = function(val) return val + 10 end,
 		on_fire_bullet = function(attacker, data, stats)
 			local wep = attacker:GetActiveWeapon()
 			local dmg = get_damage(wep) or data.Damage
@@ -129,7 +131,8 @@ jattributes.types = {
 		end,
 	},
 	physical_attack = {
-		default = 1,
+		init = 1,
+		on_level = function(val) return val + 0.2 end,
 		on_give_damage = function(stats, dmginfo)
 			if not jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() * stats.physical_attack)
@@ -137,7 +140,8 @@ jattributes.types = {
 		end,
 	},
 	physical_defense = {
-		default = 1,
+		init = 1,
+		on_level = function(val) return val + 0.2 end,
 		on_receive_damage = function(stats, dmginfo)
 			if not jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() / stats.physical_defense)
@@ -145,6 +149,7 @@ jattributes.types = {
 		end,
 	},
 	magic_attack = {
+		init = 1,
 		default = 1,
 		on_give_damage = function(stats, dmginfo)
 			if jdmg.GetDamageType(dmginfo) then
@@ -153,7 +158,8 @@ jattributes.types = {
 		end,
 	},
 	magic_defense = {
-		default = 1,
+		init = 1,
+		on_level = function(val) return val + 0.2 end,
 		on_receive_damage = function(stats, dmginfo)
 			if jdmg.GetDamageType(dmginfo) then
 				dmginfo:SetDamage(dmginfo:GetDamage() / stats.magic_defense)
@@ -161,7 +167,8 @@ jattributes.types = {
 		end,
 	},
 	jump = {
-		default = 1,
+		init = 1,
+		on_level = function(val) return val + 0.2 end,
 		on_apply = function(ent, stats)
 			if ent:IsPlayer() then
 				ent.jattributes_base_jump_power = ent.jattributes_base_jump_power or ent:GetJumpPower()
@@ -178,7 +185,8 @@ jattributes.types = {
 		end,
 	},
 	speed = {
-		default = 0,
+		init = 0,
+		on_level = function(val) return val + 30 end,
 		on_apply = function(ent, stats)
 			if ent:IsPlayer() then
 				ent.jattributes_base_walk_speed = ent.jattributes_base_walk_speed or ent:GetWalkSpeed()
@@ -238,7 +246,7 @@ if SERVER then
 			return ent.jattributes[type]
 		end
 
-		return jattributes.types[type].default
+		return jattributes.types[type].init
 	end
 
 	function jattributes.Disable(ent)
@@ -251,8 +259,8 @@ if SERVER then
 	end
 
 	function jattributes.SetTable(ent, stats)
-		for type in pairs(jattributes.types) do
-			jattributes.SetAttribute(ent, type, stats[type])
+		for type, data in pairs(jattributes.types) do
+			jattributes.SetAttribute(ent, type, stats and stats[type] or data.init)
 		end
 	end
 
