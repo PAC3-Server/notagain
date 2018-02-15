@@ -19,12 +19,12 @@ if CLIENT then
 		LocalPlayer():EmitSound("pac_server/throw/twinkle.ogg", 75, math.random(95, 105), 0.3)
 		local id = "teamrocket_"..tostring({})
 
-		hook.Add("RenderScreenspaceEffects", id, function()
+		jrpg.AddHook("RenderScreenspaceEffects", id, function()
 			local time = RealTime()
 			local delta = time - start
 
 			if delta > duration then
-				hook.Remove("HUDPaint", id)
+				jrpg.RemoveHook("RenderScreenspaceEffects", id)
 				return
 			end
 
@@ -110,7 +110,7 @@ if SERVER then
 				phys:EnableGravity(false)
 
 				local id = "team_rocket_" ..rag:EntIndex()
-				hook.Add("Think", id, function()
+				jrpg.AddHook("Think", id, function()
 					if phys:IsValid() then
 						victim:SetMoveType(MOVETYPE_NONE)
 						victim:SetPos(phys:GetPos())
@@ -118,7 +118,7 @@ if SERVER then
 						phys:AddVelocity(dir * 400)
 						phys:AddVelocity(phys:GetAngles():Right() * 150)
 					else
-						hook.Remove("Think", id)
+						jrpg.RemoveHook("Think", id)
 					end
 				end)
 			end
@@ -126,7 +126,7 @@ if SERVER then
 	end
 
 	local suppress = false
-	hook.Add("EntityTakeDamage", "teamrocket", function(victim, info)
+	jrpg.AddHook("EntityTakeDamage", "teamrocket", function(victim, info)
 		if suppress or not victim:IsPlayer() then return end
 		local force = info:GetDamageForce()
 
@@ -140,7 +140,7 @@ if SERVER then
 		end
 	end)
 
-	hook.Add("PhysgunThrowPlayer", "teamrocket", function(attacker, victim)
+	jrpg.AddHook("PhysgunThrowPlayer", "teamrocket", function(attacker, victim)
 		local res = util.TraceLine({start = victim:GetPos(), endpos = victim:GetPos() + victim:GetVelocity() * 10, filter = victim})
 
 		if (res.HitSky or util.GetSurfacePropName(res.SurfaceProps) == "no_decal") and victim:GetPos():Distance(res.HitPos) > 1000 then

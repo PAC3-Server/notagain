@@ -24,12 +24,12 @@ if CLIENT then
 
 		util.ScreenShake(origin, 50, 100, duration, 10)
 
-		hook.Add("RenderScreenspaceEffects", id, function()
+		jrpg.AddHook("RenderScreenspaceEffects", id, function()
 			local time = RealTime()
 			local delta = time - start
 
 			if delta > duration then
-				hook.Remove("HUDPaint", id)
+				jrpg.RemoveHook("RenderScreenspaceEffects", id)
 				return
 			end
 
@@ -87,7 +87,7 @@ if SERVER then
 	util.AddNetworkString("smash_death")
 
 	local suppress = false
-	hook.Add("EntityTakeDamage", "smash_death", function(victim, info)
+	jrpg.AddHook("EntityTakeDamage", "smash_death", function(victim, info)
 		if suppress or not victim:IsPlayer() then return end
 		local force = info:GetDamageForce()
 

@@ -38,7 +38,7 @@ if CLIENT then
 	function META:OnStart(ent)
 		if ent ~= LocalPlayer() then return end
 
-		hook.Add("RenderScreenspaceEffects", "jdmg_decay", function()
+		jrpg.AddHook("RenderScreenspaceEffects", "jdmg_decay", function()
 			local f = self:GetAmount()
 			f = math.Clamp(math.sin(f * math.pi), 0, 1)
 
@@ -76,27 +76,27 @@ if CLIENT then
 
 		self.old_hooks_world = {}
 		if hook.GetTable().SetupWorldFog then
-			for k,v in pairs(hook.GetTable().SetupWorldFog) do self.old_hooks_world[k] = v hook.Remove("SetupWorldFog", k,v) end
+			for k,v in pairs(hook.GetTable().SetupWorldFog) do self.old_hooks_world[k] = v jrpg.RemoveHook("SetupWorldFog", k,v) end
 		end
 
 		self.old_hooks_skybox = {}
 		if hook.GetTable().SetupSkyboxFog then
-			for k,v in pairs(hook.GetTable().SetupSkyboxFog) do self.old_hooks_skybox[k] = v hook.Remove("SetupSkyboxFog", k,v) end
+			for k,v in pairs(hook.GetTable().SetupSkyboxFog) do self.old_hooks_skybox[k] = v jrpg.RemoveHook("SetupSkyboxFog", k,v) end
 		end
 
-		hook.Add("SetupWorldFog", "jdmg_decay", setup_fog)
-		hook.Add("SetupSkyboxFog", "jdmg_decay", setup_fog)
+		jrpg.AddHook("SetupWorldFog", "jdmg_decay", setup_fog)
+		jrpg.AddHook("SetupSkyboxFog", "jdmg_decay", setup_fog)
 	end
 
 	function META:OnStop(ent)
 		if ent ~= LocalPlayer() then return end
 
-		hook.Remove("RenderScreenspaceEffects", "jdmg_decay")
-		hook.Remove("SetupWorldFog", "jdmg_decay")
-		hook.Remove("SetupSkyboxFog", "jdmg_decay")
+		jrpg.RemoveHook("RenderScreenspaceEffects", "jdmg_decay")
+		jrpg.RemoveHook("SetupWorldFog", "jdmg_decay")
+		jrpg.RemoveHook("SetupSkyboxFog", "jdmg_decay")
 
-		for k, v in pairs(self.old_hooks_world) do hook.Add("SetupWorldFog", k, v) end
-		for k, v in pairs(self.old_hooks_skybox) do hook.Add("SetupSkyboxFog", k, v) end
+		for k, v in pairs(self.old_hooks_world) do jrpg.AddHook("SetupWorldFog", k, v) end
+		for k, v in pairs(self.old_hooks_skybox) do jrpg.AddHook("SetupSkyboxFog", k, v) end
 	end
 end
 

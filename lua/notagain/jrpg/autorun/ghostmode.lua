@@ -2,20 +2,18 @@ local Tag = "GhostMode"
 local ghost_time = 8
 
 if SERVER then
-	hook.Add("PlayerDeath", Tag, function(ply)
+	jrpg.AddHook("PlayerDeath", Tag, function(ply)
 		ply:SetNW2Float("ghost_timer", CurTime() + ghost_time)
 		ply.ghost_spawn_pos = ply:GetPos()
 		ply:SetDSP(0)
 		SafeRemoveEntity(ply:GetNW2Entity("ghost_fairy"))
 	end)
 
-	hook.Add("PlayerSpawn", Tag, function(ply)
+	jrpg.AddHook("PlayerSpawn", Tag, function(ply)
 		SafeRemoveEntity(ply:GetNW2Entity("ghost_fairy"))
 	end)
 
-	hook.Add("Move", Tag, function(ply, mv)
-		if not ply:GetNWBool("rpg") then return end
-
+	jrpg.AddPlayerHook("Move", Tag, function(ply, mv)
 		if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
 			return
 		end
@@ -94,9 +92,7 @@ if SERVER then
 		return true
 	end)
 
-	hook.Add("PlayerDeathThink", Tag, function(ply)
-		if not ply:GetNWBool("rpg") then return end
-
+	jrpg.AddPlayerHook("PlayerDeathThink", Tag, function(ply)
 		if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
 			return
 		end
@@ -142,9 +138,9 @@ if SERVER then
 end
 
 if CLIENT then
-	hook.Add("EntityEmitSound", Tag, function(data)
+	jrpg.AddHook("EntityEmitSound", Tag, function(data)
 		local ply = LocalPlayer()
-		if ply:GetNWBool("rpg") and not ply:Alive() then
+		if not ply:Alive() then
 			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
 				return
 			end
@@ -159,8 +155,8 @@ if CLIENT then
 	end)
 
 	local rand_ang = Vector()
-	hook.Add("CalcView", Tag, function(ply)
-		if ply:GetNWBool("rpg") and not ply:Alive() then
+	jrpg.AddHook("CalcView", Tag, function(ply)
+		if not ply:Alive() then
 			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
 				return
 			end
@@ -195,8 +191,8 @@ if CLIENT then
 		end
 	end)
 
-    hook.Add("OnPlayerChat",Tag,function(ply, txt)
-        if ply:GetNWBool("rpg") and not ply:Alive() then
+    jrpg.AddHook("OnPlayerChat",Tag,function(ply, txt)
+        if jrpg.IsEnabled(ply) and not ply:Alive() then
 			local ent = ply:GetNW2Entity("ghost_fairy")
 			if ent:IsValid() then
 				ent.player = ply
@@ -211,12 +207,11 @@ if CLIENT then
 	local sound
 	local windup_sound
 
-    hook.Add("PrePlayerDraw",Tag,function(ply)
-		if ply:GetNWBool("rpg") and not ply:Alive() then
+    jrpg.AddPlayerHook("PrePlayerDraw",Tag,function(ply)
+		if not ply:Alive() then
 			return true
 		end
 	end)
-
 
 	local temp_mat = CreateMaterial("fairy_mirror" .. os.clock(), "UnlitGeneric", {
 		["$BaseTexture"] = render.GetScreenEffectTexture(),
@@ -224,19 +219,19 @@ if CLIENT then
 		["$VertexColor"] = 0,
 	})
 
-    hook.Add("RenderScene",Tag,function(pos, ang, fov)
+    jrpg.AddHook("RenderScene",Tag,function(pos, ang, fov)
 		local ply = LocalPlayer()
-		if ply:GetNWBool("rpg") and not ply:Alive() then
+		if not ply:Alive() then
 			local ent = ply:GetNW2Entity("ghost_fairy")
 			if ent:IsValid() then
 
 				if not ply.ghostmode_hide_hud then
 					ply.ghostmode_hide_hud = true
 					ent:CallOnRemove(Tag, function()
-						hook.Remove("HUDShouldDraw", Tag)
+						jrpg.AddHook("HUDShouldDraw", Tag)
 						ply.ghostmode_hide_hud = nil
 					end)
-					hook.Add("HUDShouldDraw",Tag,function(name)
+					jrpg.AddHook("HUDShouldDraw",Tag,function(name)
 						if name == "CHudDamageIndicator" and jrpg.enabled and not LocalPlayer():Alive() then
 							return false
 						end
@@ -262,9 +257,9 @@ if CLIENT then
 		end
 	end)
 
-    hook.Add("RenderScreenspaceEffects",Tag,function()
+    jrpg.AddHook("RenderScreenspaceEffects",Tag,function()
 		for _, ply in ipairs(player.GetAll()) do
-			if not ply:GetNWBool("rpg") then continue end
+			if not jrpg.IsEnabled(ply) then continue end
 
 			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
 				continue

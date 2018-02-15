@@ -41,7 +41,7 @@ end
 if SERVER then
 	util.AddNetworkString("roll")
 
-	hook.Add("EntityTakeDamage", "roll", function(ent, dmginfo)
+	jrpg.AddHook("EntityTakeDamage", "roll", function(ent, dmginfo)
 		if (is_rolling(ent) or is_dodging(ent)) and (bit.band(dmginfo:GetDamageType(), DMG_CRUSH) > 0 or bit.band(dmginfo:GetDamageType(), DMG_SLASH) > 0) then
 			dmginfo:ScaleDamage(0)
 			ent:ChatPrint("dodge!")
@@ -51,7 +51,7 @@ if SERVER then
 end
 
 if CLIENT then
-	hook.Add("CalcView", "roll", function(ply, pos, ang)
+	jrpg.AddHook("CalcView", "roll", function(ply, pos, ang)
 		if (is_rolling(ply) or is_dodging(ply)) and ply:Alive() and not ply:InVehicle() and not ply:ShouldDrawLocalPlayer() then
 			local eyes = ply:GetAttachment(ply:LookupAttachment("eyes"))
 
@@ -62,7 +62,7 @@ if CLIENT then
 		end
 	end)
 
-	hook.Add("CalcViewModelView", "roll", function(wep, viewmodel, oldEyePos, oldEyeAngles, eyePos, eyeAngles)
+	jrpg.AddHook("CalcViewModelView", "roll", function(wep, viewmodel, oldEyePos, oldEyeAngles, eyePos, eyeAngles)
 		if not wep or not wep:IsValid() then return end
 		local ply = LocalPlayer()
 
@@ -76,14 +76,14 @@ end
 
 local function can_roll(ply)
 	if jrpg.IsWieldingShield(ply) then return end
-	return (ply:IsValid() and ply:GetNWBool("rpg") and not is_rolling(ply) and ply:Alive() and ply:OnGround() and ply:GetMoveType() == MOVETYPE_WALK and not ply:InVehicle()) or ply.roll_landed
+	return (ply:IsValid() and jrpg.IsEnabled(ply) and not is_rolling(ply) and ply:Alive() and ply:OnGround() and ply:GetMoveType() == MOVETYPE_WALK and not ply:InVehicle()) or ply.roll_landed
 end
 
 local function can_dodge(ply)
-	return (ply:IsValid() and ply:GetNWBool("rpg") and not is_dodging(ply) and ply:Alive() and ply:OnGround() and ply:GetMoveType() == MOVETYPE_WALK and not ply:InVehicle())
+	return (ply:IsValid() and jrpg.IsEnabled(ply) and not is_dodging(ply) and ply:Alive() and ply:OnGround() and ply:GetMoveType() == MOVETYPE_WALK and not ply:InVehicle())
 end
 
-hook.Add("UpdateAnimation", "roll", function(ply, velocity)
+jrpg.AddHook("UpdateAnimation", "roll", function(ply, velocity)
 	if is_dodging(ply) then
 		local dir = vel_to_dir(ply:EyeAngles(), velocity, dodge_speed)
 		if dir == "forward" or dir == "backward" then
@@ -150,14 +150,14 @@ hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 	end
 end)
 
-hook.Add("OnPlayerHitGround", "roll", function(ply)
+jrpg.AddHook("OnPlayerHitGround", "roll", function(ply)
 	if ply:KeyDown(IN_DUCK)	then
 		ply.roll_landed = true
 		ply.roll_ang = ply:GetVelocity():Angle()
 	end
 end)
 
-hook.Add("CalcMainActivity", "roll", function(ply)
+jrpg.AddHook("CalcMainActivity", "roll", function(ply)
 	if is_rolling(ply) and ply.roll_fraction and ply.roll_fraction < 1 then
 		local dir = vel_to_dir(ply:EyeAngles(), ply:GetVelocity(), roll_speed)
 
@@ -198,9 +198,7 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 	end
 end)
 
-hook.Add("Move", "roll", function(ply, mv, ucmd)
-	if not ply:GetNWBool("rpg") then return end
-
+jrpg.AddPlayerHook("Move", "roll", function(ply, mv, ucmd)
 	if mv:GetVelocity():Length2D() < threshold then
 		ply.roll_ang = nil
 		ply.roll_time = nil

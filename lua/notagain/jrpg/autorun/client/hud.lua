@@ -110,7 +110,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
-	if jattributes and ply:GetNWBool("rpg",false) and ply:HasMana() then
+	if jattributes and jrpg.IsEnabled(ply) and ply:HasMana() then
 		local real_cur = math.Round(ply:GetMana())
 		local cur = smooth(real_cur, "mana"..ply:EntIndex())
 		local max = ply:GetMaxMana()
@@ -118,7 +118,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
-	if jattributes and ply:GetNWBool("rpg",false) and ply:HasStamina() then
+	if jattributes and jrpg.IsEnabled(ply) and ply:HasStamina() then
 		local real_cur = ply:GetStamina()
 		local cur = smooth(real_cur, "stamina"..ply:EntIndex())
 		local max = ply:GetMaxStamina()
@@ -221,7 +221,7 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	end
 end
 
-hook.Add("HUDPaint", "jhud", function()
+jrpg.AddHook("HUDPaint", "jhud", function()
 	if hook.Run("HUDShouldDraw", "JHUD") == false then return end
 
 	S = ScrW() / 1920
@@ -230,7 +230,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 	local offset = 0
 
-	if ply:GetNWBool("rpg") then
+	if jrpg.IsEnabled(ply) then
 		offset = offset + 32
 	else
 		if ply:Health() == ply:GetMaxHealth() then return end
@@ -343,7 +343,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 			x = x + 200*S
 
-			if ply:GetNWBool("rpg") then
+			if jrpg.IsEnabled(ply) then
 				prettytext.DrawText({
 					text = "Lv. " .. ply:GetNWInt("jlevel_level", 0),
 					x = x + math.Clamp(70*S + name_width, 50, ScrW()/3),
@@ -410,7 +410,7 @@ hook.Add("HUDPaint", "jhud", function()
 			x = x - skew/2.75
 		end
 
-		if ply:GetNWBool("rpg") then
+		if jrpg.IsEnabled(ply) then
 			local real_cur = math.Round(ply:GetNWInt("jlevel_xp", 0))
 			local cur = smooth(real_cur, "xp")
 			local max = ply:GetNWInt("jlevel_next_level", 0)
@@ -434,9 +434,9 @@ hook.Add("HUDPaint", "jhud", function()
 
 	local i = 0
 
-	if ply:GetNWBool("rpg") then
+	if jrpg.IsEnabled(ply) then
 		for _, ply in ipairs(player.GetAll()) do
-			if jrpg.IsFriend(ply) and ply ~= LocalPlayer() and ply:GetNWBool("rpg") and ply:GetPos():Distance(LocalPlayer():GetPos()) < 1000 then
+			if jrpg.IsFriend(ply) and ply ~= LocalPlayer() and jrpg.IsEnabled(ply) and ply:GetPos():Distance(LocalPlayer():GetPos()) < 1000 then
 				local x = ScrW() - 200 * i - 75
 				local y = ScrH() - 100
 
@@ -487,7 +487,7 @@ hook.Add("HUDPaint", "jhud", function()
 	end
 end)
 
-hook.Add("HUDShouldDraw", "jhud", function(what)
+jrpg.AddHook("HUDShouldDraw", "jhud", function(what)
 	if what == "CHudHealth"  then
 		return false
 	end

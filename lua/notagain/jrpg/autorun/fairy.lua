@@ -201,6 +201,16 @@ if CLIENT then
 		self.Size = (tonumber(util.CRC(self:EntIndex()))%100/100) + 0.5
 
 		self.pixvis = util.GetPixelVisibleHandle()
+
+		if render.SupportsPixelShaders_2_0() then
+			jrpg.AddHook("RenderScreenspaceEffects", "fairy_sunbeams", function()
+				local ents = ents.FindByClass(ENT.ClassName)
+				local count = #ents
+				for key, ent in ipairs(ents) do
+					ent:DrawSunbeams(ent:GetPos(), 0.05/count, 0.025)
+				end
+			end)
+		end
 	end
 
 	function ENT:InitWings()
@@ -234,7 +244,6 @@ if CLIENT then
 		self:CalcSounds()
 		self:CalcLight()
 		self:CalcPulse()
-		self:CalcSentence()
 
 		self:NextThink(CurTime())
 		return true
@@ -259,119 +268,6 @@ if CLIENT then
 			self.last_ang = ang
 		elseif self.last_ang then
 			self:SetAngles(self.last_ang)
-		end
-	end
-
-	local letters = {
-		a = "ᗩ",
-		b = "ᕊ",
-		c = "ᑕ",
-		d = "ᖱ",
-		e = "ᙓ",
-		f = "ℱ",
-		g = "ᘐ",
-		h = "ᖺ",
-		i = "ᓰ",
-		j = "ᒎ",
-		k = "Ḱ",
-		l = "ᒪ",
-		m = "ᙢ",
-		n = "ﬡ",
-		o = "ᗝ",
-		p = "ᖰ",
-		q = "ᕴ",
-		r = "ᖇ",
-		s = "ᔕ",
-		t = "♈",
-		u = "ᘎ",
-		v = "Ⅴ",
-		w = "ᙡ",
-		x = "ჯ",
-		y = "Ꭹ",
-		z = "ᔓ",
-	}
-
-	-- this kind of mimics player chat
-	function ENT:Say(txt)
-		if LocalPlayer():EyePos():Distance(self:GetPos()) > 2000 then return end
-
-		if self.say_txt then
-			self:SayChat(self.say_txt)
-		end
-
-		self.sentence_i = nil
-		self.say_txt = txt
-	end
-
-	function ENT:SayChat(txt)
-		self:PlayPhrase(txt)
-
-		local tbl = {}
-
-		if self.is_dead then
-			table.insert( tbl, Color( 255, 30, 40 ) )
-			table.insert( tbl, "*DEAD* " )
-		end
-
-		if self.player then
-			table.insert(tbl, self.player)
-		else
-			table.insert(tbl, self.Color)
-			table.insert(tbl, "Alan")
-		end
-		table.insert(tbl, color_white)
-		table.insert(tbl, ": " .. txt)
-
-		if chat.AddTimeStamp then chat.AddTimeStamp(tbl) end
-
-		chat.AddText(unpack(tbl))
-	end
-
-	function ENT:Ponder()
-		self.pondering = true
-	end
-
-	function ENT:CalcSentence()
-		if self.pondering then
-			self.draw_text = ("."):rep( math.floor(CurTime() * 2) % 4 )
-		end
-
-		if not self.say_txt then return end
-
-		self.pondering = false
-
-		if not self.sentence_i then
-			self.sentence_i = 0
-			self.sentence_max = #self.say_txt
-			self.sentence_tbl = {}
-			self.sentence_next_char = 0
-			self.draw_text = ""
-
-			for char in self.say_txt:gmatch("(.)") do
-				table.insert(self.sentence_tbl, 1, char)
-			end
-		else
-			if self.sentence_next_char > CurTime() then return end
-
-			local char = table.remove(self.sentence_tbl)
-			if char then
-				self.draw_text = (self.draw_text or "") .. (letters[char:lower()] or char)
-				self.sentence_i = self.sentence_i + 1
-				self.sentence_next_char = CurTime() + (math.random() * 0.15)
-			else
-				self.sentence_clear = self.sentence_clear or CurTime() + 0.5
-				if self.sentence_clear < CurTime() then
-					self:SayChat(self.say_txt)
-
-					self.say_txt = nil
-					self.draw_text = nil
-					self.sentence_max = nil
-					self.sentence_i = nil
-					self.sentence_tbl = nil
-					self.sentence_next_char = nil
-					self.sentence_clear = nil
-				end
-			end
 		end
 	end
 
@@ -613,73 +509,11 @@ if CLIENT then
 
 		self.light.Decay = 0
 		self.light.DieTime = 0
+
+		if #ents.FindByClass(ENT.ClassName) == 1 then
+			jrpg.RemoveHook("RenderScreenspaceEffects", "fairy_sunbeams")
+		end
 	end
-
-	local B = 1
-
-	local Sw = 8
-	local Sh = 4
-
-	local fairy_font = "fairy_font"
-	surface.CreateFont(
-		fairy_font,
-		{
-			font = "arial",
-			size = 25,
-			antialias = true,
-			weight = 4,
-		}
-	)
-
-	local eyepos = Vector()
-
-	hook.Add("RenderScene", "fairy_eyepos", function(pos) eyepos = pos end)
-
-	hook.Add("HUDPaint", "fairy_chatboxes", function()
-		for key, ent in pairs(ents.FindByClass("fairy")) do
-			if ent.Visibility > 0 and ent.draw_text then
-				local pos = ent:GetPos():ToScreen()
-
-				local offset = (ent.Size / eyepos:Distance(ent:GetPos())) * 6000
-
-				local x = pos.x + offset
-				local y = pos.y - offset
-
-				surface.SetFont(fairy_font)
-				local W, H = surface.GetTextSize(ent.draw_text)
-				surface.SetTextPos(x, y - H/2)
-
-				draw.RoundedBoxEx(8,
-					x-Sw,
-					y-Sh - H/2,
-					W+Sw*2,
-					H+Sh*2,
-				ent.Color, true, true, false, true)
-				draw.RoundedBoxEx(8,
-					x-Sw + B,
-					y-Sh + B - H/2,
-					W+Sw*2 - B*2,
-					H+Sh*2 - B*2,
-				color_black, true, true, false, true)
-
-				surface.SetTextColor(color_white)
-				surface.DrawText(ent.draw_text)
-			end
-		end
-	end)
-
-	hook.Add("RenderScreenspaceEffects", "fairy_sunbeams", function()
-		if not render.SupportsPixelShaders_2_0() then
-			hook.Remove("RenderScreenspaceEffects", "fairy_sunbeams")
-			return
-		end
-
-		local ents = ents.FindByClass("fairy")
-		local count = #ents
-		for key, ent in pairs(ents) do
-			ent:DrawSunbeams(ent:GetPos(), 0.05/count, 0.025)
-		end
-	end)
 
 	net.Receive("fairy_func_call", function()
 		local ent = net.ReadEntity()

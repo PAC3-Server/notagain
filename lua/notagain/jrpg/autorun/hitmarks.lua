@@ -32,20 +32,6 @@ if CLIENT then
 		["$VertexColor"] = 1,
 	})
 
-	local function draw_pie( x, y, radius, seg )
-		local cir = {}
-
-		table.insert( cir, { x = x, y = y, u = 0.5, v = 0.5 } )
-		for i = 0, seg do
-			local a = math.rad( ( i / seg ) * -360 )
-			table.insert( cir, { x = x + math.sin( a ) * radius, y = y + math.cos( a ) * radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-		end
-
-		local a = math.rad( 0 ) -- This is needed for non absolute segment counts
-		table.insert( cir, { x = x + math.sin( a ) * radius, y = y + math.cos( a ) * radius, u = math.sin( a ) / 2 + 0.5, v = math.cos( a ) / 2 + 0.5 } )
-
-		surface.DrawPoly( cir )
-	end
 	local no_texture = Material("vgui/white")
 	local function draw_health_bar(ent, x,y, w,h, health, last_health, fade, border_size, skew, r,g,b, is_health)
 		render.SetColorModulation(0.1, 0.1, 0.1)
@@ -224,7 +210,7 @@ if CLIENT then
 	local health_bars = {}
 	local weapon_info = {}
 
-	hook.Add("HUDDrawTargetID", "hitmarks", function()
+	jrpg.AddHook("HUDDrawTargetID", "hitmarks", function()
 		return false
 	end)
 
@@ -263,7 +249,7 @@ if CLIENT then
 		surface.DrawRect(x+border_size*2, y+h-border_size*2, w-border_size*4, border_size*2)
 	end
 
-	hook.Add("HUDPaint", "hitmarks", function()
+	jrpg.AddHook("HUDPaint", "hitmarks", function()
 		if hook.Run("HUDShouldDraw", "JHitmarkers") == false then
 			return
 		end
@@ -372,7 +358,7 @@ if CLIENT then
 
 					do
 						local cur = ent:GetNWFloat("jattributes_mana", -1)
-						if ent:GetNWBool("rpg",false) and cur ~= -1 then
+						if jrpg.IsEnabled(ent) and cur ~= -1 then
 							local max = ent:GetNWFloat("jattributes_max_mana", 100)
 							local width = math.Clamp(max*3, 0, 500)
 
@@ -384,7 +370,7 @@ if CLIENT then
 
 					do
 						local cur = ent:GetNWFloat("jattributes_stamina", -1)
-						if ent:GetNWBool("rpg",false) and cur ~= -1 then
+						if jrpg.IsEnabled(ent) and cur ~= -1 then
 							local max = ent:GetNWFloat("jattributes_max_stamina", 100)
 							local width = math.Clamp(max*3, 0, 500)
 
@@ -394,7 +380,7 @@ if CLIENT then
 
 					prettytext.Draw(name, x - text_x_offset, pos.y - 5, "Square721 BT", 24, 1, 5, Color(230, 230, 230, 255 * fade), (ent:IsPlayer() and team.GetColor(ent:Team()) or nil), 0, -1)
 
-					if ent:GetNWBool("rpg") then
+					if jrpg.IsEnabled(ent) then
 						prettytext.Draw("Lv. " .. ent:GetNWInt("jlevel_level"), x + width, pos.y - 5, "Square721 BT", 20, 1000, 5, Color(230, 230, 230, 255 * fade), nil, -1, -1)
 					end
 				end
@@ -658,7 +644,7 @@ if CLIENT then
 		end
 	end
 
-	timer.Create("hitmark", 0.25, 0, function()
+	jrpg.CreateTimer("hitmark", 0.25, 0, function()
 		local ply = LocalPlayer()
 		if not ply:IsValid() or not ply:GetEyeTrace() then return end
 
@@ -844,7 +830,7 @@ if SERVER then
 
 	util.AddNetworkString("hitmark_attack")
 
-	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
+	jrpg.AddHook("EntityTakeDamage", "hitmarker", function(ent, dmg)
 		if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
 		local filter = {}
 		for k,v in pairs(player.GetAll()) do
@@ -869,7 +855,7 @@ if SERVER then
 			pos = ent:GetPos()
 		end
 
-		timer.Create(tostring(ent).."_hitmarker", 0, 1, function()
+		jrpg.CreateTimer(tostring(ent).."_hitmarker", 0, 1, function()
 			if ent:IsValid() then
 
 				if damage > 0 then
@@ -884,14 +870,14 @@ if SERVER then
 					end
 				end
 
-				if damage == 0 and not jrpg.IsAlive(ent) then return end
+				if damage == 0 and not jrpg.IsActorAlive(ent) then return end
 
 				hitmarkers.ShowDamage(ent, -damage, pos, filter)
 			end
 		end)
 	end)
 
-	timer.Create("hitmarker", 1, 0, function()
+	jrpg.CreateTimer("hitmarker", 1, 0, function()
 		for _, ent in ipairs(ents.GetAll()) do
 			if ent.GetMaxHealth then
 				if ent.hm_last_health ~= ent:Health() then

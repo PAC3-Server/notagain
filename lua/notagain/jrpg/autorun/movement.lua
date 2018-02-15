@@ -6,10 +6,8 @@ local function manip_angles(ply, id, ang)
 	end
 end
 
-hook.Add("CalcMainActivity", "movement", function(ply)
-	if not ply:GetNWBool("rpg") then return end
+jrpg.AddPlayerHook("CalcMainActivity", "movement", function(ply)
 	local vel = ply:GetVelocity()
-
 
 	if ply:IsOnGround() then
 		local id = ply:LookupBone("ValveBiped.Bip01_Spine1")
@@ -73,9 +71,7 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 	end
 end)
 
-hook.Add("Move", "movement", function(ply, mv)
-	if not ply:GetNWBool("rpg") then return end
-
+jrpg.AddPlayerHook("Move", "movement", function(ply, mv)
 	ply.movement_smooth_side = ply.movement_smooth_side or 0
 	ply.movement_smooth_forward = ply.movement_smooth_forward or 0
 
@@ -211,8 +207,7 @@ if CLIENT then
 		end
 	end
 
-	hook.Add("UpdateAnimation", "movement", function(ply)
-		if not ply:GetNWBool("rpg") then return end
+	jrpg.AddPlayerHook("UpdateAnimation", "movement", function(ply)
 
 		if ply:OnGround() then
 			local ang = ply:EyeAngles()
@@ -243,12 +238,10 @@ if CLIENT then
 end
 
 if SERVER then
-	hook.Add("PlayerLoadout", "movement", function(ply)
-		if ply:GetNWBool("rpg",false) then
-			ply:SetWalkSpeed(100)
-			ply:SetRunSpeed(200)
-			ply:SetDuckSpeed(0.5)
-			ply:SetUnDuckSpeed(0.5)
-		end
+	jrpg.AddPlayerHook("PlayerLoadout", "movement", function(ply)
+		ply:SetWalkSpeed(100)
+		ply:SetRunSpeed(200)
+		ply:SetDuckSpeed(0.5)
+		ply:SetUnDuckSpeed(0.5)
 	end)
 end

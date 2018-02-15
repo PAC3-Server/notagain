@@ -77,8 +77,8 @@ function battlecam.IsKeyDown(key)
 	end
 end
 
-local HOOK = function(event) hook.Add(event, "battlecam", battlecam[event]) end
-local UNHOOK = function(event) hook.Remove(event, "battlecam") end
+local HOOK = function(event) jrpg.AddHook(event, "battlecam", battlecam[event]) end
+local UNHOOK = function(event) jrpg.RemoveHook(event, "battlecam") end
 
 function battlecam.LimitAngles(pos, dir, fov, prevpos)
 	local a1 = dir:Angle()

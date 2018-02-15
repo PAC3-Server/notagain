@@ -52,7 +52,7 @@ local function think()
 	end
 
 	if not next(speaking_entities) then
-		hook.Remove("Think", "jspeak")
+		jrpg.RemoveHook("Think", "jspeak")
 	end
 end
 
@@ -147,7 +147,7 @@ function jspeak.PlayPhrase(ent, text, list, pitch, volume, soundlevel, cutoff)
 	end
 
 	if not next(speaking_entities) then
-		hook.Add("Think", "jspeak", think)
+		jrpg.AddHook("Think", "jspeak", think)
 	end
 
 	speaking_entities[ent:EntIndex()] = ent
