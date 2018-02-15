@@ -50,10 +50,10 @@ if SERVER then
 	end
 
 	function jlevel.LevelAttribute(ent, what)
-		if not jlevel.stats[what] then return false end
+		if not jattributes.types[what] then return false end
 
 		if ent:GetNWInt("jlevel_attribute_points", 0) >= 1 then
-			jattributes.SetAttribute(ent, what, jattributes.LevelAttribute(ent, what))
+			jattributes.LevelAttribute(ent, what)
 			ent:SetNWInt("jlevel_attribute_points", ent:GetNWInt("jlevel_attribute_points", 0) - 1)
 			ent:SetPData("jlevel_attribute_points", ent:GetNWInt("jlevel_attribute_points", 0))
 			ent:SetPData("jlevel_stat_" .. what, jattributes.GetAttribute(ent, what))
@@ -67,7 +67,7 @@ if SERVER then
 		ply:SetNWInt("jlevel_attribute_points", tonumber(ply:GetPData("jlevel_attribute_points")))
 		ply:SetNWInt("jlevel_next_level", 500 * ply:GetNWInt("jlevel_level", 0) ^ 1.5)
 
-		for stat in pairs(jlevel.stats) do
+		for stat in pairs(jattributes.types) do
 			jattributes.SetAttribute(ply, stat, tonumber(ply:GetPData("jlevel_stat_" .. stat, 0)))
 		end
 	end
