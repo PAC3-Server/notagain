@@ -25,42 +25,82 @@ aowl.AddCommand("level=string", function(ply, what)
 	ply:ChatPrint(ply:GetNWInt("jlevel_attribute_points", 0) .. " attribute points left")
 end)
 
-aowl.AddCommand("element", function(ply, _, ...)
+aowl.AddCommand("status=string,number[1]", function(ply, _, what, num)
+	jdmg.SetStatus(ply, what, num)
+end)
+
+aowl.AddCommand("wepstats=string,string", function(ply, _, rarity, multiplier, ...)
 	local elements = {...}
 
-	local ok = true
+	do
+		local ok = false
+
+		for _, name in ipairs(elements) do
+			local _ok = false
+			for k,v in pairs(wepstats.registered) do
+				if v.ClassName == name then
+					_ok = true
+				end
+			end
+			if _ok then
+				ok = true
+			end
+		end
+
+		if elements[1] == nil then
+			ok = true
+		end
+
+		if elements[1] == "all" then
+			elements = {}
+			ok = true
+			for k,v in pairs(wepstats.registered) do
+				if v.Elemental then
+					table.insert(elements, v.ClassName)
+				end
+			end
+		end
+
+		if not ok then
+			ply:ChatPrint("these modifiers are valid:")
+			for k,v in pairs(wepstats.registered) do
+				local name = v.ClassName
+				if v.Elemental then
+					name = name .. " (elemental)"
+				end
+				ply:ChatPrint(name)
+			end
+			return
+		end
+	end
+
+	do
+		local ok = false
+
+		for k,v in pairs(wepstats.rarities) do
+			if v.name == rarity then
+				ok = true
+			end
+		end
+
+		if not ok then
+			ply:ChatPrint("invalid rarity " .. rarity)
+			ply:ChatPrint("these rarities are valid:")
+			for k,v in pairs(wepstats.rarities) do
+				ply:ChatPrint(v.name)
+			end
+			return
+		end
+	end
+
+	local wep = ply:GetActiveWeapon()
 
 	if not elements[1] then
-		ok = false
+		for k,v in pairs(wepstats.GetTable(wep)) do
+			wepstats.RemoveStatus(wep, k)
+		end
+		elements[1] = false
 	end
 
-	for k,v in pairs(elements) do
-		if not wepstats.registered[v] then
-			ok = false
-			break
-		end
-	end
-
-	if elements[1] == "all" then
-		elements = {}
-		ok = true
-		for k,v in pairs(wepstats.registered) do
-			if v.Elemental then
-				table.insert(elements, v.ClassName)
-			end
-		end
-	end
-
-	if ok then
-		wepstats.AddToWeapon(ply:GetActiveWeapon(),nil,nil,unpack(elements))
-	else
-		ply:ChatPrint("valid:")
-		for k,v in pairs(wepstats.registered) do
-			local name = v.ClassName
-			if v.Elemental then
-				name = name .. " (elemental)"
-			end
-			ply:ChatPrint(name)
-		end
-	end
+	wepstats.AddToWeapon(wep, rarity, multiplier, unpack(elements))
 end)

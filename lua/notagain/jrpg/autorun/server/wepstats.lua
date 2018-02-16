@@ -1,5 +1,5 @@
-wepstats = {}
-wepstats.registered = {}
+wepstats = _G.wepstats or {}
+wepstats.registered = wepstats.registered or {}
 
 function wepstats.AddStatus(wep, class_name, ...)
 	if class_name ~= "base" and (not wep.wepstats or not wep.wepstats.base) then
@@ -18,7 +18,10 @@ function wepstats.AddStatus(wep, class_name, ...)
 end
 
 function wepstats.RemoveStatus(wep, class_name)
-	wep.wepstats[class_name] = nil
+	if wep.wepstats[class_name] then
+		wep.wepstats[class_name]:OnDetach()
+		wep.wepstats[class_name] = nil
+	end
 end
 
 function wepstats.GetStatus(wep, class_name)
@@ -480,6 +483,8 @@ do
 			dmg = dmg * (1 + self.rarity.damage_mult)
 			dmginfo:SetDamage(dmg)
 		end
+
+		wepstats.rarities = META.Rarity
 
 		wepstats.Register(META)
 	end
