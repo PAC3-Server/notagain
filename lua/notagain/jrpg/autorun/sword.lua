@@ -253,7 +253,7 @@ if CLIENT then
 			suppress_player_draw = true
 			self.pos_history = self.pos_history or {}
 
-			if #self.pos_history > 10 then
+			if #self.pos_history > 5 then
 				table.remove(self.pos_history, 1)
 			end
 
@@ -275,9 +275,9 @@ if CLIENT then
 			local hit = false
 			local last_pos = Vector()
 
+			render.SetColorModulation(1,1,1)
 			for i, data in ipairs(self.pos_history) do
-				render.SetColorModulation(1,1,1)
-				render.SetBlend(((i/10) * 0.1)^1.25)
+				render.SetBlend(((i/5) * 0.1)^1.25)
 
 				if self.pos_history[i+1] then
 
