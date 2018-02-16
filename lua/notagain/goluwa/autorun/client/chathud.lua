@@ -117,16 +117,6 @@ function chathud.Initialize()
 
 	EasyChat.ChatHUD.Frame:SetVisible(true) -- FIX ME
 
-	hookAdd("HUDPaint", "chathud", function()
-		if chathud.panel:IsVisible() and EasyChat.ChatHUD.Frame:IsVisible() then
-			surface.DisableClipping(true)
-			env.render2d.PushMatrix(chathud.panel:GetPos())
-			chathud.panel:PaintX(chathud.panel:GetSize())
-			env.render2d.PopMatrix()
-			surface.DisableClipping(false)
-		end
-	end)
-
 	do -- mouse input
 		local translate_mouse = {
 			[MOUSE_LEFT] = "button_1",
@@ -227,17 +217,33 @@ function chathud.AddText(...)
 	for k,v in pairs(chathud.tags) do
 		markup.tags[k] = v
 	end
+
+	hook.Add("HUDPaint", "chathud", function()
+		if chathud.markup.text == "" or not chathud.panel:IsVisible() or not EasyChat.ChatHUD.Frame:IsVisible() then
+			hook.Remove("HUDPaint", "chathud")
+			return
+		end
+
+		surface.DisableClipping(true)
+		env.render2d.PushMatrix(chathud.panel:GetPos())
+		chathud.panel:PaintX(chathud.panel:GetSize())
+		env.render2d.PopMatrix()
+		surface.DisableClipping(false)
+	end)
+
+	hook.Add("ChatHudDraw", "chathud", function(panel)
+		if not chathud.panel:IsValid() or chathud.markup.text == "" then
+			hook.Remove("ChatHudDraw", "chathud")
+			return
+		end
+
+		-- can't draw here cause PushModelMatrix behaves strange when called in panels
+		chathud.panel:SetPos(panel:LocalToScreen(0, -chathud.markup.height + panel:GetTall()/4))
+		chathud.panel:SetSize(panel:GetSize())
+
+		return false
+	end)
 end
-
-hookAdd("ChatHudDraw", "chathud", function(panel)
-	if not chathud.panel:IsValid() then return end
-	-- can't draw here cause PushModelMatrix behaves strange when called in panels
-
-	chathud.panel:SetPos(panel:LocalToScreen(0, -chathud.markup.height + panel:GetTall()/4))
-	chathud.panel:SetSize(panel:GetSize())
-
-	return false
-end)
 
 hookAdd("ChatHudAddText", "chathud", function(...)
 	chathud.AddText(...)
