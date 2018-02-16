@@ -88,11 +88,6 @@ if ( CLIENT ) then
 
 end
 
-local ok, err = pcall(notagain.PostInit)
-
-if not ok then
-	ErrorNoHalt(err)
-end
 
 --[[---------------------------------------------------------
 	Shared modules
@@ -134,5 +129,12 @@ if ( CLIENT ) then
 
 	require ( "search" )
 
+end
+
+
+local ok, err = pcall(notagain.PostInit)
+
+if not ok then
+	ErrorNoHalt(err)
 end
 

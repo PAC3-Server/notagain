@@ -480,7 +480,6 @@ local scoreboard = {
 				ply_lines[v:SteamID()].Color = team.GetColor(v:Team())
 			end
 
-
 			if IsValid(selected_player) and not ply_lines[selected_player:SteamID()].Selected then
 				ply_lines[selected_player:SteamID()].Selected = true
 			end
