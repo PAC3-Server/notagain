@@ -536,6 +536,7 @@ if SERVER then
 		if b then
 			for k,v in pairs(ply:GetWeapons()) do
 				if v.is_shield and ply:GetActiveWeapon() ~= v then
+					v:GlobalThink()
 					v:ShowShield()
 					break
 				end
@@ -543,6 +544,7 @@ if SERVER then
 		else
 			for k,v in pairs(ply:GetWeapons()) do
 				if v.is_shield and ply:GetActiveWeapon() ~= v then
+					v:GlobalThink()
 					v:HideShield()
 					break
 				end
