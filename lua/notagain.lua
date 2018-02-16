@@ -285,7 +285,7 @@ end
 
 function notagain.PostInit()
 	for addon_name, addon_dir in pairs(notagain.directories) do
-		run_dir(addon_name, addon_dir, "/postinit/")
+		run_dir(addon_name, addon_dir .. "/postinit/")
 	end
 end
 

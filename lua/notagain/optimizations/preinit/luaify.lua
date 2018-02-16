@@ -108,7 +108,7 @@ function LUAIFY_POST()
 			local i = 1
 
 			for _, v in ipairs(list) do
-				if v:GetClass() == "Player" then
+				if v:GetClass() == "player" then
 					copy[i] = v
 					i = i + 1
 				end
@@ -178,12 +178,15 @@ function LUAIFY_POST()
 		ENTITY_LIST = list
 	end
 
-	do -- entiity meta
+	do -- entity meta
 		local ENTITY = FindMetaTable("Entity")
 		local VEHICLE = FindMetaTable("Vehicle")
 		local PLAYER = FindMetaTable("Player")
+		local WEAPON = FindMetaTable("Weapon")
 
 		local env = {}
+
+		luaify_env = env
 
 		local set_table = ENTITY.SetTable
 		local get_table = ENTITY.GetTable
@@ -193,6 +196,7 @@ function LUAIFY_POST()
 		local get_model = ENTITY.GetModel
 
 		local get_bone_count = ENTITY.GetBoneCount
+		local get_bone_name = ENTITY.GetBoneName
 		local lookup_bone = ENTITY.LookupBone
 
 		local get_class = ENTITY.GetClass
@@ -215,20 +219,28 @@ function LUAIFY_POST()
 			env[self].bone_count = get_bone_count(self)
 			env[self].bones = {}
 
+			if CLIENT then
+				self:SetupBones()
+			end
+
 			for i = 0, env[self].bone_count do
-				local name = lookup_bone(self, i)
+				local name = get_bone_name(self, i)
+
 				if name then
-					env[self].bones[name] = i
+					env[self].bones[name:lower()] = i
 				end
 			end
 		end
 
 		local function check_table(self)
-			if env[self] and not env[self].changed_table then
-				if get_table(self) ~= env[self].tbl then
-				--	print("TABLE CHANGED!?", self, get_class(self), env[self].tbl, ">>", get_table(self))
-					env[self].tbl = get_table(self)
-					env[self].changed_table = true
+			if env[self] then
+				if env[self].changed_table == false then
+					local t = get_table(self)
+					if t ~= env[self].tbl then
+						--print("TABLE CHANGED!?", self, get_class(self), env[self].tbl, ">>", get_table(self))
+						env[self].tbl = t
+						env[self].changed_table = true
+					end
 				end
 			elseif is_valid(self) then
 				local class = get_class(self)
@@ -236,6 +248,8 @@ function LUAIFY_POST()
 				env[self] = {}
 				env[self].class = class
 				env[self].tbl = get_table(self)
+				env[self].changed_table = not self:IsScripted()
+
 				reset_bones(self)
 
 				--print("TABLE SETUP", self, get_class(self))
@@ -247,6 +261,26 @@ function LUAIFY_POST()
 			if val ~= nil then return val end
 
 			local tbl = self:GetTable()
+			if tbl then
+				local val = tbl[key]
+				if val ~= nil then return val end
+			end
+
+			if key == "Owner" then
+				return ENTITY.GetOwner( self )
+			end
+
+			return nil
+		end
+
+		function WEAPON:__index(key)
+			local val = WEAPON[key]
+			if val ~= nil then return val end
+
+			local val = ENTITY[key]
+			if val ~= nil then return val end
+
+			local tbl = ENTITY.GetTable( self )
 			if tbl then
 				local val = tbl[key]
 				if val ~= nil then return val end
@@ -300,6 +334,7 @@ function LUAIFY_POST()
 
 		PLAYER.__newindex = ENTITY.__newindex
 		VEHICLE.__newindex = ENTITY.__newindex
+		WEAPON.__newindex = ENTITY.__newindex
 
 		function ENTITY:GetTable()
 			check_table(self)
@@ -324,6 +359,7 @@ function LUAIFY_POST()
 
 		VEHICLE.__eq = ENTITY.__eq
 		PLAYER.__eq = ENTITY.__eq
+		WEAPON.__eq = ENTITY.__eq
 
 		function ENTITY:GetClass()
 			return env[self] and env[self].class
@@ -343,7 +379,7 @@ function LUAIFY_POST()
 		end
 
 		function ENTITY:LookupBone(str)
-			return env[self].bones[str]
+			return env[self].bones[str:lower()]
 		end
 
 		ENTITY_TABLES = env
