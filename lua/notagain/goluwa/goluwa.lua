@@ -101,9 +101,11 @@ do
 					cb()
 				else
 					dprint("release tag id is different, redownloading")
-					redownload(tag.commit.id, cb)
+					redownload(tag.commit.id, function()
+						cb()
+						file.Write("goluwa/update_id.txt", tag.commit.id)
+					end)
 				end
-				file.Write("goluwa/update_id.txt", tag.commit.id)
 			else
 				dprint("no release tag found, assume rolling release")
 				http.Fetch("https://gitlab.com/api/v4/projects/CapsAdmin%2Fgoluwa/repository/commits", function(data, _, _, code)
