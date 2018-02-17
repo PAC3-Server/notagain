@@ -167,7 +167,7 @@ function LUAIFY_POST()
 			end
 		end
 
-		events.NetworkEntityCreated
+		events.NetworkEntityCreated = events.OnEntityCreated
 
 		events.EntityRemoved = function(ent)
 			if local_player and LOCAL_PLAYER and ent == local_player() then
