@@ -1,4 +1,4 @@
-local font_names = {}
+local font_names = util.JSONToTable(file.Read("surface_createfont2_cache.txt") or "") or {}
 
 do
 	local ULONG_MAX = 4294967295
@@ -69,7 +69,6 @@ do
 							if name_table.string_length > 0 then
 								local pos = f:Tell()
 								f:Seek(tbl_dir.offset + name_table.string_offset + name_table_header.storage_offset)
-								--print(name_table.string_length)
 								local name = f:Read(name_table.string_length)
 								if #name > 0 then
 									local temp = ""
@@ -108,11 +107,15 @@ do
 		end
 
 		for _, file_name in ipairs(files) do
-			local f = file.Open(dir .. file_name, "rb", "GAME")
-			parse_file(f, dir .. file_name)
-			f:Close()
+			if not font_names[dir..file_name] then
+				local f = file.Open(dir .. file_name, "rb", "GAME")
+				parse_file(f, dir .. file_name)
+				f:Close()
+			end
 		end
 	end
+
+	file.Write("surface_createfont2_cache.txt", util.TableToJSON(font_names))
 end
 
 local full_name_lookup = {}
