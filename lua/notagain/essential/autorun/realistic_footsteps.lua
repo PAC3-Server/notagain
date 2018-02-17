@@ -135,34 +135,34 @@ if CLIENT then
 		}
 	}
 
-	local sounds = {}
+	local sounds = util.JSONToTable(file.Read("realistic_footsteps_cache.txt") or "") or {}
+	if not next(sounds) then
+		for _, name in pairs(sound.GetTable()) do
+			if name:EndsWith("StepLeft") or name:EndsWith("StepRight") then
+				local data = sound.GetProperties(name)
 
-	for _, name in pairs(sound.GetTable()) do
-		if name:EndsWith("StepLeft") or name:EndsWith("StepRight") then
-			local data = sound.GetProperties(name)
-			if type(data.sound) == "string" then
-				data.sound = {data.sound}
-			end
+				if type(data.sound) == "string" then
+					data.sound = {data.sound}
+				end
 
-			local friendly = name:match("(.+)%."):lower()
+				local friendly = name:match("(.+)%."):lower()
 
-			sounds[friendly] = sounds[friendly] or {sounds = {}, pitch = data.pitch, level = data.level, volume = data.volume}
+				sounds[friendly] = sounds[friendly] or {sounds = {}, done = {}, pitch = data.pitch, level = data.level, volume = data.volume}
 
-			for _, path in pairs(data.sound) do
-				path = path:lower()
-				if not table.HasValue(sounds[friendly].sounds, path) then
-					table.insert(sounds[friendly].sounds, path)
+				for _, path in ipairs(data.sound) do
+					path = path:lower()
+					if not sounds[friendly].done[path] then
+						table.insert(sounds[friendly].sounds, path)
+						sounds[friendly].done[path] = true
+					end
 				end
 			end
 		end
+		file.Write("realistic_footsteps_cache.txt", util.TableToJSON(sounds))
 	end
 
 	local feet = {"left", "right"}
 
-	hook.Remove("Think", "realistic_footsteps")
-	hook.Remove("Tick", "realistic_footsteps")
-	timer.Remove("realistic_footsteps")
-	--timer.Create("realistic_footsteps", 1/60, 0, function()
 	hook.Add("Think", "realistic_footsteps", function()
 		for _, ply in ipairs(player.GetAll()) do
 			if ply:GetMoveType() ~= MOVETYPE_WALK or not ply:OnGround() or ply:GetVelocity():IsZero() then continue end
