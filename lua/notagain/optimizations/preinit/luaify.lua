@@ -93,7 +93,7 @@ function LUAIFY_POST()
 		local list = {}
 		local hash_list = {}
 
-		function ents.GetAll2()
+		function ents.GetAll()
 			local copy = {}
 
 			for i, v in ipairs(list) do
@@ -103,7 +103,7 @@ function LUAIFY_POST()
 			return copy
 		end
 
-		function player.GetAll2()
+		function player.GetAll()
 			local copy = {}
 
 			local i = 1
@@ -118,7 +118,7 @@ function LUAIFY_POST()
 			return copy
 		end
 
-		function ents.FindByClass2(class)
+		function ents.FindByClass(class)
 			class = class:lower()
 
 			local copy = {}
@@ -149,7 +149,7 @@ function LUAIFY_POST()
 		local LOCAL_PLAYER
 
 		if CLIENT then
-			function _G.LocalPlayer2()
+			function _G.LocalPlayer()
 				return LOCAL_PLAYER or NULL
 			end
 		end
