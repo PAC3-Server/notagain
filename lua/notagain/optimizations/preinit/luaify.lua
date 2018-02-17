@@ -92,7 +92,7 @@ function LUAIFY_POST()
 	do
 		local list = {}
 
-		function ents.GetAll()
+		function ents.GetAll2()
 			local copy = {}
 
 			for i, v in ipairs(list) do
@@ -102,7 +102,7 @@ function LUAIFY_POST()
 			return copy
 		end
 
-		function player.GetAll()
+		function player.GetAll2()
 			local copy = {}
 
 			local i = 1
@@ -117,7 +117,7 @@ function LUAIFY_POST()
 			return copy
 		end
 
-		function ents.FindByClass(class)
+		function ents.FindByClass2(class)
 			class = class:lower()
 
 			local copy = {}
@@ -148,7 +148,7 @@ function LUAIFY_POST()
 		local LOCAL_PLAYER
 
 		if CLIENT then
-			function _G.LocalPlayer()
+			function _G.LocalPlayer2()
 				return LOCAL_PLAYER or NULL
 			end
 		end
@@ -231,6 +231,16 @@ function LUAIFY_POST()
 				end
 			end
 		end
+
+		timer.Create("tty__check_bones_luaify", 0.1, 0, function()
+			for _, v in ipairs(ENTITY_LIST) do
+				local mdl = get_model(v)
+				if env[v] and env[v].model ~= mdl then
+					env[v].model = mdl
+					reset_bones(v)
+				end
+			end
+		end)
 
 		local function check_table(self)
 			if env[self] then
