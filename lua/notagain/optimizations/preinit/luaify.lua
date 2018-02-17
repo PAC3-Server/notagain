@@ -232,7 +232,7 @@ function LUAIFY_POST()
 			end
 		end
 
-		timer.Create("tty__check_bones_luaify", 0.1, 0, function()
+		timer.Create("__check_bones_luaify", 0.1, 0, function()
 			for _, v in ipairs(ENTITY_LIST) do
 				local mdl = get_model(v)
 				if env[v] and env[v].model ~= mdl then
