@@ -186,6 +186,8 @@ function LUAIFY_POST()
 			end
 		end
 
+		events.PlayerDisconnected = events.EntityRemoved
+
 		ENTITY_LIST = list
 	end
 
