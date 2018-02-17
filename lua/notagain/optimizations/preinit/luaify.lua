@@ -91,6 +91,7 @@ function LUAIFY_POST()
 
 	do
 		local list = {}
+		local hash_list = {}
 
 		function ents.GetAll2()
 			local copy = {}
@@ -159,19 +160,29 @@ function LUAIFY_POST()
 			end
 
 			init_entity(ent)
-			table.insert(list, ent)
+
+			if not hash_list[ent] then
+				table.insert(list, ent)
+				hash_list[ent] = true
+			end
 		end
+
+		events.NetworkEntityCreated
 
 		events.EntityRemoved = function(ent)
 			if local_player and LOCAL_PLAYER and ent == local_player() then
 				LOCAL_PLAYER = nil
 			end
 
-			for i, v in ipairs(list) do
-				if v == ent then
-					remove_entity(ent)
-					table.remove(list, i)
+			if hash_list[ent] then
+				for i, v in ipairs(list) do
+					if v == ent then
+						remove_entity(ent)
+						table.remove(list, i)
+						break
+					end
 				end
+				hash_list[ent] = nil
 			end
 		end
 
