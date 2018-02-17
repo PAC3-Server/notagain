@@ -402,7 +402,7 @@ function LUAIFY_POST()
 		end
 
 		function ENTITY:LookupBone(str)
-			return env[self].bones[str:lower()]
+			return env[self].bones[tostring(str):lower()]
 		end
 
 		ENTITY_TABLES = env
