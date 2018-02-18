@@ -1,5 +1,8 @@
 AddCSLuaFile()
 
+local LUA_GETTABLE = false
+local LUA_BONE_CACHE = false
+
 do -- override type functions
 	gtype = type
 
@@ -159,7 +162,9 @@ function LUAIFY_POST()
 				LOCAL_PLAYER = ent
 			end
 
-			init_entity(ent)
+			if LUA_GETTABLE then
+				init_entity(ent)
+			end
 
 			if not hash_list[ent] then
 				table.insert(list, ent)
@@ -218,7 +223,12 @@ function LUAIFY_POST()
 		--function scripted_ents.Get() return nil end
 
 		init_entity = function(self)
-			self:GetTable()
+			if LUA_GETTABLE then
+				self:GetTable()
+			else
+				env[self] = {}
+				env[self].class = get_class(self)
+			end
 			--print("CREATE", self, get_class(self))
 		end
 
@@ -245,15 +255,17 @@ function LUAIFY_POST()
 			end
 		end
 
-		timer.Create("__check_bones_luaify", 0.1, 0, function()
-			for _, v in ipairs(ENTITY_LIST) do
-				local mdl = get_model(v)
-				if env[v] and env[v].model ~= mdl then
-					env[v].model = mdl
-					reset_bones(v)
+		if LUA_BONE_CACHE then
+			timer.Create("__check_bones_luaify", 0.1, 0, function()
+				for _, v in ipairs(ENTITY_LIST) do
+					local mdl = get_model(v)
+					if env[v] and env[v].model ~= mdl then
+						env[v].model = mdl
+						reset_bones(v)
+					end
 				end
-			end
-		end)
+			end)
+		end
 
 		local function check_table(self)
 			if env[self] then
@@ -283,7 +295,7 @@ function LUAIFY_POST()
 			local val = ENTITY[key]
 			if val ~= nil then return val end
 
-			local tbl = self:GetTable()
+			local tbl = ENTITY.GetTable( self )
 			if tbl then
 				local val = tbl[key]
 				if val ~= nil then return val end
@@ -348,32 +360,33 @@ function LUAIFY_POST()
 			return nil
 		end
 
-		function ENTITY:__newindex(key, val)
-			check_table(self)
-			if env[self] then
-				env[self].tbl[key] = val
+		if LUA_GETTABLE then
+			function ENTITY:__newindex(key, val)
+				check_table(self)
+				if env[self] then
+					env[self].tbl[key] = val
+				end
+			end
+
+			PLAYER.__newindex = ENTITY.__newindex
+			VEHICLE.__newindex = ENTITY.__newindex
+			WEAPON.__newindex = ENTITY.__newindex
+
+			function ENTITY:GetTable()
+				check_table(self)
+				return env[self] and env[self].tbl
+			end
+
+			function ENTITY:SetTable(tbl)
+				check_table(self)
+				env[self].tbl = tbl
 			end
 		end
-
-		PLAYER.__newindex = ENTITY.__newindex
-		VEHICLE.__newindex = ENTITY.__newindex
-		WEAPON.__newindex = ENTITY.__newindex
-
-		function ENTITY:GetTable()
-			check_table(self)
-			return env[self] and env[self].tbl
-		end
-
-		function ENTITY:SetTable(tbl)
-			check_table(self)
-			env[self].tbl = tbl
-		end
-
 		-- this does not work well
 		-- function ENTITY:IsValid() return env[self] ~= nil end
 
 		function ENTITY:IsPlayer()
-			return env[self] and env[self].class == "Player"
+			return env[self] and env[self].class == "player"
 		end
 
 		function ENTITY.__eq(a, b)
@@ -385,24 +398,26 @@ function LUAIFY_POST()
 		WEAPON.__eq = ENTITY.__eq
 
 		function ENTITY:GetClass()
-			return env[self] and env[self].class
+			return env[self] and env[self].class or get_class(self)
 		end
 
-		function ENTITY:SetModel(mdl)
-			set_model(self, mdl)
-			reset_bones(self)
-		end
+		if LUA_BONE_CACHE then
+			function ENTITY:SetModel(mdl)
+				set_model(self, mdl)
+				reset_bones(self)
+			end
 
-		function ENTITY:GetModel()
-			return env[self].model
-		end
+			function ENTITY:GetModel()
+				return env[self].model
+			end
 
-		function ENTITY:GetBoneCount()
-			return env[self].bone_count
-		end
+			function ENTITY:GetBoneCount()
+				return env[self].bone_count
+			end
 
-		function ENTITY:LookupBone(str)
-			return env[self].bones[tostring(str):lower()]
+			function ENTITY:LookupBone(str)
+				return env[self].bones[tostring(str):lower()]
+			end
 		end
 
 		ENTITY_TABLES = env
