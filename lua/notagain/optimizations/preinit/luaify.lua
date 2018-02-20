@@ -76,6 +76,8 @@ do -- override type functions
 end
 
 function LUAIFY_POST()
+	do return end
+
 	local events = {}
 	local hook_call = hook.Call
 	hook.Call = function(event, gm, ...)
