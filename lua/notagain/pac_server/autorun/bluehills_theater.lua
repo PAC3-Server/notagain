@@ -63,6 +63,7 @@ end
 if CLIENT then
 	--This is a very ugly way to do it
 	hook.Add("OnContextMenuOpen", "CinemaMediaplayer", function()
+		if not MediaPlayer then return end
 		local ent = ents.FindByClass("bluehill_theater_screen")[1]
 		if IsValid(ent) then
 			mp = MediaPlayer.GetByObject( ent )
