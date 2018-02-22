@@ -526,12 +526,24 @@ do
 			end
 		end
 
+		local veh = ply:GetVehicle()
+		if veh:IsValid() then
+			ucmd:SetViewAngles(veh:WorldToLocalAngles(battlecam.cam_dir:Angle()))
+			return
+		end
+
 		local ent = jtarget.GetEntity(ply)
 
-		if not ucmd:KeyDown(IN_ATTACK) and not ply:KeyDown(IN_DUCK) and not ucmd:KeyDown(IN_ATTACK2) and (not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) and not battlecam.IsKeyDown("correct_cam") then
+		if
+			not ucmd:KeyDown(IN_ATTACK) and
+			not ply:KeyDown(IN_DUCK) and
+			not ucmd:KeyDown(IN_ATTACK2) and
+			(not ent:IsValid() or ucmd:KeyDown(IN_SPEED)) and
+			not battlecam.IsKeyDown("correct_cam")
+		then
 
 			local dir = Vector()
-			local pos = ply:GetPos()
+			local pos = ply:EyePos()
 
 			if ucmd:KeyDown(IN_MOVELEFT) then
 				dir = (pos - battlecam.cam_pos):Angle():Right() * -1

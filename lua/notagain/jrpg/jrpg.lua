@@ -327,7 +327,7 @@ function jrpg.GetRoomSize(pos, filter)
 		if jrpg.last_room_size_time and jrpg.last_room_size_time > RealTime() then
 			return jrpg.last_room_size or 30
 		end
-		filter = pos
+		filter = ents.FindInSphere(pos:WorldSpaceCenter(), pos:BoundingRadius()/2)
 		pos = pos:EyePos()
 		is_player = true
 	end
