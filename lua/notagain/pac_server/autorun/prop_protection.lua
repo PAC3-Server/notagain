@@ -449,8 +449,6 @@ if SERVER then
 		end
 
 		if not ent:GetNWString("Owner") or ent:GetNWString("Owner") == "" and not ent:IsPlayer() then
-			proptect.PlayerMakePropOwner(ply, ent)
-			proptect.Notify(ply, "You now own this prop")
 			return true
 		end
 
@@ -656,6 +654,11 @@ if SERVER then
 		end
 	end
 	hook.Add("OnNPCKilled","prop_protection",proptect.NPCDeath)
+
+	function proptect.WeaponEquip(wep, owner)
+		proptect.PlayerMakePropOwner(owner, wep)
+	end
+	hook.Add("WeaponEquip", "prop_protection", proptect.WeaponEquip)
 
 	function proptect.CDP(ply, cmd, args)
 		if IsValid(ply) and not ply:IsAdmin() then
