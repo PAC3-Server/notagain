@@ -569,7 +569,7 @@ if CLIENT then
 	end)
 
 	function chatbox.Say(str, ply)
-		if hook.Run("OnPlayerChat", ply, str, false, ply:Alive()) ~= true then
+		if hook.Run("OnPlayerChat", ply, str, false, not ply:Alive()) ~= true then
 			chatbox.AddText(ply, color_white, ": ", str)
 		end
 	end
