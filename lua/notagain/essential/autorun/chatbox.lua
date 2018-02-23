@@ -1,6 +1,5 @@
 local luadev = requirex("luadev")
 local chatbox = _G.chatbox or {}
-
 if CLIENT then
 
 	local settings = {
@@ -50,6 +49,7 @@ if CLIENT then
 	end
 
 	chatbox.cvars = cvars
+	chatbox.history = chatbox.history or {}
 
 	if IsValid(chatbox.frame) then
 		chatbox.frame:Remove()
@@ -304,9 +304,29 @@ if CLIENT then
 				self:SetMultiline(false)
 			end
 			text_input.OnValueChange = function(self, text)
+				if text == "" then chatbox.history_i = 1 end
 				gamemode.Call("ChatTextChanged", text)
 			end
 			text_input.OnKeyCodeTyped = function(self, key)
+
+				if key == KEY_UP or key == KEY_DOWN then
+					chatbox.history_i = chatbox.history_i or 1
+
+					if key == KEY_UP then
+						chatbox.history_i = chatbox.history_i - 1
+					else
+						chatbox.history_i = chatbox.history_i + 1
+					end
+
+					if chatbox.history_i < 1 then chatbox.history_i = #chatbox.history end
+					if chatbox.history_i > #chatbox.history then chatbox.history_i = 1 end
+
+					local str = table.remove(chatbox.history, chatbox.history_i)
+					self:SetText(str)
+					table.insert(chatbox.history, str)
+					self:SetCaretPos(#self:GetText())
+				end
+
 				if key == KEY_ENTER then
 					if input.IsShiftDown() then
 						surface.SetFont(self:GetFont())
@@ -316,7 +336,14 @@ if CLIENT then
 						return
 					end
 
-					chatbox.SayServer(self:GetText())
+					local str = self:GetText()
+					chatbox.SayServer(str)
+
+					if not table.HasValue(chatbox.history, str) then
+						table.insert(chatbox.history, str)
+					end
+
+					chatbox.history_i = 1
 
 					self:Clear()
 
