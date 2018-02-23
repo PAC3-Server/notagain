@@ -2,37 +2,6 @@ local env = requirex("goluwa").env
 
 local enabled = CreateClientConVar("goluwa_chathud_enabled", "1", true, false, "Disable Chathud")
 
-local hooks = {}
-local function hookAdd(event, id, callback)
-	hooks[event] = hooks[event] or {}
-	hooks[event][id] = callback
-	hook.Add(event, id, callback)
-end
-
-local function unhook()
-	for event, data in pairs(hooks) do
-		for id, callback in pairs(data) do
-			hook.Remove(event, id)
-		end
-	end
-end
-
-local function rehook()
-	for event, data in pairs(hooks) do
-		for id, callback in pairs(data) do
-			hook.Add(event, id, callback)
-		end
-	end
-end
-
-cvars.AddChangeCallback("goluwa_chathud_enabled", function(convar_name, value_old, value_new)
-	if value_new ~= '0' then
-		rehook()
-	else
-		unhook()
-	end
-end)
-
 chathud = chathud or {}
 
 chathud.panel = chathud.panel or NULL
@@ -137,16 +106,21 @@ function chathud.Initialize()
 
 	chathud.markup = markup
 
-
 	for _, v in pairs(file.Find("materials/icon16/*", "GAME")) do
 		if v:EndsWith(".png") then
 			chathud.emote_shortcuts[v:gsub("(%.png)$","")] = "<texture=materials/icon16/" .. v .. ",16>"
 		end
 	end
 
-	if enabled:GetInt() == 0 then
-		unhook()
-	end
+	chathud.panel:SetMouseInputEnabled(false)
+
+	hook.Add("OnContextMenuOpen", "chathud", function()
+		chathud.panel:SetMouseInputEnabled(true)
+	end)
+
+	hook.Add("OnContextMenuClose", "chathud", function()
+		chathud.panel:SetMouseInputEnabled(false)
+	end)
 end
 
 function chathud.AddText(tbl)
@@ -197,10 +171,11 @@ function chathud.AddText(tbl)
 			end
 
 			table.insert(args, v)
-		elseif t == "table" and IsColor(v) then
+		elseif t == "table" and v.r and v.g and v.b and v.a then
 			table.insert(args, env.Color(v.r/255, v.g/255, v.b/255, v.a/255))
 		else
-			table.insert(args, v)
+			if type(v) ~= "string" then PrintTable(v) end
+			table.insert(args, tostring(v))
 		end
 	end
 
@@ -220,8 +195,11 @@ function chathud.AddText(tbl)
 			return
 		end
 
+		local x, y = chathud.panel:GetPos()
+		y = y - chathud.markup.height + chathud.panel:GetTall() - 20
+
 		surface.DisableClipping(true)
-		env.render2d.PushMatrix(chathud.panel:GetPos())
+		env.render2d.PushMatrix(x, y)
 		chathud.panel:PaintX(chathud.panel:GetSize())
 		env.render2d.PopMatrix()
 		surface.DisableClipping(false)
@@ -231,8 +209,8 @@ function chathud.AddText(tbl)
 			chathud.panel:SetPos(x, y + 20)
 			chathud.panel:SetSize(chatbox.frame:GetSize())
 		else
-			chathud.panel:SetPos(25,ScrH() - 370)
-			chathud.panel:SetSize(527,315)
+			chathud.panel:SetPos(25,ScrH()/3)
+			chathud.panel:SetSize(ScrW()/2,ScrH()/2)
 		end
 	end)
 
@@ -241,7 +219,7 @@ function chathud.AddText(tbl)
 	end)
 end
 
-hookAdd("ChatHUDAddText", "chathud", function(tbl)
+hook.Add("ChatHUDAddText", "chathud", function(tbl)
 	chathud.AddText(tbl)
 end)
 
