@@ -31,7 +31,7 @@ local function load_path(path)
 		return var
 	end
 
-	return nil, var
+	return nil, var or "no error?"
 end
 
 local function run_func(path, func, ...)
