@@ -149,7 +149,7 @@ function chathud.Initialize()
 	end
 end
 
-function chathud.AddText(...)
+function chathud.AddText(tbl)
 
 	if not chathud.panel:IsValid() then
 		chathud.Initialize()
@@ -159,7 +159,7 @@ function chathud.AddText(...)
 
 	local args = {}
 
-	for _, v in pairs({...}) do
+	for _, v in pairs(tbl) do
 		local t = type(v)
 		if t == "Player" then
 			local c = team.GetColor(v:Team())
@@ -241,9 +241,8 @@ function chathud.AddText(...)
 	end)
 end
 
-hookAdd("ChatHudAddText", "chathud", function(...)
-	chathud.AddText(...)
-	return false
+hookAdd("ChatHUDAddText", "chathud", function(tbl)
+	chathud.AddText(tbl)
 end)
 
 chathud.Initialize()

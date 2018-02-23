@@ -1,7 +1,6 @@
 local luadev = requirex("luadev")
 local chatbox = _G.chatbox or {}
 if CLIENT then
-
 	local settings = {
 		{
 			cvar = "default_position",
@@ -281,7 +280,7 @@ if CLIENT then
 		frame:SetCookieName("chatbox")
 
 		frame.OnClose = function()
-			chatbox.Close()
+			chat.Close()
 		end
 
 		frame.OnActiveTabChanged = function(self, old, new)
@@ -291,7 +290,7 @@ if CLIENT then
 		end
 
 		do -- chat
-			local chat = vgui.Create( "Panel", frame)
+			local chat = vgui.Create("Panel", frame)
 			local text_input = vgui.Create("DTextEntry", chat)
 			chatbox.text_input = text_input
 			text_input:SetUpdateOnType(true)
@@ -305,7 +304,11 @@ if CLIENT then
 			end
 			text_input.OnValueChange = function(self, text)
 				if text == "" then chatbox.history_i = 1 end
-				gamemode.Call("ChatTextChanged", text)
+				if not text:find("\n", nil, true) then
+					self:SetMultiline(false)
+					self:SetTall(initial_height)
+				end
+				_G.chat.TextChanged(text)
 			end
 			text_input.OnKeyCodeTyped = function(self, key)
 
@@ -337,7 +340,7 @@ if CLIENT then
 					end
 
 					local str = self:GetText()
-					chatbox.SayServer(str)
+					_G.chat.SayServer(str)
 
 					if not table.HasValue(chatbox.history, str) then
 						table.insert(chatbox.history, str)
@@ -347,7 +350,7 @@ if CLIENT then
 
 					self:Clear()
 
-					chatbox.Close()
+					_G.chat.Close()
 				end
 
 				if key == KEY_TAB then
@@ -359,7 +362,8 @@ if CLIENT then
 						return true
 					end
 
-					local res = hook.Run("OnChatTab", self:GetText())
+					local res = _G.chat.Autocomplete(self:GetText())
+
 					if res then
 						self:SetText(res)
 						self:SetCaretPos(#res)
@@ -407,78 +411,45 @@ if CLIENT then
 		frame:MakePopup()
 		chatbox.text_input:RequestFocus()
 
-		do
-			chatbox.RealAddText = chatbox.RealAddText or chat.AddText
-
-			function chat.AddText(...)
-				if chatbox.frame:IsValid() then
-					if chatbox.AddText(...) == false then return end
-				end
-				return chatbox.RealAddText(...)
+		hook.Add("ChatGetChatBoxPos", "chatbox", function()
+			if not chatbox.cvars.default_position:GetBool() and chatbox.frame:IsValid() then
+				return chatbox.frame:GetPos()
 			end
-		end
+		end)
 
-		do
-			chatbox.RealGetChatBoxPos = chatbox.RealGetChatBoxPos or chat.GetChatBoxPos
-
-			function chat.GetChatBoxPos(...)
-				if not chatbox.cvars.default_position:GetBool() and chatbox.frame:IsValid() then
-					return chatbox.frame:GetPos()
-				end
-				return chatbox.RealGetChatBoxPos(...)
+		hook.Add("ChatGetChatBoxSize", "chatbox", function()
+			if not chatbox.cvars.default_position:GetBool() and chatbox.frame:IsValid() then
+				return chatbox.frame:GetSize()
 			end
-		end
+		end)
 
-		do
-			chatbox.RealGetChatBoxSize = chatbox.RealGetChatBoxSize or chat.GetChatBoxSize
-
-			function chat.GetChatBoxSize(...)
-				if not chatbox.cvars.default_position:GetBool() and chatbox.frame:IsValid() then
-					return chatbox.frame:GetSize()
-				end
-				return chatbox.RealGetChatBoxSize(...)
-			end
-		end
-
-
-		do
-			chatbox.RealChatOpen = chatbox.RealChatOpen or chat.Open
-
-			function chat.Open(...)
+		hook.Add("ChatAddText", "chatbox", function(...)
+			if not chatbox.frame:IsValid() then
 				chatbox.Open()
-				--return chatbox.RealChatOpen(...)
-			end
-		end
-
-		do
-			chatbox.RealChatClose = chatbox.RealChatClose or chat.Close
-
-			function chat.Close(...)
 				chatbox.Close()
-				--return chatbox.RealChatOpen(...)
 			end
-		end
+
+			return chatbox.AddText(...)
+		end)
 
 		hook.Add("ChatText", "chatbox", function(index, name, text, type)
 			chatbox.AddText(text)
 		end)
-
-		if goluwa then
-
-		end
 	end
+
+	hook.Add("ChatOpenChatBox", "chatbox", function()
+		chatbox.Open()
+		return false
+	end)
+
+	hook.Add("ChatCloseChatBox", "chatbox", function()
+		chatbox.Close()
+		--return false
+	end)
 
 	function chatbox.Close()
 		chatbox.frame:SetVisible(false)
 		chatbox.text_input:Clear()
-		gamemode.Call("ChatTextChanged","")
-		gamemode.Call("FinishChat")
-	end
-
-	function chatbox.Remove()
-		chat.AddText = chatbox.RealAddText or chat.AddText
-		hook.Remove("StartChat", "chatbox")
-		hook.Remove("ChatText", "chatbox")
 	end
 
 	function chatbox.AddText(...)
@@ -513,65 +484,8 @@ if CLIENT then
 		chatbox.richtext:AppendText("\n")
 
 		table.insert(args, "\n")
-		if hook.Run("ChatHudAddText", unpack(args)) == false then return end
-	end
 
-	hook.Add("PlayerBindPress", "chatbox", function(ply, bind, status)
-		if bind == "messagemode" or bind == "messagemode2" then
-			if hook.Run("StartChat", bind == "messagemode2") ~= true then
-				chatbox.Open()
-			end
-			return true
-		end
-	end)
-end
-
-if SERVER then
-	util.AddNetworkString("chatbox_say_sv")
-	util.AddNetworkString("chatbox_say_cl")
-
-	net.Receive("chatbox_say_cl", function(len, ply)
-		local str = net.ReadString()
-
-		chatbox.Say(str, ply)
-	end)
-
-	function chatbox.Say(str, ply)
-		ply = ply or NULL
-
-		local res = hook.Run("PlayerSay", ply, str, false)
-
-		if res == "" then return end
-
-		net.Start("chatbox_say_sv", true)
-			net.WriteEntity(ply)
-			net.WriteString(res or str)
-		net.Broadcast()
-	end
-end
-
-if CLIENT then
-	net.Receive("chatbox_say_sv", function()
-		local ply = net.ReadEntity()
-		local str = net.ReadString()
-
-		chatbox.Say(str, ply)
-	end)
-
-	function chatbox.SayServer(str)
-		net.Start("chatbox_say_cl", true)
-			net.WriteString(str)
-		net.SendToServer()
-	end
-
-	concommand.Add("say2", function(_,_,_,str)
-		chatbox.SayServer(str)
-	end)
-
-	function chatbox.Say(str, ply)
-		if hook.Run("OnPlayerChat", ply, str, false, not ply:Alive()) ~= true then
-			chatbox.AddText(ply, color_white, ": ", str)
-		end
+		return hook.Run("ChatHUDAddText", args)
 	end
 end
 
