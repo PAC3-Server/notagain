@@ -266,6 +266,7 @@ if CLIENT then
 				chatbox.frame:SetVisible(true)
 				chatbox.text_input:RequestFocus()
 				chatbox.frame:SwitchToName("chat")
+				chatbox.richtext:GotoTextEnd()
 			end
 			return
 		end
@@ -288,6 +289,7 @@ if CLIENT then
 		frame.OnActiveTabChanged = function(self, old, new)
 			if new:GetText() == "chat" then
 				chatbox.text_input:RequestFocus()
+				chatbox.richtext:GotoTextEnd()
 			end
 		end
 
