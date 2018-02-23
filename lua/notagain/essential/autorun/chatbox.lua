@@ -312,7 +312,7 @@ if CLIENT then
 			end
 			text_input.OnKeyCodeTyped = function(self, key)
 
-				if key == KEY_UP or key == KEY_DOWN then
+				if not text_input:IsMultiline() and (key == KEY_UP or key == KEY_DOWN) then
 					chatbox.history_i = chatbox.history_i or 1
 
 					if key == KEY_UP then
