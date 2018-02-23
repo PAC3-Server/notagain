@@ -9,38 +9,7 @@ local autocomplete_font = env.fonts.CreateFont({
 	blur_overdraw = 3,
 })
 
-local hooks = {}
-local function hookAdd(event, id, callback)
-	hooks[event] = hooks[event] or {}
-	hooks[event][id] = callback
-	hook.Add(event, id, callback)
-end
-
-local function unhook()
-	for event, data in pairs(hooks) do
-		for id, callback in pairs(data) do
-			hook.Remove(event, id)
-		end
-	end
-end
-
-local function rehook()
-	for event, data in pairs(hooks) do
-		for id, callback in pairs(data) do
-			hook.Add(event, id, callback)
-		end
-	end
-end
-
 local chatsounds_enabled = CreateClientConVar("chatsounds_enabled", "1", true, false, "Disable chatsounds")
-
-cvars.AddChangeCallback("chatsounds_enabled", function(convar_name, value_old, value_new)
-	if value_new ~= '0' then
-		rehook()
-	else
-		unhook()
-	end
-end)
 
 do
 	local found_autocomplete
@@ -48,33 +17,40 @@ do
 
 	local function query(str, scroll)
 		found_autocomplete = env.autocomplete.Query("chatsounds", str, scroll)
+		print(found_autocomplete, str, scroll)
 	end
 
-	hookAdd("OnChatTab", "chatsounds_autocomplete", function(str)
-		if str == "random" or random_mode then
-			random_mode = true
-			query("", 0)
-			return found_autocomplete[1]
-		end
+	hook.Add("ChatTextChanged", "chatsounds_autocomplete_init", function()
+		if not chatsounds_enabled:GetBool() then return end
 
-		query(str, (input.IsKeyDown(KEY_LSHIFT) or input.IsKeyDown(KEY_RSHIFT) or input.IsKeyDown(KEY_LCONTROL)) and -1 or 1)
+		hook.Remove("ChatTextChanged", "chatsounds_autocomplete_init")
 
-		if found_autocomplete[1] then
-			return found_autocomplete[1]
-		end
-	end)
+		hook.Add("OnChatTab", "chatsounds_autocomplete", function(str)
+			if str == "random" or random_mode then
+				random_mode = true
+				query("", 0)
+				return found_autocomplete[1]
+			end
 
-	hookAdd("ChatTextChanged", "chatsounds_autocomplete", function(str)
-		if str == "" then
-			random_mode = true
-			hook.Remove("PostRenderVGUI", "chatsounds_autocomplete")
-			return
-		end
+			query(str, (input.IsKeyDown(KEY_LSHIFT) or input.IsKeyDown(KEY_RSHIFT) or input.IsKeyDown(KEY_LCONTROL)) and -1 or 1)
 
-		random_mode = false
-		query(str, 0)
+			if found_autocomplete[1] then
+				return found_autocomplete[1]
+			end
+		end)
 
-		hookAdd("PostRenderVGUI", "chatsounds_autocomplete", function()
+		hook.Add("ChatTextChanged", "chatsounds_autocomplete", function(str)
+			if str == "" then
+				random_mode = true
+				return
+			end
+
+			random_mode = false
+			query(str, 0)
+		end)
+
+		hook.Add("PostRenderVGUI", "chatsounds_autocomplete", function()
+			if random_mode then return end
 			if found_autocomplete and #found_autocomplete > 0 then
 				local x, y = chat.GetChatBoxPos()
 				local w, h = chat.GetChatBoxSize()
@@ -84,10 +60,14 @@ do
 		end)
 	end)
 
-	hookAdd("FinishChat", "chatsounds_autocomplete", function()
+	hook.Add("FinishChat", "chatsounds_autocomplete", function()
+		if not chatsounds_enabled:GetBool() then return end
+
 		-- in some cases ChatTextChanged is called on FinishChat which adds the hook again
 		timer.Simple(0, function()
 			hook.Remove("PostRenderVGUI", "chatsounds_autocomplete")
+			hook.Remove("ChatTextChanged", "chatsounds_autocomplete")
+			hook.Remove("OnChatTab", "chatsounds_autocomplete")
 		end)
 	end)
 end
@@ -100,7 +80,8 @@ local blacklist = {
 }
 
 local init = false
-local doit = function(ply, str)
+
+hook.Add("OnPlayerChat", "chatsounds", function(ply, str)
 	if not init then
 
 		env.resource.AddProvider("https://github.com/PAC3-Server/chatsounds/raw/master/")
@@ -128,13 +109,9 @@ local doit = function(ply, str)
 
 	env.audio.player_object = ply
 	env.chatsounds.Say(str, math.Round(CurTime()))
-end
-
-hookAdd("OnPlayerChat", "chatsounds",doit)
+end)
 concommand.Add("saysound",function(ply, _,_, str) doit(ply, str) end) --LEGACY
 
 if not chatsounds_enabled:GetBool() then
-	timer.Simple(0.05, function()
-		unhook()
-	end)
+	hook.Remove("OnPlayerChat", "chatsounds")
 end
