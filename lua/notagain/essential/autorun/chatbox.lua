@@ -395,8 +395,10 @@ if CLIENT then
 					if chatbox.history_i < 1 then chatbox.history_i = #chatbox.history end
 					if chatbox.history_i > #chatbox.history then chatbox.history_i = 1 end
 
-					self:SetText(chatbox.history[chatbox.history_i])
-					self:SetCaretPos(#self:GetText())
+					if chatbox.history[chatbox.history_i] then
+						self:SetText(chatbox.history[chatbox.history_i])
+						self:SetCaretPos(#self:GetText())
+					end
 				end
 
 				if key == KEY_ENTER then
