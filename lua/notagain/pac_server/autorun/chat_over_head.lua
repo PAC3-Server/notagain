@@ -39,6 +39,7 @@ if CLIENT then
 				--for i, data in ipairs(ply.coh_text_history) do
 
 				ok = true
+				local Y = 0
 				for i = #ply.coh_text_history, 1, -1 do
 					local data = ply.coh_text_history[i]
 					local text = data.str
@@ -75,8 +76,10 @@ if CLIENT then
 					w = w + text_width_border*2
 
 					local x = -w/2
-					local y = (i - 1) * -h/1.1
+					local y = Y + -h - 10
 					x = x + i * 50
+
+					Y = y
 
 					draw.RoundedBox(roundness, x - border_size + shadow_size, y + -border_size + shadow_size, w + border_size*2, h + border_size*2, Color(0,0,0,50))
 					draw.RoundedBox(roundness, x - border_size, y + -border_size, w + border_size*2, h + border_size*2, border_color)
@@ -88,11 +91,26 @@ if CLIENT then
 					draw.RoundedBox(roundness, x + border_size, y+h/2, w - border_size*2, h-h/2 - border_size, Color(0,0,0, 50))
 					border_size = border_size / 2
 
-					prettytext.Draw(text, x + text_width_border, y, font, size, bold, blursize, Color(255,255,255,255*alpha), Color(200, 200, 200, 255))
+					local y_offset = 0
+					for i, line in ipairs(text:Split("\n")) do
+						local _, h_ = prettytext.Draw(
+							line,
+							x + text_width_border,
+							y + y_offset,
+							font,
+							size,
+							bold,
+							blursize,
+							Color(255,255,255,255*alpha),
+							Color(200, 200, 200, 255)
+						)
+						y_offset = y_offset + h_
 
-					if not data.entered and data.time ~= 0 then
-						surface.SetDrawColor(0, 0, 0, 230*alpha)
-						surface.DrawRect(x + text_width_border,y+h/2, w-text_width_border*2, 10)
+						if not data.entered and data.time ~= 0 then
+							surface.SetDrawColor(150, 0, 0, 230*alpha)
+							surface.DrawRect(x + text_width_border, y + y_offset - h_/2, w-text_width_border*2, 10)
+						end
+
 					end
 
 					local width = 50
