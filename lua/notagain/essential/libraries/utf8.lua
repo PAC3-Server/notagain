@@ -1,7 +1,7 @@
 local utf8 = _G.utf8 or {}
 
 function utf8.midsplit(str)
-	local half = math.round(str:ulength()/2+1)
+	local half = math.Round(str:ulength()/2+1)
 	return str:usub(1, half-1), str:usub(half)
 end
 
@@ -183,10 +183,6 @@ function utf8.totable(str)
 	end
 
 	return tbl
-end
-
-for name, func in pairs(utf8) do
-	string["u" .. name] = func
 end
 
 return utf8
