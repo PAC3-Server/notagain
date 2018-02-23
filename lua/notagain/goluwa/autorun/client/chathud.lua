@@ -83,8 +83,6 @@ chathud.emote_shortcuts = chathud.emote_shortcuts or {
 chathud.tags = chathud.tags or {}
 
 function chathud.Initialize()
-	if not EasyChat then print("goluwa chathud requires easychat!") return end
-
 	if chathud.panel:IsValid() then
 		chathud.panel:Remove()
 	end
@@ -114,8 +112,6 @@ function chathud.Initialize()
 	chathud.panel.PaintX = function(_, w, h)
 		markup:Draw()
 	end
-
-	EasyChat.ChatHUD.Frame:SetVisible(true) -- FIX ME
 
 	do -- mouse input
 		local translate_mouse = {
@@ -219,7 +215,7 @@ function chathud.AddText(...)
 	end
 
 	hook.Add("HUDPaint", "chathud", function()
-		if chathud.markup.text == "" or not chathud.panel:IsVisible() or not EasyChat.ChatHUD.Frame:IsVisible() then
+		if chathud.markup.text == "" or not chathud.panel:IsVisible() then
 			hook.Remove("HUDPaint", "chathud")
 			return
 		end
@@ -229,19 +225,19 @@ function chathud.AddText(...)
 		chathud.panel:PaintX(chathud.panel:GetSize())
 		env.render2d.PopMatrix()
 		surface.DisableClipping(false)
+
+		if chatbox and chatbox.cvars.chathud_follow:GetBool() and chatbox.frame:IsValid() then
+			local x, y = chatbox.frame:GetPos()
+			chathud.panel:SetPos(x, y + 20)
+			chathud.panel:SetSize(chatbox.frame:GetSize())
+		else
+			chathud.panel:SetPos(25,ScrH() - 370)
+			chathud.panel:SetSize(527,315)
+		end
 	end)
 
-	hook.Add("ChatHudDraw", "chathud", function(panel)
-		if not chathud.panel:IsValid() or chathud.markup.text == "" then
-			hook.Remove("ChatHudDraw", "chathud")
-			return
-		end
-
-		-- can't draw here cause PushModelMatrix behaves strange when called in panels
-		chathud.panel:SetPos(panel:LocalToScreen(0, -chathud.markup.height + panel:GetTall()/4))
-		chathud.panel:SetSize(panel:GetSize())
-
-		return false
+	hook.Add("HUDShouldDraw", "chathud", function(what)
+		if what == "CHudChat" then return false end
 	end)
 end
 
