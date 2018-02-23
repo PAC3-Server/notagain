@@ -166,7 +166,7 @@ if CLIENT then
 			if self:HasHierarchicalFocus() and input.IsKeyDown(KEY_ESCAPE) then
 				self:OnClose()
 				gui.HideGameUI()
-				return
+				return true
 			end
 
 			if cvars.default_position:GetBool() then
@@ -298,6 +298,7 @@ if CLIENT then
 			local text_input = vgui.Create("DTextEntry", chat)
 			chatbox.text_input = text_input
 			text_input:SetUpdateOnType(true)
+			text_input:SetAllowNonAsciiCharacters(true)
 			text_input:SetMultiline(true)
 			text_input:Dock(BOTTOM)
 			local initial_height = text_input:GetTall()
@@ -316,7 +317,7 @@ if CLIENT then
 			end
 			text_input.OnKeyCodeTyped = function(self, key)
 
-				if key == KEY_BACKSPACE and input.IsControlDown() then
+				if key == KEY_BACKSPACE and input.IsControlDown() and self:GetCaretPos() > 0 then
 					local str = self:GetText()
 
 					local caret_pos = self:GetCaretPos()
@@ -339,7 +340,7 @@ if CLIENT then
 							i == 1
 						then
 							if i == 1 then
-								self:SetText("")
+								self:SetText(right)
 							else
 								left = utf8.sub(left, 0, i)
 								self:SetText(left .. right)
@@ -350,7 +351,7 @@ if CLIENT then
 					end
 				end
 
-				if key == KEY_DELETE and input.IsControlDown() then
+				if key == KEY_DELETE and input.IsControlDown() and self:GetCaretPos() < #self:GetText() then
 					local str = self:GetText()
 
 					local caret_pos = self:GetCaretPos()
@@ -384,6 +385,12 @@ if CLIENT then
 				end
 
 				if not text_input:IsMultiline() and (key == KEY_UP or key == KEY_DOWN) then
+					local str = self:GetText()
+
+					if str:Trim() ~= "" and chatbox.history[#chatbox.history] ~= str then
+						table.insert(chatbox.history, str)
+					end
+
 					chatbox.history_i = chatbox.history_i or 1
 
 					if key == KEY_UP then
@@ -413,7 +420,7 @@ if CLIENT then
 					local str = self:GetText()
 					_G.chat.SayServer(str)
 
-					if chatbox.history[#chatbox.history] ~= str then
+					if str:Trim() ~= "" and chatbox.history[#chatbox.history] ~= str then
 						table.insert(chatbox.history, str)
 					end
 
@@ -482,6 +489,7 @@ if CLIENT then
 		end
 
 		frame:MakePopup()
+		frame:SetFocusTopLevel(true)
 		chatbox.text_input:RequestFocus()
 
 		hook.Add("ChatGetChatBoxPos", "chatbox", function()
@@ -528,7 +536,7 @@ if CLIENT then
 	function chatbox.AddText(...)
 		local args = {...}
 		for _, arg in ipairs(args) do
-			if IsColor(arg) then
+			if type(arg) == "table" and arg.r and arg.g and arg.b and arg.a then
 				chatbox.richtext:InsertColorChange(arg.r, arg.g, arg.b, arg.a)
 			elseif type(arg) == "Player" then
 				local c = team.GetColor(arg:Team())
