@@ -81,7 +81,7 @@ local blacklist = {
 
 local init = false
 
-hook.Add("OnPlayerChat", "chatsounds", function(ply, str)
+local function player_say(ply, str)
 	if not init then
 
 		env.resource.AddProvider("https://github.com/PAC3-Server/chatsounds/raw/master/")
@@ -109,8 +109,12 @@ hook.Add("OnPlayerChat", "chatsounds", function(ply, str)
 
 	env.audio.player_object = ply
 	env.chatsounds.Say(str, math.Round(CurTime()))
+end
+
+hook.Add("OnPlayerChat", "chatsounds", player_say)
+concommand.Add("saysound",function(ply, _,_, str)
+	player_say(ply, str)
 end)
-concommand.Add("saysound",function(ply, _,_, str) doit(ply, str) end) --LEGACY
 
 if not chatsounds_enabled:GetBool() then
 	hook.Remove("OnPlayerChat", "chatsounds")
