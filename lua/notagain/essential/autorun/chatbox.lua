@@ -1,4 +1,6 @@
 local luadev = requirex("luadev")
+local utf8 = requirex("utf8")
+
 local chatbox = _G.chatbox or {}
 if CLIENT then
 	local settings = {
@@ -311,6 +313,73 @@ if CLIENT then
 				_G.chat.TextChanged(text)
 			end
 			text_input.OnKeyCodeTyped = function(self, key)
+
+				if key == KEY_BACKSPACE and input.IsControlDown() then
+					local str = self:GetText()
+
+					local caret_pos = self:GetCaretPos()
+					local left = utf8.sub(str, 0, caret_pos)
+					local right = utf8.sub(str, caret_pos + 1)
+					local char = utf8.sub(left, utf8.length(left), utf8.length(left))
+
+					local test
+
+					local punctation = [==[[!"#$%&'%(%)*+,-./:;<=>?@%[\%]^`{|}~%s]]==]
+					local has_punctation = char:find(punctation)
+
+					local tbl = utf8.totable(left)
+
+					for i = #tbl, 1, -1 do
+						local char = tbl[i]
+						if
+							(has_punctation and not char:find(punctation)) or
+							(not has_punctation and char:find(punctation)) or
+							i == 1
+						then
+							if i == 1 then
+								self:SetText("")
+							else
+								left = utf8.sub(left, 0, i)
+								self:SetText(left .. right)
+								self:SetCaretPos(#left)
+							end
+							break
+						end
+					end
+				end
+
+				if key == KEY_DELETE and input.IsControlDown() then
+					local str = self:GetText()
+
+					local caret_pos = self:GetCaretPos()
+					local left = utf8.sub(str, 0, caret_pos)
+					local right = utf8.sub(str, caret_pos + 1)
+					local char = utf8.sub(right, 1, 1)
+
+					local punctation = [==[[!"#$%&'%(%)*+,-./:;<=>?@%[\%]^`{|}~%s]]==]
+					local has_punctation = char:find(punctation)
+
+					local tbl = utf8.totable(right)
+
+					for i = 1, #tbl do
+						local char = tbl[i]
+						if
+							(has_punctation and not char:find(punctation)) or
+							(not has_punctation and char:find(punctation)) or
+							i == #tbl
+						then
+							if i == #tbl then
+								self:SetText(left)
+								self:SetCaretPos(#left)
+							else
+								right = utf8.sub(right, i)
+								self:SetText(left .. right)
+								self:SetCaretPos(#left)
+							end
+							break
+						end
+					end
+				end
 
 				if not text_input:IsMultiline() and (key == KEY_UP or key == KEY_DOWN) then
 					chatbox.history_i = chatbox.history_i or 1
