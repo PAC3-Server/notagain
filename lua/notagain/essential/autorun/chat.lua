@@ -1,5 +1,11 @@
 local chat = _G.chat or {}
 
+local META = FindMetaTable("Player")
+
+function META:IsTyping()
+	return self:GetNW2Bool("chat_istyping")
+end
+
 if CLIENT then
 
 	local suppress = false
@@ -47,6 +53,10 @@ if CLIENT then
 
 	chat._ChatOpen = chat._ChatOpen or chat.Open
 	function chat.Open(team_chat)
+		net.Start("chat_istyping", true)
+			net.WriteBool(true)
+		net.SendToServer()
+
 		if hook.Run("ChatOpenChatBox", team_chat == 1) == false then
 			return true
 		end
@@ -56,6 +66,10 @@ if CLIENT then
 
 	chat._ChatClose = chat._ChatClose or chat.Close
 	function chat.Close(...)
+		net.Start("chat_istyping", true)
+			net.WriteBool(false)
+		net.SendToServer()
+
 		if hook.Run("ChatCloseChatBox", ...) ~= false then
 			hook.Run("FinishChat")
 			chat.TextChanged("")
@@ -112,12 +126,18 @@ end
 
 if SERVER then
 	util.AddNetworkString("chat_say")
+	util.AddNetworkString("chat_istyping")
 
 	net.Receive("chat_say", function(len, ply)
 		local str = net.ReadString()
 		local team_only = net.ReadBool()
 
 		chat.Say(ply, str, team_only)
+	end)
+
+	net.Receive("chat_istyping", function(len, ply)
+		local b = net.ReadBool()
+		ply:SetNW2Bool("chat_istyping", b)
 	end)
 
 	function chat.Say(ply, str, team_only)
@@ -133,8 +153,6 @@ if SERVER then
 			net.WriteBool(team_only)
 		net.Broadcast()
 	end
-
-	local META = FindMetaTable("Player")
 
 	function META:Say(str, b)
 		chat.Say(self, str)
