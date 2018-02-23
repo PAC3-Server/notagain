@@ -50,7 +50,7 @@ if CLIENT then
 	end
 
 	chatbox.cvars = cvars
-	chatbox.history = chatbox.history or {}
+	chatbox.history = {}
 
 	if IsValid(chatbox.frame) then
 		chatbox.frame:Remove()
@@ -395,9 +395,7 @@ if CLIENT then
 					if chatbox.history_i < 1 then chatbox.history_i = #chatbox.history end
 					if chatbox.history_i > #chatbox.history then chatbox.history_i = 1 end
 
-					local str = table.remove(chatbox.history, chatbox.history_i)
-					self:SetText(str)
-					table.insert(chatbox.history, str)
+					self:SetText(chatbox.history[chatbox.history_i])
 					self:SetCaretPos(#self:GetText())
 				end
 
@@ -413,11 +411,13 @@ if CLIENT then
 					local str = self:GetText()
 					_G.chat.SayServer(str)
 
-					if not table.HasValue(chatbox.history, str) then
+					if chatbox.history[#chatbox.history] ~= str then
 						table.insert(chatbox.history, str)
 					end
 
 					chatbox.history_i = 1
+
+
 
 					self:Clear()
 
