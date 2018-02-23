@@ -131,8 +131,9 @@ if SERVER then
 	net.Receive("chat_say", function(len, ply)
 		local str = net.ReadString()
 		local team_only = net.ReadBool()
-
-		chat.Say(ply, str, team_only)
+		if str ~= "" then
+			chat.Say(ply, str, team_only)
+		end
 	end)
 
 	net.Receive("chat_istyping", function(len, ply)
