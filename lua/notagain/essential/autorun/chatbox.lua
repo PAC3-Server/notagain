@@ -154,11 +154,11 @@ if CLIENT then
 		AccessorFunc( PANEL, "m_bDraggable", "Draggable", FORCE_BOOL )
 
 		function PANEL:OnMousePressed(...)
-			return DFrame.OnMousePressed(...)
+			return DFrame.OnMousePressed(self, ...)
 		end
 
 		function PANEL:OnMouseReleased(...)
-			return DFrame.OnMouseReleased(...)
+			return DFrame.OnMouseReleased(self, ...)
 		end
 
 		function PANEL:Think()
