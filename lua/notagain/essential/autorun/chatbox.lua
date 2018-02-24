@@ -166,6 +166,12 @@ if CLIENT then
 			if self:HasHierarchicalFocus() and input.IsKeyDown(KEY_ESCAPE) then
 				self:OnClose()
 				gui.HideGameUI()
+				hook.Add("HUDSHouldDraw", "chatbox", function(str)
+					if str == "CHudMenu" then
+						hook.Remove("HUDShouldDraw", "chatbox")
+						return false
+					end
+				end)
 				return true
 			end
 
@@ -296,6 +302,240 @@ if CLIENT then
 		do -- chat
 			local chat = vgui.Create("Panel", frame)
 			local text_input = vgui.Create("DTextEntry", chat)
+
+			local stickers = vgui.Create("DImageButton", text_input)
+			stickers:SetImage("icon16/emoticon_smile.png")
+			stickers:SizeToContents()
+
+			stickers.DoClick = function()
+				local env = requirex("goluwa").env
+				local dir = "chatbox_sticker_sets"
+				file.CreateDir(dir)
+				dir = dir .. "/"
+
+				local frame = vgui.Create("DFrame")
+				frame:SetTitle("stickers")
+				frame:SetSize(512, 512)
+				frame:Center()
+				frame:SetSizable(true)
+				frame:MakePopup()
+
+				local content = frame:Add("DPanel")
+				content:Dock(FILL)
+
+				local scroll = content:Add("DScrollPanel")
+				scroll:Dock(FILL)
+
+				local bottom = content:Add("DPanel")
+				bottom:SetTall(64)
+				bottom:Dock(BOTTOM)
+
+				local set_scroller = bottom:Add("DHorizontalScroller")
+				set_scroller:SetTall(64)
+				set_scroller:Dock(FILL)
+				set_scroller.Paint = function(self, w, h)
+					derma.SkinHook("Paint", "CategoryButton", self, w, h)
+				end
+
+				local icons = scroll:Add("DIconLayout")
+				icons:Dock(FILL)
+
+				local function refresh_sets()
+					set_scroller:Clear()
+
+					if DEFAULT_LINE_STICKERS then
+						for name, content in pairs(DEFAULT_LINE_STICKERS) do
+							content = content:Trim()
+							file.Write(dir .. name .. ".txt", content)
+						end
+					end
+
+					for _, path in ipairs((file.Find(dir .. "*", "DATA"))) do
+						local stickers = file.Read(dir .. path, "DATA"):Trim():Split("\n")
+						local icon = table.remove(stickers, 1)
+
+						local btn = vgui.Create("DImageButton")
+						btn:SetSize(64,64)
+						set_scroller:AddPanel(btn)
+
+						local tex = env.render.CreateTextureFromPath(icon)
+						btn.Paint = function()
+							local x, y = btn:LocalToScreen(0,0)
+							env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex)
+						end
+
+						btn.DoClick = function()
+							icons:Clear()
+							for _, url in ipairs(stickers) do
+								local btn = icons:Add("DImageButton")
+
+								local tex = env.render.CreateTextureFromPath( url)
+
+								btn.Paint = function()
+									local x, y = btn:LocalToScreen(0,0)
+									env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex)
+								end
+
+								btn.Think = function()
+									local size = tex:GetSize()
+									if btn.last_size ~= size then
+										local ratio = size.x/size.y
+
+										btn:SetSize(90 * ratio, 90)
+										scroll:InvalidateLayout(true)
+										content:InvalidateLayout(true)
+										btn.last_size = size
+									end
+								end
+
+								btn.DoClick = function()
+									_G.chat.SayServer("<texture=" ..  url .. ">")
+									chatbox.Close()
+									frame:Remove()
+								end
+
+								btn:Paint()
+							end
+						end
+					end
+				end
+
+				refresh_sets()
+
+				local add_set = bottom:Add("DImageButton")
+				add_set:SetSize(64, 64)
+				add_set:Dock(RIGHT)
+				add_set:SetImage("icon16/add.png")
+				add_set.DoClick = function()
+					local frame = vgui.Create("DFrame")
+					frame:SetSize(256, 256)
+					frame:MakePopup()
+					frame:Center()
+
+					local list = frame:Add("DListView")
+					list:SetMultiSelect(false)
+					list:Dock(FILL)
+
+					list:AddColumn("name")
+
+					local selected
+
+					list.OnRowSelected = function(_, index, pnl)
+						selected = pnl:GetColumnText(1)
+					end
+
+					local function refresh()
+						list:Clear()
+						for _, path in ipairs((file.Find(dir .. "*", "DATA"))) do
+							list:AddLine(path:sub(0, -5))
+						end
+						refresh_sets()
+					end
+
+					local function save_set(name, content, cb)
+						if tonumber(content) then
+							env.utility.DownloadLineStickers(content, function(tbl)
+								local str = ""
+								str = str .. tbl.icon_path .. "\n"
+								for i, path in ipairs(tbl.stickers) do
+									str = str .. path .. "\n"
+								end
+								file.Write(dir .. name .. ".txt", str)
+								cb()
+							end)
+						else
+							file.Write(dir .. name .. ".txt", content)
+							cb()
+						end
+					end
+
+					refresh()
+
+					local bottom = frame:Add("Panel")
+					bottom:Dock(BOTTOM)
+
+						local add = bottom:Add("DButton")
+						add:SetText("add")
+						add:Dock(LEFT)
+						add.DoClick = function()
+							local frame = vgui.Create("DFrame")
+							frame:SetSize(256, 256)
+							frame:MakePopup()
+							frame:Center()
+							frame:SetSizable(true)
+
+							local entry = frame:Add("DTextEntry")
+							entry:SetMultiline(true)
+							entry:Dock(FILL)
+
+							local save = frame:Add("DButton")
+							save:SetText("save")
+							save:Dock(BOTTOM)
+							save.DoClick = function()
+								Derma_StringRequest(
+									"File name",
+									"Choose a file name",
+									"",
+									function(name)
+										save:SetText("saving..")
+										save_set(name, entry:GetText(), function()
+											refresh()
+											frame:Remove()
+										end)
+									end,
+									function() end
+								)
+							end
+						end
+
+						local edit = bottom:Add("DButton")
+						edit:SetText("edit")
+						edit:Dock(LEFT)
+						edit.DoClick = function()
+							if not selected then return end
+							local selected = selected
+
+							local frame = vgui.Create("DFrame")
+							frame:SetSize(256, 256)
+							frame:MakePopup()
+							frame:Center()
+							frame:SetSizable(true)
+
+							local entry = frame:Add("DTextEntry")
+							entry:SetMultiline(true)
+							entry:Dock(FILL)
+
+							entry:SetText(file.Read(dir .. selected .. ".txt"))
+
+							local save = frame:Add("DButton")
+							save:SetText("save")
+							save:Dock(BOTTOM)
+							save.DoClick = function()
+								save:SetText("saving...")
+								save_set(selected, entry:GetText(), function()
+									frame:Remove()
+								end)
+							end
+						end
+
+						local rem = bottom:Add("DButton")
+						rem:SetText("remove")
+						rem:Dock(LEFT)
+						rem.DoClick = function()
+							if selected then
+								file.Delete(dir .. selected .. ".txt")
+								refresh()
+							end
+						end
+				end
+			end
+
+			function chat:PerformLayout()
+				stickers:AlignRight()
+				stickers:CenterVertical()
+			end
+
+
 			chatbox.text_input = text_input
 			text_input:SetUpdateOnType(true)
 			text_input:SetAllowNonAsciiCharacters(true)

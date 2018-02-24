@@ -501,7 +501,7 @@ function goluwa.CreateEnv()
 		env["table.new"] = false
 		env["table.clear"] = false
 		env["deflatelua"] = false
-		env["lunajson"] = false
+		env["lunajson"] = {encode = util.TableToJSON, decode = util.JSONToTable}
 
 		env.msgpack = {encode = msgpack.pack, decode = msgpack.unpack}
 		env.msgpack2 = false
@@ -526,6 +526,7 @@ function goluwa.CreateEnv()
 	env.structs = env.runfile("framework/lua/libraries/structs.lua")
 
 	env.utility = env.runfile("core/lua/libraries/utility.lua")
+	env.runfile("game/lua/libraries/utilities/line.lua", env.utility)
 
 	env.vfs = env.runfile("core/lua/libraries/filesystem/vfs.lua")
 	env.vfs.Mount("os:/data/goluwa/data/", "os:data/")
