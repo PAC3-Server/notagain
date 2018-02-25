@@ -293,6 +293,16 @@ function surface.CreateFont(id, tbl, ...)
 	}, ...)
 end
 
+function surface.GetFonts()
+	local out = {}
+
+	for k,v in pairs(full_name_lookup) do
+		table.insert(out, k)
+	end
+
+	return out
+end
+
 local function display_chunk(str, pattern)
 	if pattern then
 		local start, stop = str:find(pattern)
