@@ -382,7 +382,7 @@ if CLIENT then
 						local tex = env.render.CreateTextureFromPath(data.icon)
 						btn.Paint = function()
 							local x, y = btn:LocalToScreen(0,0)
-							env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex)
+							env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex, 1,1,1,1)
 						end
 
 						btn.DoClick = function()
@@ -408,9 +408,6 @@ if CLIENT then
 									end
 
 									btn.PaintX = function(_, w, h)
-										surface.SetDrawColor(0, 0, 0, 50)
-										surface.DrawRect(0,0,w,h)
-
 										local x, y = btn:LocalToScreen(0, 0)
 
 										markup:SetMaxWidth(1000)
@@ -444,7 +441,7 @@ if CLIENT then
 
 									btn.Paint = function()
 										local x, y = btn:LocalToScreen(0,0)
-										env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex)
+										env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex, 1,1,1,1)
 									end
 
 									btn.Think = function()
