@@ -28,7 +28,14 @@ local function hook_error(cb)
 end
 
 if CLIENT then
+	local last_error = setmetatable({}, {__mode = "kv"})
+
 	hook_error(function(msg, traceback, stack)
+		local hash = msg .. traceback:gsub(" = .-\n", "")
+
+		if last_error[hash] and last_error[hash] < SysTime() then return end
+		last_error[hash] = SysTime() + 1
+
 		net.Start("client_lua_error", true)
 			net.WriteString(msg)
 			net.WriteString(traceback)
