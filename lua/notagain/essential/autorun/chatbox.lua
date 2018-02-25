@@ -22,6 +22,23 @@ if CLIENT then
 				chatbox.frame.close_btn:SetVisible(b)
 			end,
 		},
+		{
+			cvar = "font_size",
+			name = "size",
+			default = 15,
+			callback = function()
+				chatbox.richtext:SetFontInternal(chatbox.GetFont())
+			end,
+		},
+		{
+			cvar = "font_name",
+			name = "font",
+			default = "roboto regular",
+			choices = surface.GetFonts and surface.GetFonts() or {"roboto regular"},
+			callback = function()
+				chatbox.richtext:SetFontInternal(chatbox.GetFont())
+			end,
+		}
 	}
 
 	local cvars = {}
@@ -772,6 +789,7 @@ if CLIENT then
 			chatbox.chat_tab = tab
 
 			local history = vgui.Create("RichText", chat)
+			history:SetFontInternal(chatbox.GetFont())
 			history.ActionSignal = function(self, name, value)
 				if name == "TextClicked" then
 					gui.OpenURL(value)
@@ -798,16 +816,32 @@ if CLIENT then
 		end
 
 		do -- settings tab
-			local pnl = vgui.Create( "DForm", frame )
-			pnl:SetSpacing(5)
+			local scroll = frame:Add("DScrollPanel")
+
+			local pnl = scroll:Add("DForm")
+			pnl:Dock(FILL)
+
+			pnl:SetName("settings")
 
 			for i,v in ipairs(settings) do
-				pnl:CheckBox(v.name, "chatbox_" .. v.cvar)
+				if v.choices then
+					local box = pnl:ComboBox("font", "chatbox_" .. v.cvar)
+					for _, font_name in ipairs(v.choices) do
+						box:AddChoice(font_name)
+					end
+				elseif type(v.default) == "number" then
+					pnl:NumSlider(v.name, "chatbox_" .. v.cvar, 1, 30, 0)
+				else
+					pnl:CheckBox(v.name, "chatbox_" .. v.cvar)
+				end
 			end
 
+			pnl:Help("")
 
-			local tab = frame:AddSheet( "settings", pnl)
-			tab.focus_me = pnl
+			pnl:Rebuild()
+
+			local tab = frame:AddSheet( "settings", scroll)
+			tab.focus_me = scroll
 		end
 
 		frame:MakePopup()
@@ -853,6 +887,22 @@ if CLIENT then
 	function chatbox.Close()
 		chatbox.frame:SetVisible(false)
 		chatbox.text_input:Clear()
+	end
+
+	function chatbox.GetFont()
+		if
+			not chatbox.font or
+			chatbox.font_size ~= chatbox.cvars.font_size:GetInt() or
+			chatbox.font_name ~= chatbox.cvars.font_name:GetString()
+		then
+			surface.CreateFont("chatbox_font", {
+				font = chatbox.cvars.font_name:GetString(),
+				size = chatbox.cvars.font_size:GetInt(),
+				antialias = true,
+				extended = true,
+			})
+		end
+		return "chatbox_font"
 	end
 
 	chatbox.addtext_history = {}
