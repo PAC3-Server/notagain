@@ -53,6 +53,9 @@ if CLIENT then
 	chatbox.history = {}
 
 	if IsValid(chatbox.frame) then
+		chatbox.old_text_input_state = {str = chatbox.text_input:GetText(), cpos = chatbox.text_input:GetCaretPos()}
+		chatbox.old_addtext_history = chatbox.addtext_history
+		chatbox.was_open = chatbox.frame:IsVisible()
 		chatbox.frame:Remove()
 	end
 
@@ -303,13 +306,19 @@ if CLIENT then
 			local chat = vgui.Create("Panel", frame)
 			local text_input = vgui.Create("DTextEntry", chat)
 
+			if chatbox.old_text_input_state then
+				text_input:SetText(chatbox.old_text_input_state.str)
+				text_input:SetCaretPos(chatbox.old_text_input_state.cpos)
+				chatbox.old_text_input_state = nil
+			end
+
 			local stickers = vgui.Create("DImageButton", text_input)
 			stickers:SetImage("icon16/emoticon_smile.png")
 			stickers:SizeToContents()
 
 			stickers.DoClick = function()
 				local env = requirex("goluwa").env
-				local dir = "chatbox_sticker_sets"
+				local dir = "chatbox_stickers"
 				file.CreateDir(dir)
 				dir = dir .. "/"
 
@@ -340,62 +349,128 @@ if CLIENT then
 				local icons = scroll:Add("DIconLayout")
 				icons:Dock(FILL)
 
+				local selected_set
+
 				local function refresh_sets()
 					set_scroller:Clear()
 
-					if DEFAULT_LINE_STICKERS then
-						for name, content in pairs(DEFAULT_LINE_STICKERS) do
-							content = content:Trim()
-							file.Write(dir .. name .. ".txt", content)
+					local sets = {}
+
+					if DEFAULT_CHATBOX_STICKERS then
+						for i, data in ipairs(DEFAULT_CHATBOX_STICKERS) do
+							table.insert(sets, data)
 						end
 					end
 
 					for _, path in ipairs((file.Find(dir .. "*", "DATA"))) do
+						local name = path:sub(0, -5)
 						local stickers = file.Read(dir .. path, "DATA"):Trim():Split("\n")
 						local icon = table.remove(stickers, 1)
+						table.insert(sets, {
+							name = name,
+							icon = icon,
+							stickers = stickers,
+						})
+					end
 
+					for _, data in ipairs(sets) do
 						local btn = vgui.Create("DImageButton")
+						btn:SetTooltip(data.name)
 						btn:SetSize(64,64)
 						set_scroller:AddPanel(btn)
 
-						local tex = env.render.CreateTextureFromPath(icon)
+						local tex = env.render.CreateTextureFromPath(data.icon)
 						btn.Paint = function()
 							local x, y = btn:LocalToScreen(0,0)
 							env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex)
 						end
 
 						btn.DoClick = function()
+							selected_set = path
+
 							icons:Clear()
-							for _, url in ipairs(stickers) do
+							for _, url in ipairs(data.stickers) do
+								url = url:Trim()
+
+								if url == "" then continue end
+
 								local btn = icons:Add("DImageButton")
 
-								local tex = env.render.CreateTextureFromPath( url)
+								if url:find("<", nil, true) then
+									btn:SetSize(90, 90)
+									local markup = env.gfx.CreateMarkup()
+									markup:SetText(url, true)
 
-								btn.Paint = function()
-									local x, y = btn:LocalToScreen(0,0)
-									env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex)
-								end
+									btn.Think = function()
+										scroll:InvalidateLayout()
+										content:InvalidateLayout()
+										btn.Think = function() end
+									end
 
-								btn.Think = function()
-									local size = tex:GetSize()
-									if btn.last_size ~= size then
-										local ratio = size.x/size.y
+									btn.PaintX = function(_, w, h)
+										surface.SetDrawColor(0, 0, 0, 50)
+										surface.DrawRect(0,0,w,h)
 
-										btn:SetSize(90 * ratio, 90)
-										scroll:InvalidateLayout(true)
-										content:InvalidateLayout(true)
-										btn.last_size = size
+										local x, y = btn:LocalToScreen(0, 0)
+
+										markup:SetMaxWidth(1000)
+										markup:Update()
+
+										surface.DisableClipping(true)
+										env.render2d.PushMatrix(x + w/2 - markup.width/2, y + h/2 - markup.height/2)
+											markup:Draw()
+										env.render2d.PopMatrix()
+										surface.DisableClipping(false)
+									end
+
+									hook.Add("PostRenderVGUI", "goluwa_markup_draw", function()
+										if not icons:IsValid() then hook.Remove("PostRenderVGUI", "goluwa_markup_draw") return end
+										for i,v in ipairs(icons:GetChildren()) do
+											if v.PaintX then
+												v:PaintX(v:GetSize())
+											end
+										end
+									end)
+
+									btn.DoClick = function()
+										_G.chat.SayServer(url)
+										chatbox.Close()
+										frame:Remove()
+									end
+
+									btn:Paint(btn:GetSize())
+								else
+									local tex = env.render.CreateTextureFromPath(url)
+
+									btn.Paint = function()
+										local x, y = btn:LocalToScreen(0,0)
+										env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex)
+									end
+
+									btn.Think = function()
+										local size = tex:GetSize()
+										if btn.last_size ~= size then
+											local ratio = size.x/size.y
+
+											btn:SetSize(90 * ratio, 90)
+											scroll:InvalidateLayout(true)
+											content:InvalidateLayout(true)
+											btn.last_size = size
+										end
+									end
+
+									btn.DoClick = function()
+										_G.chat.SayServer("<texture=" ..  url .. ">")
+										chatbox.Close()
+										frame:Remove()
 									end
 								end
 
-								btn.DoClick = function()
-									_G.chat.SayServer("<texture=" ..  url .. ">")
-									chatbox.Close()
-									frame:Remove()
-								end
-
-								btn:Paint()
 							end
+						end
+
+						if selected_set == path then
+							btn:DoClick()
 						end
 					end
 				end
@@ -405,7 +480,7 @@ if CLIENT then
 				local add_set = bottom:Add("DImageButton")
 				add_set:SetSize(64, 64)
 				add_set:Dock(RIGHT)
-				add_set:SetImage("icon16/add.png")
+				add_set:SetImage("icon64/tool.png")
 				add_set.DoClick = function()
 					local frame = vgui.Create("DFrame")
 					frame:SetSize(256, 256)
@@ -513,6 +588,7 @@ if CLIENT then
 							save.DoClick = function()
 								save:SetText("saving...")
 								save_set(selected, entry:GetText(), function()
+									refresh()
 									frame:Remove()
 								end)
 							end
@@ -534,7 +610,6 @@ if CLIENT then
 				stickers:AlignRight()
 				stickers:CenterVertical()
 			end
-
 
 			chatbox.text_input = text_input
 			text_input:SetUpdateOnType(true)
@@ -707,6 +782,16 @@ if CLIENT then
 			end
 			history:Dock(FILL)
 			chatbox.richtext = history
+
+			if chatbox.old_addtext_history then
+				for i,v in ipairs(chatbox.old_addtext_history) do
+					chatbox.restoring = true
+					chatbox.AddText(unpack(v))
+					chatbox.restoring = nil
+				end
+				timer.Simple(0, function() chatbox.richtext:GotoTextEnd() end)
+				chatbox.old_addtext_history = nil
+			end
 		end
 
 		do -- lua tab
@@ -773,12 +858,17 @@ if CLIENT then
 		chatbox.text_input:Clear()
 	end
 
+	chatbox.addtext_history = {}
+
 	function chatbox.AddText(...)
 		local args = {...}
+
+		table.insert(chatbox.addtext_history, args)
+
 		for _, arg in ipairs(args) do
 			if type(arg) == "table" and arg.r and arg.g and arg.b and arg.a then
 				chatbox.richtext:InsertColorChange(arg.r, arg.g, arg.b, arg.a)
-			elseif type(arg) == "Player" then
+			elseif type(arg) == "Player" and arg:IsValid() then
 				local c = team.GetColor(arg:Team())
 				chatbox.richtext:InsertColorChange(c.r, c.g, c.b, c.a)
 				chatbox.richtext:AppendText(arg:Nick())
@@ -802,12 +892,19 @@ if CLIENT then
 			end
 		end
 
+		if chatbox.restoring then return end
+
 		chatbox.richtext:AppendText("\n")
 
 		table.insert(args, "\n")
 
 		return hook.Run("ChatHUDAddText", args)
 	end
+end
+
+if chatbox.was_open then
+	chatbox.Open()
+	chatbox.was_open = nil
 end
 
 _G.chatbox = chatbox
