@@ -104,7 +104,7 @@ local function player_say(ply, str)
 		env.audio.Panic()
 	end
 
-	if str:Trim():find("^%b<>$") then return end
+	if str:Trim():find("^<.*>$") then return end
 
 	env.audio.player_object = ply
 	env.chatsounds.Say(str, math.Round(CurTime()))
