@@ -2,4 +2,7 @@ if not _G.notagain then
 	include("notagain.lua")
 end
 
-notagain.Autorun()
+hook.Add("PostGamemodeLoaded", "notagain", function()
+	notagain.Autorun()
+	hook.Remove("PostGamemodeLoaded", "notagain")
+end)
