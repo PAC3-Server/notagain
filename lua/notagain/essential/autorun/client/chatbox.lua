@@ -115,7 +115,11 @@ function chatbox.Open()
 	end
 
 	do -- chat
-		local chat = frame:Add("Panel")
+		local chat = frame:Add("DPanel")
+		chat.Paint = function(self,w,h)
+			surface.SetDrawColor(self:GetSkin().bg_color_dark)
+			surface.DrawRect(0,0,w,h)
+		end
 
 		local bottom = chat:Add("Panel")
 		bottom:Dock(BOTTOM)
