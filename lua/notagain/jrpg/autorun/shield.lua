@@ -537,7 +537,9 @@ if SERVER then
 			for k,v in pairs(ply:GetWeapons()) do
 				if v.is_shield and ply:GetActiveWeapon() ~= v then
 					v:GlobalThink()
-					v:ShowShield()
+					if ply:GetNWEntity("shield", NULL):IsValid() then
+						v:ShowShield()
+					end
 					break
 				end
 			end
@@ -545,7 +547,9 @@ if SERVER then
 			for k,v in pairs(ply:GetWeapons()) do
 				if v.is_shield and ply:GetActiveWeapon() ~= v then
 					v:GlobalThink()
-					v:HideShield()
+					if ply:GetNWEntity("shield", NULL):IsValid() then
+						v:HideShield()
+					end
 					break
 				end
 			end
