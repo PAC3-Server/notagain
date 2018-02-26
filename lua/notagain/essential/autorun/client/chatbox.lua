@@ -155,6 +155,7 @@ function chatbox.Open()
 		local tab = frame:AddSheet("chat", chat)
 		tab.focus_me = text_input
 		chatbox.chat_tab = tab
+		chatbox.chat_panel = chat
 
 		local richtext = chat:Add("RichText")
 		richtext.ActionSignal = function(self, name, value)
@@ -179,6 +180,7 @@ function chatbox.Open()
 
 	do -- lua tab
 		local lua = frame:Add("ChatboxLuaTab")
+		chatbox.lua_panel = lua
 		local tab = frame:AddSheet( "lua", lua)
 		tab.focus_me = lua
 	end
@@ -731,7 +733,7 @@ do -- panels
 		end
 
 		function PANEL:Think()
-			if self:HasHierarchicalFocus() then
+			if chatbox.chat_panel:HasHierarchicalFocus() then
 				for i = KEY_0, KEY_Z do
 					if input.IsKeyDown(i) then
 						chatbox.text_input:RequestFocus()
@@ -742,9 +744,23 @@ do -- panels
 				if input.IsKeyDown(KEY_ENTER) then
 					chatbox.text_input:RequestFocus()
 				end
+			end
 
+			if chatbox.lua_panel:HasHierarchicalFocus() then
+				for i = KEY_0, KEY_Z do
+					if input.IsKeyDown(i) then
+						chatbox.lua_panel.HTMLIDE:RequestFocus()
+						break
+					end
+				end
+
+				if input.IsKeyDown(KEY_ENTER) then
+					chatbox.lua_panel.HTMLIDE:RequestFocus()
+				end
+			end
+
+			if self:HasHierarchicalFocus() then
 				if input.IsKeyDown(KEY_ESCAPE) then
-					RunConsoleCommand("gameui_preventescapetoshow")
 					self:OnClose()
 				end
 			end
