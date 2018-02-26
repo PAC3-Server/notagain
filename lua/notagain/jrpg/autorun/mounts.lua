@@ -100,7 +100,7 @@ if CLIENT then
 		local veh = ply:GetVehicle()
 		if veh:IsValid() then
 			local self = veh:GetParent()
-			if self:GetClass() == ENT.ClassName then
+			if self:IsValid() and self:GetClass() == ENT.ClassName then
 				return self:CalcView(ply, origin, angles)
 			end
 		end
