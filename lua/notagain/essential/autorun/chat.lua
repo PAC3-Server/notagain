@@ -7,24 +7,17 @@ function META:IsTyping()
 end
 
 if CLIENT then
+	timer.Simple(0, function()
+		chat._GAMEMODEStartChat = chat._GAMEMODEStartChat or GAMEMODE.StartChat
+		function GAMEMODE:StartChat(b)
+			chat._GAMEMODEStartChat(self, b)
 
-	local suppress = false
+			local val = chat.Open(b)
 
-	hook.Add("PlayerBindPress", "chat", function(ply, bind, status)
-		if bind == "messagemode" or bind == "messagemode2" then
-			local team_only = bind == "messagemode2"
-			suppress = true
-			if hook.Run("StartChat", team_only) ~= true then
-				chat.Open(team_only and 0 or 1)
+			if val ~= nil then
+				return val
 			end
-			suppress = false
-			return true
 		end
-	end)
-
-	hook.Add("StartChat", "chat", function()
-		if suppress then return end
-		return true
 	end)
 
 	-- this can only be used by one chatbox
