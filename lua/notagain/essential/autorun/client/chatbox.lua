@@ -301,13 +301,13 @@ hook.Add("ChatCloseChatBox", "chatbox", function()
 end)
 
 hook.Add("ChatGetChatBoxPos", "chatbox", function()
-	if chatbox.frame:IsValid() then
+	if not chatbox.cvars.default_position:GetBool() and chatbox.frame:IsValid() then
 		return chatbox.frame:GetPos()
 	end
 end)
 
 hook.Add("ChatGetChatBoxSize", "chatbox", function()
-	if chatbox.frame:IsValid() then
+	if not chatbox.cvars.default_position:GetBool() and chatbox.frame:IsValid() then
 		return chatbox.frame:GetSize()
 	end
 end)
