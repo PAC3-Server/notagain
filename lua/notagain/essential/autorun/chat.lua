@@ -32,16 +32,24 @@ if CLIENT then
 
 	chat._GetChatBoxPos = chat._GetChatBoxPos or chat.GetChatBoxPos
 	function chat.GetChatBoxPos(...)
-		if hook.Run("ChatGetChatBoxPos", ...) ~= false then
-			return chat._GetChatBoxPos(...)
+		local x, y = hook.Run("ChatGetChatBoxPos", ...)
+
+		if x ~= nil then
+			return x, y
 		end
+
+		return chat._GetChatBoxPos(...)
 	end
 
 	chat._GetChatBoxSize = chat._GetChatBoxSize or chat.GetChatBoxSize
 	function chat.GetChatBoxSize(...)
-		if hook.Run("ChatGetChatBoxSize", ...) ~= false then
-			return chat._GetChatBoxSize(...)
+		local w, h = hook.Run("ChatGetChatBoxSize", ...)
+
+		if w ~= nil then
+			return w, h
 		end
+
+		return chat._GetChatBoxSize(...)
 	end
 
 	chat._ChatOpen = chat._ChatOpen or chat.Open
