@@ -30,8 +30,8 @@ if CLIENT then
 		end
 	end
 
-	chat._GetChatBoxSize = chat._GetChatBoxSize or chat.GetChatBoxSize
-	function chat.GetChatBoxSize(...)
+	chat._GetChatBoxPos = chat._GetChatBoxPos or chat.GetChatBoxPos
+	function chat.GetChatBoxPos(...)
 		if hook.Run("ChatGetChatBoxPos", ...) ~= false then
 			return chat._GetChatBoxPos(...)
 		end
