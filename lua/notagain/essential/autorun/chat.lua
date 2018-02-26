@@ -30,26 +30,32 @@ if CLIENT then
 		end
 	end
 
-	chat._GetChatBoxPos = chat._GetChatBoxPos or chat.GetChatBoxPos
-	function chat.GetChatBoxPos(...)
-		local x, y = hook.Run("ChatGetChatBoxPos", ...)
+	do
+		local X, Y, W, H
 
-		if x ~= nil then
-			return x, y
+		chat._GetChatBoxPos = chat._GetChatBoxPos or chat.GetChatBoxPos
+		function chat.GetChatBoxPos(...)
+			local x, y = hook.Run("ChatGetChatBoxPos", ...)
+
+			if x ~= nil then
+				return x, y
+			end
+
+			--return chat._GetChatBoxPos(...)
+			return math.Round(ScrW()/88), math.Round(ScrH()/1.75)
 		end
 
-		return chat._GetChatBoxPos(...)
-	end
+		chat._GetChatBoxSize = chat._GetChatBoxSize or chat.GetChatBoxSize
+		function chat.GetChatBoxSize(...)
+			local w, h = hook.Run("ChatGetChatBoxSize", ...)
 
-	chat._GetChatBoxSize = chat._GetChatBoxSize or chat.GetChatBoxSize
-	function chat.GetChatBoxSize(...)
-		local w, h = hook.Run("ChatGetChatBoxSize", ...)
+			if w ~= nil then
+				return w, h
+			end
 
-		if w ~= nil then
-			return w, h
+			--return chat._GetChatBoxSize(...)
+			return math.Round(ScrW() * 0.375), math.Round(ScrH() * 0.25)
 		end
-
-		return chat._GetChatBoxSize(...)
 	end
 
 	chat._ChatOpen = chat._ChatOpen or chat.Open
