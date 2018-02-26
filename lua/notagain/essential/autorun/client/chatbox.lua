@@ -2,6 +2,9 @@ local luadev = requirex("luadev")
 local utf8 = requirex("utf8")
 
 local chatbox = _G.chatbox or {}
+
+chatbox.frame = chatbox.frame or NULL
+
 local settings = {
 	{
 		cvar = "default_position",
