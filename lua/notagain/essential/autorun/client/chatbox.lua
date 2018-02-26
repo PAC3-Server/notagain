@@ -666,7 +666,7 @@ do -- panels
 							btn.DoClick = function()
 								_G.chat.SayServer(url)
 								chatbox.Close()
-								frame:Remove()
+								self:Remove()
 							end
 
 							btn:Paint(btn:GetSize())
@@ -731,16 +731,22 @@ do -- panels
 		end
 
 		function PANEL:Think()
-			if self:HasHierarchicalFocus() and input.IsKeyDown(KEY_ESCAPE) then
-				self:OnClose()
-				gui.HideGameUI()
-				hook.Add("HUDSHouldDraw", "chatbox", function(str)
-					if str == "CHudMenu" then
-						hook.Remove("HUDShouldDraw", "chatbox")
-						return false
+			if self:HasHierarchicalFocus() then
+				for i = KEY_0, KEY_Z do
+					if input.IsKeyDown(i) then
+						chatbox.text_input:RequestFocus()
+						break
 					end
-				end)
-				return true
+				end
+
+				if input.IsKeyDown(KEY_ENTER) then
+					chatbox.text_input:RequestFocus()
+				end
+
+				if input.IsKeyDown(KEY_ESCAPE) then
+					RunConsoleCommand("gameui_preventescapetoshow")
+					self:OnClose()
+				end
 			end
 
 			if cvars.default_position:GetBool() then
