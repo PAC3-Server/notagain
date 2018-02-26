@@ -5,6 +5,8 @@ local ok = CreateConVar("profile_startup", "0", FCVAR_ARCHIVE)
 local ProFi = {}
 
 if ok:GetBool() then
+	ok:SetBool(false)
+
 	--[[
 		ProFi v1.3, by Luke Perkin 2012. MIT Licence http://www.opensource.org/licenses/mit-license.php.
 
