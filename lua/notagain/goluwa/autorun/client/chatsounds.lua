@@ -17,13 +17,10 @@ do
 
 	local function query(str, scroll)
 		found_autocomplete = env.autocomplete.Query("chatsounds", str, scroll)
-		print(found_autocomplete, str, scroll)
 	end
 
-	hook.Add("ChatTextChanged", "chatsounds_autocomplete_init", function()
+	hook.Add("StartChat", "chatsounds_autocomplete_init", function()
 		if not chatsounds_enabled:GetBool() then return end
-
-		hook.Remove("ChatTextChanged", "chatsounds_autocomplete_init")
 
 		hook.Add("OnChatTab", "chatsounds_autocomplete", function(str)
 			if str == "random" or random_mode then
