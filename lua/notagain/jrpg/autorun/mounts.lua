@@ -7,15 +7,29 @@ ENT.Spawnable = true
 ENT.AdminSpawnable = false
 ENT.PrintName = "seagull mount"
 ENT.Model = "models/seagull.mdl"
-ENT.Size = 10
 
-
-local scale = 5
-local mins = Vector(1.75, 0.5, 0) * -2 * scale
-local maxs = Vector(0.75, 0.5, 1.5) * 2 * scale
+local mins = Vector(-1.75, -0.5, 0) * 5
+local maxs = Vector(0.75, 0.5, 1.5) * 5
 
 function ENT:SetupDataTables()
 	self:NetworkVar( "Float", 0, "WingFlap" )
+end
+
+function ENT:UpdateSeatPosition()
+	local seat = self.seat or NULL
+	if seat:IsValid() then
+		local pos = self:GetPos()
+		local ang = self:GetAngles()
+		pos = pos + ang:Up() * 30
+		pos = pos + ang:Forward() * -10
+		seat:SetPos(pos)
+		ang:RotateAroundAxis(self:GetUp(), -90)
+		seat:SetAngles(ang)
+
+		if CLIENT then
+			seat:SetupBones()
+		end
+	end
 end
 
 if CLIENT then
@@ -25,8 +39,9 @@ if CLIENT then
 	end
 
 	function ENT:DrawHitBoxes()
+		local s = self:GetModelScale()
 		local color_debug = self:InAir() and Color(0, 0, 255, 128) or Color(255, 0, 0, 128)
-		debugoverlay.BoxAngles(self:GetPos(), mins*5, maxs*5, self:GetAngles(), 0, color_debug)
+		debugoverlay.BoxAngles(self:GetPos(), mins*s, maxs*s, self:GetAngles(), 0, color_debug)
 	end
 
 	function ENT:Draw()
@@ -39,11 +54,13 @@ if CLIENT then
 			self:ManipulateBoneAngles(0, Angle(0,0,0))
 		end
 		self:DrawModel()
+		self:UpdateSeatPosition()
 		self:DrawHitBoxes()
 	end
 
 	function ENT:GetPlayerPosAng()
-		local pos, ang = self:GetBonePosition(self:LookupBone("seagull.pelvis"))
+		local m = self:GetBoneMatrix(self:LookupBone("seagull.pelvis"))
+		local pos, ang = m:GetTranslation(), m:GetAngles()
 		ang:RotateAroundAxis(ang:Forward(), -90)
 		pos = pos + ang:Up()*15
 		return pos, ang
@@ -55,6 +72,8 @@ if CLIENT then
 		ply:SetRenderOrigin(pos)
 		ply:SetPos(pos)
 		ply:SetRenderAngles(ang)
+
+		if false then
 		local bone = ply:LookupBone("ValveBiped.Bip01_Spine")
 		if bone then
 			local ang = self:GetAngles()
@@ -68,6 +87,7 @@ if CLIENT then
 		if bone_l then
 			ply:ManipulateBoneAngles(bone_l, Angle(-25,0,0))
 		end
+		end
 		local wep = ply:GetActiveWeapon()
 		if wep:IsValid() then
 			wep:SetupBones()
@@ -77,11 +97,10 @@ if CLIENT then
 
 	function ENT:CalcView(ply, origin, angles)
 		--if os.clock()%0.1 < 0.05 then return end
-		--do return end
 		local pos, ang = self:GetPlayerPosAng()
 		--angles.r = ang.r
 		return {
-			origin = pos + self:GetUp()*15 + self:GetForward()*5,
+			origin = pos + self:GetUp()*12 + self:GetForward()*3,
 			angles = angles,
 		}
 	end
@@ -89,7 +108,7 @@ if CLIENT then
 	hook.Add("PrePlayerDraw", ENT.ClassName, function(ply)
 		local veh = ply:GetVehicle()
 		if veh:IsValid() then
-			local self = veh:GetParent()
+			local self = veh:GetNW2Entity("mount")
 			if self:IsValid() and self:GetClass() == ENT.ClassName then
 				return self:PrePlayerDraw(ply)
 			end
@@ -97,9 +116,10 @@ if CLIENT then
 	end)
 
 	hook.Add("CalcView", ENT.ClassName, function(ply, origin, angles)
+			do return end
 		local veh = ply:GetVehicle()
 		if veh:IsValid() then
-			local self = veh:GetParent()
+			local self = veh:GetNW2Entity("mount")
 			if self:IsValid() and self:GetClass() == ENT.ClassName then
 				return self:CalcView(ply, origin, angles)
 			end
@@ -109,10 +129,44 @@ if CLIENT then
 	hook.Remove("CalcViewModelView", ENT.ClassName)
 end
 
+function ENT:SetSize2(scale)
+	self:SetModelScale(scale)
+
+	local mins = mins * scale
+	local maxs = maxs * scale
+
+	self:SetCollisionBounds(mins, maxs)
+	self.PhysCollide = CreatePhysCollideBox(mins, maxs)
+
+	if SERVER then
+		self:PhysicsInitBox(mins, maxs)
+		self:SetSolid(SOLID_VPHYSICS)
+		self:StartMotionController()
+
+		local seat = ents.Create( "prop_vehicle_prisoner_pod" )
+		seat:SetModel( "models/nova/jeep_seat.mdl")
+		seat:Spawn()
+		seat:Activate()
+		seat:SetNoDraw(true)
+		seat:SetNW2Entity("mount", self)
+		seat:SetNW2Entity("seat", seat)
+		self:CallOnRemove("mount", function() SafeRemoveEntity(seat) end)
+		seat:SetMoveType(MOVETYPE_NONE)
+		seat:SetSolid(SOLID_NONE)
+
+		self.seat = seat
+
+		self:GetPhysicsObject():SetMaterial("gmod_ice")
+	end
+
+	self:EnableCustomCollisions( true )
+	self:DrawShadow( false )
+end
+
 function ENT:Initialize()
 	self:SetModel(self.Model)
 
-	self:SetCollisionBounds(mins, maxs)
+	self:SetSize2(6)
 
 	if CLIENT then
 		self:SetLOD(0)
@@ -122,36 +176,30 @@ function ENT:Initialize()
 		self.FlapSound:Play()
 		--self.WindSound:Play()
 	end
+end
 
-	if SERVER then
-		self:PhysicsInitBox(mins, maxs)
-		self:SetMoveType(MOVETYPE_VPHYSICS)
-		self:SetSolid(SOLID_OBB)
-		self:SetModelScale(scale)
-		self:SetCollisionGroup(COLLISION_GROUP_NONE)
-		self:StartMotionController()
-
-		--self:MakePhysicsObjectAShadow(true, true)
-		self:StartMotionController()
-
-		--phys:GetPhysicsObject():SetMass(100)
-
-		local seat = ents.Create( "prop_vehicle_prisoner_pod" )
-		seat:SetModel( "models/nova/jeep_seat.mdl")
-		seat:Spawn()
-		seat:Activate()
-		seat:SetNoDraw(true)
-		seat:SetParent(self)
-
-		seat:SetPos(Vector(0,0,18))
-		local ang = self:GetAngles()
-		ang:RotateAroundAxis(self:GetUp(), -90)
-		seat:SetAngles(ang)
-
-		self.seat = seat
-
-		self:GetPhysicsObject():SetMaterial("gmod_ice")
+function ENT:TestCollision( startpos, delta, isbox, extents )
+	if not IsValid(self.PhysCollide) then
+		return
 	end
+
+	-- TraceBox expects the trace to begin at the center of the box, but TestCollision is bad
+	local max = extents
+	local min = -extents
+	max.z = max.z - min.z
+	min.z = 0
+
+	local hit, norm, frac = self.PhysCollide:TraceBox( self:GetPos(), self:GetAngles(), startpos, startpos + delta, min, max )
+
+	if not hit then
+		return
+	end
+
+	return {
+		HitPos = hit,
+		Normal = norm,
+		Fraction = frac,
+	}
 end
 
 function ENT:InAir()
@@ -165,7 +213,7 @@ function ENT:GetGroundTrace(distance)
 	local info = {
 		start = self:GetPos(),
 		endpos =  bottom + gravity_dir * distance,
-		filter = {self, self.seat},
+		filter = {self, self:GetNW2Entity("seat")},
 	}
 
 	local res = util.TraceLine(info)
@@ -194,10 +242,12 @@ do -- calc
 	end
 
 	function ENT:AnimationThink()
+		local scale = self:GetModelScale()
+
 		local vel = self:GetVelocity() / scale
 		local len = vel:Length()
 		local ang = vel:Angle()
-		local siz = scale
+		local siz = scale*150
 		len = len / siz
 
 		if not self:InAir() then
@@ -220,7 +270,7 @@ do -- calc
 
 			self.Noise = (self.Noise + (math.Rand(-1,1) - self.Noise) * FrameTime())
 
-			self.Cycle = (self.Cycle + (len / (17 / siz)) * FrameTime() * math.Clamp(self:GetForward():Dot(vel), -1, 1)) % 1
+			self.Cycle = (self.Cycle + (len / (21 / siz)) * FrameTime() * math.Clamp(self:GetForward():Dot(vel), -1, 1)) % 1
 			self:SetCycle(self.Cycle)
 
 			if CLIENT then
@@ -295,7 +345,7 @@ do -- calc
 	end
 
 	function ENT:StepSoundThink()
-		local siz = scale
+		local siz = self:GetModelScale()
 		local stepped = self.Cycle%0.5
 		if stepped  < 0.3 then
 			if not self.stepped then
@@ -319,6 +369,7 @@ if SERVER then
 	end
 
 	function ENT:Think()
+		local scale = self:GetModelScale()
 		self:PhysWake()
 		self:AnimationThink(self:GetVelocity() / scale, self:GetVelocity():Length(), self:GetAngles())
 
@@ -367,6 +418,8 @@ if SERVER then
 	end
 
 	function ENT:PhysicsUpdate(phys)
+		self:UpdateSeatPosition()
+
 		if self.flap_wing then
 			self.flap_wing = self.flap_wing + FrameTime() * 1
 			self:SetWingFlap(self.flap_wing)
@@ -503,7 +556,7 @@ if SERVER then
 	end
 
 	hook.Add("PlayerLeaveVehicle", ENT.ClassName, function(ply, veh)
-		local self = veh:GetParent()
+		local self = veh:GetNW2Entity("mount")
 		if self:IsValid() and self:GetClass() == ENT.ClassName then
 			self:OnExit(ply)
 		end
