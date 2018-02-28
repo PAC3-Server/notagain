@@ -17,6 +17,13 @@ local crash_time
 local delay = 0
 local times = 1
 
+-- Ping the server when the client is ready.
+hook.Add("InitPostEntity", "crashsys", function()
+	net.Start("crashsys")
+	net.SendToServer()
+	hook.Remove("InitPostEntity", "crashsys")
+end)
+
 -- Delay Function
 local function delaycall(time, callback)
 	local wait = RealTime() + time

@@ -12,7 +12,8 @@ local function ping(target, bit)
 	end
 end
 
-hook.Add("PlayerCanHearPlayersVoice", "crashsys", function(ply)
+net.Receive("crashsys", function(len, ply)
+	if not IsValid(ply) then return end
 	if not table.HasValue(loaded, ply) then
 		table.insert(loaded, ply)
 	end
