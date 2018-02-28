@@ -319,7 +319,7 @@ hook.Add("ChatGetChatBoxSize", "chatbox", function()
 end)
 
 hook.Add("ChatAddText", "chatbox", function(...)
-	if not chatbox.frame:IsValid() then
+	if not IsValid(chatbox.frame) then
 		chatbox.Open()
 		chatbox.Close()
 	end
