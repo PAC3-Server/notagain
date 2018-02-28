@@ -5,9 +5,28 @@ if CLIENT then
 
 	function vote.Start(title, options, time, length)
 		local P = 20
-		local blur_size = 6
-		vote.casted = nil
+		local blur_size = 4
+		local blur_overdraw = 6
+		vote.fade_time = nil
+		vote.winner = nil
 		hook.Add("HUDPaint", "vote", function()
+			local f = 1
+			local time_left = math.max(math.Round(-(CurTime() - time) + length), 0)
+
+			if vote.fade_time then
+				time_left = 0
+
+				f = math.Clamp((vote.fade_time - RealTime()) / 3 + 0.5, 0, 1)
+				f = f ^ 0.5
+
+				if f == 0 then
+					hook.Remove("HUDPaint", "vote")
+					return
+				end
+			end
+
+			surface.SetAlphaMultiplier(f)
+
 			local Y = 150
 			local w, h = prettytext.DrawText({
 				font = "Roboto Black",
@@ -16,44 +35,83 @@ if CLIENT then
 				y = Y,
 				size = 30,
 				blur_size = blur_size,
-				x_align = 0.5,
+				blur_overdraw = blur_overdraw,
 			})
-
 			Y = Y + h + 10
+			local max_width = 0
+			local votes = {}
 
 			for i,v in ipairs(options) do
+				votes[i] = votes[i] or {count = 0}
+				local key = i
+				if key > 9 then
+					key = string.char(64 + key - 9)
+				end
 				local w, h = prettytext.DrawText({
 					font = "Roboto Medium",
-					text = i .. ". " .. v,
+					text = key .. ". " .. v,
 					x = P,
 					y = Y,
 					size = 20,
 					blur_size = blur_size,
-					background_color = vote.GetPlayerVote(LocalPlayer()) == i and Color(0,255,0,255) or Color(0,0,0,255),
+					background_color =
+					(vote.winner == i and Color(0,255,0,255)) or
+					vote.GetPlayerVote(LocalPlayer()) == i and Color(150,150,0,255) or Color(0,0,0,255),
+					blur_overdraw = blur_overdraw,
 				})
 				Y = Y + h + 5
+				votes[i].y = Y
 
-				local votes = {}
-				local size = h / 1.25
+				max_width = math.max(max_width, w)
+			end
 
+			local size = h / 1.25
+
+			for i,v in ipairs(options) do
 				for _, ply in ipairs(player.GetAll()) do
 					if vote.GetPlayerVote(ply) == i then
-						votes[i] = (votes[i] or 0) + 1
-						avatar.Draw(ply, P + w + (votes[i]*size)+(votes[i]-1)*8, Y - size/2 - 5, size, nil,nil,nil, 3)
+						votes[i].count = votes[i].count + 1
+						avatar.Draw(ply, P + max_width + (votes[i].count*size)+(votes[i].count-1)*8, votes[i].y - size/2 - 5, size, nil,nil,nil, 3)
 					end
 				end
 			end
 
-			Y = Y + 10
-
-			if not vote.GetPlayerVote(LocalPlayer()) then
+			if vote.fade_time then
 				local w, h = prettytext.DrawText({
-					text = "hold CTRL and press the number you want to vote",
+					text = "the voting has ended",
 					x = P,
 					y = Y,
 					size = 14,
 					blur_size = blur_size,
+					background_color = Color(255,0,0,255),
+					blur_overdraw = blur_overdraw,
 				})
+				Y = Y + h + 10
+			elseif not vote.GetPlayerVote(LocalPlayer()) then
+				local w, h = prettytext.DrawText({
+					font = "Roboto Black",
+					text = "CTRL + *NUMBER* to vote",
+					x = P,
+					y = Y,
+					size = 20,
+					blur_size = blur_size*2,
+					blur_overdraw = blur_overdraw*2,
+					background_color = input.IsControlDown() and Color(0,0,255, 255) or Color(0,0,255,(math.sin(RealTime()*20)*0.5+0.5) * 55),
+				})
+				Y = Y + h + 10
+			end
+
+			if time_left > 0 then
+				local w, h = prettytext.DrawText({
+					font = "Roboto Black",
+					text = time_left .. " seconds left",
+					x = P,
+					y = Y,
+					size = 30,
+					blur_size = blur_size,
+					blur_overdraw = blur_overdraw,
+				})
+				Y = Y + h + 10
 			end
 
 			if input.IsControlDown() then
@@ -63,11 +121,16 @@ if CLIENT then
 					end
 				end
 			end
+
+			surface.SetAlphaMultiplier(1)
 		end)
+		vote.started = true
 	end
 
-	function vote.Stop()
-		vote.stopped = true
+	function vote.Stop(winner)
+		vote.winner = winner
+		vote.started = false
+		vote.fade_time = RealTime() + 3
 	end
 
 	function vote.Cast(i)
@@ -81,19 +144,12 @@ if CLIENT then
 		local length = net.ReadFloat()
 
 		vote.Start(title, options, time, length)
-		vote.started = true
 	end)
 
 	net.Receive("vote_stop", function()
-		vote.started = false
-		timer.Simple(3, function()
-			hook.Remove("HUDPaint", "vote")
-		end)
+		local result = net.ReadInt(8)
+		vote.Stop(result)
 	end)
-
-	if LocalPlayer() == me then
-
-	end
 end
 
 function vote.GetPlayerVote(ply)
@@ -126,7 +182,7 @@ if SERVER then
 			net.WriteFloat(time)
 		net.Broadcast()
 
-		timer.Simple(time, function()
+		timer.Create("voting", time, 1, function()
 			vote.Stop()
 		end)
 
@@ -136,17 +192,16 @@ if SERVER then
 	end
 
 	function vote.Stop()
-		net.Start("vote_stop")
-		net.Broadcast()
-
 		vote.started = false
 
 		local score = {}
+		local voter_count = 0
 		for _, ply in ipairs(player.GetAll()) do
 			local num = vote.GetPlayerVote(ply)
 			if num then
 				score[num] = score[num] or {count = 0, score = num}
 				score[num].count = score[num].count + 1
+				voter_count = voter_count + 1
 			end
 		end
 
@@ -157,6 +212,14 @@ if SERVER then
 
 		table.sort(list, function(a, b) return a.count > b.count end)
 
-		vote.callback(vote.options[list[1].score], list)
+		vote.callback(list[1] and vote.options[list[1].score], voter_count, list)
+
+		net.Start("vote_stop")
+			net.WriteInt(list[1] and list[1].score or -1, 8)
+		net.Broadcast()
+	end
+
+	if me then
+		vote.Start("which food do you like the most?", {"bread","sushi", "pizza","onigri", "nugatti", "orange",   "ramen", }, 15, print)
 	end
 end
