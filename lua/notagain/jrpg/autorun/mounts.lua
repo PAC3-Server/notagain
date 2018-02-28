@@ -60,6 +60,7 @@ if CLIENT then
 
 	function ENT:GetPlayerPosAng()
 		local m = self:GetBoneMatrix(self:LookupBone("seagull.pelvis"))
+		if not m then return self:GetPos(), self:GetAngles() end
 		local pos, ang = m:GetTranslation(), m:GetAngles()
 		ang:RotateAroundAxis(ang:Forward(), -90)
 		pos = pos + ang:Up()*15
@@ -327,11 +328,12 @@ do -- calc
 			if self.smooth_cycle > 10 then self.smooth_cycle = 0 end
 
 			if CLIENT then
-				local RoundedZ = math.Round(self.smooth_cycle*5)
+				local RoundedZ = self.smooth_cycle*100
 
-				self.FlapSound:ChangePitch(math.Clamp(RoundedZ,50, 100))
+				self.FlapSound:ChangePitch(math.Clamp(RoundedZ/2, 50, 100))
 				self.FlapSound:ChangeVolume(math.Clamp(RoundedZ/80, 0, 1))
-				self.WindSound:ChangePitch(70)
+
+				self.WindSound:ChangePitch(100)
 				self.WindSound:ChangeVolume(self:GetVelocity():Length() / 2000)
 			end
 

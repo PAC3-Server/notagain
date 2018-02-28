@@ -10,7 +10,7 @@ if SERVER then
 						if ent ~= ply then
 							local val
 							local savetable = ent:GetSaveTable()
-							if ent:IsPlayer() or ent:IsNPC() then
+							if jrpg.IsActor(ent) then
 								if jrpg.IsFriend(ply, ent) then
 									val = ent
 								end
@@ -49,7 +49,7 @@ if SERVER then
 
 					local text = "examine"
 
-					if ent.GetActiveWeapon then
+					if jrpg.IsActor(ent) then
 						text = "talk"
 					else
 						local savetable = ent:GetSaveTable()

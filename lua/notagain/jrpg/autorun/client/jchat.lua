@@ -521,7 +521,7 @@ jrpg.AddHook("PlayerUsedEntity", "jchat", function(ply, ent)
 	if not battlecam.IsEnabled() then return end
 	if jtarget.GetEntity(LocalPlayer()):IsValid() then return end
 
-	if ply == LocalPlayer() and (ent:IsNPC() or ent:IsPlayer()) and jchat.CanChat(ent) then
+	if ply == LocalPlayer() and jrpg.IsActor(ent) and jchat.CanChat(ent) then
 		jchat.Start(function() battlecam.Enable() end)
 		jchat.AddPlayer(ply)
 		jchat.AddPlayer(ent)

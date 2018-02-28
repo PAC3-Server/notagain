@@ -279,6 +279,8 @@ local blacklist = {
 function jrpg.IsActor(ent)
 	if not ent or not ent:IsValid() then return false end
 
+	if ent:GetClass() == "mount_base" then return true end
+
 	if blacklist[ent:GetClass()] then return end
 	if ent:EntIndex() == -1 then return end
 	if ent:IsWeapon() then return false end
@@ -319,6 +321,7 @@ end
 local friendly_npcs = {
 	monster_scientist = true,
 	monster_barney = true,
+	mount_base = true,
 }
 
 function jrpg.GetRoomSize(pos, filter)
@@ -367,7 +370,7 @@ end
 
 if SERVER then
 	function jrpg.IsFriend(a, b)
-		if b:IsNPC() and (IsFriendEntityName(b:GetClass()) or friendly_npcs[b:GetClass()]) then
+		if jrpg.IsActor(b) and (IsFriendEntityName(b:GetClass()) or friendly_npcs[b:GetClass()]) then
 			return true
 		end
 
