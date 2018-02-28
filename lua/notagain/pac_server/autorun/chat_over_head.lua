@@ -40,8 +40,7 @@ if CLIENT then
 
 				ok = true
 				local Y = 0
-				for i = #ply.coh_text_history, 1, -1 do
-					local data = ply.coh_text_history[i]
+				for i, data in ipairs(ply.coh_text_history) do
 					local text = data.str
 					if text == "" then text = ("."):rep(math.ceil(os.clock()%3)) end
 
