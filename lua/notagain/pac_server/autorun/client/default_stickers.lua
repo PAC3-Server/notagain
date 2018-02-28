@@ -17,6 +17,7 @@ DEFAULT_CHATBOX_STICKERS = {
 			"https://cdn.discordapp.com/emojis/361098314021601291.png",
 			"https://cdn.discordapp.com/emojis/284093579012341764.png",
 			"https://cdn.discordapp.com/emojis/406766679071260674.png",
+			"<scale=2,2><translate=[(t()*100)-500]>W w w w w w w w . . . . .</scale></translate>",
 		},
 	},
 	{
