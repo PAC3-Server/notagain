@@ -7,11 +7,10 @@ chathud = chathud or {}
 chathud.panel = chathud.panel or NULL
 
 chathud.default_font = {
-	font = "Square721 BT",
-	size = 18,
-	weight = 600,
+	font = "Roboto Regular",
+	size = 19,
 	blur_size = 3,
-	background_color = Color(25,50,100,255),
+	background_color = Color(30,30,30,255),
 	blur_overdraw = 3,
 }
 
