@@ -607,7 +607,7 @@ if SERVER then
 			end
 		end
 	end
-	hook.Add("PlayerUse", "prop_protection", proptect.PlayerUse)
+	--hook.Add("PlayerUse", "prop_protection", proptect.PlayerUse)
 
 	function proptect.OnPhysgunReload(weapon, ply)
 		if tonumber(proptect.Config["pgr"]) == 0 then
