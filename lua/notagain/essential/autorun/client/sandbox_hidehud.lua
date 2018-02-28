@@ -1,4 +1,6 @@
-local hide_these = {}
+local hide_these = {
+	CHudDamageIndicator = true,
+}
 
 timer.Create("sandbox_hide_hud", 0.1, 0, function()
 	local ply = LocalPlayer()
