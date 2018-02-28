@@ -106,8 +106,10 @@ if CLIENT then
 		["$VertexColor"] = 1,
 	})
 
-	function avatar.Draw(ply, x,y, size, rot, sx,sy)
+	function avatar.Draw(ply, x,y, size, rot, sx,sy, border_size)
 		local info = avatar.avatars[ply]
+
+		border_size = border_size or 5
 
 		if info then
 			x = x or 0
@@ -145,7 +147,7 @@ if CLIENT then
 			render.SetBlend(1)
 			render.SetColorModulation(1,1,1,1)
 			render.SetMaterial(border)
-			draw_rect(x,y,size,size, 0, 4, 70, 5, border:GetTexture("$BaseTexture"):Width(), true)
+			draw_rect(x,y,size,size, 0, border_size-1, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 		else
 			if not avatar.steam_avatars[ply] then
 				local pnl = vgui.Create("AvatarImage")
@@ -163,7 +165,7 @@ if CLIENT then
 			render.SetMaterial(border)
 			render.SetColorModulation(1,1,1)
 			render.SetBlend(1)
-			draw_rect(x,y,size,size, 0, 4, 70, 5, border:GetTexture("$BaseTexture"):Width(), true)
+			draw_rect(x,y,size,size, 0, border_size-1, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 		end
 	end
 end
