@@ -15,9 +15,7 @@ hook.Add("EntityTakeDamage", "propkill_dmginfo", function(ply, dmginfo)
 
 	if attacker.propkill_dmginfo_dropdata then
 		local real_attacker = attacker.propkill_dmginfo_dropdata.ply
-print(real_attacker)
 		if IsValid(real_attacker) and attacker.propkill_dmginfo_dropdata.when > CurTime() then
-print("!")
 			dmginfo:SetAttacker(real_attacker)
 			dmginfo:SetInflictor(attacker)
 		end
