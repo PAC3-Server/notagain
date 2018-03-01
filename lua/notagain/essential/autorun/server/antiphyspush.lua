@@ -8,6 +8,28 @@ local hooks = {
 	"PlayerSpawnedVehicle",
 }
 
+local protect = true
+
+hook.Add("PhysgunPickup", "antiphyspush", function(ply, ent)
+	if protect and IsValid(ent) then
+		protect = false
+
+		local can_touch = hook.Run('PhysgunPickup', ply, ent)
+		if can_touch then
+			ent.pickedby = ply
+		end
+
+		protect = true
+	end
+end)
+
+local function ForcePlayerDrop(ent, ply)
+	ent:ForcePlayerDrop()
+	if IsValid(ply) then
+		ply:ConCommand("-attack")
+	end
+end
+
 local function PlayerSpawnedObject(ply, model, ent)
 	local ent = ent
 
@@ -23,7 +45,9 @@ local function PlayerSpawnedObject(ply, model, ent)
 
 				if canmove then
 					if IsPlayer(ply) and ( ply.CanAlter and not ply:CanAlter(ent) ) then
-						ent:ForcePlayerDrop()
+						local pos = ply:GetPos()
+
+						ForcePlayerDrop(ent, ent.pickedby)
 						ent.PhysgunDisabled = true
 						ent.IsPushing = true
 
@@ -33,6 +57,7 @@ local function PlayerSpawnedObject(ply, model, ent)
 						timer.Simple(FrameTime(), function()
 							if IsValid(ply) then
 								ply:SetVelocity(ply:GetVelocity()*-1)
+								ply:SetPos(pos)
 							end
 						end)
 
