@@ -254,6 +254,7 @@ function chatbox.AddText(...)
 	table.insert(chatbox.addtext_history, args)
 
 	chatbox.richtext:SetFontInternal(chatbox.GetFont())
+	chatbox.richtext:AppendText("\n")
 
 	for _, arg in ipairs(args) do
 		if type(arg) == "table" and arg.r and arg.g and arg.b and arg.a then
@@ -283,8 +284,6 @@ function chatbox.AddText(...)
 	end
 
 	if chatbox.restoring then return end
-
-	chatbox.richtext:AppendText("\n")
 
 	table.insert(args, "\n")
 
