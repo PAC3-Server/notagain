@@ -247,6 +247,13 @@ if SERVER then
 
 			local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
 			if GodCheck(ply, dmginfo, actor) then
+				if ply == actor then
+					if ( not ply:IsOnGround() ) then
+						ply:SetVelocity( dmginfo:GetDamageForce()*0.03 )
+					end
+					return true
+				end
+
 				if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(actor) then
 					suppress = true
 					local mirror = ents.FindByClass('god_reflect_damage')[1]
@@ -257,6 +264,7 @@ if SERVER then
 					actor:TakeDamageInfo(dmginfo)
 					suppress = false
 				end
+
 				return true
 			end
 		end
