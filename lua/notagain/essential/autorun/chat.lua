@@ -60,7 +60,7 @@ if CLIENT then
 
 	chat._ChatOpen = chat._ChatOpen or chat.Open
 	function chat.Open(team_chat)
-		net.Start("chat_istyping", true)
+		net.Start("chat_istyping")
 			net.WriteBool(true)
 		net.SendToServer()
 
@@ -73,7 +73,7 @@ if CLIENT then
 
 	chat._ChatClose = chat._ChatClose or chat.Close
 	function chat.Close(...)
-		net.Start("chat_istyping", true)
+		net.Start("chat_istyping")
 			net.WriteBool(false)
 		net.SendToServer()
 
@@ -103,7 +103,7 @@ if CLIENT then
 	end)
 
 	function chat.SayServer(str, team_only)
-		net.Start("chat_say", true)
+		net.Start("chat_say")
 			net.WriteString(str)
 			net.WriteBool(team_only)
 		net.SendToServer()
@@ -155,7 +155,7 @@ if SERVER then
 
 		if res == "" then return end
 
-		net.Start("chat_say", true)
+		net.Start("chat_say")
 			net.WriteEntity(ply)
 			net.WriteString(res or str)
 			net.WriteBool(team_only)
