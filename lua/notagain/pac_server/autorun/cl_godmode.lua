@@ -269,14 +269,11 @@ if SERVER then
                     ply.bloodcolor = nil
                 end
 
-				do
-                    if ply == actor then
-                        if ( not ply:IsOnGround() ) then
-                            ply:SetVelocity( dmginfo:GetDamageForce()*0.03 )
-                        end
-                        return
+                if ply == actor then
+                    if ( not ply:IsOnGround() ) then
+                        ply:SetVelocity( dmginfo:GetDamageForce()*0.03 )
                     end
-
+                else
                     if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(actor) then
                         suppress = true
                         local mirror = ents.FindByClass('god_reflect_damage')[1]
