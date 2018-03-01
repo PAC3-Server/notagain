@@ -214,19 +214,19 @@ if CLIENT then
 		spawnmenu.AddToolMenuOption( "Utilities", "User", "cl_godmode", "Godmode", "", "", GodmodeUI)
 	end)
 
-    net.Receive("cl_godmode_clearDecals", function()
+	net.Receive("cl_godmode_clearDecals", function()
 		local ent = net.ReadEntity()
 		if ent:IsValid() then
 			ent:RemoveAllDecals()
 		end
 	end)
 
-    hook.Add("PlayerTraceAttack", "cl_godmode", function(ply, dmginfo)
-        local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
-        if GodCheck(ply, dmginfo, actor) then
-            return true
-        end
-    end)
+	hook.Add("PlayerTraceAttack", "cl_godmode", function(ply, dmginfo)
+		local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
+		if GodCheck(ply, dmginfo, actor) then
+			return true
+		end
+	end)
 end
 
 if SERVER then
