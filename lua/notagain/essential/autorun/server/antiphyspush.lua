@@ -15,7 +15,7 @@ local function PlayerSpawnedObject(ply, model, ent)
 		ent = model
 	end
 
-	timer.Simple(FrameTime(), function()
+	timer.Simple(0.01, function()
 		if IsValid(ent) then
 			ent:AddCallback('PhysicsCollide', function(ent, data)
 				local ply = data.HitEntity
@@ -36,7 +36,7 @@ local function PlayerSpawnedObject(ply, model, ent)
 							end
 						end)
 
-						timer.Simple(FrameTime()*3, function()
+						timer.Simple(FrameTime()*2, function()
 							if IsValid(ent) and ent.IsPushing then
 								ent:ForcePlayerDrop()
 								ent.PhysgunDisabled = nil
