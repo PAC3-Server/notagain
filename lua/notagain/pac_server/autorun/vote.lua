@@ -9,6 +9,7 @@ if CLIENT then
 		local blur_overdraw = 6
 		vote.fade_time = nil
 		vote.winner = nil
+		vote.fail_reason = nil
 		hook.Add("HUDPaint", "vote", function()
 			local f = 1
 			local time_left = math.max(math.Round(-(CurTime() - time) + length), 0)
@@ -78,7 +79,7 @@ if CLIENT then
 
 			if vote.fade_time then
 				local w, h = prettytext.DrawText({
-					text = "the voting has ended",
+					text = vote.fail_reason or "the voting has ended",
 					x = P,
 					y = Y,
 					size = 14,
@@ -148,6 +149,9 @@ if CLIENT then
 
 	net.Receive("vote_stop", function()
 		local result = net.ReadInt(8)
+		local ok = net.ReadBool()
+		local err = net.ReadString()
+		if not ok then vote.fail_reason = err end
 		vote.Stop(result)
 	end)
 end
@@ -212,14 +216,34 @@ if SERVER then
 
 		table.sort(list, function(a, b) return a.count > b.count end)
 
-		vote.callback(list[1] and vote.options[list[1].score], voter_count, list)
+		local ok, msg = vote.callback(list[1] and vote.options[list[1].score], voter_count, (voter_count/player.GetCount())*100, list)
+
+		if ok == nil then ok = true end
 
 		net.Start("vote_stop")
 			net.WriteInt(list[1] and list[1].score or -1, 8)
+			net.WriteBool(ok)
+			if msg then
+				net.WriteString(msg)
+			end
 		net.Broadcast()
 	end
 
 	if me then
-		vote.Start("which food do you like the most?", {"bread","sushi", "pizza","onigri", "nugatti", "orange",   "ramen", }, 15, print)
+	--	vote.Start("which noodles do you like the most?", {"udon", "soba", "somen", "egg noodles", "rice noodles", "cellophane noodles"}, 15, print)
 	end
+
+	aowl.AddCommand("votekick=player,string",function(_,line, ply, reason)
+		vote.Start("kick " .. ply:Nick() .. "? (" .. reason .. ")", {"yes", "no"}, 15, function(res, voter_count, percent)
+			if percent < 60 then
+				return false, "need more than 60% of players voting"
+			end
+
+			if res == "yes" then
+				ply:Kill()
+			else
+
+			end
+		end)
+	end)
 end
