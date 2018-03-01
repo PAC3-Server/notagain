@@ -989,7 +989,7 @@ do -- panels
 					return
 				end
 
-				local str = self:GetText()
+				local str = self:GetValue()
 
 				self:OnEnter(str)
 
