@@ -983,31 +983,16 @@ derma.DefineSkin( "JC2MP", "From Just Cause 2 Multiplayer", SKIN )
 
 
 --Hacky way to set text color of a DMenuOption
-if hook.GetTable()["OnGamemodeLoaded"] and hook.GetTable()["OnGamemodeLoaded"]["CreateMenuBar"] then
+local META = vgui.GetControlTable("DMenuOption")
+META.jc2mp_Init = META.jc2mp_Init or META.Init
 
-	local OLDCREATEMENUBAR = OLDCREATEMENUBAR or hook.GetTable()["OnGamemodeLoaded"]["CreateMenuBar"]
-
-	hook.Add( "OnGamemodeLoaded", "CreateMenuBar", function()
-
-		OLDDMENUOPTIONINIT = OLDDMENUOPTIONINIT or DMenuOption.Init
-
-		function DMenuOption:Init(...)
-			local values = {OLDDMENUOPTIONINIT(self, ...)}
-
-			self:SetTextColor( Color( 200, 200, 200 ) )
-
-			return unpack(values)
-		end
-
-		OLDCREATEMENUBAR()
-
-	end )
-
+function META:Init(...)
+	local ret = {self:jc2mp_Init(...)}
+	self:SetTextColor(Color(200, 200, 200, 255))
+	return unpack(ret)
 end
 
 --Force the Just Cause 2 Multiplayer Skin
 hook.Add( "ForceDermaSkin", "JC2MPSkin.Force", function()
-
     return "JC2MP"
-
 end )
