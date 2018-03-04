@@ -1017,7 +1017,7 @@ do -- panels
 
 				if res then
 					self:SetText(res)
-					self:SetCaretPos(#res)
+					self:SetCaretPos(#self:GetText())
 				end
 
 				return true
