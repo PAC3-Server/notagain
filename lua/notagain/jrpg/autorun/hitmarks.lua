@@ -644,7 +644,7 @@ if CLIENT then
 		end
 	end
 
-	jrpg.CreateTimer("hitmark", 0.25, 0, function()
+	timer.Create("hitmark", 0.25, 0, function()
 		local ply = LocalPlayer()
 		if not ply:IsValid() or not ply:GetEyeTrace() then return end
 
@@ -855,7 +855,7 @@ if SERVER then
 			pos = ent:GetPos()
 		end
 
-		jrpg.CreateTimer(tostring(ent).."_hitmarker", 0, 1, function()
+		timer.Create(tostring(ent).."_hitmarker", 0, 1, function()
 			if ent:IsValid() then
 
 				if damage > 0 then
@@ -877,7 +877,7 @@ if SERVER then
 		end)
 	end)
 
-	jrpg.CreateTimer("hitmarker", 1, 0, function()
+	timer.Create("hitmarker", 1, 0, function()
 		for _, ent in ipairs(ents.GetAll()) do
 			if ent.GetMaxHealth then
 				if ent.hm_last_health ~= ent:Health() then

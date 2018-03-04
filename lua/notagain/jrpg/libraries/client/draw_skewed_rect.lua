@@ -339,7 +339,7 @@ if LocalPlayer() == me then
 		["$VertexColor"] = 1,
 	})
 
-	jrpg.AddHook("HUDPaint", "", function()
+	hook.Add("HUDPaint", "", function()
 		render.SetColorModulation(1,1,0,1)
 		render.SetBlend(0.1)
 		render.SetMaterial(border)

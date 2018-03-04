@@ -74,7 +74,7 @@ if SERVER then
 		end
 	end
 
-	jrpg.AddHook("EntityTakeDamage", "jlevel", function(victim, dmginfo)
+	hook.Add("EntityTakeDamage", "jlevel", function(victim, dmginfo)
 		local attacker = dmginfo:GetAttacker()
 		if not jrpg.IsEnabled(attacker) then return end
 
@@ -86,7 +86,7 @@ if SERVER then
 		end
 	end)
 
-	jrpg.AddHook("EntityRemoved", "jlevel", function(ent)
+	hook.Add("EntityRemoved", "jlevel", function(ent)
 		if not ent:IsNPC() or ent:Health() > 0 then return end
 
 		if ent.jlevel_attackers then

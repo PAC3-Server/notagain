@@ -241,7 +241,7 @@ do
 		function SWEP:Initialize()
 			table.insert(shields, self)
 
-			jrpg.AddHook("Think", "shield", function()
+			hook.Add("Think", "shield", function()
 				for _, self in ipairs(shields) do
 					if self.is_shield then
 						self:GlobalThink()
@@ -307,7 +307,7 @@ do
 			end
 
 			if not shields[1] then
-				jrpg.RemoveHook("Think", "shields")
+				hook.Remove("Think", "shields")
 			end
 		end
 
@@ -514,7 +514,7 @@ for _, tbl in pairs(shields) do
 	register_shield(tbl)
 end
 
-jrpg.AddHook("SetupMove", "shield", function(ply, ucmd)
+hook.Add("SetupMove", "shield", function(ply, ucmd)
 	if not jrpg.IsWieldingShield(ply) then return end
 
 	if ucmd:KeyDown(IN_ATTACK) then
@@ -564,17 +564,17 @@ if SERVER then
 		EnableShield(ply, false)
 	end)
 
-	jrpg.AddHook("KeyPress", "shield", function(ply, key)
+	hook.Add("KeyPress", "shield", function(ply, key)
 		if key ~= IN_WALK then return end
 		EnableShield(ply, true)
 	end)
 
-	jrpg.AddHook("KeyRelease", "shield", function(ply, key)
+	hook.Add("KeyRelease", "shield", function(ply, key)
 		if key ~= IN_WALK then return end
 		EnableShield(ply, false)
 	end)
 
-	jrpg.AddHook("PostPlayerDeath", "shield", function(ply)
+	hook.Add("PostPlayerDeath", "shield", function(ply)
 		SafeRemoveEntity(ply:GetNWEntity("shield"))
 	end)
 end
@@ -587,7 +587,7 @@ local function manip_angles(ply, id, ang)
 	end
 end
 
-jrpg.AddHook("UpdateAnimation", "shield", function(ply)
+hook.Add("UpdateAnimation", "shield", function(ply)
 	if jrpg.IsWieldingShield(ply) then
 		ply.shield_unwield_time = nil
 		ply.shield_wield_time = ply.shield_wield_time or CurTime()
@@ -631,7 +631,7 @@ jrpg.AddHook("UpdateAnimation", "shield", function(ply)
 	end
 end)
 
-jrpg.AddHook("EntityTakeDamage", "shield", function(ent, dmginfo)
+hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 	if ent:GetNWBool("shield_stunned") then
 		dmginfo:SetDamage(dmginfo:GetDamage() * 3)
 

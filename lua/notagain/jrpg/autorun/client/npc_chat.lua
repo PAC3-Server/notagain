@@ -1,4 +1,4 @@
-jrpg.AddHook("NPCSpeak", "npc_chat", function(npc, text)
+hook.Add("NPCSpeak", "npc_chat", function(npc, text)
 	if npc:EyePos():Distance(LocalPlayer():EyePos()) > 1500 then return end
 
 	local color

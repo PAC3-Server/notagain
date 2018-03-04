@@ -1,4 +1,4 @@
-jrpg.AddHook("EntityEmitSound", "npc_speak_broadcast", function(data)
+hook.Add("EntityEmitSound", "npc_speak_broadcast", function(data)
 	if not data.Entity:IsNPC() or data.Channel ~= 2 then return end
 
 	if SERVER then
