@@ -89,7 +89,7 @@ function jchat.Stop()
 	hook.Remove("HUDShouldDraw", "jchat")
 	hook.Remove("OnPlayerChat", "jchat")
 	hook.Remove("ShouldDrawLocalPlayer", "jchat")
-	jrpg.RemoveTimer("jchat_check_players")
+	timer.Remove("jchat_check_players")
 
 	jchat.active = false
 
