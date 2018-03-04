@@ -1,5 +1,5 @@
 if SERVER then
-	jrpg.CreateTimer("juse", 0.5, 0, function()
+	timer.CreateTimer("juse", 0.5, 0, function()
 		for _, ply in ipairs(player.GetAll()) do
 			ply:SetNWEntity("juse_ent", NULL)
 			if (ply:GetInfoNum("ctp_enabled", 0) == 1 or ply:GetInfoNum("battlecam_enabled", 0) == 1) and jrpg.IsEnabled(ply) then
@@ -77,7 +77,7 @@ if SERVER then
 		end
 	end)
 
-	jrpg.AddHook("KeyPress", "juse", function(ply, key)
+	hook.Add("KeyPress", "juse", function(ply, key)
 		if key ~= IN_USE then return end
 		local button = ply:GetNWEntity("juse_ent")
 		if button:IsValid() then
@@ -110,7 +110,7 @@ if SERVER then
 		end
 	end)
 
-	jrpg.AddHook("PlayerUse", "juse", function(ply, ent)
+	hook.Add("PlayerUse", "juse", function(ply, ent)
 		if ply:GetNWEntity("juse_ent") == ent then
 			if ent:GetClass() == "item_suitcharger" or ent:GetClass() == "item_healthcharger" then return end
 			return false
@@ -150,7 +150,7 @@ if CLIENT then
 	local last_pos
 	local last_str
 
-	jrpg.AddHook("HUDPaint", "juse", function()
+	hook.Add("HUDPaint", "juse", function()
 		if jtarget.GetEntity(LocalPlayer()):IsValid() then return end
 		if jchat.IsActive() then return end
 

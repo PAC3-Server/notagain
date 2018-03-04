@@ -299,7 +299,7 @@ if (SERVER) then
 		end
 	end
 
-	jrpg.CreateTimer("witcher_SavePortals", 180, 0, function()
+	timer.Create("witcher_SavePortals", 180, 0, function()
 		local win, msg = pcall(SavePortals)
 
 		if (not win) then
@@ -307,14 +307,14 @@ if (SERVER) then
 		end
 	end)
 
-	jrpg.AddHook("ShutDown", "witcher_SavePortals", function()
+	hook.Add("ShutDown", "witcher_SavePortals", function()
 		local win, msg = pcall(SavePortals)
 
 		if (not win) then
 			ErrorNoHalt("[WITCHERGATES] Something went wrong when saving portals! \n" .. msg)
 		end
 	end)
-	
+
 	local SpawnPortals = function()
 		timer.Simple(5, function()
 			local win, msg = pcall(LoadPortals)
@@ -325,10 +325,10 @@ if (SERVER) then
 		end)
 	end
 
-	jrpg.AddHook("InitPostEntity","witcher_LoadPortals",SpawnPortals)
-	jrpg.AddHook("PostCleanupMap","witcher_LoadPortals",SpawnPortals)
+	hook.Add("InitPostEntity","witcher_LoadPortals",SpawnPortals)
+	hook.Add("PostCleanupMap","witcher_LoadPortals",SpawnPortals)
 
-	jrpg.AddHook("ShouldCollide", "witcher_RPGFix", function(a, b)
+	hook.Add("ShouldCollide", "witcher_RPGFix", function(a, b)
 		local aClass = a:GetClass()
 		local bClass = b:GetClass()
 		if (aClass == "rpg_missile" and (bClass == "witcher_door" or bClass == "witcher_gateway")) then

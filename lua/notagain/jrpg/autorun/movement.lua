@@ -6,7 +6,9 @@ local function manip_angles(ply, id, ang)
 	end
 end
 
-jrpg.AddPlayerHook("CalcMainActivity", "movement", function(ply)
+hook.Add("CalcMainActivity", "movement", function(ply)
+	if not jrpg.IsEnabled(ply) then return end
+
 	local vel = ply:GetVelocity()
 
 	if ply:IsOnGround() then
@@ -71,7 +73,9 @@ jrpg.AddPlayerHook("CalcMainActivity", "movement", function(ply)
 	end
 end)
 
-jrpg.AddPlayerHook("Move", "movement", function(ply, mv)
+hook.Add("Move", "movement", function(ply, mv)
+	if not jrpg.IsEnabled(ply) then return end
+
 	ply.movement_smooth_side = ply.movement_smooth_side or 0
 	ply.movement_smooth_forward = ply.movement_smooth_forward or 0
 
@@ -207,7 +211,8 @@ if CLIENT then
 		end
 	end
 
-	jrpg.AddPlayerHook("UpdateAnimation", "movement", function(ply)
+	hook.Add("UpdateAnimation", "movement", function(ply)
+		if not jrpg.IsEnabled(ply) then return end
 
 		if ply:OnGround() then
 			local ang = ply:EyeAngles()

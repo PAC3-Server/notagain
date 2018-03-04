@@ -1,4 +1,4 @@
-jrpg.CreateTimer("thirdperson_sound_fix", 0.1, 0, function()
+timer.Create("thirdperson_sound_fix", 0.1, 0, function()
 	for _, ply in pairs(player.GetAll()) do
 		local tp = ply:GetInfo("battlecam_enabled")
 		if tp == "1" then

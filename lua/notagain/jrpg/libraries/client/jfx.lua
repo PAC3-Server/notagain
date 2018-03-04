@@ -30,15 +30,15 @@ function jfx.CreateMaterial(data)
 
 	for k, v in pairs(data) do
 		if type(v) == "string" and v:StartWith("http") then
-			jrpg.AddHook("Think", v, function()
+			hook.Add("Think", v, function()
 				local m,w,h = urlimage.GetURLImage(v)
 				if m == nil then
-					jrpg.RemoveHook("Think", v)
+					hook.Remove("Think", v)
 				elseif m then
 					mat:SetInt("$glowx", w)
 					mat:SetInt("$glowy", h)
 					mat:SetTexture("$" .. k, m:GetTexture("$BaseTexture"))
-					jrpg.RemoveHook("Think", v)
+					hook.Remove("Think", v)
 				end
 			end)
 		end
@@ -267,7 +267,7 @@ do
 		jfx:StartEffect(tbl.length or 1)
 		table.insert(active, jfx)
 
-		jrpg.AddHook("RenderScreenspaceEffects", "jfx", function()
+		hook.Add("RenderScreenspaceEffects", "jfx", function()
 			render.UpdateScreenEffectTexture()
 			cam.Start3D()
 			for _, jfx in ipairs(active) do

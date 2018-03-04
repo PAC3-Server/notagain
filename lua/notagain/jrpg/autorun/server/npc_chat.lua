@@ -1,4 +1,4 @@
-jrpg.AddHook("PlayerSay", "npc_chat", function(ply, txt)
+hook.Add("PlayerSay", "npc_chat", function(ply, txt)
 	local ent = ply:GetEyeTrace().Entity
 	if ent:IsNPC() then
 		txt = txt:lower()

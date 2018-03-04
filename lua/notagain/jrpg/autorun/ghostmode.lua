@@ -2,14 +2,14 @@ local Tag = "GhostMode"
 local ghost_time = 8
 
 if SERVER then
-	jrpg.AddHook("PlayerDeath", Tag, function(ply)
+	jrpg.AddPlayerHook("PlayerDeath", Tag, function(ply)
 		ply:SetNW2Float("ghost_timer", CurTime() + ghost_time)
 		ply.ghost_spawn_pos = ply:GetPos()
 		ply:SetDSP(0)
 		SafeRemoveEntity(ply:GetNW2Entity("ghost_fairy"))
 	end)
 
-	jrpg.AddHook("PlayerSpawn", Tag, function(ply)
+	jrpg.AddPlayerHook("PlayerSpawn", Tag, function(ply)
 		SafeRemoveEntity(ply:GetNW2Entity("ghost_fairy"))
 	end)
 
@@ -138,7 +138,7 @@ if SERVER then
 end
 
 if CLIENT then
-	jrpg.AddHook("EntityEmitSound", Tag, function(data)
+	hook.Add("EntityEmitSound", Tag, function(data)
 		local ply = LocalPlayer()
 		if not ply:Alive() then
 			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
@@ -155,7 +155,7 @@ if CLIENT then
 	end)
 
 	local rand_ang = Vector()
-	jrpg.AddHook("CalcView", Tag, function(ply)
+	hook.Add("CalcView", Tag, function(ply)
 		if not ply:Alive() then
 			if ply:GetNW2Float("ghost_timer", 0) > CurTime() then
 				return
@@ -191,7 +191,7 @@ if CLIENT then
 		end
 	end)
 
-    jrpg.AddHook("OnPlayerChat",Tag,function(ply, txt)
+    hook.Add("OnPlayerChat",Tag,function(ply, txt)
         if jrpg.IsEnabled(ply) and not ply:Alive() then
 			local ent = ply:GetNW2Entity("ghost_fairy")
 			if ent:IsValid() then
@@ -219,7 +219,7 @@ if CLIENT then
 		["$VertexColor"] = 0,
 	})
 
-    jrpg.AddHook("RenderScene",Tag,function(pos, ang, fov)
+    hook.Add("RenderScene",Tag,function(pos, ang, fov)
 		local ply = LocalPlayer()
 		if not ply:Alive() then
 			local ent = ply:GetNW2Entity("ghost_fairy")
@@ -228,10 +228,10 @@ if CLIENT then
 				if not ply.ghostmode_hide_hud then
 					ply.ghostmode_hide_hud = true
 					ent:CallOnRemove(Tag, function()
-						jrpg.AddHook("HUDShouldDraw", Tag)
+						hook.Add("HUDShouldDraw", Tag)
 						ply.ghostmode_hide_hud = nil
 					end)
-					jrpg.AddHook("HUDShouldDraw",Tag,function(name)
+					hook.Add("HUDShouldDraw",Tag,function(name)
 						if name == "CHudDamageIndicator" and jrpg.enabled and not LocalPlayer():Alive() then
 							return false
 						end
@@ -259,7 +259,7 @@ if CLIENT then
 		end
 	end)
 
-    jrpg.AddHook("RenderScreenspaceEffects",Tag,function()
+    hook.Add("RenderScreenspaceEffects",Tag,function()
 		for _, ply in ipairs(player.GetAll()) do
 			if not jrpg.IsEnabled(ply) then continue end
 
