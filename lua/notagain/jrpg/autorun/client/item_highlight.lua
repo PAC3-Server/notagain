@@ -117,13 +117,13 @@ local function remove_ent(ent)
 	end
 end
 
-jrpg.AddHook("OnEntityCreated", "jrpg_items", function(ent)
+hook.Add("OnEntityCreated", "jrpg_items", function(ent)
 	if ent:IsWeapon() then
 		add_ent(ent)
 	end
 end)
 
-jrpg.AddHook("EntityRemoved", "jrpg_items", remove)
+hook.Add("EntityRemoved", "jrpg_items", remove)
 
 local gradient = Material("gui/center_gradient")
 
@@ -139,7 +139,7 @@ local function TempColor(r,g,b,a)
 	return temp_color
 end
 
-jrpg.AddHook("HUDPaint", "jrpg_items", function()
+hook.Add("HUDPaint", "jrpg_items", function()
 	local S = ScrW() / 1920
 	S = S * 0.9
 
@@ -460,8 +460,6 @@ local emitter_viewmodel = ParticleEmitter(vector_origin)
 emitter_viewmodel:SetNoDraw(true)
 
 jrpg.AddHook("RenderScreenspaceEffects", "jrpg_items", jrpg.SafeDraw(cam.Start3D, cam.End3D, function()
-	if not jrpg.enabled then return end
-
 	render.UpdateScreenEffectTexture()
 	local time = RealTime()
 
@@ -504,13 +502,9 @@ end))
 
 local suppress = false
 jrpg.AddHook("PreDrawPlayerHands", "jrpg_items", function(hands, ent, ply, wep)
-	if not jrpg.enabled then return end
-
 	render.ModelMaterialOverride()
 end)
 jrpg.AddHook("PreDrawViewModel", "jrpg_items", function(ent, ply, wep)
-	if not jrpg.enabled then return end
-
 	if not wep then return end
 	if suppress then return end
 

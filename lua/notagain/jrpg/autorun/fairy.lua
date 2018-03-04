@@ -211,7 +211,7 @@ if CLIENT then
 		self.pixvis = util.GetPixelVisibleHandle()
 
 		if render.SupportsPixelShaders_2_0() then
-			jrpg.AddHook("RenderScreenspaceEffects", "fairy_sunbeams", jrpg.DrawFairySunbeams)
+			hook.Add("RenderScreenspaceEffects", "fairy_sunbeams", jrpg.DrawFairySunbeams)
 		end
 	end
 
@@ -513,7 +513,7 @@ if CLIENT then
 		self.light.DieTime = 0
 
 		if #ents.FindByClass(ENT.ClassName) == 1 then
-			jrpg.RemoveHook("RenderScreenspaceEffects", "fairy_sunbeams")
+			hook.Remove("RenderScreenspaceEffects", "fairy_sunbeams")
 		end
 	end
 

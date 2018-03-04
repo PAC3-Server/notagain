@@ -78,13 +78,13 @@ vgui.Register("tips_panel",tips,"DPanel")
 
 local convar = CreateConVar("rpg_scoreboard_tips","1",FCVAR_ARCHIVE,"Enable or disable the tips status bar")
 
-jrpg.AddHook("ScoreboardShow","ShowTipsPanel",function()
+hook.Add("ScoreboardShow","ShowTipsPanel",function()
 	if convar:GetBool() and not IsValid(_G.TIPS) then
 		_G.TIPS = vgui.Create("tips_panel")
 	end
 end)
 
-jrpg.AddHook("ScoreboardHide","HideTipsPanel",function()
+hook.Add("ScoreboardHide","HideTipsPanel",function()
 	if convar:GetBool() and IsValid(_G.TIPS) then
 		_G.TIPS:Remove()
 	end

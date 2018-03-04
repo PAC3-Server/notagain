@@ -210,7 +210,7 @@ if CLIENT then
 	local health_bars = {}
 	local weapon_info = {}
 
-	jrpg.AddHook("HUDDrawTargetID", "hitmarks", function()
+	hook.Add("HUDDrawTargetID", "hitmarks", function()
 		return false
 	end)
 
@@ -249,7 +249,7 @@ if CLIENT then
 		surface.DrawRect(x+border_size*2, y+h-border_size*2, w-border_size*4, border_size*2)
 	end
 
-	jrpg.AddHook("HUDPaint", "hitmarks", function()
+	hook.Add("HUDPaint", "hitmarks", function()
 		if hook.Run("HUDShouldDraw", "JHitmarkers") == false then
 			return
 		end
@@ -830,7 +830,7 @@ if SERVER then
 
 	util.AddNetworkString("hitmark_attack")
 
-	jrpg.AddHook("EntityTakeDamage", "hitmarker", function(ent, dmg)
+	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
 		if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
 		local filter = {}
 		for k,v in pairs(player.GetAll()) do

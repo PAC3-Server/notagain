@@ -222,7 +222,7 @@ do
 	end
 
 	if SERVER then
-		jrpg.AddHook("GravGunOnPickedUp", ENT.ClassName, function(ply, self)
+		hook.Add("GravGunOnPickedUp", ENT.ClassName, function(ply, self)
 			if self:GetClass() ~= ENT.ClassName then return end
 
 			if self.bullet_info then
@@ -353,7 +353,7 @@ if SERVER then
 	util.AddNetworkString("jprojectile_sounds")
 end
 
-jrpg.AddHook("EntityEmitSound", "jprojectiles", function(data)
+hook.Add("EntityEmitSound", "jprojectiles", function(data)
 	if data.SoundName:find("weapons/", nil, true) and data.OriginalSoundName:EndsWith(".Single") then
 		local ply = data.Entity
 		if not ply:IsPlayer() and not ply:IsNPC() then return end
@@ -390,7 +390,7 @@ jrpg.AddHook("EntityEmitSound", "jprojectiles", function(data)
 	end
 end)
 
-jrpg.AddHook("EntityFireBullets", "jprojectiles", function(attacker, data)
+hook.Add("EntityFireBullets", "jprojectiles", function(attacker, data)
 	if suppress then return end
 	if not attacker:IsPlayer() and not attacker:IsNPC() then return end
 

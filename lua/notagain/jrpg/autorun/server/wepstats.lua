@@ -172,7 +172,7 @@ function wepstats.CallStatusFunction(wep, func_name, ...)
 end
 
 do -- status events
-	jrpg.AddHook("EntityTakeDamage", "wepstats", function(victim, info)
+	hook.Add("EntityTakeDamage", "wepstats", function(victim, info)
 		if wepstats.suppress_events then return end
 
 		local attacker = info:GetAttacker()
@@ -196,7 +196,7 @@ do -- status events
 		end
 	end)
 
-	jrpg.AddHook("EntityFireBullets", "wepstats", function(wep, data)
+	hook.Add("EntityFireBullets", "wepstats", function(wep, data)
 		if wepstats.suppress_events then return end
 
 		if wep:IsPlayer() then
@@ -596,9 +596,9 @@ do -- effects
 					local id = "decay_"..tostring(attacker)..tostring(victim)
 					local health = victim:Health()
 
-					jrpg.CreateTimer(id, 0.5, 0, function()
+					timer.Create(id, 0.5, 0, function()
 						if not attacker:IsValid() or not victim:IsValid() then
-							jrpg.RemoveTimer(id)
+							timer.Remove(id)
 							return
 						end
 
@@ -611,7 +611,7 @@ do -- effects
 						self:TakeDamageInfo(victim, dmginfo)
 
 						if not victim:Alive() or victim:Health() > health then
-							jrpg.RemoveTimer(id)
+							timer.Remove(id)
 							jdmg.SetStatus(victim, "decay", false)
 						end
 
@@ -702,7 +702,7 @@ do -- effects
 	end
 end
 
-jrpg.AddHook("OnEntityCreated", "wepstats_bugbait", function(ent)
+hook.Add("OnEntityCreated", "wepstats_bugbait", function(ent)
 	if ent:GetClass() == "npc_grenade_bugbait" and ent:GetOwner():IsValid() then
 		local ply = ent:GetOwner()
 		local wep = ply:GetActiveWeapon()
@@ -721,7 +721,7 @@ if me or game.SinglePlayer() then
 		weapon_physgun = true,
 	}
 
-	jrpg.AddHook("OnEntityCreated", "", function(wep)
+	hook.Add("OnEntityCreated", "", function(wep)
 		timer.Simple(0.1, function()
 			if not wep.wepstats and wep:IsValid() and wep:IsWeapon() and wep:GetClass():StartWith("weapon_") and not blacklist[wep:GetClass()] then
 				wepstats.AddToWeapon(wep)
