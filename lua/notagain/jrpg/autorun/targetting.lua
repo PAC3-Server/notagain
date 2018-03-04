@@ -194,7 +194,7 @@ if CLIENT then
 		jtarget.Scroll(-1)
 		jtarget.friends_only = friends_only
 
-		jrpg.AddHook("HUDShouldDraw", "jtarget", function(what)
+		hook.Add("HUDShouldDraw", "jtarget", function(what)
 			if what == "JHitmarkers" and jtarget.GetEntity(LocalPlayer()):IsValid() then
 				return false
 			end
@@ -203,14 +203,14 @@ if CLIENT then
 
 	function jtarget.StopSelection()
 		jtarget.selecting = false
-		jrpg.RemoveHook("HUDShouldDraw", "jtarget")
+		hook.Remove("HUDShouldDraw", "jtarget")
 	end
 
 	function jtarget.IsSelecting()
 		return jtarget.selecting
 	end
 
-	jrpg.AddHook("HUDPaint", "jtarget", jtarget.DrawSelection)
+	hook.Add("HUDPaint", "jtarget", jtarget.DrawSelection)
 end
 
 jtarget.prev_target = NULL
@@ -276,7 +276,7 @@ local function get_aim_angles(ply)
 end
 
 if CLIENT then
-	jrpg.AddHook("CreateMove", "jtarget", function(mv)
+	hook.Add("CreateMove", "jtarget", function(mv)
 		local ang = get_aim_angles(LocalPlayer())
 
 		if ang then
@@ -302,7 +302,7 @@ if CLIENT then
 		end
 	end)
 
-	jrpg.AddHook("InputMouseApply", "jtarget", function(mv, x, y)
+	hook.Add("InputMouseApply", "jtarget", function(mv, x, y)
 		if math.abs(x) > 1000 or math.abs(y) > 1000 then
 			jtarget.SetEntity(LocalPlayer())
 			jtarget.StopSelection()
@@ -310,7 +310,7 @@ if CLIENT then
 	end)
 end
 
-jrpg.AddHook("Move", "jtarget", function(ply)
+hook.Add("Move", "jtarget", function(ply)
 	local ang = get_aim_angles(ply)
 
 	if ang then

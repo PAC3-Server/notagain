@@ -274,7 +274,7 @@ if SERVER then
 		return ent.jattributes or {}
 	end
 
-	jrpg.AddHook("EntityTakeDamage", "jattributes", function(victim, dmginfo)
+	hook.Add("EntityTakeDamage", "jattributes", function(victim, dmginfo)
 		local attacker = dmginfo:GetAttacker()
 		if not attacker:IsPlayer() and not attacker:IsNPC() then return end
 
@@ -299,7 +299,7 @@ if SERVER then
 		end
 	end)
 
-	jrpg.AddHook("EntityFireBullets", "jattributes", function(ply, data)
+	hook.Add("EntityFireBullets", "jattributes", function(ply, data)
 		for type, info in pairs(jattributes.types) do
 			if info.on_fire_bullet and ply.jattributes and ply.jattributes[type] then
 				local b = info.on_fire_bullet(ply, data, ply.jattributes)
@@ -310,7 +310,7 @@ if SERVER then
 		end
 	end)
 
-	jrpg.AddHook("PlayerPostThink", "jattributes", function(ply)
+	hook.Add("PlayerPostThink", "jattributes", function(ply)
 		local wep = ply:GetActiveWeapon()
 
 		if not wep:IsValid() then return end

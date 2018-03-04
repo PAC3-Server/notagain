@@ -154,7 +154,7 @@ do -- status
 						table.remove(jdmg.active_status, i)
 
 						if not jdmg.active_status[1] then
-							jrpg.RemoveHook("Think", "jdmg_status_update")
+							hook.Remove("Think", "jdmg_status_update")
 						end
 					end
 				end
@@ -291,7 +291,7 @@ if CLIENT then
 		render.SetBlend(1)
 
 		if not active[1] then
-			jrpg.RemoveHook("RenderScreenspaceEffects", "jdmg")
+			hook.Remove("RenderScreenspaceEffects", "jdmg")
 		end
 	end
 
@@ -329,7 +329,7 @@ if CLIENT then
 		end
 
 		if not low_health[1] then
-			jrpg.RemoveHook("RenderScreenspaceEffects", "jdmg_lowhealth")
+			hook.Remove("RenderScreenspaceEffects", "jdmg_lowhealth")
 		end
 	end
 
