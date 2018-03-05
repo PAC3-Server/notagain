@@ -137,7 +137,7 @@ if CLIENT then
 			end
 			ply.friends_last_friend_status = status
 
-			local status = cookie.GetString("friends_" .. ply:UniqueID())
+			local status = cookie.GetString("friends_" .. ply:UniqueID(), "none")
 			if ply.friends_last_cookie ~= status then
 				if status == "clear" then
 					cookie.Delete("friends_" .. ply:UniqueID())
