@@ -9,7 +9,7 @@ if CLIENT then
 	}
 
 	local maps = {}
-	local votestate = {}
+	local votestate = g_mapvote_state or {}
 	local panel = NULL
 
 	g_mapvote_state = votestate
@@ -118,7 +118,11 @@ if SERVER then
 		if maps2[name] then
 			ply.mapvotes = ply.mapvotes or {}
 			ply.mapvotes[name] = b
-			PrintMessage(HUD_PRINTTALK, ply:Nick() .. " map voted for " .. name)
+			if b then
+				PrintMessage(HUD_PRINTTALK, ply:Nick() .. " map voted for " .. name)
+			else
+				PrintMessage(HUD_PRINTTALK, ply:Nick() .. " map unvoted " .. name)
+			end
 		end
 	end)
 
