@@ -164,6 +164,7 @@ if SERVER then
 			vote.Start(map_info.score .. "% has voted for "..map_info.name..". Change map?", {"yes", "no"}, 20, function(res)
 				if res == "yes" then
 					aowl.CountDown(10, "CHANGING MAP TO " .. map_info.name, function()
+						cookie.Set("mapvote_lastmap", map_info.name)
 						game.ConsoleCommand("changelevel " .. map_info.name .. "\n")
 					end)
 				else
@@ -180,6 +181,12 @@ if SERVER then
 	aowl.AddCommand("mapvote|votemap", function(ply)
 		ply:SendLua("ShowMapVote()")
 	end)
+
+	local voted_map = cookie.GetString("mapvote_lastmap", game.GetMap())
+	if game.GetMap() ~= voted_map then
+		cookie.Set("mapvote_lastmap", voted_map)
+		game.ConsoleCommand("changelevel " .. voted_map .. "\n")
+	end
 
 	for _, ply in ipairs(player.GetAll()) do
 		hook.GetTable().PlayerInitialSpawn.mapvote(ply)
