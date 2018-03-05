@@ -40,7 +40,7 @@ if CLIENT then
 				else
 					ent.serverside_ragdoll_origin = nil
 				end
-			end)
+			end, -100)
 		else
 			hook.Remove("CalcView", "serverside_ragdoll")
 		end
