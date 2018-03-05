@@ -151,7 +151,7 @@ hook.Add("UpdateAnimation", "roll", function(ply, velocity)
 end)
 
 hook.Add("OnPlayerHitGround", "roll", function(ply)
-	if ply:KeyDown(IN_DUCK)	then
+	if jrpg.IsEnabled(ply) and ply:KeyDown(IN_DUCK) then
 		ply.roll_landed = true
 		ply.roll_ang = ply:GetVelocity():Angle()
 	end
@@ -199,7 +199,9 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 end)
 
 hook.Add("Move", "roll", function(ply, mv, ucmd)
-	if jrpg.IsEnabled(ply) and mv:GetVelocity():Length2D() < threshold then
+	if not jrpg.IsEnabled(ply) then return end
+
+	if mv:GetVelocity():Length2D() < threshold then
 		ply.roll_ang = nil
 		ply.roll_time = nil
 		ply.roll_time2 = nil
