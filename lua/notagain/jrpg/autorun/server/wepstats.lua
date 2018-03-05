@@ -179,7 +179,7 @@ do -- status events
 
 		if attacker:IsPlayer() and not jrpg.IsEnabled(attacker) then return end
 
-		if not (attacker:IsNPC() or attacker:IsPlayer()) then return end
+		if not attacker.GetActiveWeapon then return end
 		local wep = attacker:GetActiveWeapon()
 
 		wepstats.suppress_events = true
@@ -196,12 +196,12 @@ do -- status events
 		end
 	end)
 
+	wepstats.suppress_events = nil
+
 	hook.Add("EntityFireBullets", "wepstats", function(wep, data)
 		if wepstats.suppress_events then return end
 
-		if wep:IsPlayer() then
-			if not jrpg.IsEnabled(wep) then return end
-
+		if wep.GetActiveWeapon then
 			wep = wep:GetActiveWeapon()
 		end
 

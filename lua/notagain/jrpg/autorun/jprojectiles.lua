@@ -31,7 +31,7 @@ do
 			self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
 
 			if self:GetOwner():IsValid() then
-				self.rand_dir = (self.dir - self:GetOwner():GetAimVector())
+				self.rand_dir = (self.dir - self:GetOwner():EyeAngles():Forward())
 				self.start_time = RealTime() + 1
 				self.damp = math.random()
 				if self.damage then self:SetDamage(self.damage) end
@@ -313,7 +313,7 @@ do
 				elseif not pos or not pos:IsValid() then
 					local filter = ents.FindByClass(ENT.ClassName)
 					table.insert(filter, ply)
-					pos = util.TraceLine({start = ply:EyePos(), endpos = ply:EyePos() + ply:GetAimVector()*10000, filter = filter}).HitPos
+					pos = util.TraceLine({start = ply:EyePos(), endpos = ply:EyePos() + ply:EyeAngles():Forward()*10000, filter = filter}).HitPos
 				end
 				local dir = pos - phys:GetPos()
 				local dist = dir:Length()
@@ -392,9 +392,7 @@ end)
 
 hook.Add("EntityFireBullets", "jprojectiles", function(attacker, data)
 	if suppress then return end
-	if not attacker:IsPlayer() and not attacker:IsNPC() then return end
-
-	if attacker:IsPlayer() and not jrpg.IsEnabled(attacker) then return end
+	if not attacker.GetActiveWeapon then return end
 
 	local wep = attacker:GetActiveWeapon()
 
