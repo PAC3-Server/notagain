@@ -177,25 +177,6 @@ if CLIENT then
 		},
 	}
 
-	local function find_head_pos(ent)
-		if not ent.bc_head or ent.bc_last_mdl ~= ent:GetModel() then
-			for i = 0, ent:GetBoneCount() do
-				local name = ent:GetBoneName(i):lower()
-				if name:find("head") then
-					ent.bc_head = i
-					ent.bc_last_mdl = ent:GetModel()
-					break
-				end
-			end
-		end
-
-		if ent.bc_head then
-			return ent:GetBonePosition(ent.bc_head)
-		end
-
-		return ent:EyePos(), ent:EyeAngles()
-	end
-
 	local line_mat = Material("particle/Particle_Glow_04")
 
 	local line_width = 12
