@@ -240,7 +240,7 @@ if SERVER then
 			end
 
 			if res == "yes" then
-				ply:Kill()
+				ply:Kick("votekicked")
 			else
 
 			end
