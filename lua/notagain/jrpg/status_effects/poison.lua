@@ -81,7 +81,7 @@ if SERVER then
 		end
 
 		if self:GetAmount() > 0.75 then
-			for _, ent in ipairs(ents.FindInSphere(target:GetPos(), target:BoundingRadius() * 3)) do
+			for _, ent in ipairs(ents.FindInSphere(target:GetPos(), math.min(target:BoundingRadius() * 3, 500))) do
 				if ent ~= target and jrpg.IsActor(ent) then
 					wepstats.TakeDamageInfo(ent, dmginfo)
 				end
