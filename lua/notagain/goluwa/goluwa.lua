@@ -202,7 +202,14 @@ function goluwa.CreateEnv()
 
 				local dir = path:sub(0, -2)
 
-				if not file.IsDir(goluwa.lua_dir .. dir, goluwa.lua_dir_where) then
+				if dir:StartWith("lua/") then
+					local relative = debug.getinfo(2).source:match("@(.+)")
+					local addon_dir = relative:match("^(.-/)")
+
+					if file.IsDir(goluwa.lua_dir .. addon_dir .. dir, goluwa.lua_dir_where) then
+						dir = addon_dir .. dir
+					end
+				elseif not file.IsDir(goluwa.lua_dir .. dir, goluwa.lua_dir_where) then
 					local relative = debug.getinfo(2).source:match("@(.+)")
 
 					if relative then
@@ -674,6 +681,20 @@ function goluwa.CreateEnv()
 		env.steam = steam
 	end
 
+	do
+		local network = {}
+
+		function network.IsConnected()
+			return true
+		end
+
+		function network.GetHostname()
+			return GetHostName()
+		end
+
+		env.network = network
+	end
+
 	do -- rendering
 		do
 			local temp = {{}, {}, {}, {}}
@@ -728,8 +749,17 @@ function goluwa.CreateEnv()
 
 			local render_SetMaterial = render.SetMaterial
 
-			function render2d.shader:Bind()
-				render_SetMaterial(self.tex.mat)
+			do
+				local temp = Vector()
+				function render2d.shader:Bind()
+					temp.x = render2d.shader.global_color.r
+					temp.y = render2d.shader.global_color.g
+					temp.z = render2d.shader.global_color.b
+					self.tex.mat:SetVector("$color", temp)
+					self.tex.mat:SetVector("$color2", temp)
+					self.tex.mat:SetFloat("$alpha", render2d.shader.global_color.a * render2d.shader.alpha_multiplier)
+					render_SetMaterial(self.tex.mat)
+				end
 			end
 
 			env.render2d = render2d
@@ -756,7 +786,7 @@ function goluwa.CreateEnv()
 		end
 
 		env.gfx = env.runfile("framework/lua/libraries/graphics/gfx/gfx.lua")
-		env.runfile("engine/lua/libraries/graphics/gfx/markup.lua")
+		env.runfile("engine/lua/libraries/graphics/gfx/markup.lua", env.gfx)
 
 		env.io.stdin = env.io.open("stdin", "r")
 		env.io.stdout = env.io.open("stdout", "w")
@@ -782,24 +812,54 @@ function goluwa.CreateEnv()
 		env.gfx.ninepatch_poly.vertex_buffer:SetDrawHint("dynamic")
 	end
 
+	if _G.TEST_GOLUWA_GUI then
+		env.runfile("engine/lua/libraries/graphics/gfx/particles.lua", env.gfx)
+		--env.network = env.runfile("engine/lua/libraries/network/network.lua")
+		--env.runfile("framework/lua/libraries/extensions/utility.lua", env.utility)
+
+		env.packet = env.runfile("engine/lua/libraries/network/packet.lua")
+		env.message = env.runfile("engine/lua/libraries/network/message.lua")
+		env.nvars = env.runfile("engine/lua/libraries/network/nvars.lua")
+		env.clients = env.runfile("engine/lua/libraries/network/clients.lua")
+		env.chat = env.runfile("game/lua/libraries/network/chat.lua")
+
+		env.runfile("game/lua/autorun/console_commands.lua")
+		env.runfile("engine/lua/libraries/extensions/input.lua", env.input)
+		env.gui = env.runfile("engine/lua/libraries/graphics/gui/gui.lua")
+		env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
+		env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
+
+		env.gui.Initialize()
+
+		hook.Add("PostRenderVGUI", "goluwa_2d", function()
+			local dt = FrameTime()
+			env.event.Call("PreDrawGUI", dt)
+			env.event.Call("DrawGUI", dt)
+			env.event.Call("PostDrawGUI", dt)
+		end)
+
+		for i,v in ipairs(player.GetAll()) do
+			local c
+			if v == LocalPlayer() then
+				c = env.clients.Create(v:UniqueID())
+				env.clients.local_client = c
+			else
+				c = env.clients.Create(v:UniqueID())
+			end
+			c:SetNick(v:Nick())
+		end
+
+		env.runfile("game/lua/autorun/graphics/scoreboard.lua")
+		env.runfile("game/lua/autorun/graphics/chatbox.lua")
+
+		for _, client in ipairs(env.clients.GetAll()) do
+			env.scoreboard.AddClient(client)
+		end
+
+		--env.runfile("game/lua/autorun/graphics/main_menu.lua")
+	end
+
 	return env
-end
-
-
-function goluwa.InitializeGUI()
-	local env = goluwa.env
-
-	env.gui = env.runfile("engine/lua/libraries/graphics/gui/gui.lua")
-	env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
-	env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
-	env.gui.Initialize()
-
-	hook.Add("HUDPaint", "goluwa_2d", function()
-		local dt = FrameTime()
-		env.event.Call("PreDrawGUI", dt)
-		env.event.Call("DrawGUI", dt)
-		env.event.Call("PostDrawGUI", dt)
-	end)
 end
 
 function goluwa.Initialize()
@@ -824,7 +884,7 @@ function goluwa.Initialize()
 		notagain.loaded_libraries.goluwa = goluwa
 
 		notagain.AutorunDirectory("goluwa")
-		dprint("initializing goluwa took " .. (SysTime() - time) .. " seconds")
+		dprint(("initializing goluwa took %.5f seconds"):format(SysTime() - time))
 
 		concommand.Add("goluwa", function(ply, cmd, args, line)
 			if GetConVar("sv_allowcslua"):GetBool() or LocalPlayer():IsAdmin() then
