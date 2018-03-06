@@ -196,6 +196,16 @@ do -- status
 			end
 		end
 
+		function jdmg.ClearStatus(ent)
+			for k,v in pairs(jdmg.GetStatuses(ent)) do
+				v:SetAmount(0)
+			end
+		end
+
+		hook.Add("PlayerSpawn", "jdmg_clearstatus", function(ply)
+			jdmg.ClearStatus(ply)
+		end)
+
 		function jdmg.AddStatus(ent, status, amt, userdata)
 
 			if not jdmg.GetStatuses(ent)[status] then
