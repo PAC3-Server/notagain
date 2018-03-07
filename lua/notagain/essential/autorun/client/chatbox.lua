@@ -624,8 +624,9 @@ do -- panels
 
 				local tex = env.render.CreateTextureFromPath(data.icon)
 				btn.Paint = function()
-					local x, y = btn:LocalToScreen(0,0)
-					env.gfx.DrawRect(x, y, btn:GetWide(), btn:GetTall(), tex, 1,1,1,1)
+					btn:BeginGoluwaPaint()
+					env.gfx.DrawRect(0, 0, btn:GetWide(), btn:GetTall(), tex, 1,1,1,1)
+					btn:EndGoluwaPaint()
 				end
 
 				btn.DoClick = function()
