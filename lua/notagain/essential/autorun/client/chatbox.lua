@@ -249,6 +249,11 @@ end
 chatbox.addtext_history = {}
 
 function chatbox.AddText(...)
+	if not IsValid(chatbox.frame) then
+		chatbox.Open()
+		chatbox.Close()
+	end
+
 	local args = {...}
 
 	table.insert(chatbox.addtext_history, args)
@@ -318,11 +323,6 @@ hook.Add("ChatGetChatBoxSize", "chatbox", function()
 end)
 
 hook.Add("ChatAddText", "chatbox", function(...)
-	if not IsValid(chatbox.frame) then
-		chatbox.Open()
-		chatbox.Close()
-	end
-
 	return chatbox.AddText(...)
 end)
 
