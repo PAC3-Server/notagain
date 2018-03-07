@@ -247,6 +247,12 @@ function goluwa.CreateEnv()
 				if file.Exists(goluwa.lua_dir .. addon_dir .. path, goluwa.lua_dir_where) then
 					return execute(goluwa.lua_dir .. addon_dir .. path, addon_dir .. original_path,  ...)
 				end
+
+				for k,v in ipairs({"core", "framework", "engine", "game"}) do
+					if file.Exists(goluwa.lua_dir .. v .. "/" .. path, goluwa.lua_dir_where) then
+						return execute(goluwa.lua_dir .. v .. "/" .. path, v .. "/" .. path, ...)
+					end
+				end
 			end
 
 			if file.Exists(goluwa.lua_dir .. path, goluwa.lua_dir_where) then
@@ -728,8 +734,8 @@ function goluwa.CreateEnv()
 		env.camera = env.runfile("framework/lua/libraries/graphics/camera.lua")
 		env.render = env.runfile("framework/lua/libraries/graphics/render/render.lua")
 		env.render.GenerateTextures = function()
-			env.render.white_texture = env.render.CreateTextureFromPath("vgui/white", true)
-			env.render.loading_texture = env.render.CreateTextureFromPath("gui/progress_cog.png", true)
+			env.render.white_texture = env.render.CreateTextureFromPath("materials/color/white.vtf")
+			env.render.loading_texture = env.render.CreateTextureFromPath("vgui/loading-rotate", true)
 			env.render.error_texture = env.render.CreateTextureFromPath("error", true)
 		end
 
@@ -751,18 +757,29 @@ function goluwa.CreateEnv()
 
 			do
 				local temp = Vector()
+				local mat = CreateMaterial("goluwa_unlit_shader_", "UnlitGeneric", {
+					["$translucent"] = 1,
+					["$vertexcolor"] = 1,
+					["$vertexalpha"] = 1,
+				})
 				function render2d.shader:Bind()
-					temp.x = render2d.shader.global_color.r
-					temp.y = render2d.shader.global_color.g
-					temp.z = render2d.shader.global_color.b
-					self.tex.mat:SetVector("$color", temp)
-					self.tex.mat:SetVector("$color2", temp)
-					self.tex.mat:SetFloat("$alpha", render2d.shader.global_color.a * render2d.shader.alpha_multiplier)
-					render_SetMaterial(self.tex.mat)
+					temp.x = self.global_color.r
+					temp.y = self.global_color.g
+					temp.z = self.global_color.b
+
+					mat:SetTexture("$basetexture", self.tex.tex)
+					mat:SetVector("$color", temp)
+					mat:SetVector("$color2", temp)
+					mat:SetFloat("$alpha", self.global_color.a * self.alpha_multiplier)
+					mat:SetFloat("$translucent", 1)
+
+					render_SetMaterial(mat)
 				end
 			end
 
 			env.render2d = render2d
+
+			render2d.SetColor(1,1,1,1)
 		end
 
 		do
@@ -812,7 +829,21 @@ function goluwa.CreateEnv()
 		env.gfx.ninepatch_poly.vertex_buffer:SetDrawHint("dynamic")
 	end
 
+	local META = FindMetaTable("Panel")
+
+	function META:BeginGoluwaPaint()
+		local x, y = self:LocalToScreen()
+		env.render2d.PushMatrix(x, y)
+		render.SetScissorRect(x, y, x + self:GetWide(), y + self:GetTall(), true)
+	end
+
+	function META:EndGoluwaPaint()
+		env.render2d.PopMatrix()
+		render.SetScissorRect(0,0,0,0, false)
+	end
+
 	if _G.TEST_GOLUWA_GUI then
+		env.runfile("framework/lua/libraries/extensions/utility.lua", env.utility)
 		env.runfile("engine/lua/libraries/graphics/gfx/particles.lua", env.gfx)
 		--env.network = env.runfile("engine/lua/libraries/network/network.lua")
 		--env.runfile("framework/lua/libraries/extensions/utility.lua", env.utility)
@@ -831,11 +862,47 @@ function goluwa.CreateEnv()
 
 		env.gui.Initialize()
 
+		hook.Remove("Think", "goluwa")
+
+		for _, gmod_pnl in ipairs(vgui.GetWorldPanel():GetChildren()) do
+			if IsValid(gmod_pnl.goluwa_collision) then
+				gmod_pnl.goluwa_collision:Remove()
+			end
+		end
+
 		hook.Add("PostRenderVGUI", "goluwa_2d", function()
+			env.event.UpdateTimers()
+			env.event.Call("Update", env.system.GetFrameTime())
+
 			local dt = FrameTime()
 			env.event.Call("PreDrawGUI", dt)
 			env.event.Call("DrawGUI", dt)
 			env.event.Call("PostDrawGUI", dt)
+
+			--[[
+
+			for _, gmod_pnl in ipairs(vgui.GetWorldPanel():GetChildren()) do
+				local goluwa_pnl = gmod_pnl.goluwa_collision
+				if gmod_pnl:IsVisible() then
+					if not goluwa_pnl then
+						gmod_pnl.goluwa_collision = env.gui.CreatePanel("base")
+						gmod_pnl.goluwa_collision.OnUpdate = function(s)
+							if not gmod_pnl:IsValid() then
+								goluwa_pnl:Remove()
+							end
+						end
+						goluwa_pnl = gmod_pnl.goluwa_collision
+					end
+				end
+
+				if goluwa_pnl then
+					goluwa_pnl:SetVisible(gmod_pnl:IsVisible())
+					goluwa_pnl:SetPosition(env.Vec2(gmod_pnl:LocalToScreen()))
+					goluwa_pnl:SetSize(env.Vec2(gmod_pnl:GetSize()))
+				end
+			end
+
+			]]
 		end)
 
 		for i,v in ipairs(player.GetAll()) do
@@ -849,14 +916,22 @@ function goluwa.CreateEnv()
 			c:SetNick(v:Nick())
 		end
 
-		env.runfile("game/lua/autorun/graphics/scoreboard.lua")
-		env.runfile("game/lua/autorun/graphics/chatbox.lua")
+		env.render2d.PushStencilRect = function() end
+		env.render2d.PopStencilRect = function() end
+
+		--env.runfile("game/lua/autorun/graphics/scoreboard.lua")
+		--env.runfile("game/lua/autorun/graphics/chatbox.lua")
 
 		for _, client in ipairs(env.clients.GetAll()) do
-			env.scoreboard.AddClient(client)
+			--env.scoreboard.AddClient(client)
 		end
 
-		--env.runfile("game/lua/autorun/graphics/main_menu.lua")
+		env.render.SetFrameBuffer()
+		env.goluwa = env.event.CreateRealm("goluwa")
+
+		--env.runfile("game/lua/gui_panels/*")
+		--for i = 1, 100 do env.gui.CreatePanel"sheep" end
+		--env.runfile("game/lua/examples/2d/esheep.lua")
 	end
 
 	return env
