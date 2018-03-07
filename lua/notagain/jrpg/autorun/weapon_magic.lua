@@ -272,7 +272,7 @@ end
 if CLIENT then
 	net.Receive(SWEP.ClassName, function(len, ply)
 		local wep = net.ReadEntity()
-		if wep:IsValid() and wep:GetClass() == SWEP.ClassName and wep.DeployMagic then
+		if wep:IsValid() and wep:GetOwner():IsValid() and wep:GetClass() == SWEP.ClassName and wep.DeployMagic then
 			if net.ReadBool() then
 				wep:DeployMagic()
 			else
