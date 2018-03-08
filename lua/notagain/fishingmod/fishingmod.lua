@@ -9,6 +9,7 @@ if SERVER then
 
 	add_dir("/")
 	add_dir("client/")
+	add_dir("client/pac_outfits/")
 	add_dir("bait/")
 	add_dir("fish/")
 end
