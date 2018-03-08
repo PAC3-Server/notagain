@@ -178,11 +178,11 @@ function open()
     if (typeof AudioContext != "undefined")
     {
         audio = new AudioContext();
-        processor = audio.createScriptProcessor(]==] .. webaudio.buffer_size:GetInt() .. [==[, 0, 0);
+        processor = audio.createScriptProcessor(]==] .. webaudio.buffer_size:GetInt() .. [==[, 2, 2);
         gain = audio.createGain();
     } else {
         audio = new webkitAudioContext();
-        processor = audio.createJavaScriptNode(]==] .. webaudio.buffer_size:GetInt() .. [==[, 0, 0);
+        processor = audio.createJavaScriptNode(]==] .. webaudio.buffer_size:GetInt() .. [==[, 2, 2);
         gain = audio.createGainNode();
     }
 
