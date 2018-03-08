@@ -949,6 +949,8 @@ if CLIENT then
 	end
 
 	function ENT:Think()
+		if self.BROKEN then return end
+
 		if (self:GetEnabled()) then
 			local light = DynamicLight(self:EntIndex())
 
@@ -972,6 +974,7 @@ if CLIENT then
 
 		if (not IsValid(self.hole)) then
 			self.hole = ClientsideModel("models/hunter/plates/plate1x2.mdl", RENDERGROUP_BOTH)
+			if not self.hole:IsValid() then self.BROKEN = true return end
 			self.hole:SetPos(self:GetPos() - self:GetUp() * (1 + offset))
 			self.hole:SetAngles(self:GetAngles())
 			self.hole:SetParent(self)
