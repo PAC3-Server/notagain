@@ -35,8 +35,23 @@ local function load_path(path)
 end
 
 local function run_func(path, func, ...)
-	local OLD = _G.AddCSLuaFile
-	_G.AddCSLuaFile = function(...) if not ... then OLD(debug.getinfo(2).source:match("@.-lua/(.+)") or path) return end return OLD(...) end
+	local OLD_AddCSLuaFile = _G.AddCSLuaFile
+	_G.AddCSLuaFile = function(...)
+		if not ... then
+			return OLD_AddCSLuaFile(debug.getinfo(2).source:match("@.-lua/(.+)") or path)
+		end
+
+		return OLD_AddCSLuaFile(...)
+	end
+	local OLD_include = _G.include
+	_G.include = function(path, ...)
+		local dir = debug.getinfo(2).source:match("@.-lua/(.+/)")
+		if file.Exists(dir .. path, "LUA") then
+			path = dir .. path
+		end
+
+		return OLD_include(path, ...)
+	end
 
 	local err
 	local res = {xpcall(func, function(msg) err = msg .. "\n" .. debug.traceback() end, ...)}
@@ -45,7 +60,8 @@ local function run_func(path, func, ...)
 		res[2] = err
 	end
 
-	_G.AddCSLuaFile = OLD
+	_G.AddCSLuaFile = OLD_AddCSLuaFile
+	_G.include = OLD_include
 
 	return unpack(res)
 end
@@ -233,18 +249,7 @@ function notagain.AutorunDirectory(addon_name)
 	return notagain.autorun_results[addon_name]
 end
 
-function notagain.Autorun()
-	--If external stuff needs to be called before notagain
-	hook.Run("NotagainPreLoad")
-
-	--local include = function(path) print("INCLUDE: ", path) return _G.include(path) end
-	--local AddCSLuaFile = function(path) print("AddCSLuaFile: ", path) return AddCSLuaFile(path) end
-
-	-- pre autorun
-	for addon_name, addon_dir in pairs(notagain.directories) do
-		local lib = notagain.loaded_libraries[addon_name]
-		run_dir(addon_name, addon_dir .. "/prerun/", lib and lib.notagain_autorun == false)
-	end
+function notagain.Initialize()
 
 	-- load foo/foo.lua
 	for addon_name, addon_dir in pairs(notagain.directories) do
@@ -263,6 +268,20 @@ function notagain.Autorun()
 				end
 			end
 		end
+	end
+
+end
+function notagain.Autorun()
+	--If external stuff needs to be called before notagain
+	hook.Run("NotagainPreLoad")
+
+	--local include = function(path) print("INCLUDE: ", path) return _G.include(path) end
+	--local AddCSLuaFile = function(path) print("AddCSLuaFile: ", path) return AddCSLuaFile(path) end
+
+	-- pre autorun
+	for addon_name, addon_dir in pairs(notagain.directories) do
+		local lib = notagain.loaded_libraries[addon_name]
+		run_dir(addon_name, addon_dir .. "/prerun/", lib and lib.notagain_autorun == false)
 	end
 
 	-- autorun
