@@ -325,8 +325,8 @@ if (SERVER) then
 		end)
 	end
 
-	hook.Add("InitPostEntity","witcher_LoadPortals",SpawnPortals)
-	hook.Add("PostCleanupMap","witcher_LoadPortals",SpawnPortals)
+	--hook.Add("InitPostEntity","witcher_LoadPortals",SpawnPortals)
+	--hook.Add("PostCleanupMap","witcher_LoadPortals",SpawnPortals)
 
 	hook.Add("ShouldCollide", "witcher_RPGFix", function(a, b)
 		local aClass = a:GetClass()
