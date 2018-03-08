@@ -1,5 +1,5 @@
 if SERVER then
-	timer.CreateTimer("juse", 0.5, 0, function()
+	timer.Create("juse", 0.5, 0, function()
 		for _, ply in ipairs(player.GetAll()) do
 			ply:SetNWEntity("juse_ent", NULL)
 			if (ply:GetInfoNum("ctp_enabled", 0) == 1 or ply:GetInfoNum("battlecam_enabled", 0) == 1) and jrpg.IsEnabled(ply) then
