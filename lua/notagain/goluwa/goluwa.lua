@@ -762,16 +762,44 @@ function goluwa.CreateEnv()
 					["$vertexcolor"] = 1,
 					["$vertexalpha"] = 1,
 				})
-				function render2d.shader:Bind()
-					temp.x = self.global_color.r
-					temp.y = self.global_color.g
-					temp.z = self.global_color.b
 
-					mat:SetTexture("$basetexture", self.tex.tex)
-					mat:SetVector("$color", temp)
-					mat:SetVector("$color2", temp)
-					mat:SetFloat("$alpha", self.global_color.a * self.alpha_multiplier)
-					mat:SetFloat("$translucent", 1)
+				local last_tex
+				local last_color_r
+				local last_color_g
+				local last_color_b
+				local last_color_a
+
+				function render2d.shader:Bind()
+					if last_tex ~= self.tex.tex then
+						mat:SetTexture("$basetexture", self.tex.tex)
+
+						last_tex = self.tex.tex
+					end
+
+					if
+						last_color_r ~= self.global_color.r or
+						last_color_g ~= self.global_color.g or
+						last_color_b ~= self.global_color.b
+					then
+						temp.x = self.global_color.r
+						temp.y = self.global_color.g
+						temp.z = self.global_color.b
+
+						mat:SetVector("$color", temp)
+						mat:SetVector("$color2", temp)
+
+						last_color_r = self.global_color_r
+						last_color_g = self.global_color_g
+						last_color_b = self.global_color_b
+					end
+
+					local alpha = self.global_color.a * self.alpha_multiplier
+
+					if last_color_a ~= alpha then
+						mat:SetFloat("$alpha", alpha)
+
+						last_color_a = alpha
+					end
 
 					render_SetMaterial(mat)
 				end
