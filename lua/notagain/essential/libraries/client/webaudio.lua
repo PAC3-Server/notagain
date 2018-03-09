@@ -148,8 +148,7 @@ function webaudio.Initialize()
 		end
 	end)
 
-	file.Write("webaudio_html.txt", [==[
-<script>
+	local js = ([==[
 /*jslint bitwise: true */
 
 window.onerror = function(description, url, line)
@@ -504,10 +503,16 @@ function DestroyStream(id)
 
 open();
 
-</script>
-
 ]==])
-	webaudio.browser_panel:OpenURL("asset://garrysmod/data/webaudio_html.txt")
+	
+	webaudio.browser_panel.OnFinishLoadingDocument = function(self)
+		self.OnFinishLoadingDocument = nil
+		
+		dprint("OnFinishLoadingDocument")
+		webaudio.browser_panel:RunJavascript(js)
+	end
+	
+	webaudio.browser_panel:OpenURL[[asset://garrysmod/html/loading.html]] -- so that we have correct cors
 
 	hook.Add("RenderScene", "webaudio2", function(pos, ang)
 		webaudio.eye_pos = pos
