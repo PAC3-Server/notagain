@@ -80,20 +80,11 @@ local init = false
 
 local function player_say(ply, str)
 	if not init then
-
-		env.resource.AddProvider("https://github.com/PAC3-Server/chatsounds/raw/master/")
-
 		env.chatsounds.Initialize()
 
-		env.chatsounds.LoadListFromAppID(220) -- hl2
-
-		for i, info in ipairs(engine.GetGames()) do
-			if info.mounted and not blacklist[info.depot] then
-				env.chatsounds.LoadListFromAppID(info.depot)
-			end
-		end
-
+		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games")
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
+		env.chatsounds.BuildFromGithub("Metastruct/garrysmod-chatsounds", "sound/chatsounds/autoadd")
 
 		hook.Run("ChatsoundsInitialized")
 
