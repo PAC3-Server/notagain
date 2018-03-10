@@ -378,45 +378,7 @@ if SERVER then
 	end
 end
 
-
-function jrpg.FindHeadPos(ent)
-	if ent.jrpg_last_mdl ~= ent:GetModel() then
-		ent.jrpg_head_bone = nil
-		ent.jrpg_head_attachment = nil
-		ent.jrpg_last_mdl = ent:GetModel()
-	end
-
-	if not ent.jrpg_head_bone then
-		for i = 0, ent:GetBoneCount() or 0 do
-			local name = ent:GetBoneName(i):lower()
-			if name:find("head", nil, true) then
-				ent.jrpg_head_bone = i
-				break
-			end
-		end
-	end
-
-	if ent.jrpg_head_bone then
-		local m = ent:GetBoneMatrix(ent.jrpg_head_bone)
-		if m then
-			local pos = m:GetTranslation()
-			if pos ~= ent:GetPos() then
-				return pos, m:GetAngles()
-			end
-		end
-	else
-		if not ent.jrpg_attachment_eyes then
-			ent.jrpg_head_attachment = ent:GetAttachments().eyes or ent:GetAttachments().forward
-		end
-
-		if ent.jrpg_head_attachment then
-			local angpos = ent:GetAttachment(ent.jrpg_head_attachment)
-			return angpos.Pos, angpos.Ang
-		end
-	end
-
-	return ent:EyePos(), ent:EyeAngles()
-end
+jrpg.FindHeadPos = requirex("find_head_pos")
 
 FindMetaTable("Player").IsRPG = jrpg.IsEnabled
 
