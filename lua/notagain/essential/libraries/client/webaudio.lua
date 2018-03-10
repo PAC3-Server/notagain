@@ -164,7 +164,7 @@ function dprint(str)
 var audio;
 var gain;
 var processor;
-var streams = [];
+var streams = new Object();
 var streams_array = [];
 
 function open()
@@ -179,10 +179,12 @@ function open()
         audio = new AudioContext();
         processor = audio.createScriptProcessor(]==] .. webaudio.buffer_size:GetInt() .. [==[, 2, 2);
         gain = audio.createGain();
+		compressor = audio.createDynamicsCompressor()
     } else {
         audio = new webkitAudioContext();
         processor = audio.createJavaScriptNode(]==] .. webaudio.buffer_size:GetInt() .. [==[, 2, 2);
         gain = audio.createGainNode();
+		compressor = audio.createDynamicsCompressor()
     }
 
     processor.onaudioprocess = function(event)
@@ -269,8 +271,8 @@ function open()
 					if (stream.filter_type == 0)
 					{
 						// None
-                        left = buffer_left[index] * stream.vol_left_smooth;
-                        right = buffer_right[index] * stream.vol_right_smooth;
+                        left = buffer_left[index] * stream.vol_both;
+                        right = buffer_right[index] * stream.vol_both;
 					}
 					else
                     {
@@ -280,16 +282,19 @@ function open()
                         if (stream.filter_type == 1)
                         {
 							// Low pass
-                            left = sml * stream.vol_left_smooth;
-                            right = smr * stream.vol_right_smooth;
+                            left = sml * stream.vol_both;
+                            right = smr * stream.vol_both;
                         }
                         else if (stream.filter_type == 2)
                         {
 							// High pass
-                            left = (buffer_left[index] - sml) * stream.vol_left_smooth;
-                            right = (buffer_right[index] - smr) * stream.vol_right_smooth;
+                            left = (buffer_left[index] - sml) * stream.vol_both;
+                            right = (buffer_right[index] - smr) * stream.vol_both;
                         }
                     }
+
+					left = Math.min(Math.max(left, -1), 1) * stream.vol_left_smooth;
+					right = Math.min(Math.max(right, -1), 1) * stream.vol_right_smooth;
                 }
 
 				if (stream.lfo_volume_time)
@@ -325,8 +330,10 @@ function open()
 
                 stream.position += speed;
 
-				output_left[j] = Math.min(Math.max(output_left[j], -1), 1);
-				output_right[j] = Math.min(Math.max(output_right[j], -1), 1);
+				var max = 1;
+
+				output_left[j] = Math.min(Math.max(output_left[j], -max), max);
+				output_right[j] = Math.min(Math.max(output_right[j], -max), max);
 
 				if (!isFinite(output_left[j])) {
 					output_left[j] = 0
@@ -339,9 +346,9 @@ function open()
         }
     };
 
-    processor.connect(gain);
+    processor.connect(compressor);
+    compressor.connect(gain);
     gain.connect(audio.destination);
-    //processor.connect(audio.destination);
 
     lua.message("initialized", audio.sampleRate);
 }
@@ -356,7 +363,7 @@ function close()
     }
 }
 
-var buffer_cache = [];
+var buffer_cache = new Object();
 
 function download_buffer(url, callback, skip_cache, id)
 {
@@ -404,7 +411,7 @@ function download_buffer(url, callback, skip_cache, id)
     request.onerror = function()
     {
         dprint("downloading " + url + " errored");
-		lua.message("stream", "call", id, "OnError", "download failed");
+		lua.message("stream", "call", id, "OnError", "download failed: ", request.responseText);
     };
 }
 
@@ -422,6 +429,7 @@ function CreateStream(url, id, skip_cache)
         stream.url = url;
         stream.speed = 1; // 1 = normal pitch
         stream.max_loop = 1; // -1 = inf
+        stream.vol_both = 1;
         stream.vol_left = 1;
         stream.vol_right = 1;
         stream.paused = true;
@@ -441,6 +449,7 @@ function CreateStream(url, id, skip_cache)
 
         stream.play = function(stop, position)
         {
+			dprint("play " + stop + position)
             if(position !== undefined)
             {
                 stream.position = position;
@@ -484,6 +493,13 @@ function CreateStream(url, id, skip_cache)
         streams_array.push(stream);
 
         lua.message("stream", "loaded", id, buffer.length);
+
+		var size = 0, key;
+		for (key in streams) {
+			if (streams.hasOwnProperty(key)) size++;
+		}
+		dprint("total stream count " + size)
+
     }, skip_cache, id);
 }
 
@@ -491,28 +507,34 @@ function DestroyStream(id)
 {
 	var stream = streams[id];
 
+	dprint("destroying stream " + stream)
+
 	if (stream)
 	{
-		streams[id] = undefined;
-		buffer_cache[stream.url] = undefined;
+		delete streams[id];
+		delete buffer_cache[stream.url];
 
 		var i = streams_array.indexOf(stream);
 		streams_array.splice(i, 1);
+
+		dprint("destroyed stream")
+
 	}
 }
 
 open();
 
 ]==])
-	
+
 	webaudio.browser_panel.OnFinishLoadingDocument = function(self)
 		self.OnFinishLoadingDocument = nil
-		
+
 		dprint("OnFinishLoadingDocument")
 		webaudio.browser_panel:RunJavascript(js)
 	end
-	
-	webaudio.browser_panel:OpenURL[[asset://garrysmod/html/loading.html]] -- so that we have correct cors
+
+	file.Write("webaudio_blankhtml.txt", "<html></html>")
+	webaudio.browser_panel:OpenURL("asset://garrysmod/data/webaudio_blankhtml.txt")
 
 	hook.Add("RenderScene", "webaudio2", function(pos, ang)
 		webaudio.eye_pos = pos
@@ -573,7 +595,7 @@ do
 	DECLARE_PROPERTY("LastSourcePosition", nil)
 	DECLARE_PROPERTY("LastSourcePositionTime", nil)
 	DECLARE_PROPERTY("SourceVelocity", nil)
-	DECLARE_PROPERTY("SourceRadius", 5000)
+	DECLARE_PROPERTY("SourceRadius", 4300)
 	DECLARE_PROPERTY("ListenerOutOfRadius", false)
 
 	DECLARE_PROPERTY("Id")
@@ -759,10 +781,15 @@ do
 		return self
 	end
 
-	function META:UpdateSourcePosition()
-		if not self.SourceEntity:IsValid() then return end
+	local FindHeadPos = requirex("find_head_pos")
 
-		self.SourcePosition = self.SourceEntity:GetPos()
+	function META:UpdateSourcePosition()
+		if not self.SourceEntity:IsValid() then
+			self:OutOfRadius()
+			return
+		end
+
+		self.SourcePosition = FindHeadPos(self.SourceEntity)
 	end
 
 	function META:UpdateVolume()
@@ -776,8 +803,15 @@ do
 	end
 
 	function META:UpdateVolumeFlat()
-		self:SetRightVolume((math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
-		self:SetLeftVolume((math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+		self:SetRightVolume((math.Clamp(1 + self.Panning, 0, 1)) + self.AdditiveVolumeFraction)
+		self:SetLeftVolume((math.Clamp(1 - self.Panning, 0, 1)) + self.AdditiveVolumeFraction)
+	end
+
+	function META:UpdateVolumeBoth()
+		if self.last_vol_both ~= self.Volume then
+			self:Call(".vol_both= %f", self.Volume)
+			self.last_vol_both = self.Volume
+		end
 	end
 
 	function META:SetLeftVolume(vol)
@@ -785,6 +819,7 @@ do
 			self:Call(".vol_left= %f", vol)
 			self.last_left_volume = vol
 		end
+		self:UpdateVolumeBoth()
 	end
 
 	function META:SetRightVolume(vol)
@@ -792,9 +827,16 @@ do
 			self:Call(".vol_right = %f", vol)
 			self.last_right_volume = vol
 		end
+		self:UpdateVolumeBoth()
 	end
 
 	function META:UpdateVolume3d()
+		if self.SourceEntity == LocalPlayer() and not self.SourceEntity:ShouldDrawLocalPlayer() then
+			self:UpdateVolumeFlat()
+			return
+		end
+
+
 		self:UpdateSourcePosition()
 
 		local time = RealTime()
@@ -814,8 +856,8 @@ do
 
 		if distanceToSource < self.SourceRadius then
 			local pan = relativeSourcePosition:GetNormalized():Dot(webaudio.eye_ang:Right())
-			local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 1.5
-			volumeFraction = volumeFraction * 0.75 * self.Volume
+			local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 6
+			volumeFraction = volumeFraction * 0.5
 
 			self:SetRightVolume((math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 			self:SetLeftVolume((math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
@@ -829,11 +871,15 @@ do
 
 			self.ListenerOutOfRadius = false
 		else
-			if not self.ListenerOutOfRadius then
-				self:SetRightVolume(0)
-				self:SetLeftVolume(0)
-				self.ListenerOutOfRadius = true
-			end
+			self:OutOfRadius()
+		end
+	end
+
+	function META:OutOfRadius()
+		if not self.ListenerOutOfRadius then
+			self:SetRightVolume(0)
+			self:SetLeftVolume(0)
+			self.ListenerOutOfRadius = true
 		end
 	end
 
@@ -939,12 +985,12 @@ function webaudio.CreateStream(path)
 
 	webaudio.streams[self:GetId()] = self
 
-	run_javascript(string.format("CreateStream(%q, %d)", self:GetUrl(), self:GetId()))
+	run_javascript(string.format("CreateStream(%q, %i)", self:GetUrl(), self:GetId()))
 
 	return self
 end
 
-function webaudio.Panic()
+function webaudio.Panic(strong)
 	for k,v in pairs(webaudio.streams) do
 		v:Remove()
 	end
