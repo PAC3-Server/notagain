@@ -516,8 +516,7 @@ function goluwa.CreateEnv()
 		env["deflatelua"] = false
 		env["lunajson"] = {encode = util.TableToJSON, decode = util.JSONToTable}
 
-		env.msgpack = {encode = msgpack.pack, decode = msgpack.unpack}
-		env.msgpack2 = false
+		env.msgpack_ffi = {encode = msgpack.pack, decode = msgpack.unpack}
 		env.von = false
 	end
 
