@@ -3,6 +3,10 @@ local audio = {}
 do
 	local META = {}
 
+	function META:IsValid()
+		return true
+	end
+
 	function META:QueueEvent(event, val)
 		self.event_queue = self.event_queue or {}
 		table.insert(self.event_queue, {event = event, val = val})
@@ -79,7 +83,7 @@ do
 	end
 
 	function META:OnRemove()
-
+		self:Remove()
 	end
 
 	audio.base_meta = META
@@ -323,7 +327,11 @@ end
 function audio.CreateSoundFromInterface(interface)
 	interface = interface or "webaudio"
 
-	return setmetatable({}, audio.registered[interface])
+	local self = setmetatable({}, audio.registered[interface])
+	self.__gcproxy = getmetatable(newproxy(true))
+	self.__gcproxy.__gc = function() self:OnRemove() end
+
+	return self
 end
 
 function audio.Panic()
