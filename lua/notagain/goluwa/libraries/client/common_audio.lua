@@ -3,8 +3,10 @@ local audio = {}
 do
 	local META = {}
 
+	META.__valid = true
+
 	function META:IsValid()
-		return true
+		return self.__valid == nil
 	end
 
 	function META:QueueEvent(event, val)
@@ -68,7 +70,7 @@ do
 
 	function META:Remove()
 		self:OnEvent("remove")
-		setmetatable(self, getmetatable(NULL))
+		self.__valid = false
 	end
 
 	function META:Restart()
