@@ -6,7 +6,7 @@ do
 	META.__valid = true
 
 	function META:IsValid()
-		return self.__valid == nil
+		return self.__valid == true
 	end
 
 	function META:QueueEvent(event, val)
