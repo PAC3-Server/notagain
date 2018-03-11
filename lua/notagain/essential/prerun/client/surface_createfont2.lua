@@ -213,6 +213,11 @@ surface.created_fonts = surface.created_fonts or {}
 
 surface.old_CreateFont = surface.old_CreateFont or surface.CreateFont
 function surface.CreateFont(id, tbl, ...)
+	if id:StartWith("Expression") then
+		print(id)
+		return surface.old_CreateFont(id, tbl, ...)
+	end
+
 	local copy = {}
 	for k,v in pairs(tbl) do copy[k] = v end
 	tbl = copy
