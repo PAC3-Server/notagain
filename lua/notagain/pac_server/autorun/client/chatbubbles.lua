@@ -1,9 +1,12 @@
 local circle = { mat=Material("sgm/playercircle") }
 local speaker = { mat=Material("gmod/recording.png") }
 
-if IsValid(g_VoicePanelList) then
-    g_VoicePanelList:SetVisible(false)
-end
+hook.Add("InitPostEntity", "tBubbles", function()
+    if IsValid(g_VoicePanelList) then
+        g_VoicePanelList:SetVisible(false)
+    end
+    hook.Remove("InitPostEntity", "tBubbles")
+end)
 
 hook.Add( "PrePlayerDraw", "tBubbles", function( ply )
 	if not IsValid(ply) then return end
@@ -15,13 +18,13 @@ hook.Add( "PrePlayerDraw", "tBubbles", function( ply )
 
     if ply.is_talking then
         if ply.speaker_fade < 1 then
-            ply.speaker_fade = ply.speaker_fade + 0.01
+            ply.speaker_fade = ply.speaker_fade + FrameTime()
         else
             ply.speaker_fade = 1
         end
     else
         if ply.speaker_fade > 0 then
-            ply.speaker_fade = ply.speaker_fade - 0.04
+            ply.speaker_fade = ply.speaker_fade - (FrameTime() * 2)
         else
             ply.speaker_fade = 0
         end
@@ -39,12 +42,12 @@ hook.Add( "PrePlayerDraw", "tBubbles", function( ply )
         trace.filter = ply
 
         local tr = util.TraceLine(trace)
-        circle.size = (radius + (ply:VoiceVolume()*20)) * (1 - (tr.Fraction <= 0.4 and 0 or tr.Fraction >= 0.8 and 1 or tr.Fraction))
+        circle.size = (radius + (ply:VoiceVolume() * 20)) * (1 - (tr.Fraction <= 0.4 and 0 or tr.Fraction >= 0.8 and 1 or tr.Fraction))
 
         if not tr.HitWorld then
             tr.HitPos = ply:GetPos()
             tr.HitNormal = Vector(0,0,1)
-            circle.size = (radius + (ply:VoiceVolume()*20))
+            circle.size = (radius + (ply:VoiceVolume() * 20))
             circle.colour.a = circle.colour.a - 150
         end
 
@@ -55,30 +58,35 @@ hook.Add( "PrePlayerDraw", "tBubbles", function( ply )
 end)
 
 local IsTalking = false
-
-local lerpv = 0
-local down = false
+local RecFade = 0
+local RecBounce = 0
 
 hook.Add("HUDPaint", "tBubbles", function()
+    local size = 128
+    local x = ScrW() - (size * 2)
+    local y = ScrH() - (size + 50)
+
     if IsTalking then
-        local size = 128
-
-        local x = ScrW() - (size * 2)
-        local y = ScrH() - (size + 50)
-
-        if down then
-            lerpv = (lerpv - 0.02)
-            if lerpv <= 0 then down = false end
+        RecBounce = (RecBounce + FrameTime())%360
+        if RecFade < 1 then
+            RecFade = RecFade + (FrameTime() * 2)
         else
-            lerpv = (lerpv + 0.02)
-            if lerpv >= 1 then down = true end
+            RecFade = 1
         end
+    else
+        if RecFade > 0 then
+            RecFade = RecFade - (FrameTime() * 2)
+        else
+            RecFade = 0
+        end
+    end
 
-        local updown = Lerp(lerpv, 0, 15)
+    local alpha = Lerp(RecFade, 0, 255)
 
-        surface.SetDrawColor( 255, 255, 255, 255 )
+    if alpha > 0 then
+        surface.SetDrawColor( 255, 255, 255, alpha )
         surface.SetMaterial( speaker.mat )
-        surface.DrawTexturedRect( x, y - ( math.abs(math.sin(SysTime()*4))*40 ), size * 2, size )
+        surface.DrawTexturedRect( x, y - ( math.abs(math.sin(RecBounce*4))*40 ), size * 2, size )
     end
 end)
 
