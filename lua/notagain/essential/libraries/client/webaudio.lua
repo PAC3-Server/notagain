@@ -975,14 +975,6 @@ function webaudio.CreateStream(path)
 	self:SetId(webaudio.last_stream_id)
 	self:SetUrl(path)
 
-	self.__gcobj = newproxy()
-	debug.setmetatable(self.__gcobj, {__gc = function()
-		if self:IsValid() then
-			dprint("destroying  " .. tostring(self) .. " because it has no references")
-			self:Remove()
-		end
-	end})
-
 	webaudio.streams[self:GetId()] = self
 
 	run_javascript(string.format("CreateStream(%q, %i)", self:GetUrl(), self:GetId()))
