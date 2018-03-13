@@ -1,26 +1,20 @@
 local circle = { mat=Material("sgm/playercircle") }
 local speaker = { mat=Material("gmod/recording.png") }
 
-local function HideVoicePanel()
-    if IsValid(g_VoicePanelList) then
-        g_VoicePanelList:SetVisible(false)
-    end
-end
-
-HideVoicePanel()
-
 hook.Add("InitPostEntity", "tBubbles", function()
     timer.Simple(1, function()
-        HideVoicePanel()
+        if IsValid(g_VoicePanelList) then
+            g_VoicePanelList:SetVisible(false)
+        end
+        print("Attempting to hide g_VoicePanelList...")
     end)
-    hook.Remove("InitPostEntity", "tBubbles")
 end)
 
 hook.Add( "PrePlayerDraw", "tBubbles", function( ply )
-	if not IsValid(ply) then return end
+    if not IsValid(ply) then return end
     if ply == LocalPlayer() then return end
 
-	circle.colour = GAMEMODE:GetTeamColor(ply) or Color(127,159,255,255)
+    circle.colour = GAMEMODE:GetTeamColor(ply) or Color(127,159,255,255)
 
     ply.speaker_fade = ply.speaker_fade or 0
 
