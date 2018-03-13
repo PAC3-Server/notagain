@@ -1,10 +1,18 @@
 local circle = { mat=Material("sgm/playercircle") }
 local speaker = { mat=Material("gmod/recording.png") }
 
-hook.Add("InitPostEntity", "tBubbles", function()
+local function HideVoicePanel()
     if IsValid(g_VoicePanelList) then
         g_VoicePanelList:SetVisible(false)
     end
+end
+
+HideVoicePanel()
+
+hook.Add("InitPostEntity", "tBubbles", function()
+    timer.Simple(1, function()
+        HideVoicePanel()
+    end)
     hook.Remove("InitPostEntity", "tBubbles")
 end)
 
