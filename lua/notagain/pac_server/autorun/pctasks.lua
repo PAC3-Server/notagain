@@ -178,7 +178,7 @@ if SERVER then
     end)
 
     hook.Add("PlayerDeath","pc_task_otherworld",function(ply,_,ent)
-        if ply:GetNWBool("rpg",false) then
+        if ply:GetNWBool("jrpg",false) then
             PCTasks.Complete(ply,"Otherworld")
         end
         if ent:IsPlayer() and ent ~= ply then
@@ -226,7 +226,7 @@ if CLIENT then
 
     if not PCTasks.IsCompleted(LocalPlayer(),"Slower than my old windows 2000") then
         hook.Add("Think","pc_task_lag",function()
-            if 1/RealFrameTime() < 10 and system.HasFocus() then
+            if ( 1/RealFrameTime() ) < 10 and system.HasFocus() then
                 net.Start(tasklag)
                 net.SendToServer()
                 hook.Remove("Think","pc_task_lag")
