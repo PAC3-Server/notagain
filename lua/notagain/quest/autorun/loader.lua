@@ -1,4 +1,4 @@
-QUESTS_PATH = "notagain/quest/quests/"
+QUESTS_PATH = "quests/"
 
 local colgood = Color(0,160,220)
 local colbad  = Color(255,127,127)

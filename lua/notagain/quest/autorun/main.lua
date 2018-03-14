@@ -6,7 +6,7 @@ _G.Quest = Quest
 This loads every quest script in "quest_core/quests/"
 Returns void
 ]]--
-Quest.Load = include("notagain/quest/loader.lua")
+Quest.Load = include("loader.lua")
 Quest.Print = function(txt,isbad)
     local col = isbad and Color(200,100,0) or Color(0,100,200)
     MsgC(Color(255,255,255),"[",col,"Quest",Color(255,255,255),"] >> " .. txt)
@@ -277,7 +277,7 @@ if CLIENT then
 end
 
 if SERVER then
-    local questctor = include("notagain/quest/server/quest.lua")
+    local questctor = include("server/quest.lua")
 
     util.AddNetworkString("QUEST_DIALOG")
 
