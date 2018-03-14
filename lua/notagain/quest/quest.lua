@@ -436,3 +436,5 @@ local OnInitialize = function()
 end
 
 hook.Add("Initialize",Tag,OnInitialize)
+
+return Quest
