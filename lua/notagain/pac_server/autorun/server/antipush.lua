@@ -55,12 +55,15 @@ hook.Add("OnEntityCreated", "antiphyspush", function(ent)
                     ent.IsPushing = true
 
                     if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(ent.pickedby) then
+                        ent.pickedby:SetMoveType(MOVETYPE_WALK)
                         ent.pickedby:SetVelocity((data.OurOldVelocity*-1) + data.HitNormal*-600)
                     end
 
                     ply:SetVelocity(ply:GetVelocity()*-1)
-                    ent:SetAbsVelocity( data.OurOldVelocity * (data.PhysObject:GetMass() * -2) )
+                    ent:SetPos(ent:GetPos())
+
                     data.HitObject:Sleep()
+                    data.PhysObject:Sleep()
 
                     wait(function()
                         if IsValid(ply) then
