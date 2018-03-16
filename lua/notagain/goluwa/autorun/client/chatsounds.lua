@@ -69,13 +69,6 @@ do
 	end)
 end
 
-local blacklist = {
-	[220] = true, -- hl2
-	[320] = true, -- hl2 death match
-	[360] = true, -- hl1 death match
-	[340] = true, -- hl2 lost coast
-}
-
 local init = false
 
 local function player_say(ply, str)
