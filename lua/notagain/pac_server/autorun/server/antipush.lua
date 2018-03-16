@@ -27,10 +27,7 @@ for _, hookTo in next, {"PhysgunPickup", "GravGunPunt"} do
     hook.Add(hookTo, "antiphyspush", function(ply, ent)
         wait(function()
             if ( IsValid(ent) and ply._appHasInAttack ) and ent:IsPlayerHolding() then
-                local trace = ply:GetEyeTraceNoCursor()
-                if trace.Entity == ent then
-                    ent.pickedby = ply
-                end
+                ent.pickedby = ply
             end
             ply._appHasInAttack = nil
         end, 3)
