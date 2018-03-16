@@ -17,6 +17,24 @@ local function wait(callback, frames)
     end)
 end
 
+hook.Add( "KeyPress", "antiphyspush", function( ply, key )
+    if IsValid(ply) and key == IN_ATTACK then
+        ply._appHasInAttack = true
+    end
+end)
+
+hook.Add("PhysgunPickup", "antiphyspush", function(ply, ent)
+    wait(function()
+        if ( IsValid(ent) and ply._appHasInAttack ) and ent:IsPlayerHolding() then
+            local trace = ply:GetEyeTraceNoCursor()
+            if trace.Entity == ent then
+                ent.pickedby = ply
+            end
+        end
+        ply._appHasInAttack = nil
+    end, 3)
+end)
+
 hook.Add("OnEntityCreated", "antiphyspush", function(ent)
     wait(function()
         local ply = IsValid(ent) and ( ent.CPPIGetOwner and ent:CPPIGetOwner() or ent:GetOwner() )
@@ -36,8 +54,12 @@ hook.Add("OnEntityCreated", "antiphyspush", function(ent)
                     local pos = ply:GetPos()
                     ent.IsPushing = true
 
+                    if tobool( ply:GetInfo("cl_godmode_reflect") ) then
+                        ent.pickedby:SetVelocity((data.OurOldVelocity*-1) + data.HitNormal*-600)
+                    end
+
                     ply:SetVelocity(ply:GetVelocity()*-1)
-                    ent:SetAbsVelocity( ent:GetAbsVelocity()*(data.PhysObject:GetMass()*-1) )
+                    ent:SetAbsVelocity( data.OurOldVelocity * (data.PhysObject:GetMass() * -2) )
                     data.HitObject:Sleep()
 
                     wait(function()
