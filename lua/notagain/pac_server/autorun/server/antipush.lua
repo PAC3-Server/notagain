@@ -54,7 +54,7 @@ hook.Add("OnEntityCreated", "antiphyspush", function(ent)
                     local pos = ply:GetPos()
                     ent.IsPushing = true
 
-                    if tobool( ply:GetInfo("cl_godmode_reflect") ) then
+                    if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(ent.pickedby) then
                         ent.pickedby:SetVelocity((data.OurOldVelocity*-1) + data.HitNormal*-600)
                     end
 
