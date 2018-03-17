@@ -2,6 +2,10 @@ hook.Add("PhysgunPickup", "propkill_dmginfo", function(ply, ent)
 	ent.propkill_dmginfo_pickup = ply
 end)
 
+hook.Add("GravGunPickupAllowed", "propkill_dmginfo", function(ply, ent)
+	ent.propkill_dmginfo_pickup = ply
+end)
+
 hook.Add("PhysgunDrop", "propkill_dmginfo", function(ply, ent)
 	if IsValid(ent.propkill_dmginfo_pickup) then
 		ent.propkill_dmginfo_dropdata = {ply = ply, when = CurTime() + 3}
