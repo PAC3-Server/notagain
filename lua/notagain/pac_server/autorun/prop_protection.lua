@@ -648,7 +648,8 @@ if SERVER then
 	hook.Add("CreateEntityRagdoll","prop_protection",proptect.NPCCreatedRagdoll)
 
 	function proptect.NPCDeath(npc,attacker,weapon)
-		if not IsValid(npc) or not IsValid(npc:GetActiveWeapon()) then return end
+		if not IsValid(npc) then return end
+		if not IsValid(npc:GetActiveWeapon()) then return end
 		if proptect.Props[npc:EntIndex()] and not proptect.Props[npc:GetActiveWeapon():EntIndex()] and IsValid(proptect.Props[npc:EntIndex()].Owner) then
 			proptect.PlayerMakePropOwner(proptect.Props[npc:EntIndex()].Owner,npc:GetActiveWeapon())
 		end
