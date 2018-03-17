@@ -492,13 +492,17 @@ function CreateStream(url, id, skip_cache)
         streams[id] = stream;
         streams_array.push(stream);
 
+		dprint("created stream[" + id + "][" + stream.url + "]");
         lua.message("stream", "loaded", id, buffer.length);
 
-		var size = 0, key;
-		for (key in streams) {
-			if (streams.hasOwnProperty(key)) size++;
+		if (]==] .. (webaudio.debug and "true" or "false") .. [==[)
+		{
+			var size = 0, key;
+			for (key in streams) {
+				if (streams.hasOwnProperty(key)) size++;
+			}
+			dprint("total stream count " + size)
 		}
-		dprint("total stream count " + size)
 
     }, skip_cache, id);
 }
@@ -507,18 +511,24 @@ function DestroyStream(id)
 {
 	var stream = streams[id];
 
-	dprint("destroying stream " + stream)
-
 	if (stream)
 	{
+		dprint("destroying stream[" + id + "][" + stream.url + "]");
+
 		delete streams[id];
 		delete buffer_cache[stream.url];
 
 		var i = streams_array.indexOf(stream);
 		streams_array.splice(i, 1);
 
-		dprint("destroyed stream")
-
+		if (]==] .. (webaudio.debug and "true" or "false") .. [==[)
+		{
+			var size = 0, key;
+			for (key in streams) {
+				if (streams.hasOwnProperty(key)) size++;
+			}
+			dprint("total stream count " + size)
+		}
 	}
 }
 
@@ -974,14 +984,6 @@ function webaudio.CreateStream(path)
 	webaudio.last_stream_id = webaudio.last_stream_id + 1
 	self:SetId(webaudio.last_stream_id)
 	self:SetUrl(path)
-
-	self.__gcobj = newproxy()
-	debug.setmetatable(self.__gcobj, {__gc = function()
-		if self:IsValid() then
-			dprint("destroying  " .. tostring(self) .. " because it has no references")
-			self:Remove()
-		end
-	end})
 
 	webaudio.streams[self:GetId()] = self
 

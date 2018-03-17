@@ -330,8 +330,8 @@ function audio.CreateSoundFromInterface(interface)
 	interface = interface or "webaudio"
 
 	local self = setmetatable({}, audio.registered[interface])
-	self.__gcproxy = getmetatable(newproxy(true))
-	self.__gcproxy.__gc = function() self:OnRemove() end
+	self.__gcproxy = newproxy(true)
+	getmetatable(self.__gcproxy).__gc = function() self:OnRemove() end
 
 	return self
 end

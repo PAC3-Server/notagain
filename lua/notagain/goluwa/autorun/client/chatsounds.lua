@@ -69,20 +69,18 @@ do
 	end)
 end
 
-local blacklist = {
-	[220] = true, -- hl2
-	[320] = true, -- hl2 death match
-	[360] = true, -- hl1 death match
-	[340] = true, -- hl2 lost coast
-}
-
 local init = false
 
 local function player_say(ply, str)
 	if not init then
 		env.chatsounds.Initialize()
 
-		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games")
+		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "hl2")
+		--env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "tf2")
+		--env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "ep2")
+		--env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "ep1")
+		--env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "portal")
+
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
 		env.chatsounds.BuildFromGithub("Metastruct/garrysmod-chatsounds", "sound/chatsounds/autoadd")
 
