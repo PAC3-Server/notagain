@@ -59,7 +59,7 @@ local ShouldCollideCache = {}
 hook.Add("ShouldCollide", "antiphyspush", function(entA, entB)
     if ( entA and entB ) and ( entA.PushProtected and CanMove(entA) ) then
         local id = entA._ShouldCollideID
-        local cache = ShouldCollideCache[id]
+        local cache = id and ShouldCollideCache[id] or nil
         local compare = NotWorld(entB) and entB or "world"
 
         if cache and cache.compare == compare then
