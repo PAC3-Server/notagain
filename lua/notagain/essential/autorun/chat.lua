@@ -91,6 +91,8 @@ if CLIENT then
 	function chat.Autocomplete(str)
 		local res = hook.Run("OnChatTab", str)
 
+		hook.Run("ChatAutoCompleteChanged", str)
+
 		return res
 	end
 
