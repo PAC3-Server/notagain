@@ -52,9 +52,10 @@ if CLIENT then
 						table.remove(ply.coh_text_history, i)
 					end
 
-					if ply == LocalPlayer() and ply:ShouldDrawLocalPlayer() then
-						local dot = math.max(-EyeVector():Dot(ply:GetAimVector()), 0)*2
+					local dot = math.max(-EyeVector():Dot(ply:GetAimVector()), 0)*2
+					local redline_alpha = alpha * dot
 
+					if ply == LocalPlayer() and ply:ShouldDrawLocalPlayer() then
 						alpha = alpha * dot
 					end
 
@@ -70,7 +71,8 @@ if CLIENT then
 					ang.r = ang.r + 90
 
 					render.PushFilterMag(TEXFILTER.ANISOTROPIC)
-					cam.Start3D2D(pos + ang:Right() * - 12, ang, 0.025)
+					local scale = ply:GetModelScale() or 1
+					cam.Start3D2D(pos + (ang:Right() * -12 * scale), ang, 0.025 * scale)
 					local w, h = prettytext.GetTextSize(text, font, size, bold, blursize)
 					w = w + text_width_border*2
 
@@ -106,14 +108,17 @@ if CLIENT then
 						y_offset = y_offset + h_
 
 						if not data.entered and data.time ~= 0 then
-							surface.SetDrawColor(150, 0, 0, 230*alpha)
+							surface.SetDrawColor(150, 0, 0, 230*alpha*redline_alpha)
 							surface.DrawRect(x + text_width_border, y + y_offset - h_/2, w-text_width_border*2, 10)
 						end
 
 					end
 
 					local width = 50
-					local xpos = x + math.min(w/2 - 100, w) + width * 3
+					local xpos = x + 20
+					local x = 200
+					local xpos = 0
+					local w = 0
 
 					if i == 1 then
 						surface.SetDrawColor(0, 0, 0, 50*alpha/2)
@@ -204,6 +209,11 @@ if CLIENT then
 
 	local wrote = ""
 
+	hook.Add("StartChat", "coh", function()
+		send_text("", true)
+		wrote = ""
+	end)
+
 	hook.Add("FinishChat", "coh", function()
 		send_text(wrote, false, input.IsKeyDown(KEY_ENTER) or input.IsKeyDown(KEY_PAD_ENTER))
 		wrote = ""
@@ -215,6 +225,9 @@ if CLIENT then
 	end)
 
 	hook.Add("ChatTextChanged", "coh", function(text)
+		if #text <= 1 then
+			send_text(wrote, false, false)
+		end
 		wrote = text
 		send_text(text, true)
 	end)
