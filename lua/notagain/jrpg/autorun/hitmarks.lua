@@ -251,13 +251,13 @@ if CLIENT then
 				local world_pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2))
 				local pos = world_pos:ToScreen()
 				local dist = world_pos:Distance(EyePos())
-				local scale = (ent:GetModelScale() and ent:GetModelScale()*2 or 2)
-				local radius = ent:BoundingRadius() * 7
+				local scale = ent:GetModelScale() and ent:GetModelScale() or 1
+				local radius = ent:BoundingRadius() * 5
 				local max_distance = scale * radius
 				fraction = fraction * ((-(dist / max_distance)+1) ^ 2)
 
 				ent.hm_pixvis = ent.hm_pixvis or util.GetPixelVisibleHandle()
-				ent.hm_pixvis_vis = util.PixelVisible(world_pos, ent:BoundingRadius(), ent.hm_pixvis)
+				ent.hm_pixvis_vis = util.PixelVisible(world_pos, ent:BoundingRadius()/5, ent.hm_pixvis)
 				local vis = ent.hm_pixvis_vis
 				local selected_target = jtarget.GetEntity(LocalPlayer()) == ent
 
