@@ -231,6 +231,18 @@ hook.Add("HUDPaint", "jhud", function()
 
 	local ply = LocalPlayer()
 
+
+	if not jrpg.IsEnabled(ply) then
+		local ent = ply:GetEyeTrace().Entity
+		if ent:IsPlayer() then
+
+			local x = ScrW() - 75
+			local y = ScrH() - 70
+
+			jhud.DrawInfoSmall(ent, x, y)
+		end
+	end
+
 	local offset = 0
 
 	if jrpg.IsEnabled(ply) then
@@ -489,17 +501,6 @@ hook.Add("HUDPaint", "jhud", function()
 		draw_rect(x+w-size,y+h,size*status:GetAmount(),size)
 
 		x = x - size - 5
-	end
-
-	if not jrpg.IsEnabled(ply) then
-		local ent = ply:GetEyeTrace().Entity
-		if ent:IsPlayer() then
-
-			local x = ScrW() - 75
-			local y = ScrH() - 70
-
-			jhud.DrawInfoSmall(ent, x, y)
-		end
 	end
 end)
 
