@@ -631,7 +631,7 @@ if CLIENT then
 
 		local data = ply:GetEyeTrace()
 		local ent = data.Entity
-		if ent:IsNPC() or ent:IsPlayer() then
+		if ent:IsNPC() or (jrpg.IsEnabled(ply) and ent:IsPlayer()) then
 			hitmarkers.ShowHealth(ent)
 		end
 
