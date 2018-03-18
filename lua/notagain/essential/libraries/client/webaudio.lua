@@ -624,7 +624,7 @@ do
 	DECLARE_PROPERTY("FilterFraction", 0, ".filter_fraction = %f", function(num) return math.Clamp(num, 0, 1) end)
 
 	DECLARE_PROPERTY("Echo", false, ".useEcho(%s)")
-	DECLARE_PROPERTY("EchoDelay", 1, ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", function(num) return math.max(num, 0) end)
+	DECLARE_PROPERTY("EchoDelay", 1, ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", function(num) return math.Clamp(num, 0, 5) end)
 	DECLARE_PROPERTY("EchoFeedback", 0.75, ".echo_feedback = %f")
 
 	-- State
@@ -996,6 +996,7 @@ function webaudio.Panic(strong)
 	for k,v in pairs(webaudio.streams) do
 		v:Remove()
 	end
+	webaudio.last_stream_id = 0
 end
 
 function webaudio.GetStream(streamId)
