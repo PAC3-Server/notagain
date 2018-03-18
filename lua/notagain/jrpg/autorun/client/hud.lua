@@ -52,6 +52,11 @@ local width = 100
 local spacing = 3
 local color_white = Color(255, 255, 255, 255)
 function jhud.DrawInfoSmall(ply, x, y, alpha, color)
+	local S = ScrW() / 1920
+	local width = 100*S
+	local spacing = 3*S
+	S = S * 0.9
+
 	alpha = alpha or 1
 	color = color or color_white
 	surface.DisableClipping(true)
@@ -67,7 +72,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 	render.SetBlend(0)
 	surface.SetDrawColor(0,0,0,1)
 	draw.NoTexture()
-	surface.DrawRect(x-width-100,y-width, width + 200, width+70)
+	surface.DrawRect(x-width-100*S,y-width, width + 200*S, width+70*S)
 	render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
 	surface.SetAlphaMultiplier(alpha)
 	do
@@ -88,7 +93,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		x = x + math.Rand(-1,1) * (lost-1)
 		y = y + math.Rand(-1,1) * (lost-1)
 		surface.SetDrawColor(255,critical*255/lost,critical*255/lost,255)
-		avatar.Draw(ply, x-80,y+15, width/1.5)
+		avatar.Draw(ply, x-80*S,y+15*S, width/1.5)
 	end
 	local health_height = 8
 	x = x - 50
@@ -221,10 +226,8 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	end
 end
 
-jrpg.AddHook("HUDPaint", "jhud", function()
+hook.Add("HUDPaint", "jhud", function()
 	if hook.Run("HUDShouldDraw", "JHUD") == false then return end
-
-	S = ScrW() / 1920
 
 	local ply = LocalPlayer()
 
@@ -236,6 +239,8 @@ jrpg.AddHook("HUDPaint", "jhud", function()
 		if ply:Health() == ply:GetMaxHealth() then return end
 		offset = offset - 16
 	end
+
+	S = ScrW() / 1920
 
 	local width = 100000
 	local height = 100*S
@@ -485,9 +490,20 @@ jrpg.AddHook("HUDPaint", "jhud", function()
 
 		x = x - size - 5
 	end
+
+	if not jrpg.IsEnabled(ply) then
+		local ent = ply:GetEyeTrace().Entity
+		if ent:IsPlayer() then
+
+			local x = ScrW() - 75
+			local y = ScrH() - 70
+
+			jhud.DrawInfoSmall(ent, x, y)
+		end
+	end
 end)
 
-jrpg.AddHook("HUDShouldDraw", "jhud", function(what)
+hook.Add("HUDShouldDraw", "jhud", function(what)
 	if what == "CHudHealth"  then
 		return false
 	end
