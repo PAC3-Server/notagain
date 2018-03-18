@@ -56,7 +56,7 @@ end
 
 local ShouldCollideCache = {}
 
-hook.Remove("ShouldCollide", "antiphyspush", function(entA, entB)
+hook.Add("ShouldCollide", "antiphyspush", function(entA, entB)
     if ( entA and entB ) and ( entA.PushProtected and CanMove(entA) ) then
         local id = entA._ShouldCollideID
         local cache = ShouldCollideCache[id]
