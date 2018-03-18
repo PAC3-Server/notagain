@@ -5,13 +5,15 @@ local restarting = false
 local try_restart = false
 local reason = false
 
+file.Delete("server_want_restart.txt")
+file.Write("server_last_restart.txt", tostring(os.time()))
+
 timer.Create("auto_restart", 2, 0, function()
 	local want_restart = os.time() - tonumber(file.Read("server_last_restart.txt", "DATA") or 0) > (6 * 60 * 60)
 
 	if file.Exists("server_want_restart.txt", "DATA") then
 		reason = file.Read("server_want_restart.txt", "DATA")
 		try_restart = true
-		file.Delete("server_want_restart.txt")
 	end
 
 	if want_restart or try_restart then
@@ -28,7 +30,6 @@ timer.Create("auto_restart", 2, 0, function()
 		if afk then
 			if not players[1] then
 				hook.Run("AutoRestart", want_restart, reason)
-				file.Write("server_last_restart.txt", tostring(os.time()))
 				game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				return
 			end
@@ -37,7 +38,6 @@ timer.Create("auto_restart", 2, 0, function()
 				restarting = true
 				hook.Run("AutoRestart", want_restart, reason)
 				aowl.CountDown(15, "RESTARTING SERVER BECAUSE EVERYONE IS AFK", function()
-					file.Write("server_last_restart.txt", tostring(os.time()))
 					game.ConsoleCommand("changelevel " .. game.GetMap() .. "\n")
 				end)
 			end
