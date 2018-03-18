@@ -23,6 +23,13 @@ function aowl.SetFriend(a, b, is_friend)
 
 	is_friend_cache[a] = nil
 	is_friend_cache[b] = nil
+
+	if SERVER then
+		net.Start("friends_changed")
+			net.WriteEntity(a)
+			net.WriteEntity(b)
+		net.Broadcast()
+	end
 end
 
 do
@@ -92,6 +99,7 @@ end
 
 if SERVER then
 	util.AddNetworkString("friends")
+	util.AddNetworkString("friends_changed")
 
 	net.Receive("friends", function(len , ply)
 		if not ply:IsValid() then return end
@@ -113,11 +121,23 @@ if SERVER then
 			elseif status == "remove" then
 				aowl.SetFriend(ply, friend, false)
 			end
+
+			net.Start("friends_changed")
+				net.WriteEntity(ply)
+				net.WriteEntity(friend)
+			net.Broadcast()
 		end
 	end)
 end
 
 if CLIENT then
+	net.Receive("friends_changed", function(len , ply)
+		local a = net.ReadEntity()
+		local b = net.ReadEntity()
+		is_friend_cache[a] = nil
+		is_friend_cache[b] = nil
+	end)
+
 	for _, ply in ipairs(player.GetAll()) do
 		ply.friends_last_friend_status = nil
 	end
