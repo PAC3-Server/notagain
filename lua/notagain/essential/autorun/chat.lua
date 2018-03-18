@@ -42,7 +42,7 @@ if CLIENT then
 			end
 
 			--return chat._GetChatBoxPos(...)
-			return math.Round(ScrW()/88), math.Round(ScrH()/1.75)
+			return chat.pos_x or math.Round(ScrW()/88), chat.pos_y or math.Round(ScrH()/1.75)
 		end
 
 		chat._GetChatBoxSize = chat._GetChatBoxSize or chat.GetChatBoxSize

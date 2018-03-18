@@ -29,7 +29,7 @@ local skew = -40
 local health_height = 18
 local no_texture = Material("vgui/white")
 
-function jhud.DrawBar(x,y,w,h,cur,max,border_size, r,g,b)
+function jhud.DrawBar(x,y,w,h,cur,max,border_size, r,g,b, a)
 	local skew = skew/1.5
 
 	render.SetColorModulation(0,0,0)
@@ -111,7 +111,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		local real_cur = ply:Health()
 		local cur = smooth(math.max(real_cur, 0), "health"..ply:EntIndex())
 		local max = ply:GetMaxHealth()
-		jhud.DrawBar(x, y, width,health_height,cur,max,border_size, 0.19607843137254902, 0.6274509803921568, 0.19607843137254902)
+		jhud.DrawBar(x, y, width,health_height,cur,max,border_size, 0.19607843137254902, 0.6274509803921568, 0.19607843137254902, alpha)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
@@ -119,7 +119,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		local real_cur = math.Round(ply:GetMana())
 		local cur = smooth(real_cur, "mana"..ply:EntIndex())
 		local max = ply:GetMaxMana()
-		jhud.DrawBar(x,y,width,health_height,cur,max,border_size, 0.1960784313725490, 0.19607843137254902, 0.68627450980392157)
+		jhud.DrawBar(x,y,width,health_height,cur,max,border_size, 0.1960784313725490, 0.19607843137254902, 0.68627450980392157, alpha)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
@@ -127,7 +127,7 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		local real_cur = ply:GetStamina()
 		local cur = smooth(real_cur, "stamina"..ply:EntIndex())
 		local max = ply:GetMaxStamina()
-		jhud.DrawBar(x,y,width,health_height,cur,max,border_size, 0.5882352941176470, 0.58823529411764708, 0.19607843137254902)
+		jhud.DrawBar(x,y,width,health_height,cur,max,border_size, 0.5882352941176470, 0.58823529411764708, 0.19607843137254902, alpha)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
@@ -226,22 +226,37 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	end
 end
 
+local last_aiment = NULL
+local next_aim = 0
+
 hook.Add("HUDPaint", "jhud", function()
 	if hook.Run("HUDShouldDraw", "JHUD") == false then return end
 
 	local ply = LocalPlayer()
 
-
 	if not jrpg.IsEnabled(ply) then
 		local ent = ply:GetEyeTrace().Entity
+
 		if ent:IsPlayer() then
+			last_aiment = ent
+			next_aim = RealTime() + 2
+		elseif next_aim < RealTime() then
+			last_aiment = NULL
+		end
+
+		if last_aiment:IsValid() then
+			local f = (next_aim - RealTime()) / 2
+
+			if ent:IsValid() then f = 1 end
 
 			local x = ScrW() - 75
 			local y = ScrH() - 70
 
-			jhud.DrawInfoSmall(ent, x, y)
+			jhud.DrawInfoSmall(last_aiment, x, y, (f^0.75)*1.5)
 		end
 	end
+
+	chat.pos_y = nil
 
 	local offset = 0
 
@@ -251,6 +266,8 @@ hook.Add("HUDPaint", "jhud", function()
 		if ply:Health() == ply:GetMaxHealth() then return end
 		offset = offset - 16
 	end
+
+	chat.pos_y = math.Round(ScrH()/2)
 
 	S = ScrW() / 1920
 
