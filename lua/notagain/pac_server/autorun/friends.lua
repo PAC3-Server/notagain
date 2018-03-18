@@ -48,7 +48,7 @@ do
 	end
 
 	function aowl.GetFriend(a, b)
-		if is_friend_cache[a] and is_friend_cache[a][b] then return is_friend_cache[a][b] end
+		if is_friend_cache[a] and is_friend_cache[a][b] ~= nil then return is_friend_cache[a][b] end
 
 		is_friend_cache[a] = is_friend_cache[a] or {}
 		is_friend_cache[a][b] = is_friend(a, b)
