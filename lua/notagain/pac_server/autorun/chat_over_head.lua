@@ -209,6 +209,11 @@ if CLIENT then
 		wrote = ""
 	end)
 
+	hook.Add("ChatAutoCompleteChanged", "coh", function(res)
+		send_text(res, true)
+		wrote = res
+	end)
+
 	hook.Add("ChatTextChanged", "coh", function(text)
 		wrote = text
 		send_text(text, true)
