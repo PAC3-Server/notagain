@@ -27,6 +27,23 @@ local function CanPush(ent, ply)
     return canAlter
 end
 
+local function CanMove(ent)
+    if not ent.GetPhysicsObject then return end
+    local phys = ent:GetPhysicsObject()
+
+    if ent._entCantMove then
+        return false
+    end
+
+    if phys:IsAsleep() or ( not phys:IsMotionEnabled() ) then
+        ent._entCantMove = true
+        return false
+    else
+        ent._entCantMove = nil
+        return true
+    end
+end
+
 local function wait(callback, frames)
     local delay = FrameTime() * ( frames or 1 )
     local function throw(msg, ...)
@@ -39,22 +56,20 @@ end
 
 local ShouldCollideCache = {}
 
-hook.Add("ShouldCollide", "antiphyspush", function(entA, entB)
-    if entA and entB then
-        if entA.PushProtected then
-            local id = entA._ShouldCollideID
-            local cache = ShouldCollideCache[id]
-            local compare = NotWorld(entB) and entB or "world"
+hook.Remove("ShouldCollide", "antiphyspush", function(entA, entB)
+    if ( entA and entB ) and ( entA.PushProtected and CanMove(entA) ) then
+        local id = entA._ShouldCollideID
+        local cache = ShouldCollideCache[id]
+        local compare = NotWorld(entB) and entB or "world"
 
-            if cache and cache.compare == compare then
-                return false
-            end
+        if cache and cache.compare == compare then
+            return false
+        end
 
-            if not CanPush(entA, entB) then
-                entA._ShouldCollideID = CurTime()
-                ShouldCollideCache[id] = {compare = compare, when = CurTime()}
-                return false
-            end
+        if not CanPush(entA, entB) then
+            entA._ShouldCollideID = CurTime()
+            ShouldCollideCache[id] = {compare = compare, when = CurTime()}
+            return false
         end
     end
 end)
