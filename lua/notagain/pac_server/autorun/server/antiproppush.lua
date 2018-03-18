@@ -16,7 +16,7 @@ local function CanPush(ent, ply)
     if not IsValid(ent) then return false end
 
     local owner = ent.pickedby or ( ent.CPPIGetOwner and ent:CPPIGetOwner() ) or nil
-    local canAlter = false 
+    local canAlter = false
 
     if IsValid(owner) then
         canAlter = ( owner.CanAlter and owner:CanAlter(ply) )
@@ -37,25 +37,35 @@ local function wait(callback, frames)
     end)
 end
 
-hook.Add( "KeyPress", "antiphyspush", function( ply, key )
-    if IsValid(ply) and key == IN_ATTACK then
-        ply._appHasInAttack = true
+local ShouldCollideCache = {}
+
+hook.Add("ShouldCollide", "antiphyspush", function(entA, entB)
+    if entA and entB then
+        if entA.PushProtected then
+            local id = entA._ShouldCollideID
+            local cache = ShouldCollideCache[id]
+            local compare = NotWorld(entB) and entB or "world"
+
+            if cache and cache.compare == compare then
+                return false
+            end
+
+            if not CanPush(entA, entB) then
+                entA._ShouldCollideID = CurTime()
+                ShouldCollideCache[id] = {compare = compare, when = CurTime()}
+                return false
+            end
+        end
     end
 end)
 
-for _, hookTo in next, {"PhysgunPickup", "GravGunPunt"} do
-    hook.Add(hookTo, "antiphyspush", function(ply, ent)
-        local trace = ply:GetEyeTraceNoCursor()
-        wait(function()
-            if ( IsValid(ent) and ply._appHasInAttack and NotWorld(ent) ) and ent:IsPlayerHolding() then
-                if trace.Entity == ent then
-                    ent.pickedby = ply
-                end
-            end
-            ply._appHasInAttack = nil
-        end, 3)
-    end)
-end
+timer.Create("antiphyspush", 2, 0, function()
+    for key, data in next, ShouldCollideCache do
+        if (CurTime() - data.when) < 2 then
+            ShouldCollideCache[key] = nil
+        end
+    end
+end)
 
 hook.Add("OnEntityCreated", "antiphyspush", function(ent)
     wait(function()
@@ -64,54 +74,34 @@ hook.Add("OnEntityCreated", "antiphyspush", function(ent)
         local isWorld = (ent == Entity(0)) or ent:IsWorld()
 
         if ( IsPlayer(ply) and not isWorld ) and not ent.PushProtected then
-            ent:AddCallback('PhysicsCollide', function(ent, data)
-                if ent.IsPushing then
-                    data.PhysObject:Sleep()
-                    data.PhysObject:EnableMotion(false)
-                    return
-                end
-
-                local ply = data.HitEntity
-
-                local canMove = IsValid(data.PhysObject) and data.PhysObject:IsMotionEnabled() or false
-                local cantAlter = ( not CanPush(ent, ply) )
-
-                if NotWorld(ply) and ( canMove and cantAlter ) then
-                    local picker = ent.pickedby
-                    local pos = ply:GetPos()
-
-                    ent.IsPushing = true
-
-                    if picker and IsPlayer(ply) and tobool( ply:GetInfo("cl_godmode_reflect") ) then
-                        picker:SetMoveType(MOVETYPE_WALK)
-                        picker:SetVelocity((data.OurOldVelocity*-1) + data.HitNormal*-600)
-                    end
-
-                    ent:SetPos(ent:GetPos())
-
-                    data.HitObject:SetVelocityInstantaneous(data.HitObject:GetVelocity()*-1)
-                    data.HitObject:AddAngleVelocity(data.HitObject:GetAngleVelocity()*-1)
-                    data.HitObject:Sleep()
-
-                    data.PhysObject:Sleep()
-                    data.PhysObject:EnableMotion(false)
-                    ent:SetCollisionGroup(COLLISION_GROUP_WORLD)
-
-                    wait(function()
-                        if IsValid(ply) then
-                            ply:SetVelocity(ply:GetVelocity()*-1)
-                            ply:SetPos(pos)
-                        end
-                        if IsValid(ent) and ent.IsPushing then
-                            ent.IsPushing = nil
-                        end
-                    end, 2)
-                end
-
-                return false
-            end)
-
+            ent:SetCustomCollisionCheck(true)
             ent.PushProtected = true
         end
     end)
 end)
+
+hook.Add("KeyPress", "antiphyspush", function(ply, key)
+    if ply and key == IN_ATTACK then
+        ply._appHasInAttack = true
+    end
+end)
+
+hook.Add("KeyRelease", "antiphyspush", function(ply, key) 
+    if ply and key == IN_ATTACK then
+        ply._appHasInAttack = nil
+    end
+end)
+
+for _, hookTo in next, {"PhysgunPickup", "GravGunPunt"} do
+    hook.Add(hookTo, "antiphyspush", function(ply, ent)
+        local trace = ply:GetEyeTraceNoCursor()
+        if not ply._appHasInAttack then return false end -- Attempted to pickup prop without pressing Attack Key.
+        wait(function()
+            if ( IsValid(ent) and NotWorld(ent) ) and ent:IsPlayerHolding() then
+                if trace.Entity == ent then
+                    ent.pickedby = ply
+                end
+            end
+        end, 3)
+    end)
+end
