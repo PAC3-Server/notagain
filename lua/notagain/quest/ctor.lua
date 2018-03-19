@@ -1,7 +1,7 @@
 if not SERVER then return end
 
-local taskctor = include("server/quest_task.lua")
-local entctor = include("server/quest_entity.lua")
+local taskctor = include("task.lua")
+local entctor = include("entity.lua")
 
 local quest = {
     --[[

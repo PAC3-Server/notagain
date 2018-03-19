@@ -1,3 +1,5 @@
+AddCSLuaFile()
+
 local ENT = {
 	Base 				  = "base_ai",
 	Type 				  = "ai",
