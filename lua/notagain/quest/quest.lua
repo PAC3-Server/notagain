@@ -12,7 +12,11 @@ Quest.Print = function(txt,isbad)
     MsgC(Color(255,255,255),"[",col,"Quest",Color(255,255,255),"] >> " .. txt)
 end
 
+include("npc.lua")
+
 if CLIENT then
+    include("main_panel.lua")
+    
     surface.CreateFont("QuestDialogFont",{
         font = "Arial",
         extended = true,
@@ -277,7 +281,9 @@ if CLIENT then
 end
 
 if SERVER then
-    local questctor = include("quest_ctor.lua")
+    AddCSLuaFile("main_panel.lua")
+    
+    local questctor = include("ctor.lua")
 
     util.AddNetworkString("QUEST_DIALOG")
 
