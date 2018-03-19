@@ -41,6 +41,11 @@ local function run_func(path, func, ...)
 			return OLD_AddCSLuaFile(debug.getinfo(2).source:match("@.-lua/(.+)") or path)
 		end
 
+		local dir = debug.getinfo(2).source:match("@.-lua/(.+/)")
+		if ... and file.Exists(dir .. (...), "LUA") then
+			return OLD_AddCSLuaFile(dir .. path)
+		end
+
 		return OLD_AddCSLuaFile(...)
 	end
 	local OLD_include = _G.include
