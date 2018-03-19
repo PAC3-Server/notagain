@@ -1,3 +1,5 @@
+local include = includex
+
 if SERVER then
 
 	local function add_dir(dir)
