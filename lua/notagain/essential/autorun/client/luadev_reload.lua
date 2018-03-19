@@ -12,33 +12,44 @@ local function find(path)
 	return find_cache[path]
 end
 
+local function check_path(path, cb, what, lib)
+	local name = path:match("(.+)%.lua$")
+
+	local time = file.Time(path, "MOD")
+
+	if last[path] ~= time then
+		if last[path] then
+			print(path, " changed")
+			local code = file.Read(path, "MOD")
+			if lib then
+				if isfunction(lib) then
+					code = lib(code)
+				else
+					code = "notagain.loaded_libraries." .. name .. "=(function()" .. code .. ";end)()"
+				end
+			end
+			cb(path, code, what)
+		end
+		last[path] = time
+	end
+end
+
 local function check_dir(dir, cb, what, lib)
 	for _, path in ipairs(find(dir .. "*")) do
-
-		local name = path:match("(.+)%.lua")
-		path = dir .. path
-
-		local time = file.Time(path, "MOD")
-
-		if last[path] ~= time then
-			if last[path] then
-				print(path, " changed")
-				local code = file.Read(path, "MOD")
-				if lib then
-					if isfunction(lib) then
-						code = lib(code)
-					else
-						code = "notagain.loaded_libraries." .. name .. "=(function()" .. code .. ";end)()"
-					end
-				end
-				cb(path, code, what)
-			end
-			last[path] = time
-		end
+		check_path(dir .. path, cb, what, lib)
 	end
 end
 
 local function callback(path, code, what)
+	if not what then
+		what = "shared"
+		if path:lower():find("/client/", nil, true) then
+			what = "clients"
+		elseif path:lower():find("/server/", nil, true) then
+			what = "server"
+		end
+	end
+
 	if what == "self" then
 		luadev.RunOnSelf(code, path)
 	elseif what == "clients" then
@@ -79,16 +90,6 @@ concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 
 		print("monitoring these files in lua/notagain/*")
 
-		for _, dir in pairs(notagain.directories) do
-			dump_dir(addon_dir .. dir .. "/autorun/")
-			dump_dir(addon_dir .. dir .. "/autorun/client/")
-			dump_dir(addon_dir .. dir .. "/autorun/server/")
-
-			dump_dir(addon_dir .. dir .. "/libraries/")
-			dump_dir(addon_dir .. dir .. "/libraries/client/")
-			dump_dir(addon_dir .. dir .. "/libraries/server/")
-		end
-
 		set_timer("notagain", function()
 			for _, dir in pairs(notagain.directories) do
 				check_dir(addon_dir .. dir .. "/autorun/", callback, "shared")
@@ -102,6 +103,10 @@ concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 				check_dir(addon_dir .. dir .. "/libraries/", callback, "shared", true)
 				check_dir(addon_dir .. dir .. "/libraries/client/", callback, "clients", true)
 				check_dir(addon_dir .. dir .. "/libraries/server/", callback, "server", true)
+			end
+
+			for path in pairs(notagain.included_files) do
+				check_path(addon_dir .. path, callback)
 			end
 
 			for _, lib in pairs(notagain.loaded_libraries) do

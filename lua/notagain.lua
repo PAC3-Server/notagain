@@ -6,6 +6,37 @@ notagain.loaded_libraries = notagain.loaded_libraries or {}
 notagain.autorun_results = notagain.autorun_results or {}
 notagain.directories = notagain.directories or {}
 notagain.hasloaded = false
+notagain.included_files = notagain.included_files or {}
+notagain.addcslua_files = notagain.addcslua_files or {}
+
+local OLD_include = _G.include
+function includex(path, ...)
+	local dir = debug.getinfo(2).source:match("@.-lua/(.+/)")
+	if file.Exists(dir .. path, "LUA") then
+		path = dir .. path
+	end
+
+	notagain.included_files[path] = true
+
+	return OLD_include(path, ...)
+end
+
+local OLD_AddCSLuaFile = _G.AddCSLuaFile
+function AddCSLuaFileX(path, ...)
+	local dir = debug.getinfo(2).source:match("@.-lua/(.+/)")
+
+	if path then
+		if dir and file.Exists(dir .. path, "LUA") then
+			path = dir .. path
+		end
+	else
+		path = debug.getinfo(2).source:match("@.-lua/(.+)") or path
+	end
+
+	notagain.addcslua_files[path] = true
+
+	return OLD_AddCSLuaFile(path, ...)
+end
 
 do
 	notagain.addon_dir = "addons/notagain/"
@@ -34,39 +65,27 @@ local function load_path(path)
 	return nil, var or "no error?"
 end
 
+local call_level = 0
+
 local function run_func(path, func, ...)
-	local OLD_AddCSLuaFile = _G.AddCSLuaFile
-	_G.AddCSLuaFile = function(...)
-		if not ... then
-			return OLD_AddCSLuaFile(debug.getinfo(2).source:match("@.-lua/(.+)") or path)
-		end
+	_G.AddCSLuaFile = AddCSLuaFileX
+	_G.include = includex
 
-		local dir = debug.getinfo(2).source:match("@.-lua/(.+/)")
-		if ... and file.Exists(dir .. (...), "LUA") then
-			return OLD_AddCSLuaFile(dir .. path)
-		end
-
-		return OLD_AddCSLuaFile(...)
-	end
-	local OLD_include = _G.include
-	_G.include = function(path, ...)
-		local dir = debug.getinfo(2).source:match("@.-lua/(.+/)")
-		if file.Exists(dir .. path, "LUA") then
-			path = dir .. path
-		end
-
-		return OLD_include(path, ...)
-	end
-
+	call_level = call_level + 1
 	local err
 	local res = {xpcall(func, function(msg) err = msg .. "\n" .. debug.traceback() end, ...)}
+	call_level = call_level - 1
+
+	if call_level == 0 then
+		_G.AddCSLuaFile = OLD_AddCSLuaFile
+		_G.include = OLD_include
+	end
 
 	if err then
 		res[2] = err
 	end
 
-	_G.AddCSLuaFile = OLD_AddCSLuaFile
-	_G.include = OLD_include
+	notagain.included_files[path] = true
 
 	return unpack(res)
 end
@@ -99,8 +118,9 @@ do
 		local func
 		local errors = ""
 
+		local path
+
 		if not func then
-			local path
 			local addon_tries = {
 				"libraries/%s.lua",
 				"libraries/client/%s.lua",
@@ -114,6 +134,7 @@ do
 				if found then
 					path = err
 					func = found
+					break
 				else
 					errors = errors .. err
 				end
@@ -122,7 +143,8 @@ do
 
 		-- foo/init.lua
 		if not func then
-			local res, msg = load_path(root_dir .. "/" .. name .. "/init.lua")
+			path = root_dir .. "/" .. name .. "/init.lua"
+			local res, msg = load_path(path)
 			if res then
 				func = res
 			else
