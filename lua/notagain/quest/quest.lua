@@ -277,7 +277,7 @@ if CLIENT then
 end
 
 if SERVER then
-    local questctor = include("server/quest.lua")
+    local questctor = include("quest_ctor.lua")
 
     util.AddNetworkString("QUEST_DIALOG")
 
