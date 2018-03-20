@@ -96,7 +96,10 @@ do
 			if tag then
 				if not file.IsDir("goluwa/goluwa", "DATA") or not file.IsDir("goluwa/goluwa/core", "DATA") then
 					dprint("missing goluwa directory, redownloading")
-					redownload(tag.commit.id, cb)
+					redownload(tag.commit.id, function()
+						cb()
+						file.Write("goluwa/update_id.txt", tag.commit.id)
+					end)
 				elseif file.Read("goluwa/update_id.txt", "DATA") == tag.commit.id then
 					cb()
 				else
