@@ -120,7 +120,10 @@ do
 						cb()
 					else
 						dprint("last commit is different, redownloading")
-						redownload("master", cb)
+						redownload("master", function()
+							cb()
+							file.Write("goluwa/update_id.txt", commits[1].id)
+						end)
 					end
 				end)
 			end
