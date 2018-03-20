@@ -190,15 +190,15 @@ hook.Add("Move", hook_key, function(ply, data)
 	end
 end)
 
-hook.Add("Initialize", hook_key, function()
+hook.Add("PostGamemodeLoaded", hook_key, function()
 	function GAMEMODE:StartMove() end
 	function GAMEMODE:FinishMove() end
 
 	if SERVER then
 		RunConsoleCommand("sv_airaccelerate", "1000000")
-		RunConsoleCommand("sv_maxvelocity", "20000")
+		RunConsoleCommand("sv_maxvelocity", "40960")
 		RunConsoleCommand("sv_sticktoground", "0")
 	end
 
-	hook.Remove("Initialize",hook_key)
+	hook.Remove("PostGamemodeLoaded",hook_key)
 end)
