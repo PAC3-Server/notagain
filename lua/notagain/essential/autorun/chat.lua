@@ -101,7 +101,9 @@ if CLIENT then
 		local str = net.ReadString()
 		local team_only = net.ReadBool()
 
-		chat.Say(ply, str, team_only)
+		if ply:IsValid() then
+			chat.Say(ply, str, team_only)
+		end
 	end)
 
 	function chat.SayServer(str, team_only)
@@ -140,7 +142,7 @@ if SERVER then
 	net.Receive("chat_say", function(len, ply)
 		local str = net.ReadString()
 		local team_only = net.ReadBool()
-		if str ~= "" then
+		if str ~= "" and ply:IsValid() then
 			chat.Say(ply, str, team_only)
 		end
 	end)
