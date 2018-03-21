@@ -86,6 +86,8 @@ local function dump_dir(dir)
 end
 
 concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
+	table.Empty(find_cache)
+
 	if b == "1" then
 
 		print("monitoring these files in lua/notagain/*")
@@ -126,7 +128,6 @@ concommand.Add("luadev_monitor_notagain", function(_,_,_,b)
 	else
 		print("stop monitoring files in lua/notagain/*")
 
-		table.Empty(find_cache)
 		set_timer("notagain")
 	end
 end)
