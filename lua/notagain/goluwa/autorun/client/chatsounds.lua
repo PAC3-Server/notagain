@@ -83,6 +83,7 @@ local function player_say(ply, str)
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "l4d")
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "l4d2")
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "css")
+		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "csgo")
 
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
 		env.chatsounds.BuildFromGithub("Metastruct/garrysmod-chatsounds", "sound/chatsounds/autoadd")
