@@ -75,13 +75,15 @@ local function player_say(ply, str)
 	if not init then
 		env.chatsounds.Initialize()
 
-		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "hl2")
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "tf2")
-		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "ep2")
+		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "hl2")
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "ep1")
+		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "ep2")
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "portal")
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "l4d")
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "l4d2")
+		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "css")
+		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds-valve-games", "csgo")
 
 		env.chatsounds.BuildFromGithub("PAC3-Server/chatsounds")
 		env.chatsounds.BuildFromGithub("Metastruct/garrysmod-chatsounds", "sound/chatsounds/autoadd")
