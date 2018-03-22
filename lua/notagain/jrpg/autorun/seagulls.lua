@@ -1,5 +1,5 @@
 local DEBUG = false
-local DEBUG2 = false
+local DEBUG2 = true
 
 local ENT = {}
 
@@ -61,7 +61,7 @@ end
 
 function ENT:Initialize()
 
-	self:SetSize2(math.Rand(10,50))
+	self:SetSize2(math.Rand(5,10))
 	self:SetModel2(self.Model)
 
 	if SERVER then
@@ -246,52 +246,51 @@ do -- calc
 	end
 
 	if CLIENT then
-	local sounds = {
-		"npc/fast_zombie/foot2.wav",
-	}
-	for i = 1, 5 do
-		sounds[i] = "seagull_step_" .. i .. "_" .. util.CRC(os.clock())
-		sound.Generate(sounds[i], 22050, 0.25, function(t)
-			local f = (t/22050) * (1/0.25)
-			f = -f + 1
-			f = f ^ 10
-			return ((math.random()*2-1) * math.sin(t*1005) * math.cos(t*0.18)) * f
-		end)
-	end
-	function ENT:StepSoundThink() do return end
-		local siz = self:GetScale()
-		local stepped = self.Cycle%0.5
-		if stepped  < 0.3 then
-			if not self.stepped then
-				--[[sound.Play(
-					table.Random(sounds),
-					self:GetPos(),
-					math.Clamp(10 * siz, 70, 160),
-					math.Clamp(100 / (siz/3) + math.Rand(-20,20), 40, 255)
-				)]]
-
-
-
-				EmitSound(
-					table.Random(sounds),
-					self:GetPos(),
-					self:EntIndex(),
-					CHAN_AUTO,
-					1,
-					--math.Clamp(10 * siz, 70, 160),
-					55,
-					0,
-					--math.Clamp(100 / (siz/3) + math.Rand(-20,20), 40, 255)
-					100/siz + math.Rand(-15, 15)
-				)
-
-				self.stepped = true
-			end
-		else
-			self.stepped = false
+		local sounds = {
+			"npc/fast_zombie/foot2.wav",
+		}
+		for i = 1, 5 do
+			sounds[i] = "seagull_step_" .. i .. "_" .. util.CRC(os.clock())
+			sound.Generate(sounds[i], 22050, 0.25, function(t)
+				local f = (t/22050) * (1/0.25)
+				f = -f + 1
+				f = f ^ 10
+				return ((math.random()*2-1) * math.sin(t*1005) * math.cos(t*0.18)) * f
+			end)
 		end
-	end
+		function ENT:StepSoundThink() do return end
+			local siz = self:GetScale()
+			local stepped = self.Cycle%0.5
+			if stepped  < 0.3 then
+				if not self.stepped then
+					--[[sound.Play(
+						table.Random(sounds),
+						self:GetPos(),
+						math.Clamp(10 * siz, 70, 160),
+						math.Clamp(100 / (siz/3) + math.Rand(-20,20), 40, 255)
+					)]]
 
+
+
+					EmitSound(
+						table.Random(sounds),
+						self:GetPos(),
+						self:EntIndex(),
+						CHAN_AUTO,
+						1,
+						--math.Clamp(10 * siz, 70, 160),
+						55,
+						0,
+						--math.Clamp(100 / (siz/3) + math.Rand(-20,20), 40, 255)
+						100/siz + math.Rand(-15, 15)
+					)
+
+					self.stepped = true
+				end
+			else
+				self.stepped = false
+			end
+		end
 	end
 end
 
@@ -532,7 +531,7 @@ if SERVER then
 
 		if self.reached_target and not self:InAir() then
 			phys:SetVelocity(vector_origin)
-			phys:Sleep()
+			--phys:Sleep()
 		else
 			self:PhysWake()
 		end
@@ -540,26 +539,33 @@ if SERVER then
 		self:CalcMoveTo()
 	end
 
-	function ENT:AvoidOthers(phys) do return end
-		local pos = phys:GetPos()
-		local in_air = self:InAir()
-		local radius = self:BoundingRadius()* (in_air and 5 or 3)
-		local average_pos = Vector()
-		local count = 0
-		for i, v in ipairs(all_seagulls) do
-			local pos2 = v:GetPos()
-			if ((in_air and v:InAir()) or (not in_air and not v:InAir())) and pos2:Distance(pos) < radius then
-				average_pos = average_pos + pos2
-				count = count + 1
+	function ENT:AvoidOthers()
+		--if self.TargetPosition then return end
+
+		if not self.next_avoid or self.next_avoid < self.Time then
+			self.next_avoid = self.Time + math.random()*0.01
+
+			local pos = self.Position
+			local in_air = self:InAir()
+			local radius = self.Radius * (in_air and 5 or 3)
+			local average_pos = Vector()
+			local count = 0
+
+			for i, v in ipairs(all_seagulls) do
+				local pos2 = v.Position or v:GetPos()
+				if ((in_air and v:InAir()) or (not in_air and not v:InAir())) and pos2:Distance(pos) < radius then
+					average_pos = average_pos + pos2
+					count = count + 1
+				end
 			end
-		end
-		if count > 1 then
-			average_pos = average_pos / count
-			local vel = pos - average_pos
-			if not in_air then
-				vel.z = 0
+			if count > 1 then
+				average_pos = average_pos / count
+				local vel = pos - average_pos
+				if not in_air then
+					vel.z = 0
+				end
+				self.NewVelocity = self.NewVelocity + (vel*3)
 			end
-			phys:AddVelocity(vel*0.25)
 		end
 	end
 
@@ -599,6 +605,19 @@ if SERVER then
 			local info = self.TargetPositions[1]
 
 			if info then
+				local phys = self:GetPhysicsObject()
+				self.Velocity = phys:GetVelocity()
+		self.NewVelocity = Vector()
+		self.VelocityLength = self.Velocity:Length()
+
+		self.AngleVelocity = phys:GetAngleVelocity()
+		self.NewAngleVelocity = Vector()
+		self.AngleVelocityLength = self.AngleVelocity:Length()
+
+		self.Position = phys:GetPos()
+		self.Radius = self:BoundingRadius()
+		self.Time = RealTime()
+
 				local ok = not info.check or info.check(self)
 
 				if ok then
@@ -610,21 +629,20 @@ if SERVER then
 
 					local reached = false
 
-					local radius = self:BoundingRadius()
-					local dir = pos - self:GetPos()
+					local dir = pos - self.Position
 					local len2d = dir:Length2D()
 					local len = dir:Length()
 					local phys = self:GetPhysicsObject()
 
-					if len > radius then
+					if len > self.Radius then
 						self.TargetPosition = pos
 						self.reached_target = nil
 						self.standing_still = nil
-					elseif (phys:GetVelocity():Length() < 100 and phys:GetAngleVelocity():Length() < 100) then
+					elseif (self.VelocityLength < 100 and self.AngleVelocityLength < 100) then
 						if info.waiting_time then
-							self.standing_still = self.standing_still or RealTime() + info.waiting_time
+							self.standing_still = self.standing_still or self.Time + info.waiting_time
 						end
-						if not info.waiting_time or (self.standing_still < RealTime()) then
+						if not info.waiting_time or (self.standing_still < self.Time) then
 							self.TargetPosition = nil
 							self.standing_still = true
 
@@ -677,89 +695,82 @@ if SERVER then
 		end
 	end
 
-	function ENT:PhysicsUpdate(phys)
-
-		if not self.standing_still then -- stuck
-			local prev_vel = phys:GetVelocity()
-
-			if not self.unstuck_timer and prev_vel:Length() < 20 then
+	function ENT:CalcStuck()
+		if not self.standing_still then
+			if not self.unstuck_timer and self.VelocityLength < 20 then
 				if DEBUG then
-					debugoverlay.Text(phys:GetPos(), "STUCK?", 0.1)
+					debugoverlay.Text(self.Position, "STUCK?", 0.1)
 				end
 
-				self.stuck_timer = self.stuck_timer or RealTime() + math.Rand(0.5,1)
+				self.stuck_timer = self.stuck_timer or self.Time + math.Rand(0.5,1)
 
-				if self.stuck_timer < RealTime() then
+				if self.stuck_timer < self.Time then
 					self.Stuck = true
 					if DEBUG then
-						debugoverlay.Text(phys:GetPos(), "STUCK ", 1)
+						debugoverlay.Text(self.Position, "STUCK ", 1)
 					end
-					self.unstuck_timer = self.unstuck_timer or RealTime() + math.Rand(0.5,1)
+					self.unstuck_timer = self.unstuck_timer or self.Time + math.Rand(0.5,1)
 				end
 			else
 				self.stuck_timer = nil
 			end
 
-			if self.unstuck_timer and self.unstuck_timer < RealTime() then
+			if self.unstuck_timer and self.unstuck_timer < self.Time then
 				self.Stuck = false
 				self.stuck_timer = nil
 				self.unstuck_timer = nil
 
 				if DEBUG then
-					debugoverlay.Text(phys:GetPos(), "UNSTUCK!", 1)
+					debugoverlay.Text(self.Position, "UNSTUCK!", 1)
 				end
 			end
 
 			if self.Stuck then
-
-				phys:AddVelocity(VectorRand() * 50)
+				self:GetPhysicsObject():AddVelocity(VectorRand() * 50)
 				return
 			end
 		end
-
-		local radius = self:BoundingRadius()
-
-		do -- keep upright
-			-- Get angle difference of the prop and up right and facing away from the camera
-			local vel = phys:GetVelocity()
-			local len = vel:Length()
-			local desired_ang = vel:Angle()
-			local ang = self:GetAngles()
-
-			if self.TargetPosition and self:InAir() then
-				local vel = self.TargetPosition - phys:GetPos()
-				desired_ang = vel:Angle()
-			end
+	end
 
 
-			local p = -math.AngleDifference(desired_ang.p, ang.p)
-			local y = -math.AngleDifference(desired_ang.y, ang.y)
-			local r = -math.AngleDifference(desired_ang.r, ang.r)
+	function ENT:CalcUpright()
+		-- Get angle difference of the prop and up right and facing away from the camera
+		local vel = self.Velocity
+		local len = self.VelocityLength
+		local desired_ang = self.Velocity:Angle()
+		local ang = self:GetAngles()
 
-			local force = len/40
-			local z = 0
-			local roll = 0
-
-
-			if self.TargetPosition and self:InAir() then
-				force = 2
-			end
-
-			phys:AddAngleVelocity(-phys:GetAngleVelocity() - VectorTemp(force*r, force*p, force*y))
+		if self.TargetPosition and self:InAir() then
+			local vel = self.TargetPosition - self.Position
+			desired_ang = vel:Angle()
 		end
 
-		self:AvoidOthers(phys)
 
+		local p = -math.AngleDifference(desired_ang.p, ang.p)
+		local y = -math.AngleDifference(desired_ang.y, ang.y)
+		local r = -math.AngleDifference(desired_ang.r, ang.r)
+
+		local force = len/40
+		local z = 0
+		local roll = 0
+
+
+		if self.TargetPosition and self:InAir() then
+			force = 2
+		end
+
+		self.NewAngleVelocity = -VectorTemp(force*r, force*p, force*y)
+	end
+
+	function ENT:CalcTargetPosition()
 		if self.TargetPosition then
-			local prev_vel = phys:GetVelocity()
-
 			if DEBUG then
-				debugoverlay.Line(self.TargetPosition, self:GetPos(), 0)
+				debugoverlay.Line(self.TargetPosition, self.Position, 0)
 			end
 
-			local vel = self.TargetPosition - phys:GetPos()
+			local vel = self.TargetPosition - self.Position
 			local len2d = vel:Length2D()
-			local len = vel:Length()
+			local len = self.VelocityLength
 
 			vel:Normalize()
 			vel = vel * 20
@@ -790,27 +801,29 @@ if SERVER then
 				local forward = self:GetForward() * math.max(self:GetForward():Dot(vel), 0)
 				local up = self:GetUp() * math.max(self:GetUp():Dot(vel), 0)
 
-				phys:AddVelocity(forward + up)
+				self.NewVelocity = self.NewVelocity + (forward + up)
 			else
-				phys:AddVelocity(vel)
+				self.NewVelocity = self.NewVelocity + vel
 			end
 		end
+	end
 
+	function ENT:CalcAir()
 		if self:InAir() then
 			self.efficiency = 0.5
 
-			local curvel = phys:GetVelocity()
+			local curvel = self.Velocity
 			local curup = self:GetUp()
-
 
 			local vec1 = curvel
 			local vec2 = curup
 			vec1 = vec1 - 2*(vec1:Dot(vec2))*vec2
 			local sped = vec1:Length()
 
+			local nrm = curvel:GetNormalized()
 			local finalvec = curvel
-			local modf = math.abs(curup:DotProduct(curvel:GetNormalized()))
-			local nvec = curup:DotProduct(curvel:GetNormalized())
+			local modf = math.abs(curup:DotProduct(nrm))
+			local nvec = curup:DotProduct(nrm)
 
 			if nvec > 0 then
 				vec1 = vec1 + (curup * 10)
@@ -820,35 +833,63 @@ if SERVER then
 
 			finalvec = vec1:GetNormalized() * (math.pow(sped, modf) - 1)
 			finalvec = finalvec:GetNormalized()
-			finalvec = (finalvec * self.efficiency) + curvel
+			finalvec = (finalvec * self.efficiency) + self.Velocity
 
 			local liftmul = 1 - math.abs(nvec)
-			finalvec = finalvec + (curup * liftmul * curvel:Length() * self.efficiency) / 3000
+			finalvec = finalvec + (curup * liftmul * self.VelocityLength * self.efficiency) / 3000
 			finalvec = finalvec:GetNormalized()
-			finalvec = finalvec * curvel:Length()
+			finalvec = finalvec * self.VelocityLength
 
-			phys:SetVelocity(finalvec)
+			self.NewVelocity = self.NewVelocity - (self.Velocity - finalvec)
+
+			-- tilt
+			local vel = self:GetRight():Dot(curvel)
+
+			self.NewAngleVelocity = self.NewAngleVelocity + VectorTemp(vel*0.5,vel*-2.9,0)
+			self.NewVelocity = self.NewVelocity + (VectorTemp(0,0,math.sin(self.Time * vel)*vel*0.01) + (self:GetRight() * vel * -0.4))
 		end
+	end
 
+	function ENT:CalcDamping()
 		-- damping
 		if self:InAir() then
-			local vel = phys:GetVelocity()
-			phys:AddVelocity(-vel * 0.02)
+			local vel = self.Velocity
+			self.NewVelocity = self.NewVelocity + (-vel * 0.02)
 
 			-- slow down before hitting the ground
 			if vel.z < 0 and self:GetGroundTrace(5).Hit then
-				phys:SetVelocity(phys:GetVelocity() * 0.5)
+				self.NewVelocity = self.Velocity * 0.5
 			end
-
-			-- tilt
-			local vel = self:GetRight():Dot(vel)
-
-			phys:AddAngleVelocity(VectorTemp(vel*0.5,vel*-2.9,0))
-			phys:AddVelocity(VectorTemp(0,0,math.sin(RealTime() * vel)*vel*0.01) + (self:GetRight() * vel * -0.4))
 		else
-			local vel = phys:GetVelocity()
-			phys:AddVelocity(-vel * 0.1)
+			self.NewVelocity = self.NewVelocity + (-self.Velocity * 0.1)
 		end
+	end
+
+	function ENT:PhysicsUpdate(phys)
+
+		self.Velocity = phys:GetVelocity()
+		self.NewVelocity = Vector()
+		self.VelocityLength = self.Velocity:Length()
+
+		self.AngleVelocity = phys:GetAngleVelocity()
+		self.NewAngleVelocity = Vector()
+		self.AngleVelocityLength = self.AngleVelocity:Length()
+
+		self.Position = phys:GetPos()
+		self.Radius = self:BoundingRadius()
+		self.Time = RealTime()
+
+
+		self:CalcStuck()
+		self:CalcUpright()
+		self:AvoidOthers(phys)
+		self:CalcTargetPosition()
+		self:CalcAir()
+		self:CalcDamping()
+
+
+		phys:AddVelocity(self.NewVelocity)
+		phys:AddAngleVelocity(-self.AngleVelocity + self.NewAngleVelocity)
 	end
 end
 
