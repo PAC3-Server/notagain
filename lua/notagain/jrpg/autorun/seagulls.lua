@@ -1,9 +1,217 @@
 local DEBUG = false
 local DEBUG2 = false
 
+do
+	local MOVED = {}
+	local MOVE_REF = {}
+
+	local function net_write(ent, vec, ang)
+		net.WriteEntity(ent)
+
+		net.WriteVector(vec)
+		net.WriteAngle(ang)
+
+		do return end
+
+		net.WriteInt(vec.x, 16)
+		net.WriteInt(vec.y, 16)
+		net.WriteInt(vec.z, 16)
+
+		net.WriteInt(ang.x, 9)
+		net.WriteInt(ang.y, 9)
+		net.WriteInt(ang.z, 9)
+	end
+
+	local function net_read()
+		local ent = net.ReadEntity()
+
+		if not ent:IsValid() then return end
+
+		do return ent, net.ReadVector(), net.ReadAngle() end
+
+		local x = net.ReadInt(16)
+		local y = net.ReadInt(16)
+		local z = net.ReadInt(16)
+
+		local p = net.ReadInt(9)
+		local y = net.ReadInt(9)
+		local r = net.ReadInt(9)
+
+		print("READ: ", x,y,z)
+
+		return ent, Vector(x,y,z), Angle(p,y,r)
+	end
+
+	local function WRITE_COUNT(n)
+		net.WriteUInt(n, 16)
+	end
+
+	local function READ_COUNT()
+		return net.ReadUInt(16)
+	end
+
+	--hook.Remove("Think", "seagull_update")
+	hook.Add(SERVER and "Think" or "RenderScreenspaceEffects", "seagull_update", function()
+		local seagulls = ents.FindByClass("monster_seagull")
+		if SERVER then
+			for _, self in ipairs(seagulls) do
+				--[[if not self.seagull_untransmit then
+					self.seagull_untransmit_timer = self.seagull_untransmit_timer or CurTime() + 1
+					if self.seagull_untransmit_timer < CurTime() then
+						for i,v in ipairs(player.GetAll()) do
+							self:SetPreventTransmit(v, true)
+						end
+						self.seagull_untransmit = true
+					end
+				end]]
+
+				if not self.notransmit then
+
+					function self:UpdateTransmitState()
+						return TRANSMIT_NEVER
+					end
+
+					self.notransmit = true
+					self.checktransmit = CurTime() + 1
+				end
+
+				if self.checktransmit < CurTime() then
+					self:AddEFlags( EFL_FORCE_CHECK_TRANSMIT )
+				end
+
+				local updatedPos = false
+
+				local curPos = self:GetPos() --curPos.x = math.Round(curPos.x) curPos.y = math.Round(curPos.y)
+				if self.LastStoredPos ~= curPos then
+					self.LastStoredPos = curPos
+					updatedPos = true
+				end
+
+				local curAng = self:GetAngles() --curAng.x = math.Round(curAng.x) curAng.y = math.Round(curAng.y) curAng.z = math.Round(curAng.z)
+				if self.LastStoredAng ~= curAng then
+					self.LastStoredAng = curAng
+					updatedPos = true
+				end
+
+
+				-- when the seagull is standing still emit the data once
+				local important = false
+
+				if self.VelocityLength and self.VelocityLength < 5 then
+					if not self.seagull_sent_important then
+						updatedPos = true
+						self.LastStoredPos = curPos
+						self.LastStoredAng = curAng
+						important = true
+						self.seagull_sent_important = true
+					end
+				else
+					self.seagull_sent_important = false
+				end
+
+				if updatedPos == true then
+					local tableId = #MOVED + 1
+					local data = MOVE_REF[self]
+					if data ~= nil then
+						data[2] = self:GetPos()
+						data[3] = self:GetAngles()
+						--print("Updating move record")
+					else
+						-- Insert new queue record, keep order.
+						table.insert(MOVED, {self, self:GetPos(), self:GetAngles(), tableId} )
+						MOVE_REF[self] = MOVED[tableId]
+						--print("Added move record")
+					end
+				else
+					--print("No update")
+				end
+			end
+
+			local available = math.min(table.Count(MOVED), 10)
+			if available == 0 then
+				return
+			end
+			if important then
+				net.Start("seagull_update", false)
+			else
+				net.Start("seagull_update", true)
+			end
+			WRITE_COUNT(available)
+			local centerPos = Vector(0, 0, 0)
+			for i = 1, available do
+				local data = MOVED[1]
+
+				net_write(data[1], data[2], data[3])
+
+				centerPos = centerPos + data[2]
+				MOVE_REF[data[1]] = nil
+
+				table.remove(MOVED, 1)
+			end
+
+			if important then
+				net.Broadcast()
+			else
+				net.SendPVS(centerPos / available)
+			end
+		end
+
+		if CLIENT then
+			local dt = math.Clamp(FrameTime() * 5, 0.0001, 0.1)
+
+			local eye = EyePos()
+			local dir = EyeVector()
+
+			for _, self in ipairs(seagulls) do
+				local net_pos = self.pos
+				local net_ang = self.ang
+
+				if net_pos then
+					local dot = dir:Dot((net_pos - eye):GetNormal())
+
+					if dot > 0.2 then
+						local last_pos = self:GetPos()
+						local last_ang = self:GetAngles()
+
+						local new_pos = LerpVector(dt, last_pos, net_pos)
+						local new_ang = LerpAngle(dt, last_ang, net_ang)
+
+						self:SetPos(new_pos)
+						self:SetAngles(new_ang)
+
+						new_pos:Sub(last_pos)
+						new_pos:Mul(50)
+
+						self.vel:Set(new_pos)
+					else
+						self.vel:Zero()
+						self:SetPos(net_pos)
+						self:SetAngles(net_ang)
+					end
+				end
+			end
+		end
+	end)
+
+	if SERVER then
+		util.AddNetworkString("seagull_update")
+	end
+
+	if CLIENT then
+		net.Receive("seagull_update", function()
+			local count = READ_COUNT()
+			for i = 1, count do
+				local self, pos, ang = net_read()
+				if not self then return end
+
+				self.pos = pos
+				self.ang = ang
+			end
+		end)
+	end
+end
+
 local ENT = {}
-local MOVED = {}
-local MOVE_REF = {}
 
 ENT.ClassName = "monster_seagull"
 ENT.Type = "anim"
@@ -13,50 +221,31 @@ ENT.AdminSpawnable = false
 ENT.PrintName = "seagull mount"
 ENT.Model = "models/seagull.mdl"
 
-local function WRITE_COUNT(n)
-	net.WriteUInt(n, 16)
+function ENT:Initialize()
+	self:DrawShadow( false )
+	self:SetMonsterModel(self.Model)
+
+	if SERVER then
+		self:SetScale(math.Rand(15,25))
+	end
+
+	if CLIENT then
+		self.csmodel = ClientsideModel(self:GetMonsterModel())
+		self.csmodel:SetParent(self)
+		self.csmodel:SetLOD(0)
+	end
+
+	self.ground_trace_cache = {}
+	self.standing_still = true
 end
 
-local function READ_COUNT()
-	return net.ReadUInt(16)
-end
-
-local function WRITE_ID(n)
-	net.WriteUInt(n, 12)
-end
-
-local function READ_ID()
-	return net.ReadUInt(12)
-end
-
-local function WRITE_VECTOR(v)
-	net.WriteInt(v.x, 16)
-	net.WriteInt(v.y, 16)
-	net.WriteInt(v.z, 16)
-end
-local function READ_VECTOR(v)
-	local x = net.ReadInt(16)
-	local y = net.ReadInt(16)
-	local z = net.ReadInt(16)
-	return Vector(x,y,z)
-end
-
-local function WRITE_ANGLE(a)
-	net.WriteInt(a.x, 9)
-	net.WriteInt(a.y, 9)
-	net.WriteInt(a.z, 9)
-end
-
-local function READ_ANGLE(a)
-	local p = net.ReadInt(9)
-	local y = net.ReadInt(9)
-	local r = net.ReadInt(9)
-
-	return Angle(p,y,r)
+function ENT:OnRemove()
+	SafeRemoveEntity(self.weld)
+	SafeRemoveEntity(self.csmodel)
 end
 
 function ENT:SetScale(scale)
-	self.scale = scale
+	self:SetNW2Float("monster_scale", scale)
 
 	if SERVER then
 		self:PhysicsInitSphere(scale, "gmod_ice")
@@ -68,7 +257,16 @@ function ENT:SetScale(scale)
 end
 
 function ENT:GetScale()
-	return self.scale
+	return self:GetNW2Float("monster_scale")
+end
+
+function ENT:SetMonsterModel(mdl)
+	self:SetNW2String("monster_model", mdl)
+end
+
+function ENT:GetMonsterModel()
+	local mdl = self:GetNW2String("monster_model")
+	return mdl and mdl ~= "" and mdl
 end
 
 
@@ -76,31 +274,22 @@ function ENT:InAir()
 	if not self.next_in_air or self.next_in_air < RealTime() then
 		local point = self:GetPos()
 		local down = -self:GetUp()
-		local down_dir = down * self:GetScale()*1.7
 
-		if bit.band(util.PointContents(point + down_dir), CONTENTS_SOLID ) == CONTENTS_SOLID then
+		if bit.band(util.PointContents(point + down * self:BoundingRadius()), CONTENTS_SOLID ) == CONTENTS_SOLID then
 			self.in_air = false
 		else
+			point = point + down
+
 			self.tr_out = self.tr_out or {}
 			self.tr_in = self.tr_in or {output = self.tr_out}
 
-			if CLIENT then
-				self.tr_in.start = point - down
-				self.tr_in.endpos = point + down_dir
+			self.tr_in.start = point
+			self.tr_in.endpos = point
 
-				util.TraceLine(self.tr_in)
-			else
-				point = point + down
+			util.TraceEntity(self.tr_in, self)
 
-				self.tr_in.start = point
-				self.tr_in.endpos = point
-
-
-				util.TraceEntity(self.tr_in, self)
-
-				if self.tr_out.Entity.ClassName == ENT.ClassName then
-					self.tr_out.Hit = false
-				end
+			if self.tr_out.Entity.ClassName == ENT.ClassName then
+				self.tr_out.Hit = false
 			end
 
 			self.in_air = not self.tr_out.Hit
@@ -152,18 +341,9 @@ if CLIENT then
 		Takeoff = "takeoff",
 	}
 
-	local sounds = {
+	local footstep_sounds = {
 		"npc/fast_zombie/foot2.wav",
 	}
-	for i = 1, 5 do
-		sounds[i] = "seagull_step_" .. i .. "_" .. util.CRC(os.clock())
-		sound.Generate(sounds[i], 22050, 0.25, function(t)
-			local f = (t/22050) * (1/0.25)
-			f = -f + 1
-			f = f ^ 10
-			return ((math.random()*2-1) * math.sin(t*1005) * math.cos(t*0.18)) * f
-		end)
-	end
 
 	local ambient_sounds = {
 		"ambient/creatures/seagull_idle1.wav",
@@ -171,25 +351,52 @@ if CLIENT then
 		"ambient/creatures/seagull_idle3.wav",
 	}
 
-	function ENT:Update()
+	for i = 1, 5 do
+		footstep_sounds[i] = "seagull_step_" .. i .. "_" .. util.CRC(os.clock())
+		sound.Generate(footstep_sounds[i], 22050, 0.25, function(t)
+			local f = (t/22050) * (1/0.25)
+			f = -f + 1
+			f = f ^ 10
+			return ((math.random()*2-1) * math.sin(t*1005) * math.cos(t*0.18)) * f
+		end)
+	end
+
+	local no_texture = Material("vgui/white")
+
+	function ENT:Draw()
+		if DEBUG then
+			render.SetMaterial(no_texture)
+			render.DrawSphere(self:GetPos(), self:GetScale(), 8, 8, self:InAir() and Color(0, 0, 255, 128) or Color(255, 0, 0, 128))
+		end
+	end
+
+	function ENT:Think()
+		self.vel = self.vel or self:GetVelocity()
+
 		self:AnimationThink()
 
 		local scale = self:GetScale()
 		if scale ~= self.last_scale then
-			self:SetColor(Color(255, 255, Lerp(scale/20, 100, 255), 255))
-			self:SetModelScale(scale / self:GetModelRadius() * 6)
-			self.local_pos = Vector(0, 0, -scale)
+			self.local_pos = Vector(0, 0, -self:BoundingRadius()/2 - (scale/10) - 1)
+			self.csmodel:SetColor(Color(255, 255, Lerp(scale/20, 100, 255), 255))
+			self.csmodel:SetModelScale(scale / self.csmodel:GetModelRadius() * 6)
 
 			self.last_scale = scale
 		end
 
-		if math.random() > 0.99 then
-			sound.Play(ambient_sounds[math.random(1, #ambient_sounds)], self.pos, 75, math.Clamp((1000 / scale) + math.Rand(-10, 10), 1, 255), 1)
+		self.csmodel:SetPos(self:GetPos() + self.local_pos)
+		self.csmodel:SetAngles(self:GetAngles())
+
+		if math.random() > 0.999 then
+			sound.Play(ambient_sounds[math.random(1, #ambient_sounds)], self:GetPos(), 75, math.Clamp((1000 / scale) + math.Rand(-10, 10), 1, 255), 1)
 		end
+
+		self:NextThink(CurTime() + 1/30)
+		return true
 	end
 
 	function ENT:SetAnim(anim)
-		self:SetSequence(self:LookupSequence(self.Animations[anim]))
+		self.csmodel:SetSequence(self.csmodel:LookupSequence(self.Animations[anim]))
 	end
 
 	function ENT:AnimationThink()
@@ -223,7 +430,7 @@ if CLIENT then
 
 			self.Noise = (self.Noise + (math.Rand(-1,1) - self.Noise) * FrameTime())
 			self.Cycle = (self.Cycle + (len / (2.5 / siz)) * FrameTime() * mult) % 1
-			self:SetCycle(self.Cycle)
+			self.csmodel:SetCycle(self.Cycle)
 		else
 
 			local ground = self:GetGroundTrace(self:BoundingRadius() - 4)
@@ -240,7 +447,7 @@ if CLIENT then
 					self:SetAnim("Land")
 				end
 
-				self:SetCycle(f)
+				self.csmodel:SetCycle(f)
 				return
 			else
 				self.takeoff = true
@@ -272,7 +479,7 @@ if CLIENT then
 				end
 			end
 
-			self:SetCycle(self.Cycle)
+			self.csmodel:SetCycle(self.Cycle)
 		end
 	end
 
@@ -306,119 +513,6 @@ if CLIENT then
 		else
 			self.stepped = false
 		end
-	end
-
-
-	local seagulls = _G.SEAGULLS_ENTS or {}
-	local seagullsi = _G.SEAGULLS_ENTSI or {}
-
-	_G.SEAGULLS_ENTS = seagulls
-	_G.SEAGULLS_ENTSI = seagullsi
-
-	net.Receive("seagull_create", function()
-		local id = READ_ID()
-		local scale = net.ReadFloat()
-
-		local self = ClientsideModel(ENT.Model)
-		self:SetParent(self)
-		self:SetLOD(0)
-		self.scale = scale
-		self.vel = Vector()
-		self.pos = Vector()
-		self.ang = Angle()
-		self.local_pos = Vector()
-		self.seagull_id = id
-
-		for k,v in pairs(ENT) do
-			self[k] = v
-		end
-
-		self.ground_trace_cache = {}
-		self.standing_still = true
-
-		seagulls[id] = self
-		table.insert(seagullsi, self)
-	end)
-
-	net.Receive("seagull_update", function()
-		local count = READ_COUNT()
-		for i = 1, count do
-			local id = READ_ID()
-			local self = seagulls[id]
-			if not self then return end
-
-			local pos = READ_VECTOR()
-			local ang = READ_ANGLE()
-
-			self.pos = pos
-			self.ang = ang
-		end
-	end)
-
-	net.Receive("seagull_remove", function()
-		local id = READ_ID()
-
-		local self = seagulls[id]
-		self:Remove()
-	end)
-
-	hook.Add("Think", "seagulls", function()
-		local dt = math.Clamp(FrameTime() * 5, 0.0001, 1)
-		for i = 1, #seagullsi do
-			local self = seagullsi[i]
-
-			if self:IsValid() then
-
-				local last_pos = self.smooth_pos or self.pos
-
-				self.smooth_pos = self.smooth_pos or self.pos
-   				self.smooth_pos = self.smooth_pos + ((self.pos - self.smooth_pos) * dt)
-
-				self.vel = (self.smooth_pos - last_pos) * 50
-
-				self.smooth_dir = self.smooth_dir or self.ang:Forward()
-				self.smooth_dir = self.smooth_dir + ((self.ang:Forward() - self.smooth_dir) * dt)
-
-				self:SetPos(self.smooth_pos + self.local_pos)
-				self:SetAngles(self.smooth_dir:Angle())
-
-				ENT.Update(self)
-			end
-		end
-	end)
-end
-
-if SERVER then
-	util.AddNetworkString("seagull_create")
-	util.AddNetworkString("seagull_remove")
-	util.AddNetworkString("seagull_update")
-
-	SEAGULL_ID = 0
-
-	function ENT:Initialize()
-		local scale = math.Rand(15,25)
-
-		self:SetScale(scale)
-
-		self.ground_trace_cache = {}
-		self.standing_still = true
-
-		self.seagull_id = SEAGULL_ID
-
-		net.Start("seagull_create")
-		net.WriteUInt(self.seagull_id, 12)
-		net.WriteFloat(scale)
-		net.Broadcast()
-
-		SEAGULL_ID = SEAGULL_ID + 1
-	end
-
-	function ENT:OnRemove()
-		SafeRemoveEntity(self.weld)
-
-		net.Start("seagull_remove")
-		net.WriteUInt(self.seagull_id, 12)
-		net.Broadcast()
 	end
 end
 
@@ -695,35 +789,6 @@ if SERVER then
 		end
 
 		self:CalcMoveTo()
-
-		local updatedPos = false
-
-		if self.LastStoredPos ~= self:GetPos() then
-			self.LastStoredPos = self:GetPos()
-			updatedPos = true
-		end
-
-		if self.LastStoredAng ~= self:GetAngles() then
-			self.LastStoredAng = self:GetAngles()
-			updatedPos = true
-		end
-
-		if updatedPos == true then
-			local tableId = #MOVED + 1
-			local data = MOVE_REF[self.seagull_id]
-			if data ~= nil then
-				data[2] = self:GetPos()
-				data[3] = self:GetAngles()
-				--print("Updating move record")
-			else
-				-- Insert new queue record, keep order.
-				table.insert(MOVED, { self.seagull_id, self:GetPos(), self:GetAngles(), tableId } )
-				MOVE_REF[self.seagull_id] = MOVED[tableId]
-				--print("Added move record")
-			end
-		else
-			--print("No update")
-		end
 
 		self:NextThink(CurTime() + 1/fps)
 		return true
@@ -1028,33 +1093,6 @@ if SERVER then
 		phys:AddVelocity(self.NewVelocity * mult)
 		phys:AddAngleVelocity(-self.AngleVelocity + (self.NewAngleVelocity * mult))
 	end
-
-	function ENT:UpdateTransmitState()
-		return TRANSMIT_NEVER
-	end
-
-	hook.Add("Think", "seagull_update", function()
-		local available = math.min(table.Count(MOVED), 10)
-		if available == 0 then
-			return
-		end
-		net.Start("seagull_update", true)
-		WRITE_COUNT(available)
-		local centerPos = Vector(0, 0, 0)
-		for i = 1, available do
-			local data = MOVED[1]
-
-			WRITE_ID(data[1])
-			WRITE_VECTOR(data[2])
-			WRITE_ANGLE(data[3])
-
-			centerPos = centerPos + data[2]
-			MOVE_REF[data[1]] = nil
-
-			table.remove(MOVED, 1)
-		end
-		net.SendPVS(centerPos / available)
-	end)
 end
 
 scripted_ents.Register(ENT, ENT.ClassName, true)
@@ -1064,15 +1102,5 @@ function CREATESEAGULLS(where, max)
 		local ent = ents.Create("monster_seagull")
 		ent:SetPos(where + Vector(math.Rand(-1,1), math.Rand(-1,1), 0)*100 + Vector(0,0,50))
 		ent:Spawn()
-	end
-end
-
-for _, ent in ipairs(ents.GetAll()) do
-	if ent.seagull_id then
-		if CLIENT then
-			for k,v in pairs(ENT) do
-				ent[k] = v
-			end
-		end
 	end
 end
