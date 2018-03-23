@@ -1,5 +1,5 @@
 local DEBUG = false
-local DEBUG2 = true
+local DEBUG2 = false
 
 local ENT = {}
 
@@ -11,8 +11,29 @@ ENT.AdminSpawnable = false
 ENT.PrintName = "seagull mount"
 ENT.Model = "models/seagull.mdl"
 
+function ENT:SetScale(scale)
+	self:SetNW2Float("monster_scale", scale)
+
+	if SERVER then
+		self:PhysicsInitSphere(scale, "gmod_ice")
+		self:GetPhysicsObject():SetMass(scale * 20)
+		self:SetCollisionBounds( Vector( -scale, -scale, -scale ) , Vector( scale, scale, scale ) )
+
+		self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
+	end
+end
+
 function ENT:GetScale()
-	return self:GetNW2Float("scale", 1)
+	return self:GetNW2Float("monster_scale")
+end
+
+function ENT:SetMonsterModel(mdl)
+	self:SetNW2String("monster_model", mdl)
+end
+
+function ENT:GetMonsterModel()
+	local mdl = self:GetNW2String("monster_model")
+	return mdl and mdl ~= "" and mdl
 end
 
 if CLIENT then
@@ -23,60 +44,40 @@ if CLIENT then
 			render.SetMaterial(no_texture)
 			render.DrawSphere(self:GetPos(), self:GetScale(), 8, 8, self:InAir() and Color(0, 0, 255, 128) or Color(255, 0, 0, 128))
 		end
-		self.csmodel:SetLocalPos(self.local_pos)
+
 	end
 
 	function ENT:Think()
 		self:AnimationThink()
-		self:NextThink(CurTime())
+
+		local scale = self:GetScale()
+		if scale ~= self.last_scale then
+			self.local_pos = Vector(0, 0, -self:BoundingRadius()/2 - (scale/10) - 1)
+			self.csmodel:SetColor(Color(255, 255, Lerp(scale/20, 100, 255), 255))
+			self.csmodel:SetModelScale(scale / self.csmodel:GetModelRadius() * 6)
+
+			self.last_scale = scale
+		end
+
+		self.csmodel:SetPos(self:GetPos() + self.local_pos)
+
+		self:NextThink(CurTime() + 1/30)
 		return true
 	end
 end
 
-function ENT:SetSize2(scale)
-	self:SetNW2Float("scale", scale)
-
-	if SERVER then
-		self:PhysicsInitSphere(scale, "gmod_ice")
-		self:GetPhysicsObject():SetMass(scale * 20)
-		self:SetCollisionBounds( Vector( -scale, -scale, -scale ) , Vector( scale, scale, scale ) )
-	end
-
-	--self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
-
-	self:DrawShadow( false )
-end
-
-function ENT:SetModel2(mdl)
-	self:SetNW2String("model", mdl)
-end
-
-function ENT:StartTouch(ent)
-	print("START TOUCH", ent)
-end
-
-function ENT:EndTouch(ent)
-	print("END TOUCH", ent)
-end
-
 function ENT:Initialize()
-
-	self:SetSize2(math.Rand(5,10))
-	self:SetModel2(self.Model)
+	self:DrawShadow( false )
+	self:SetMonsterModel(self.Model)
 
 	if SERVER then
-		self:SetTrigger(true)
+		self:SetScale(math.Rand(15,25))
 	end
 
 	if CLIENT then
-		self.csmodel = ClientsideModel(self:GetNW2String("model"))
+		self.csmodel = ClientsideModel(self:GetMonsterModel())
 		self.csmodel:SetParent(self)
-		self.local_pos = Vector(0, 0, -self:BoundingRadius()/2 - (self:GetScale()/10) - 1)
-		self.csmodel:SetLocalPos(self.local_pos)
-		self.csmodel:SetModelScale(self:GetScale() / self.csmodel:GetModelRadius() * 6)
 		self.csmodel:SetLOD(0)
-		local s = self:GetScale()
-		self.csmodel:SetColor(Color(255, 255, Lerp(s/20, 100, 255), 255))
 	end
 
 	self.ground_trace_cache = {}
@@ -165,7 +166,6 @@ do -- calc
 
 		local vel = self:GetVelocity() / scale
 		local len = vel:Length()
-		local ang = vel:Angle()
 		local siz = scale*0.05
 		len = len / siz
 
@@ -258,7 +258,7 @@ do -- calc
 				return ((math.random()*2-1) * math.sin(t*1005) * math.cos(t*0.18)) * f
 			end)
 		end
-		function ENT:StepSoundThink() do return end
+		function ENT:StepSoundThink()
 			local siz = self:GetScale()
 			local stepped = self.Cycle%0.5
 			if stepped  < 0.3 then
@@ -282,7 +282,7 @@ do -- calc
 						55,
 						0,
 						--math.Clamp(100 / (siz/3) + math.Rand(-20,20), 40, 255)
-						100/siz + math.Rand(-15, 15)
+						math.Clamp(100/siz + math.Rand(-15, 15), 10, 255)
 					)
 
 					self.stepped = true
@@ -306,135 +306,148 @@ if SERVER then
 	local flock_radius = 2000
 
 	local flock_pos
-	local food_pos
-	local flock_vel = Vector()
 	local food = {}
 	local tallest_points = {}
-	local all_seagulls
+	local all_seagulls = ents.FindByClass(ENT.ClassName)
 
-	timer.Create(ENT.ClassName, 0, 0.1, function()
+	local function global_update()
 		all_seagulls = ents.FindByClass(ENT.ClassName)
-
-		if DEBUG2 then
-			if me:KeyDown(IN_RELOAD) then
-				for i,v in ipairs(all_seagulls) do
-					v:Remove()
-				end
-			end
-		end
 
 		local found = all_seagulls
 		local count = #found
 		local pos = VectorTemp(0,0,0)
 
 		for _, ent in ipairs(found) do
-			local p = ent:GetPos()
+			local p = ent.Position or ent:GetPos()
 			pos = pos + p
 		end
 
 		if count > 1 then
-			local pos = pos / count
+			pos = pos / count
 
 			flock_vel = (flock_pos or pos) - pos
 
 			flock_pos = pos
 
 			if DEBUG then
-				debugoverlay.Sphere(pos, flock_radius, 0, Color(0, 255, 0, 5))
+				debugoverlay.Sphere(pos, flock_radius, 1, Color(0, 255, 0, 5))
 				if me:KeyDown(IN_JUMP) then
 					tallest_points = {}
 				end
 			end
 
-
 			local up = physenv.GetGravity():GetNormalized()
-			local top = util.QuickTrace(pos, up*-10000).HitPos
+			local top = util.QuickTrace(pos + Vector(0,0,flock_radius/2), up*-10000).HitPos
+			top.z = math.min(pos.z + flock_radius, top.z)
 			local bottom = util.QuickTrace(top, up*10000).HitPos
+
+			if DEBUG then
+				debugoverlay.Text(top, "TOP", 1)
+				debugoverlay.Text(bottom, "BOTTOM", 1)
+				debugoverlay.Text(LerpVector(0.5, top, bottom), "POINTS: " .. #tallest_points, 1)
+			end
 
 			top.z = math.min(flock_pos.z + flock_radius, top.z)
 
-			local bias = Vector()
-			local count = 0
-			for i = 1, 5 do
-				local p = tallest_points[i]
-				if not p then break end
-				bias = bias + p
-				count = count + 1
-			end
-			if count > 1 then
-				bias = bias / count
-			end
+			local max = 30
 
-			local max = 3
+			if not tallest_points[max] then
+				for i = 1, max do
+					if tallest_points[max] then
+						break
+					end
 
-			for i = 1, max do
-				local start_pos = LerpVector(i/max, bottom, top)
+					local start_pos = LerpVector(i/max, bottom, top)
 
-				if DBEUG then
-					debugoverlay.Cross(start_pos,100, 0.1)
-				end
-				--if not util.IsInWorld(start_pos) then break end
-				local bias = count > 1 and (pos - bias):GetNormalized() or up
-				local tr = util.TraceLine({
-					start = start_pos,
-					endpos = start_pos + VectorTemp(math.Rand(-1, 1), math.Rand(-1, 1), math.Rand(-1, -0.2))*flock_radius,
-				})
+					if DBEUG then
+						debugoverlay.Cross(start_pos, 100, 1)
+					end
 
-				if tr.Hit and math.abs(tr.HitNormal.z) > 0.8 and (not tr.Entity:IsValid() or tr.Entity.ClassName ~= ENT.ClassName) then
-					if tr.HitPos.z > flock_pos.z then
-						for i,v in ipairs(tallest_points) do
-							if v:Distance(tr.HitPos) < 50 then
-								return
+					--if not util.IsInWorld(start_pos) then break end
+					local tr = util.TraceLine({
+						start = start_pos,
+						endpos = start_pos + VectorTemp(math.Rand(-1, 1), math.Rand(-1, 1), math.Rand(-1, -0.2))*flock_radius,
+					})
+
+					if tr.Hit and math.abs(tr.HitNormal.z) > 0.8 and (not tr.Entity:IsValid() or tr.Entity.ClassName ~= ENT.ClassName) then
+						if tr.HitPos.z > flock_pos.z then
+							for _,v in ipairs(tallest_points) do
+								if v:Distance(tr.HitPos) < 50 then
+									return
+								end
 							end
-						end
 
-						table.insert(tallest_points, tr.HitPos)
-
-						table.sort(tallest_points, function(a, b) return a.z > b.z end)
-
-						if #tallest_points > 50 then
-							table.remove(tallest_points, 50)
-						end
-
-						if DEBUG then
-							for i,v in ipairs(tallest_points) do
-								debugoverlay.Cross(v, 5, 0.1, Color(0,0,255, 255))
-							end
+							table.insert(tallest_points, tr.HitPos)
 						end
 					end
-				else
+
 					if DEBUG then
-						debugoverlay.Line(tr.StartPos, tr.HitPos, 0.1, Color(255,255,255, 1))
+						debugoverlay.Line(tr.StartPos, tr.HitPos, 1, tr.Hit and Color(0,255,0, 255) or Color(255,0,0, 255))
 					end
 				end
-			end
 
-			for i = #tallest_points, 1, -1 do
-				local v = tallest_points[i]
-				if v:Distance(flock_pos) > flock_radius then
-					table.remove(tallest_points, i)
+				if DEBUG then
+					for _,v in ipairs(tallest_points) do
+						debugoverlay.Cross(v, 5, 1, Color(0,0,255, 255))
+					end
+				end
+
+				table.sort(tallest_points, function(a, b) return a.z > b.z end)
+
+				for i = #tallest_points, 1, -1 do
+					local v = tallest_points[i]
+					if v:Distance(flock_pos) > flock_radius then
+						table.remove(tallest_points, i)
+					end
 				end
 			end
 		else
 			flock_pos = nil
 		end
+	end
 
-		food = {}
-		for _, ent in ipairs(ents.GetAll()) do
+	local function entity_create(ent)
+		timer.Simple(0.25, function()
+			if not ent:IsValid() then return end
+
 			local phys = ent:GetPhysicsObject()
 			if phys:IsValid() and (
 				phys:GetMaterial():lower():find("flesh") or
 				phys:GetMaterial() == "watermelon" or
 				phys:GetMaterial() == "antlion"
 			) then
+				ent.seagull_food = true
 				table.insert(food, ent)
 			end
+		end)
+	end
+
+	local function entity_remove(ent)
+		if ent.seagull_food then
+			for i,v in ipairs(food) do
+				if v == ent then
+					table.remove(food, i)
+				end
+			end
 		end
-	end)
+	end
 
 	function ENT:OnTakeDamage(info)
-		print(info:GetDamage(), info:GetAttacker())
+		print(self, info:GetDamage(), info:GetAttacker())
 	end
+
+	timer.Create(ENT.ClassName, 1, 0, function()
+		global_update()
+	end)
+
+	hook.Add("OnEntityCreated", ENT.ClassName, function(ent)
+		entity_create(ent)
+	end)
+
+	hook.Add("EntityRemoved", ENT.ClassName, function(ent)
+		entity_remove(ent)
+	end)
+
 
 	function ENT:Think()
 		if DEBUG2 then
@@ -446,14 +459,31 @@ if SERVER then
 				})
 			end
 
+			if me:KeyDown(IN_RELOAD) then
+				for _,v in ipairs(all_seagulls) do
+					v:Remove()
+				end
+			end
+
 			if me:KeyDown(IN_ATTACK2) then
 				self:CancelMoving()
+			end
+
+			if me:KeyDown(IN_DUCK) then
+				if tallest_points[1] then
+					local point = table.remove(tallest_points, 1)
+
+					self.tallest_point_target = point
+					self:MoveTo({
+						pos = point,
+					})
+				end
 			end
 		end
 
 		if flock_pos then
 
-			if not self.tallest_point_target or (self.reached_target and math.random() > 0.8 and self.tallest_point_target.z < flock_pos.z - 100) then
+			if not self.tallest_point_target or (self.reached_target and math.random() > 0.2 and self.tallest_point_target.z < flock_pos.z - 100) then
 				if tallest_points[1] then
 					local point = table.remove(tallest_points, 1)
 
@@ -466,7 +496,7 @@ if SERVER then
 
 			if math.random() > 0.9 and flock_pos:Distance(self:GetPos()) > flock_radius then
 				self:MoveTo({
-					get_pos = function(self)
+					get_pos = function()
 						return flock_pos
 					end,
 					check = function()
@@ -494,7 +524,7 @@ if SERVER then
 							(ent.seagull_weld.seagull ~= self and ent.seagull_weld.seagull:GetScale() < self:GetScale())
 						)
 					end,
-					get_pos = function(self)
+					get_pos = function()
 						return ent:GetPos()
 					end,
 					priority = 1,
@@ -536,35 +566,57 @@ if SERVER then
 			self:PhysWake()
 		end
 
+		local fps = 10
+
+		self:PhysicsUpdate2(phys, 6)
 		self:CalcMoveTo()
+
+		self:NextThink(CurTime() + 1/fps)
+		return true
 	end
 
 	function ENT:AvoidOthers()
-		--if self.TargetPosition then return end
-
 		if not self.next_avoid or self.next_avoid < self.Time then
-			self.next_avoid = self.Time + math.random()*0.01
+			self.next_avoid = self.Time + math.random()*3
 
 			local pos = self.Position
 			local in_air = self:InAir()
-			local radius = self.Radius * (in_air and 5 or 3)
+			local radius = self.Radius * (in_air and 5 or 2)
 			local average_pos = Vector()
 			local count = 0
 
-			for i, v in ipairs(all_seagulls) do
+			for _, v in ipairs(all_seagulls) do
 				local pos2 = v.Position or v:GetPos()
-				if ((in_air and v:InAir()) or (not in_air and not v:InAir())) and pos2:Distance(pos) < radius then
+				--local radius2 = v.Radius or v:BoundingRadius()
+
+				if ((in_air and v:InAir()) or (not in_air and not v:InAir())) and pos2:Distance(pos) < (radius) then
 					average_pos = average_pos + pos2
 					count = count + 1
 				end
 			end
 			if count > 1 then
 				average_pos = average_pos / count
+
 				local vel = pos - average_pos
+
+				local len = vel:Length()
+
+				if len < 5 then return end
+
 				if not in_air then
 					vel.z = 0
 				end
-				self.NewVelocity = self.NewVelocity + (vel*3)
+				if self.TargetPosition then
+					vel = vel * 0.5
+				else
+					self.damping_pause = self.damping_pause or 1
+				end
+				vel = vel * 1/len*10
+
+				self.NewVelocity = self.NewVelocity + vel
+
+				self.Velocity = self.NewVelocity
+				self.VelocityLength = self.Velocity:Length()
 			end
 		end
 	end
@@ -584,8 +636,7 @@ if SERVER then
 				table.Merge(self.target_ids[id], data)
 				for i,v in ipairs(self.TargetPositions) do
 					if v.id == id then
-						local v = table.remove(self.TargetPositions, i)
-						table.insert(self.TargetPositions, data.priority, v)
+						table.insert(self.TargetPositions, data.priority, table.remove(self.TargetPositions, i))
 						break
 					end
 				end
@@ -605,19 +656,6 @@ if SERVER then
 			local info = self.TargetPositions[1]
 
 			if info then
-				local phys = self:GetPhysicsObject()
-				self.Velocity = phys:GetVelocity()
-		self.NewVelocity = Vector()
-		self.VelocityLength = self.Velocity:Length()
-
-		self.AngleVelocity = phys:GetAngleVelocity()
-		self.NewAngleVelocity = Vector()
-		self.AngleVelocityLength = self.AngleVelocity:Length()
-
-		self.Position = phys:GetPos()
-		self.Radius = self:BoundingRadius()
-		self.Time = RealTime()
-
 				local ok = not info.check or info.check(self)
 
 				if ok then
@@ -627,12 +665,8 @@ if SERVER then
 						pos = info.get_pos(self)
 					end
 
-					local reached = false
-
 					local dir = pos - self.Position
-					local len2d = dir:Length2D()
 					local len = dir:Length()
-					local phys = self:GetPhysicsObject()
 
 					if len > self.Radius then
 						self.TargetPosition = pos
@@ -645,8 +679,6 @@ if SERVER then
 						if not info.waiting_time or (self.standing_still < self.Time) then
 							self.TargetPosition = nil
 							self.standing_still = true
-
-							--phys:Sleep()
 
 							table.remove(self.TargetPositions, 1)
 
@@ -734,32 +766,25 @@ if SERVER then
 
 
 	function ENT:CalcUpright()
-		-- Get angle difference of the prop and up right and facing away from the camera
-		local vel = self.Velocity
 		local len = self.VelocityLength
 		local desired_ang = self.Velocity:Angle()
-		local ang = self:GetAngles()
+		local ang = self.Physics:GetAngles()
 
-		if self.TargetPosition and self:InAir() then
-			local vel = self.TargetPosition - self.Position
-			desired_ang = vel:Angle()
+		local p = math.AngleDifference(desired_ang.p, ang.p)/180
+		local y = math.AngleDifference(desired_ang.y, ang.y)/180
+		local r = math.AngleDifference(desired_ang.r, ang.r)/180
+
+		local force = math.min(self:GetPhysicsObject():GetMass() * 0.5, 500)
+
+		if not self:InAir() then
+			force = force * math.Clamp(len-1, 0, 1)
+
+			if force == 0 then
+				self.Physics:SetAngles(Angle(0,ang.y,0))
+			end
 		end
 
-
-		local p = -math.AngleDifference(desired_ang.p, ang.p)
-		local y = -math.AngleDifference(desired_ang.y, ang.y)
-		local r = -math.AngleDifference(desired_ang.r, ang.r)
-
-		local force = len/40
-		local z = 0
-		local roll = 0
-
-
-		if self.TargetPosition and self:InAir() then
-			force = 2
-		end
-
-		self.NewAngleVelocity = -VectorTemp(force*r, force*p, force*y)
+		self.NewAngleVelocity = Vector(force*r, force*p, force*y)
 	end
 
 	function ENT:CalcTargetPosition()
@@ -769,20 +794,13 @@ if SERVER then
 			end
 
 			local vel = self.TargetPosition - self.Position
-			local len2d = vel:Length2D()
 			local len = self.VelocityLength
 
 			vel:Normalize()
-			vel = vel * 20
+			vel = vel * self.Physics:GetMass()/20
 
-			local tr = util.TraceLine({
-				start = self:WorldSpaceCenter(),
-				endpos = self.TargetPosition,
-				filter = self,
-			}, self)
-
-			if tr.Hit then
-				vel.z = vel.z + 2
+			if self:InAir() then
+				vel.z = vel.z + self.Physics:GetMass()*0.01
 			end
 
 			if math.abs(vel.z) < 10 and not self:InAir() then
@@ -797,76 +815,40 @@ if SERVER then
 				vel.z = vel.z * 0.5
 			end
 
-			if self:InAir() then
-				local forward = self:GetForward() * math.max(self:GetForward():Dot(vel), 0)
-				local up = self:GetUp() * math.max(self:GetUp():Dot(vel), 0)
+			self.NewVelocity = self.NewVelocity + vel
 
-				self.NewVelocity = self.NewVelocity + (forward + up)
-			else
-				self.NewVelocity = self.NewVelocity + vel
-			end
-		end
-	end
-
-	function ENT:CalcAir()
-		if self:InAir() then
-			self.efficiency = 0.5
-
-			local curvel = self.Velocity
-			local curup = self:GetUp()
-
-			local vec1 = curvel
-			local vec2 = curup
-			vec1 = vec1 - 2*(vec1:Dot(vec2))*vec2
-			local sped = vec1:Length()
-
-			local nrm = curvel:GetNormalized()
-			local finalvec = curvel
-			local modf = math.abs(curup:DotProduct(nrm))
-			local nvec = curup:DotProduct(nrm)
-
-			if nvec > 0 then
-				vec1 = vec1 + (curup * 10)
-			else
-				vec1 = vec1 + (curup * -10)
-			end
-
-			finalvec = vec1:GetNormalized() * (math.pow(sped, modf) - 1)
-			finalvec = finalvec:GetNormalized()
-			finalvec = (finalvec * self.efficiency) + self.Velocity
-
-			local liftmul = 1 - math.abs(nvec)
-			finalvec = finalvec + (curup * liftmul * self.VelocityLength * self.efficiency) / 3000
-			finalvec = finalvec:GetNormalized()
-			finalvec = finalvec * self.VelocityLength
-
-			self.NewVelocity = self.NewVelocity - (self.Velocity - finalvec)
-
-			-- tilt
-			local vel = self:GetRight():Dot(curvel)
-
-			self.NewAngleVelocity = self.NewAngleVelocity + VectorTemp(vel*0.5,vel*-2.9,0)
-			self.NewVelocity = self.NewVelocity + (VectorTemp(0,0,math.sin(self.Time * vel)*vel*0.01) + (self:GetRight() * vel * -0.4))
+			self.Velocity = self.NewVelocity
+			self.VelocityLength = self.NewVelocity:Length()
 		end
 	end
 
 	function ENT:CalcDamping()
 		-- damping
 		if self:InAir() then
-			local vel = self.Velocity
-			self.NewVelocity = self.NewVelocity + (-vel * 0.02)
-
 			-- slow down before hitting the ground
-			if vel.z < 0 and self:GetGroundTrace(5).Hit then
-				self.NewVelocity = self.Velocity * 0.5
+			if self.Velocity.z < 0 and self:GetGroundTrace(5).Hit then
+				self.Physics:SetDamping(2, 0)
+			else
+				self.Physics:SetDamping(1, 0)
 			end
 		else
-			self.NewVelocity = self.NewVelocity + (-self.Velocity * 0.1)
+			local mult = 1
+
+			if self.damping_pause then
+				self.damping_pause = math.max(self.damping_pause - FrameTime() * 3, 0)
+				mult = -self.damping_pause+1
+				if self.damping_pause == 0 then self.damping_pause = nil end
+				mult = mult ^ 5
+			end
+
+			self.Physics:SetDamping(5*mult, 5*mult)
 		end
+
+		--self.NewAngleVelocity = self.NewAngleVelocity + (-self.AngleVelocity * 0.05)
 	end
 
-	function ENT:PhysicsUpdate(phys)
-
+	function ENT:PhysicsUpdate2(phys, mult)
+		self.Physics = phys
 		self.Velocity = phys:GetVelocity()
 		self.NewVelocity = Vector()
 		self.VelocityLength = self.Velocity:Length()
@@ -879,17 +861,20 @@ if SERVER then
 		self.Radius = self:BoundingRadius()
 		self.Time = RealTime()
 
-
-		self:CalcStuck()
-		self:CalcUpright()
-		self:AvoidOthers(phys)
+		self:AvoidOthers()
 		self:CalcTargetPosition()
-		self:CalcAir()
+		self:CalcUpright()
+		--self:CalcAir()
+		self:CalcStuck()
+
 		self:CalcDamping()
 
+		phys:AddVelocity(self.NewVelocity * mult)
+		phys:AddAngleVelocity(-self.AngleVelocity + (self.NewAngleVelocity * mult))
+	end
 
-		phys:AddVelocity(self.NewVelocity)
-		phys:AddAngleVelocity(-self.AngleVelocity + self.NewAngleVelocity)
+	function ENT:UpdateTransmitState()
+		--return TRANSMIT_NEVER
 	end
 end
 
@@ -901,9 +886,9 @@ end
 scripted_ents.Register(ENT, ENT.ClassName, true)
 
 function SEAGULLS(where, max)
-	for i = 1, max or 30 do
+	for _ = 1, max or 30 do
 		local ent = ents.Create("monster_seagull")
-		ent:SetPos(where + Vector(math.Rand(-1,1), math.Rand(-1,1), 0)*1000 + Vector(0,0,50))
+		ent:SetPos(where + Vector(math.Rand(-1,1), math.Rand(-1,1), 0)*100 + Vector(0,0,50))
 		ent:Spawn()
 	end
 end
