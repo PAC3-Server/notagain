@@ -33,7 +33,7 @@ if CLIENT then
 	hook_error(function(msg, traceback, stack)
 		local hash = msg .. traceback:gsub(" = .-\n", "")
 
-		if last_error[hash] and last_error[hash] < SysTime() then return end
+		if last_error[hash] and last_error[hash] > SysTime() then return end
 		last_error[hash] = SysTime() + 1
 
 		net.Start("client_lua_error", true)
