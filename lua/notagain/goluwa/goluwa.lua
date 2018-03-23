@@ -294,7 +294,6 @@ function goluwa.CreateEnv()
 				string = string,
 				debug = debug,
 				io = io,
-				table = table,
 				os = os,
 			}
 
@@ -955,9 +954,9 @@ function goluwa.CreateEnv()
 		--env.runfile("game/lua/autorun/graphics/scoreboard.lua")
 		--env.runfile("game/lua/autorun/graphics/chatbox.lua")
 
-		for _, client in ipairs(env.clients.GetAll()) do
-			--env.scoreboard.AddClient(client)
-		end
+		-- for _, client in ipairs(env.clients.GetAll()) do
+		-- 	env.scoreboard.AddClient(client)
+		-- end
 
 		env.render.SetFrameBuffer()
 		env.goluwa = env.event.CreateRealm("goluwa")
