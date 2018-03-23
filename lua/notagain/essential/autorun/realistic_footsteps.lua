@@ -169,6 +169,11 @@ if CLIENT then
 			for _, which in ipairs(feet) do
 				ply.realistic_footsteps = ply.realistic_footsteps or {}
 				ply.realistic_footsteps[which] = ply.realistic_footsteps[which] or {}
+				ply.realistic_footsteps[which].next_time = ply.realistic_footsteps[which].next_time or CurTime()
+
+				if CurTime() < ply.realistic_footsteps[which].next_time then
+					continue
+				end
 
 				ply:SetupBones()
 				local toes = true
@@ -248,7 +253,6 @@ if CLIENT then
 							local mute = false
 
 							local path = table.Random(data.sounds)
-
 							for name, func in pairs(hook.GetTable().PlayerFootstep) do
 								if name ~= "realistic_footsteps" then
 									local ret = func(ply, pos, path, volume)
@@ -303,7 +307,9 @@ if CLIENT then
 					break
 				end
 
+				local a = math.Clamp(vel:Length2D() / 20, 0, 1) * 0.1
 				ply.realistic_footsteps[which].last_pos = pos
+				ply.realistic_footsteps[which].next_time = CurTime() + (0.1 - a)
 			end
 		end
 	end)
