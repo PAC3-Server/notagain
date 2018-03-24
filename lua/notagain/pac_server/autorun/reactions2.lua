@@ -30,24 +30,23 @@ if CLIENT then
 
 	react.Reactions = {}
 
-	react.Menu = vgui.Create("DFrame")
-	react.Menu:SetTitle("")
-	react.Menu:SetSize(300,300)
-	react.Menu:SetDeleteOnClose(false)
-	react.Menu:SetScreenLock(true)
-	react.Menu:ShowCloseButton(false)
-	react.Menu:SetPos(0,ScrH()-react.Menu:GetTall())
-	react.Menu:Hide()
-	react.Menu.Paint = function()
-		draw.RoundedBoxEx(4,0,0,react.Menu:GetWide(),react.Menu:GetTall(),Color(100,100,255,255),true,true,false,false)
-		surface.SetDrawColor(100,100,100,255)
-		surface.DrawRect(4,25,react.Menu:GetWide()-8,react.Menu:GetTall()-29)
-		draw.SimpleText("Reactions","R2Font2",(react.Menu:GetWide()/2)+2,7,Color(0,0,0,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP)
-		draw.SimpleText("Reactions","R2Font2",react.Menu:GetWide()/2,5,Color(255,255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP)
+	react.CreateMenu = function()
+		react.Menu = vgui.Create("DFrame")
+		react.Menu:SetTitle("")
+		react.Menu:SetSize(300,300)
+		react.Menu:SetDeleteOnClose(false)
+		react.Menu:SetScreenLock(true)
+		react.Menu:ShowCloseButton(false)
+		react.Menu:SetPos(0,ScrH()-react.Menu:GetTall())
+		react.Menu:Hide()
+		react.Menu.Paint = function()
+			draw.RoundedBoxEx(4,0,0,react.Menu:GetWide(),react.Menu:GetTall(),Color(100,100,255,255),true,true,false,false)
+			surface.SetDrawColor(100,100,100,255)
+			surface.DrawRect(4,25,react.Menu:GetWide()-8,react.Menu:GetTall()-29)
+			draw.SimpleText("Reactions","R2Font2",(react.Menu:GetWide()/2)+2,7,Color(0,0,0,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP)
+			draw.SimpleText("Reactions","R2Font2",react.Menu:GetWide()/2,5,Color(255,255,255,255),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP)
+		end
 	end
-
-	net.Start("R2_requestlist")
-	net.SendToServer()
 
 	net.Receive("R2_sendlist",function()
 		react.Emotes = net.ReadTable()
@@ -112,6 +111,10 @@ if CLIENT then
 	end
 
 	react.PopulateMenu = function()
+		if(!IsValid(react.Menu))then
+			react.CreateMenu()
+		end
+
 		local CategoryTabs = vgui.Create("DPropertySheet",react.Menu)
 		CategoryTabs:Dock(FILL)
 		CategoryTabs:SetFadeTime(0)
@@ -191,10 +194,19 @@ if CLIENT then
 				local spos,ang = k:GetBonePosition(bone)
 				ang2 = ang:Right():Angle():Forward()
 				render.DrawQuadEasy(((ang:Forward()*3)+(ang2*7)+spos),ang2, 8, 8, Color(255, 255, 255, math.Clamp(255-(timeex-4)*255,0,255)),180)
+			else
+				spos = k:GetPos()+Vector(0,0,80+math.sin(timeex*3)*2)
+				render.DrawQuadEasy(spos,Angle(0,timeex*180,0):Forward(), 8, 8, Color(255, 255, 255, math.Clamp(255-(timeex-4)*255,0,255)),180)
+				render.DrawQuadEasy(spos,-Angle(0,timeex*180,0):Forward(), 8, 8, Color(255, 255, 255, math.Clamp(255-(timeex-4)*255,0,255)),180)
 			end
 		end
 	end)
 	hook.Add("OnContextMenuOpen", "ReactionMenuOpen", function()
+		if(!IsValid(react.Menu))then
+			react.CreateMenu()
+			net.Start("R2_requestlist")
+			net.SendToServer()
+		end
 		react.Menu:Show()
 		react.Menu:MakePopup()
 	end)
