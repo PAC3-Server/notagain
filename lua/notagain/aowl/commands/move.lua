@@ -124,6 +124,11 @@ aowl.AddCommand("goto|warp|go=location", function(ply, line, ent)
 		dir.r = 0
 		dir = dir:Forward() * -100
 
+		if ent.NoGoto and not ply:IsSudo() then
+			ply:ChatPrint('This entity has "goto" disabled please respect its privacy.')
+			return
+		end
+
 		if ent:GetPos():DistToSqr(ply:GetPos()) < 256*256 and (not ply.IsStuck or not ply:IsStuck()) then
 			LookAt(ply, ent)
 			return
@@ -155,6 +160,11 @@ aowl.AddCommand("goto|warp|go=location", function(ply, line, ent)
 	ply:SetVelocity(-ply:GetVelocity())
 
 	hook.Run("AowlTargetCommand", ply, "goto", ent)
+end)
+
+aowl.AddCommand("togglegoto|tgoto|tgo", function(ply, line)
+	ply.NoGoto = ( not ply.NoGoto ) or nil
+	ply:ChatPrint("Players may "..(ply.NoGoto and 'no longer "goto" you!' or 'now "goto" you!'))
 end)
 
 aowl.AddCommand("tp", function(pl)
