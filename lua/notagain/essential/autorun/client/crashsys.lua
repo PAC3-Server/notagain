@@ -20,7 +20,7 @@ local times = 1
 -- Ping the server when the client is ready.
 timer.Create("crashsys_startup", 0.01, 0, function()
 	local ply = LocalPlayer()
-	if p:IsValid() then
+	if ply:IsValid() then
 		net.Start("crashsys")
 		net.SendToServer()
 		print("Initializing CrashSys...")
