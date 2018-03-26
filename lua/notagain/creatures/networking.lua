@@ -3,32 +3,100 @@ AddCSLuaFile()
 local MOVED = {}
 local MOVE_REF = {}
 
+local PACK_ANGLES = true
+local PACK_ANGLES2 = true
+
+local cell_size = game.GetWorld():GetModelRadius()/4
+
 local function net_write(ent, vec, ang)
 	net.WriteEntity(ent)
+
+	if PACK_ANGLES then
+		local ang = ang:Forward():Angle()
+		ang:Normalize()
+		net.WriteInt((ang.p/180)*127, 8)
+		net.WriteInt((ang.y/180)*127, 8)
+		--net.WriteInt((ang.r/180)*127, 8)
+	else
+		net.WriteInt(ang.x, 9)
+		net.WriteInt(ang.y, 9)
+		net.WriteInt(ang.z, 9)
+	end
 
 	net.WriteInt(vec.x, 16)
 	net.WriteInt(vec.y, 16)
 	net.WriteInt(vec.z, 16)
 
-	net.WriteInt(ang.x, 9)
-	net.WriteInt(ang.y, 9)
-	net.WriteInt(ang.z, 9)
+	--[[
+
+	local x,y,z = vec.x, vec.y, vec.z
+
+	local pos = vec + Vector(32767, 32767, 32767)
+	local cell = Vector(math.ceil(pos.x/cell_size), math.ceil(pos.y/cell_size), math.ceil(pos.z/cell_size))
+	local lpos = Vector(pos.x%cell_size, pos.y%cell_size, pos.z%cell_size)
+	local wpos = lpos + (cell * cell_size) - Vector(cell_size, cell_size, cell_size)
+	--vec = vec - (cell * cell_size)
+
+	print("===========")
+	print("POS :", pos)
+	print("CELL:", (cell * cell_size))
+	print("LPOS:", lpos)
+	print("WPOS:", wpos)
+	print("REAL:", vec)
+
+	net.WriteInt(lpos.x, 16)
+	net.WriteInt(lpos.y, 16)
+	net.WriteInt(lpos.z, 16)
+
+	if ent.last_cell ~= cell then
+		net.WriteBit(1)
+		net.WriteInt(cell.x, 4)
+		net.WriteInt(cell.y, 4)
+		net.WriteInt(cell.z, 4)
+		ent.last_cell = cell
+	end
+
+	]]
 end
 
-local function net_read()
+local function net_read(len)
 	local ent = net.ReadEntity()
 
 	if not ent:IsValid() then return end
 
+	local ang
+	if PACK_ANGLES2 then
+		local p = (net.ReadInt(8)/127)*180
+		local y = (net.ReadInt(8)/127)*180
+		--local r = (net.ReadInt(8)/127)*180
+		ang = Angle(p,y,0)
+	else
+		local p = net.ReadInt(9)
+		local y = net.ReadInt(9)
+		local r = net.ReadInt(9)
+		ang = Angle(p,y,r)
+	end
+
 	local x = net.ReadInt(16)
 	local y = net.ReadInt(16)
 	local z = net.ReadInt(16)
+	local pos = Vector(x,y,z)
 
-	local p = net.ReadInt(9)
-	local yaw = net.ReadInt(9)
-	local r = net.ReadInt(9)
+	--[[
 
-	return ent, Vector(x,y,z), Angle(p,yaw,r)
+	if len ~= 96 then
+		local x = net.ReadInt(4)
+		local y = net.ReadInt(4)
+		local z = net.ReadInt(4)
+		local cell = Vector(x,y,z) * cell_size
+		ent.cell_pos = cell
+	end
+
+	if ent.cell_pos then
+		pos = pos + ent.cell_pos - Vector(cell_size, cell_size, cell_size)
+	end]]
+
+	return ent, pos, ang
 end
 
 local function WRITE_COUNT(n)
@@ -40,6 +108,8 @@ local function READ_COUNT()
 end
 
 if SERVER then
+	local next_print = 0
+	local bytes_written = 0
 	hook.Add("Think", "creatures_network", function()
 		for _, self in ipairs(creatures.GetAll()) do
 			if self.AlternateNetworking then
@@ -120,7 +190,7 @@ if SERVER then
 			end
 		end
 
-		local available = math.min(table.Count(MOVED), 10)
+		local available = math.min(table.Count(MOVED), 25)
 		if available == 0 then
 			return
 		end
@@ -142,6 +212,14 @@ if SERVER then
 			table.remove(MOVED, 1)
 		end
 
+		bytes_written = bytes_written + net.BytesWritten()
+
+		if next_print < RealTime() then
+			print("creatures: ", string.NiceSize(bytes_written), " per second")
+			bytes_written = 0
+			next_print = RealTime() + 1
+		end
+
 		if important then
 			net.Broadcast()
 		else
@@ -153,10 +231,10 @@ if SERVER then
 end
 
 if CLIENT then
-	net.Receive("creature_update", function()
+	net.Receive("creature_update", function(len)
 		local count = READ_COUNT()
 		for i = 1, count do
-			local self, pos, ang = net_read()
+			local self, pos, ang = net_read(len)
 			if not self then return end
 
 			self.net_pos = pos

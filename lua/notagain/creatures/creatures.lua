@@ -35,7 +35,7 @@ end)
 
 if SERVER then
 	hook.Add("KeyPress", "creatures_debug", function(ply, key)
-		if not ply:IsAdmin() and not ply:Nick():lower():find("capsadmin") then return end
+		if ply:IsAdmin() and ply:Nick():lower():find("capsadmin") then else return end
 
 		for _, self in ipairs(creatures.GetAll()) do
 			if key == IN_ATTACK then
@@ -75,7 +75,7 @@ function creatures.Create(what, where, count, min,max)
 
 	for _ = 1, count do
 		local ent = ents.Create("creature_" .. what)
-		ent:SetPos(where + Vector(math.Rand(-1,1), math.Rand(-1,1), 0)*100 + Vector(0,0,50))
+		ent:SetPos(where + Vector(math.Rand(-1,1), math.Rand(-1,1), 0)*30 + Vector(0,0,50))
 		ent:Spawn()
 		ent:SetSize(math.Rand(min, max))
 	end

@@ -59,7 +59,7 @@ do -- example behavior, override these functions
 			local count = 0
 
 			for _, v in ipairs(ents.FindInSphere(pos, radius)) do
-				if v.ClassName ~= self.ClassName and v ~= self then
+				if v.ClassName == self.ClassName and v ~= self then
 					average_pos = average_pos + v.Position or v:GetPos()
 					count = count + 1
 				end
@@ -113,8 +113,8 @@ function ENT:Initialize()
 	self:DrawShadow(false)
 
 	if CLIENT then
-		self.model = ClientsideModel(self.Model)
-		self.model:SetParent(self)
+		self.model = ClientsideModel(self.Model, RENDERGROUP_OPAQUE)
+		--self.model:SetParent(self)
 	end
 
 	self:SetSize(self.DefaultSize or math.Rand(15, 25))
@@ -202,17 +202,29 @@ if CLIENT then
 	end
 
 	local eyepos = Vector()
-	hook.Add("RenderScene", "creatures_eyepos", function(eye, ang) eyepos = eye end)
+	local time = RealTime()
+	hook.Add("RenderScene", "creatures_eyepos", function(eye, ang)
+		eyepos = eye
+		time = RealTime()
+	end)
+
+	local max_dist = 5000^2
+	local LerpVector = LerpVector
+	local LerpAngle = LerpAngle
+	local math_max = math.max
+	local math_clamp = math.Clamp
+	local CurTime = CurTime
 
 	function ENT:Think()
-		self.Time = RealTime()
+		self.Time = time
 
 		if self.next_think and self.next_think > self.Time then return end
 
 		local last_pos = self:GetPos()
 		local last_ang = self:GetAngles()
+		--local last_pos, last_ang = self:GetBonePosition(0)
 
-		local fps = math.max(((-last_pos:Distance(eyepos) + 5000) / 5000) * 120, 15)
+		local fps = math_max((((last_pos - eyepos):LengthSqr() + max_dist) / max_dist) * 120, 15)
 
 		local size = self:GetSize()
 
@@ -227,19 +239,19 @@ if CLIENT then
 
 		if self.AlternateNetworking then
 			if not self.next_vel or self.next_vel < self.Time then
-				self.Velocity = (self:GetPos() - (self.last_pos or self:GetPos())) * 12
-				self.last_pos = self:GetPos()
+				self.Velocity = (last_pos - (self.last_pos or last_pos)) * 12
+				self.last_pos = last_pos
 				self.next_vel = self.Time + 1/fps*2
 			end
 		else
 			self.Velocity = self:GetVelocity()
 		end
 
-		self.model:SetPos(self:GetPos())
-		self.model:SetAngles(self:GetAngles())
+		self.model:SetPos(last_pos)
+		self.model:SetAngles(last_ang)
 
 		if self.net_pos then
-			local dt = math.Clamp(FrameTime() * 15, 0.0001, 0.5)
+			local dt = math_clamp(FrameTime() * 15, 0.0001, 0.5)
 
 			self:SetPos(LerpVector(dt, last_pos, self.net_pos))
 			self:SetAngles(LerpAngle(dt, last_ang, self.net_ang))
@@ -263,7 +275,7 @@ if SERVER then
 
 		local size = self:GetSize()
 		if size ~= self.last_size then
-			self:PhysicsInitSphere(size, "gmod_ice")
+			self:PhysicsInitSphere(size, "gmod_silent")
 			self:SetCollisionBounds(Vector(-size, -size, -size), Vector(size, size, size))
 			self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
 
