@@ -46,7 +46,7 @@ local function calcPlyCanHearPlayerVoice(listener)
     end
 end
 
-local lastDelay = 0.1
+local lastDelay = 0
 local playerCount = player.GetCount()
 
 local function timerFunction()
