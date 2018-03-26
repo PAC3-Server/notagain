@@ -18,11 +18,14 @@ local delay = 0
 local times = 1
 
 -- Ping the server when the client is ready.
-hook.Add("InitPostEntity", "crashsys", function()
-	print("\tSending Player Ready Ping to Server!\t")
-	net.Start("crashsys")
-	net.SendToServer()
-	hook.Remove("InitPostEntity", "crashsys")
+timer.Create("crashsys_startup", 0.01, 0, function()
+	local ply = LocalPlayer()
+	if p:IsValid() then
+		net.Start("crashsys")
+		net.SendToServer()
+		print("Initializing CrashSys...")
+		timer.Remove("crashsys_startup")
+	end
 end)
 
 -- Delay Function
