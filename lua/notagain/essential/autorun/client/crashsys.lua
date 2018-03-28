@@ -364,6 +364,7 @@ do -- gui
 				ShowMenu()
 			end
 		else
+			delay = 0
 			last_per = 0
 			api_changed = 0
 			menu_closed = false
