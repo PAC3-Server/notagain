@@ -18,7 +18,7 @@ end
 
 hook.Add("CanTool", "stopWorldInteraction", function(ply, tr, tool)
 	local ent = tr.Entity
-	if ent and ent.CPPIGetOwner and whitelist[tool] then
+	if ent and ent.CPPIGetOwner and not whitelist[tool] then
 		local class = ent.GetClass and ent:GetClass()
 		if class and checkClass(class) then
 			if ({ent:CPPIGetOwner()})[1] == nil then
