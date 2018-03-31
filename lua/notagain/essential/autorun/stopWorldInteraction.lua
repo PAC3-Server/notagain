@@ -4,8 +4,10 @@ local whitelist = {
 }
 
 hook.Add("PhysgunPickup", "stopWorldInteraction", function(ply, ent)
-	if ent and ent.CPPIGetOwner and ({ent:CPPIGetOwner()})[1] == nil then 
-		return false 
+	if ent and ent.CPPIGetOwner and not ent:GetClass() == "player" then
+		if ({ent:CPPIGetOwner()})[1] == nil then 
+			return false 
+		end
 	end
 end)
 
