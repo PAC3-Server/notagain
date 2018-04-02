@@ -6,7 +6,7 @@ if SERVER then
 	util.AddNetworkString("R2_requestlist")
 	util.AddNetworkString("R2_reaction")
 
-	local dat = util.JSONToTable(file.Read("addons/misc/lua/autorun/reactions.json","GAME"))
+	local dat = util.JSONToTable(file.Read("lua/notagain/pac_server/autorun/reactions.json","GAME"))
 	net.Receive("R2_requestlist",function(_,ply)
 		net.Start("R2_sendlist")
 		net.WriteTable(dat)
