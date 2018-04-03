@@ -272,7 +272,7 @@ SKIN.Colours.Tab.Inactive.Disabled		= GWEN.TextureColor( 4 + 8 * 7, 500 )
 SKIN.Colours.Label = {}
 SKIN.Colours.Label.Default			= GWEN.TextureColor( 4 + 8 * 8, 508 )
 SKIN.Colours.Label.Bright			= GWEN.TextureColor( 4 + 8 * 9, 508 )
-SKIN.Colours.Label.Dark				= GWEN.TextureColor( 4 + 8 * 8, 500 )
+SKIN.Colours.Label.Dark				= Color(200, 200, 200, 255)
 SKIN.Colours.Label.Highlight			= GWEN.TextureColor( 4 + 8 * 9, 500 )
 
 SKIN.Colours.Tree = {}
