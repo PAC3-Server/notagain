@@ -18,10 +18,14 @@ local delay = 0
 local times = 1
 
 -- Ping the server when the client is ready.
-hook.Add("InitPostEntity", "crashsys", function()
-	net.Start("crashsys")
-	net.SendToServer()
-	hook.Remove("InitPostEntity", "crashsys")
+timer.Create("crashsys_startup", 0.01, 0, function()
+	local ply = LocalPlayer()
+	if ply:IsValid() then
+		net.Start("crashsys")
+		net.SendToServer()
+		print("Initializing CrashSys...")
+		timer.Remove("crashsys_startup")
+	end
 end)
 
 -- Delay Function
@@ -54,6 +58,10 @@ local function CrashTick(is_crashing, length, api_response)
 	if is_crashing then
 		crash_status = true
 		crash_time = math.Round(length)
+
+		if delay == 0 then
+			delay = RealTime() + api_retry_delay -- Give the API some time to update.
+		end
 
 		if API_RESPONSE ~= 4 then
 			if delay < RealTime() and times <= api_retry then
@@ -221,7 +229,13 @@ do -- gui
 			{
 				text = "RECONNECT",
 				enable = true,
-				call = function() RunConsoleCommand( "retry" ) end
+				call = function(button)
+					button:SetDisabled( true )
+					delaycall(1, function()
+						RunConsoleCommand( "snd_restart" )
+						RunConsoleCommand( "retry" ) 
+					end)
+				end
 			},
 			{
 				text = CHAT_LINK and ( "Copy " .. ( CHAT_PLATFORM or "Chat" ) .. " Link" ) or "",
@@ -246,7 +260,7 @@ do -- gui
 			local pnl = vgui.Create( "DButton", bottom )
 			pnl:SetText( v.text )
 			pnl:SetSize( DermaPanel:GetWide()/#buttons, 20 )
-			pnl.DoClick = v.call
+			function pnl:DoClick() v.call(self) end
 			pnl:Dock(RIGHT)
 			pnl:SetEnabled( v.enable )
 		end
@@ -341,6 +355,7 @@ do -- gui
 				if per >= 99 then
 					DermaPanel:Close()
 					delaycall(0.03, function()
+						RunConsoleCommand("snd_restart")
 						RunConsoleCommand("retry")
 					end)
 				end
@@ -349,6 +364,7 @@ do -- gui
 				ShowMenu()
 			end
 		else
+			delay = 0
 			last_per = 0
 			api_changed = 0
 			menu_closed = false
