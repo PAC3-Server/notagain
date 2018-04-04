@@ -8,6 +8,14 @@ if SERVER then
 	local stackingOffset = Vector(0, 0, 0.01)
 	
 	local function CheckSpawnedObject(ply, mdl, ent)
+				
+		-- Ignore props that are frozen.
+		local phys = ent:GetPhysicsObject()
+		if IsValid(phys) then 
+			if phys:IsMotionEnabled() == false then 
+				return false 
+			end 
+		end 
 		
 		local trace = 
 		{ 
@@ -17,6 +25,14 @@ if SERVER then
 		}
 
 		local tr = util.TraceEntity( trace, ent )		
+		if tr.Hit == true and IsValid(tr.Entity) then 
+			-- Ignore intersecting objects that spawned the same frame.
+			local t = math.abs(tr.Entity:GetCreationTime() - ent:GetCreationTime())
+			if t == 0 then 
+				return false 
+			end 
+		end 
+		
 		return tr.Hit
 		
 	end
@@ -26,12 +42,17 @@ if SERVER then
 		if sanitizeCvar:GetBool() == false then 
 			return 
 		end 
-			
-		if CheckSpawnedObject(ply, mdl, ent) == true then 
-			ent:Remove()
-			net.Start("SanitizeSpawn")
-			net.Send(ply)
-		end 
+		-- Check next frame.
+		timer.Simple(0, function()
+			if not IsValid(ent) then 
+				return 
+			end 
+			if CheckSpawnedObject(ply, mdl, ent) == true then 
+				ent:Remove()
+				net.Start("SanitizeSpawn")
+				net.Send(ply)
+			end 
+		end)
 		
 	end)	
 	
