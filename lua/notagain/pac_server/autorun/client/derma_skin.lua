@@ -1,5 +1,8 @@
 local enabled = CreateClientConVar("derma_skin_enabled", "1", true, false, "Custom derma skin. Changing this requires you to reconnect")
-if not enabled:GetBool() then return end
+
+local mat = Material( "materials/pac_server/jc2mp.png" )
+
+if mat:IsError() or not enabled:GetBool() then return end
 
 local surface = surface
 local draw = draw
@@ -11,7 +14,7 @@ SKIN = {}
 SKIN.PrintName 		= "Just Cause 2 Multiplayer Skin"
 SKIN.Author 		= "Edited for Garry's Mod by Thomas (STEAM_0:0:19375877)"
 SKIN.DermaVersion	= 2
-SKIN.GwenTexture	= Material( "materials/pac_server/jc2mp.png" )
+SKIN.GwenTexture	= mat
 
 SKIN.bg_color 				= Color( 101, 100, 105, 255 )
 SKIN.bg_color_sleep 			= Color( 70, 70, 70, 255 )
