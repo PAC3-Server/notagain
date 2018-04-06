@@ -9,7 +9,6 @@ local CHAT_PLATFORM = "Discord" -- The platform you use for chat. (Set to nil if
 local API_RESPONSE = 0 -- Idle, not waiting for a response.
 local api_retry = 5
 local api_retry_delay = 12
-local api_startup_delay = 30 -- The average time it takes for your server to startup.
 
 local lastPong = false
 local crash_status
@@ -61,7 +60,7 @@ local function CrashTick(is_crashing, length, api_response)
 		crash_time = math.Round(length)
 
 		if delay == 0 then
-			delay = RealTime() + (api_retry_delay + api_startup_delay) -- Give the API some time to update.
+			delay = RealTime() + api_retry_delay -- Give the API some time to update.
 		end
 
 		if API_RESPONSE ~= 4 then
