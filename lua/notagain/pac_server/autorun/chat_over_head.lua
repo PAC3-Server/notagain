@@ -63,9 +63,16 @@ if CLIENT then
 
 					surface.SetAlphaMultiplier(alpha)
 
-					local pos, ang = jrpg.FindHeadPos(ply)
+					local pos, ang
 
-					local ang = ply:EyeAngles()
+					if ply.pac_editor_camera then
+						pos, ang = ply.pac_editor_camera:GetPos(), ply.pac_editor_camera:GetAngles()
+					else
+						pos, ang = jrpg.FindHeadPos(ply)
+
+						local ang = ply:EyeAngles()
+					end
+
 					ang.p = 0
 					ang.y = ang.y + 90
 					ang.r = ang.r + 90
