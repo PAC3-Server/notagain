@@ -6,7 +6,7 @@ local MOVE_REF = {}
 local PACK_ANGLES = true
 local PACK_ANGLES2 = true
 
-local cell_size = game.GetWorld():GetModelRadius()/4
+--local cell_size = game.GetWorld():GetModelRadius()/4
 
 local function net_write(ent, vec, ang)
 	net.WriteEntity(ent)
