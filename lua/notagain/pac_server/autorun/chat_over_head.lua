@@ -70,7 +70,7 @@ if CLIENT then
 					else
 						pos, ang = jrpg.FindHeadPos(ply)
 
-						local ang = ply:EyeAngles()
+						ang = ply:EyeAngles()
 					end
 
 					ang.p = 0
