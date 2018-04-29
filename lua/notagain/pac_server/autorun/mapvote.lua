@@ -177,7 +177,7 @@ if SERVER then
 					end
 					BroadcastLua("table.Empty(g_mapvote_state)")
 				end
-				timer.Resume("mapvote")
+				timer.UnPause("mapvote")
 			end)
 		end
 	end)
