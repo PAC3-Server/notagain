@@ -892,7 +892,7 @@ function goluwa.CreateEnv()
 		env.runfile("game/lua/autorun/console_commands.lua")
 		env.runfile("engine/lua/libraries/extensions/input.lua", env.input)
 		env.gui = env.runfile("engine/lua/libraries/graphics/gui/gui.lua")
-		env.resource.AddProvider("https://g.com/CapsAdmin/goluwa-assets/raw/master/base/")
+		env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/base/")
 		env.resource.AddProvider("https://github.com/CapsAdmin/goluwa-assets/raw/master/extras/")
 
 		env.gui.Initialize()
