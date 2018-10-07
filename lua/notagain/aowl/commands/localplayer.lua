@@ -81,7 +81,7 @@ aowl.AddCommand("gwiki",function(ply,line)
 end,"localplayer")
 
 aowl.AddCommand("browser",function(ply,line)
-	gui.OpenURL()
+	gui.OpenURL(line)
 end,"localplayer")
 
 aowl.AddCommand("cmd|console", function(ply, line)
