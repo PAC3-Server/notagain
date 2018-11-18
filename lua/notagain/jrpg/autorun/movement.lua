@@ -14,7 +14,7 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 	if ply:IsOnGround() then
 		local id = ply:LookupBone("ValveBiped.Bip01_Spine1")
 
-		if id and vel:Length() > 300 then
+		if id and vel:Length() > 175 then
 			ply.sprint_lean = ply.sprint_lean or CurTime() + 2
 
 			if ply.sprint_lean > CurTime() then
