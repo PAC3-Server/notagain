@@ -318,21 +318,6 @@ if CLIENT then
 				return
 			end
 		end
-
-
-		if CurTime()%0.5 < 0.25 then
-			if not self.lol then
-				self.Owner:AnimResetGestureSlot(GESTURE_SLOT_VCD)
-				self.Owner:AnimRestartGesture(GESTURE_SLOT_VCD,  self.Owner:GetSequenceActivity(self.Owner:LookupSequence("jump_land")), true)
-				self.Owner:AnimRestartGesture(GESTURE_SLOT_CUSTOM,  self.Owner:GetSequenceActivity(self.Owner:LookupSequence("flinch_stomach_02")), true)
-				self.Owner:AnimSetGestureWeight(GESTURE_SLOT_VCD, math.Rand(0.2,0.35))
-				self.Owner:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, math.Rand(0.2,0.35))
-				self.lol = true
-			end
-		elseif self.lol then
-			self.lol = false
-		end
-
 	end
 end
 

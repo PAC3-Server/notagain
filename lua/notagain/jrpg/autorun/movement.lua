@@ -229,8 +229,21 @@ if CLIENT then
 			manip_angles(ply, 0, Angle(0,0,0))
 		end
 
-
-
+		if jtarget.GetEntity(LocalPlayer()):IsValid() then
+			ply.jrpg_bounce_anim_seed = ply.jrpg_bounce_anim_seed or math.random()
+			if (CurTime() + ply.jrpg_bounce_anim_seed)%0.5 < 0.25 then
+				if not ply.jrpg_bounce_anim then
+					ply:AnimResetGestureSlot(GESTURE_SLOT_VCD)
+					ply:AnimRestartGesture(GESTURE_SLOT_VCD,  ply:GetSequenceActivity(ply:LookupSequence("jump_land")), true)
+					ply:AnimRestartGesture(GESTURE_SLOT_CUSTOM,  ply:GetSequenceActivity(ply:LookupSequence("flinch_stomach_02")), true)
+					ply:AnimSetGestureWeight(GESTURE_SLOT_VCD, math.Rand(0.2,0.35))
+					ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, math.Rand(0.2,0.35))
+					ply.jrpg_bounce_anim = true
+				end
+			elseif ply.jrpg_bounce_anim then
+				ply.jrpg_bounce_anim = false
+			end
+		end
 
 		local vel = ply:GetVelocity()
 		if not ply:IsOnGround() and vel:Length() > 750 then
