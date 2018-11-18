@@ -366,11 +366,11 @@ if CLIENT then
 
 		if ent == LocalPlayer() then
 			return true
-	end
+		end
 
 		if ent.CanAlter then
 			return ent:CanAlter(LocalPlayer())
-end
+		end
 
 		if IsFriendEntityName(ent:GetClass()) then
 			return true
@@ -391,6 +391,92 @@ if SERVER then
 		end
 
 		return a:IsFriend(b)
+	end
+end
+
+if CLIENT then
+	local weapon_info = {
+		weapon_medkit = {
+			{
+				name = "heal other",
+				healing = true,
+				melee = true,
+				primary = true,
+			},
+			{
+				name = "heal self",
+				healing = true,
+				self_inflicting = true,
+				secondary = true,
+			}
+		},
+		weapon_crowbar = {
+			{
+				primary = true,
+				melee = true,
+			},
+		}
+	}
+
+	local blacklist = {
+	}
+
+	function jrpg.GetSkills(ply)
+		local skills = {}
+
+		for _, wep in ipairs(ply:GetWeapons()) do
+			local class = wep:GetClass()
+			local name = wep.PrintName or language.GetPhrase(class) or class
+			class = class:lower()
+
+			if weapon_info[class] then
+				for _, info in ipairs(weapon_info[class]) do
+					if not info.name then
+						if info.primary then
+							info.name = name .. " primary"
+						end
+						if info.secondary then
+							info.name = name .. " secondary"
+						end
+					end
+					info.weapon = wep
+					table.insert(skills, info)
+				end
+			elseif not wep.is_shield and not blacklist[class] then
+				local info = {}
+				info.name = name
+
+				if
+					class:find("potion", nil, true) or
+					class:find("heal", nil, true) or
+					class:find("medkit", nil, true) or
+					class:find("medic	", nil, true)
+				then
+					info.self_inflicting = true
+					info.healing = true
+				end
+
+				if
+					wep.is_jsword or
+					class:find("crowbar", nil, true) or
+					class:find("melee", nil, true) or
+					class:find("fist", nil, true) or
+					class:find("slap", nil, true)
+				then
+					info.melee = true
+				end
+
+				if class:find("potion", nil, true) then
+					info.attack_time = 1
+				end
+
+				info.primary = true
+				info.weapon = wep
+
+				table.insert(skills, info)
+			end
+		end
+		return skills
 	end
 end
 
