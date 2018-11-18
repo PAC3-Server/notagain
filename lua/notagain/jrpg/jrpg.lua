@@ -187,7 +187,9 @@ if SERVER then
 		ply:Give("potion_health")
 		ply:Give("potion_mana")
 		ply:Give("potion_stamina")
-		ply:Give("weapon_magic")
+		for k,v in pairs(jdmg.types) do
+			ply:Give("weapon_magic_" .. k)
+		end
 		ply:Give("weapon_jsword_virtuouscontract")
 
 		ply:SelectWeapon("weapon_jsword_virtuouscontract")
