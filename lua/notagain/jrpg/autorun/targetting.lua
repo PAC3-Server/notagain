@@ -20,8 +20,7 @@ if CLIENT then
 				val ~= prev_target and
 				not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
 			then
-				local pos = jrpg.FindHeadPos(val)
-				pos.z = pos.z + 10
+				local pos = val:NearestPoint(val:WorldSpaceCenter() + Vector(0,0,100))
 				pos = pos:ToScreen()
 
 				if pos.x > center_x then
@@ -164,7 +163,7 @@ if CLIENT then
 			surface.SetDrawColor(255, 255, 255, 50)
 
 			for i, info in ipairs(targets.left) do
-				jhud.DrawInfoSmall(info.ent, offset + ScrW()/2 - i * 160 - 30, pos.y - 50, -(i / #targets.left - 0.8 ^ 5) + 1, jrpg.IsFriend(info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
+				jhud.DrawInfoSmall(info.ent, info.pos.x, info.pos.y - 50, -(i / #targets.left - 0.8 ^ 5) + 1, jrpg.IsFriend(info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
 				--draw_world_target(info.pos.x, info.pos.y, 0.25)
 			end
 
@@ -180,7 +179,7 @@ if CLIENT then
 			surface.SetDrawColor(255, 255, 255, 50)
 
 			for i, info in ipairs(targets.right) do
-				jhud.DrawInfoSmall(info.ent, offset + pos.x + i * 160 + 30, pos.y - 50, -(i / #targets.right - 0.8 ^ 5) + 1, jrpg.IsFriend(info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
+				jhud.DrawInfoSmall(info.ent, info.pos.x, info.pos.y - 50, -(i / #targets.right - 0.8 ^ 5) + 1, jrpg.IsFriend(info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
 				--draw_world_target(info.pos.x, info.pos.y, 0.25)
 			end
 		end
