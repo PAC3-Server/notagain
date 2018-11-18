@@ -252,6 +252,7 @@ SWEP.Spawnable = true
 SWEP.Category = "JRPG"
 SWEP.RenderGroup = RENDERGROUP_TRANSLUCENT
 SWEP.WorldModel = "models/Gibs/HGIBS.mdl"
+SWEP.IsWeaponMagic = true
 
 function SWEP:SetupDataTables()
 	self:NetworkVar("String", 0, "DamageTypesInternal")
@@ -272,7 +273,7 @@ end
 if CLIENT then
 	net.Receive(SWEP.ClassName, function(len, ply)
 		local wep = net.ReadEntity()
-		if wep:IsValid() and wep:GetOwner():IsValid() and wep:GetClass() == SWEP.ClassName and wep.DeployMagic then
+		if wep:IsValid() and wep:GetOwner():IsValid() and wep.IsWeaponMagic and wep.DeployMagic then
 			if net.ReadBool() then
 				wep:DeployMagic()
 			else
@@ -506,6 +507,28 @@ function SWEP:SecondaryAttack()
 end
 
 weapons.Register(SWEP, SWEP.ClassName)
+
+do
+	local function register_elemental(what)
+		local SWEP = {}
+		SWEP.Base = "weapon_magic"
+		SWEP.ClassName = "weapon_magic_" .. what
+		SWEP.PrintName = what
+
+		if SERVER then
+			function SWEP:Initialize()
+				self.BaseClass.Initialize(self)
+				wepstats.AddToWeapon(self, nil,nil, what)
+			end
+		end
+
+		weapons.Register(SWEP, SWEP.ClassName)
+	end
+
+	for k,v in pairs(jdmg.types) do
+		register_elemental(k)
+	end
+end
 
 if SERVER then
 	if me then
