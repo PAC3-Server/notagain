@@ -364,7 +364,23 @@ if CLIENT then
 			return true
 		end
 
-		return ent == LocalPlayer() or ent:IsPlayer() and (ent.CanAlter and (LocalPlayer():CanAlter(ent) and ent:CanAlter(LocalPlayer()))) or IsFriendEntityName(ent:GetClass()) or friendly_npcs[ent:GetClass()]
+		if ent == LocalPlayer() then
+			return true
+	end
+
+		if ent.CanAlter then
+			return ent:CanAlter(LocalPlayer())
+end
+
+		if IsFriendEntityName(ent:GetClass()) then
+			return true
+		end
+
+		if friendly_npcs[ent:GetClass()] then
+			return true
+		end
+
+		return false
 	end
 end
 
