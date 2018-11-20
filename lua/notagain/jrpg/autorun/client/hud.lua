@@ -25,8 +25,8 @@ local function smooth(var, id)
 end
 local last_hp_timer = 0
 local border_size = 2
-local skew = -40
-local health_height = 18
+local skew = 30
+local health_height = 14
 local no_texture = Material("vgui/white")
 
 function jhud.DrawBar(x,y,w,h,cur,max,border_size, r,g,b, a)
@@ -51,14 +51,20 @@ end
 local width = 100
 local spacing = 3
 local color_white = Color(255, 255, 255, 255)
-function jhud.DrawInfoSmall(ply, x, y, alpha, color)
+function jhud.DrawInfoSmall(ply, x, y, alpha, color, no_avatar, width_override)
 	local S = ScrW() / 1920
 	local width = 100*S
 	local spacing = 3*S
 	S = S * 0.9
 
+	if width_override then 
+		width = width_override*S
+	end
+
 	alpha = alpha or 1
 	color = color or color_white
+	
+	if not no_avatar then
 	surface.DisableClipping(true)
 	render.ClearStencil()
 	render.SetStencilEnable(true)
@@ -74,8 +80,9 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 	draw.NoTexture()
 	surface.DrawRect(x-width-100*S,y-width, width + 200*S, width+70*S)
 	render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
+	end
 	surface.SetAlphaMultiplier(alpha)
-	do
+	if not no_avatar then
 		local cur = ply:Health()
 		local max = ply:GetMaxHealth()
 		local critical = (cur/max)
@@ -131,9 +138,12 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color)
 		y = y + health_height + spacing
 		x = x + skew/4
 	end
+
 	surface.SetAlphaMultiplier(1)
+	if not no_avatar then
 	surface.DisableClipping(false)
 	render.SetStencilEnable(false)
+end
 end
 
 local S = 1
@@ -154,7 +164,8 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	if not txt then
 		skew = skew / 1.5
 	end
-
+--	
+--	
 	render.SetMaterial(border)
 	render.SetBlend(1)
 	render.SetColorModulation(1,1,1)
@@ -164,10 +175,12 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 		draw_rect(x-5,y,w+10,h, skew, 0, 70, border_size*3, border:GetTexture("$BaseTexture"):Width(), false)
 	end
 
+	render.OverrideBlend(true, BLEND_ONE, BLEND_DST_COLOR, BLENDFUNC_ADD)
 	render.SetBlend(0.980)
 	render.SetColorModulation(0,0,0)
 	render.SetMaterial(no_texture)
 	draw_rect(x,y,w,h, skew)
+	render.OverrideBlend(false)
 
 	render.SetBlend(1)
 	render.SetMaterial(gradient)
@@ -226,8 +239,256 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	end
 end
 
+local selected_i
+local selected_list
+local select_stage = "categories"
+local next_key_check = {}
+local last_weapon = NULL
+
+local function check_key(code)
+	if input.IsKeyDown(code) then
+		if not next_key_check[code] or next_key_check[code] < os.clock() then
+			next_key_check[code] = os.clock() + 0.2
+			return true
+		end
+	else
+		next_key_check[code] = 0
+	end
+	return false
+end
+
+local function reset()
+	selected_list = nil
+	selected_i = 1
+	select_stage = "categories"
+	jtarget.StopSelection()
+	hook.Remove("CreateMove", "weapon_select_attack")
+
+	for i, wep in ipairs(LocalPlayer():GetWeapons()) do
+		if wep.is_jsword then
+			input.SelectWeapon(wep)
+			break
+		end
+	end
+end
+
+function attack(ent, data)
+	ent = ent or NULL
+	local wep = data.weapon
+	local state = "attack"
+	local attack = 0
+	local info = data
+	local move_back_timer = 0
+
+	if info.melee then
+		state = "move_forward"
+	end
+
+	if not ent:IsValid() then
+		state = "attack"
+	end
+
+	hook.Add("CreateMove", "weapon_select_attack", function(ucmd)
+		if wep and wep:IsValid() then
+			ucmd:SelectWeapon(wep)
+		end
+
+		if state == "move_forward" then
+			ucmd:SetForwardMove(1000) 
+			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_SPEED))
+
+			local cur_pos = LocalPlayer():WorldSpaceCenter()
+			local target_pos = ent:WorldSpaceCenter()
+
+			local aim_ang = (target_pos - cur_pos):Angle()
+			ucmd:SetViewAngles(aim_ang)
+
+			if ent:NearestPoint(cur_pos):Distance(LocalPlayer():NearestPoint(target_pos)) < 55 then
+				state = "attack"
+			end
+		elseif state == "move_back" then
+			local cur_pos = LocalPlayer():GetPos()
+			local target_pos = ent:WorldSpaceCenter()
+
+			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_SPEED))
+
+			local aim_ang = (target_pos - cur_pos):Angle()
+			aim_ang.p = 0
+			ucmd:SetViewAngles(aim_ang)
+			ucmd:SetForwardMove(-1000)
+
+			if cur_pos:Distance(target_pos) > 150 or move_back_timer < os.clock() then
+				reset()
+			elseif LocalPlayer():GetVelocity():Length() > 150 then
+				ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_JUMP))
+			end
+		elseif state == "attack" then
+			attack = os.clock() + 0.5
+			state = "attacking"
+		elseif state == "attacking" then
+			local next_attack = wep:GetNextPrimaryFire() - CurTime() < 0
+			if attack > os.clock() and next_attack then
+				if data.primary then
+					ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
+				elseif data.secondary then
+					ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK2))
+				else
+					ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
+				end
+			elseif next_attack then
+				if info.melee and ent:IsValid() then
+					state = "move_back"
+					move_back_timer = os.clock() + 1.5
+				else
+					reset()
+				end
+			end
+		end
+
+		return true
+	end)
+end
+
+local sort_order = {
+	skill = 1,
+	magic = 2,
+	items = 3,
+}
+
+local function get_weapons()
+	local categories = {}
+	local category_list = {}
+
+	for i,info in ipairs(jrpg.GetSkills(LocalPlayer())) do
+		local category
+
+		if info.weapon.IsWeaponMagic then
+			category = "magic"
+		elseif info.self_inflicting then
+			category = "items"
+		else
+			category = "skill"
+		end
+
+		if not categories[category] then
+			categories[category] = {}
+			table.insert(category_list, {name = category, list = categories[category], sort = sort_order[category]})
+		end
+
+		table.insert(categories[category], info)
+	end
+
+	table.sort(category_list, function(a, b)
+		return a.sort < b.sort
+	end)
+
+	return category_list
+end
+
+local selected_category_i = 0
+local selected_weapon_i = {}
+
+local function advance(i, num)
+	return i + num
+end
+
+function jhud.UpdateMenu()
+	local categories = get_weapons()
+	
+	selected_list = selected_list or categories
+
+	table.insert(categories, 1, {name = "attack"})
+
+	selected_weapon_i[selected_category_i] = selected_weapon_i[selected_category_i] or 1
+
+	if check_key(KEY_DOWN) then
+		if select_stage == "categories" then
+			selected_category_i = selected_category_i + 1
+		else
+			selected_weapon_i[selected_category_i] = selected_weapon_i[selected_category_i] + 1
+		end
+	elseif check_key(KEY_UP) then
+		if select_stage == "categories" then
+			selected_category_i = selected_category_i - 1
+		else
+			selected_weapon_i[selected_category_i] = selected_weapon_i[selected_category_i] - 1
+		end
+	elseif check_key(KEY_BACKSPACE) then
+		reset()
+	elseif check_key(KEY_ENTER) then
+		if select_stage == "categories" then
+			if selected_list[(selected_category_i % #selected_list) + 1].name == "attack" then
+				local skill
+		
+				for i,info in ipairs(jrpg.GetSkills(LocalPlayer())) do
+					if info.weapon.is_jsword then
+						skill = info
+						break
+					end
+				end
+				
+				jtarget.StartSelection(not not skill.healing)
+
+				local current_target = jtarget.GetEntity(LocalPlayer())
+				reset()
+				attack(current_target, skill)
+			else
+				selected_list = selected_list[(selected_category_i % #selected_list) + 1].list
+				select_stage = "weapons"
+			end
+		elseif select_stage == "weapons" then
+			local skill = selected_list[(selected_weapon_i[selected_category_i] % #selected_list) + 1]
+			if skill.self_inflicting then
+				reset()
+				attack(LocalPlayer(), skill)
+				return
+			else
+				jtarget.StartSelection(not not skill.healing)
+				local current_target = jtarget.GetEntity(LocalPlayer())
+				if not current_target:IsValid() then
+					reset()
+					attack(LocalPlayer(), skill)
+					return
+				end
+			end
+			select_stage = "target"
+		elseif select_stage == "target" then
+			local skill = selected_list[(selected_weapon_i[selected_category_i] % #selected_list) + 1]
+			local current_target = jtarget.GetEntity(LocalPlayer())
+			jtarget.StopSelection()
+			reset()
+			attack(current_target, skill)
+		end
+	end
+
+	selected_list = selected_list or categories
+end
+
+function jhud.DrawSelection(x, y)
+	--if select_stage == "target" then return end
+	if not selected_list then return end
+
+	local i = 0
+	--for i, data in ipairs(selected_list) do
+
+	local selected_i = 0
+	if select_stage == "categories" then
+		selected_i = selected_category_i
+	elseif select_stage == "weapons" then
+		selected_i = selected_weapon_i[selected_category_i]
+	end
+	
+	jhud.DrawList(selected_list, selected_i, x, y)
+end
+
 local last_aiment = NULL
 local next_aim = 0
+
+hook.Add("Think", "jhud", function()
+	if jrpg.IsEnabled(ply) then
+		jhud.UpdateMenu()
+	end
+end)
 
 hook.Add("HUDPaint", "jhud", function()
 	if hook.Run("HUDShouldDraw", "JHUD") == false then return end
@@ -267,93 +528,44 @@ hook.Add("HUDPaint", "jhud", function()
 		offset = offset - 16
 	end
 
-	chat.pos_y = math.Round(ScrH()/2)
+	chat.pos_y = math.Round(ScrH()/2.5)
 
 	S = ScrW() / 1920
 
 	local width = 100000
 	local height = 100*S
 
-	local x = 110*S
-	local y = ScrH() - 140*S
+	local x = 160*S
+	local y = ScrH() - 90*S
+
+	if jrpg.IsEnabled(ply) then
+		--render.OverrideBlend(true, BLEND_SRC_ALPHA, BLEND_ONE_MINUS_DST_ALPHA, BLENDFUNC_REVERSE_SUBTRACT)
+
+		surface.SetMaterial(background_glow)
+		surface.SetDrawColor(0,0,0,200)
+		local size = 500*S
+		local x = x + 30
+		local y = y + height - 70*S
+		surface.DrawTexturedRect(x-size*2/2,y-size/2,size*3,size)
+
+		--render.OverrideBlend(false, BLEND_SRC_ALPHA, BLEND_ONE_MINUS_DST_ALPHA, BLENDFUNC_REVERSE_SUBTRACT)
+	end
+
+	
+	if jrpg.IsEnabled(ply) then
+		jhud.Draw3DModels(x, y)
+		jhud.UpdateMenu()
+		jhud.DrawSelection(x, y)
+	end
 
 	do
-		local x = x
-		local y = y
+		local x = x - 20
+		local y = y - 20
 
-		if true then
-			surface.DisableClipping(true)
-			render.ClearStencil()
-			render.SetStencilEnable(true)
-			render.SetStencilWriteMask(255)
-			render.SetStencilTestMask(255)
-			render.SetStencilReferenceValue(15)
-			render.SetStencilFailOperation(STENCILOPERATION_KEEP)
-			render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
-			render.SetStencilPassOperation(STENCILOPERATION_REPLACE)
-			render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_ALWAYS)
-			render.SetBlend(0)
-				surface.SetDrawColor(0,0,0,1)
-				draw.NoTexture()
-				surface.DrawRect(x-500,y-500, width+500, height+500)
-			render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_EQUAL)
+		if not jrpg.IsEnabled(ply) then
+			x = x - 280
 		end
-
-		do
-			local w, h = background_wing:GetInt("$realwidth"), background_wing:GetInt("$realheight")
-			if w and h then
-				surface.SetMaterial(background_wing)
-				surface.SetDrawColor(255,255,255,255)
-				surface.DrawTexturedRect(x-130*S,y-150*S,w*S,h*S)
-			end
-		end
-
-
-		if true then
-			local x = x + 125*S
-			local y = y + 25*S
-			local w = 500*S
-			local h = 500*S
-			surface.SetMaterial(background_glow)
-			surface.SetDrawColor(0,0,0,50)
-			surface.DrawTexturedRect(x-w/2,y-h/2,w,h)
-
-			local cur = ply:Health()
-			local max = ply:GetMaxHealth()
-			local critical = (cur/max)
-			if critical < 0.5 then
-				critical = critical + math.sin(os.clock() * (2/critical))*0.5+0.5
-				critical = critical ^ 0.5
-			else
-				critical = 1
-			end
-
-			local lost = 0
-
-			if smoothers.health then
-				lost = math.max(smoothers.health - math.max(ply:Health(), 0), 0)
-			end
-
-			lost = lost + 1
-			x = x + math.Rand(-1,1) * (lost-1)
-			y = y + math.Rand(-1,1) * (lost-1)
-
-			surface.SetDrawColor(255,critical*255/lost,critical*255/lost,255)
-
-			if avatar.Draw then -- this is sometimes nil
-				avatar.Draw(LocalPlayer(), x,y, height)
-			end
-		end
-
-		if true then
-			surface.SetMaterial(background_glow)
-			surface.SetDrawColor(0,0,0,200)
-			local size = 300*S
-			local x = x + 120
-			local y = y + height + 20*S
-			surface.DrawTexturedRect(x-size*2/2,y-size/2,size*2,size)
-		end
-
+		
 		local c = team.GetColor(TEAM_FRIENDS)
 		c.r = c.r/5
 		c.g = c.g/5
@@ -454,33 +666,6 @@ hook.Add("HUDPaint", "jhud", function()
 		end
 	end
 
-	surface.DisableClipping(false)
-	render.SetStencilEnable(false)
-
-	do
-		local w, h = foreground_line:GetInt("$realwidth"), foreground_line:GetInt("$realheight")
-		if w and h then
-			surface.SetMaterial(foreground_line)
-			surface.SetDrawColor(255,255,255,255)
-			surface.DrawTexturedRect(x-90*S,y+65*S,w*S,h*S)
-		end
-	end
-
-	local i = 0
-
-	if jrpg.IsEnabled(ply) then
-		for _, ply in ipairs(player.GetAll()) do
-			if jrpg.IsFriend(ply) and ply ~= LocalPlayer() and jrpg.IsEnabled(ply) and ply:GetPos():Distance(LocalPlayer():GetPos()) < 1000 then
-				local x = ScrW() - 200 * i - 75
-				local y = ScrH() - 100
-
-				jhud.DrawInfoSmall(ply, x, y)
-
-				i = i + 1
-			end
-		end
-	end
-
 	local size = 16
 	local fade = 1
 	local h = 72
@@ -519,6 +704,30 @@ hook.Add("HUDPaint", "jhud", function()
 
 		x = x - size - 5
 	end
+
+	if jrpg.IsEnabled(ply) then
+		local i = 1
+
+		local temp = {}
+		for _, ent in ipairs(ents.FindInSphere(ply:EyePos(), 1000)) do
+			if jrpg.IsFriend(ent) and ent ~= LocalPlayer() then
+				temp[i] = ent
+				i = i + 1
+			end
+		end
+
+		table.sort(temp, function(a, b) return jrpg.GetFriendlyName(a) > jrpg.GetFriendlyName(b) end)
+
+		for i = 1, #temp do
+			local ent = temp[i]
+			
+			local x = 75
+			local y = -25 + (i * 50)
+
+			jhud.DrawInfoSmall(ent, x, y, nil, nil, true, 300)
+		end
+	end
+
 end)
 
 hook.Add("HUDShouldDraw", "jhud", function(what)
@@ -530,3 +739,221 @@ hook.Add("HUDShouldDraw", "jhud", function(what)
 		return false
 	end
 end)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+do
+	jhud.entities = jhud.entities or {}
+
+	local function create_ent(path, ang, scale, tex)
+		local ent = ClientsideModel(path)
+		ent:SetNoDraw(true)
+		ent:SetAngles(ang)
+
+		if type(scale) == "Vector" then
+			local m = Matrix()
+			m:Scale(Vector(scale))
+			ent.matrix = m
+			ent:EnableMatrix("RenderMultiply", m)
+		else
+			ent:SetModelScale(scale or 1)
+		end
+		ent:SetLOD(0)
+
+		local mat
+
+		if tex then
+			mat = CreateMaterial("jhud_" .. path ..tostring({}), "VertexLitGeneric", {["$basetexture"] = tex})
+		else
+			mat = CreateMaterial("jhud_" .. path ..tostring({}), "VertexLitGeneric")
+			mat:SetTexture("$basetexture", Material(ent:GetMaterials()[1]):GetTexture("$basetexture"))
+		end
+
+		function ent:RenderOverride()
+			render.MaterialOverride(mat)
+			ent:SetupBones()
+			ent:DrawModel()
+			render.MaterialOverride()
+		end
+
+		table.insert(jhud.entities, ent)
+
+		return ent
+	end
+
+	jhud.combine_scanner_ent = nil
+	jhud.suit_charger_ent = nil
+	
+	function jhud.Draw3DModels(x, y)
+		local sx = ScrW() / 1980
+		local sy = ScrH() / 1050
+
+		x = x - 180
+		y = y - 35
+
+		if not jhud.combine_scanner_ent then
+			jhud.combine_scanner_ent = create_ent("models/combine_scanner.mdl", Angle(-90,-90-45,0), 9)
+		end
+		if not jhud.suit_charger_ent then
+			jhud.suit_charger_ent = create_ent("models/props_combine/suit_charger001.mdl", Angle(-90 + 25,-45, 45), 9)
+		end
+
+		local ply = LocalPlayer()
+
+		local hp = smooth(math.max(ply:Health()/ply:GetMaxHealth(), 0), "health"..ply:EntIndex()) ^ 0.3
+		local mp = smooth(ply:GetMana()/ply:GetMaxMana(), "mana"..ply:EntIndex())
+
+		jhud.combine_scanner_ent:SetRenderOrigin(Vector(x+150,y-38,-200))
+		jhud.suit_charger_ent:SetRenderOrigin(Vector(x+300,y-20,-400))
+
+		jhud.combine_scanner_ent:SetCycle(((-hp+1)^0.25))
+		jhud.suit_charger_ent:SetCycle(-mp+1)
+
+		render.SuppressEngineLighting(true)
+
+		cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
+			render.CullMode(MATERIAL_CULLMODE_CW)
+				render.PushCustomClipPlane(Vector(0,1,0), 500)
+					jhud.suit_charger_ent:DrawModel()
+				render.PopCustomClipPlane()
+			render.CullMode(MATERIAL_CULLMODE_CCW)
+		cam.EndOrthoView()
+
+		cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
+			render.CullMode(MATERIAL_CULLMODE_CW)
+				jhud.combine_scanner_ent:DrawModel()
+			render.CullMode(MATERIAL_CULLMODE_CCW)
+		cam.EndOrthoView()
+
+		render.SuppressEngineLighting(false)
+	end
+
+	do
+		local jfx = requirex("jfx")
+
+		local glyph_disc = jfx.CreateMaterial({
+			Shader = "UnlitGeneric",
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678820698947584/disc.png",
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+		local ring = jfx.CreateMaterial({
+			Shader = "UnlitGeneric",
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678934834085888/ring2.png",
+			VertexColor = 1,
+			VertexAlpha = 1,
+		})
+
+
+		local hand = jfx.CreateMaterial({
+			Shader = "UnlitGeneric",
+
+			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291690387033161728/clock_hand.png",
+			Additive = 0,
+			VertexColor = 1,
+			VertexAlpha = 1,
+			BaseTextureTransform = "center .5 .5 scale 1 5 rotate 0 translate 0 1.25",
+		})
+
+		local color = Color(45, 45, 45)
+
+		function jhud.DrawList(list, selected_i, x,y)
+			jhud.smooth_scrolls = jhud.smooth_scrolls or {}
+
+			surface.DisableClipping(true)
+
+			x = x - 31
+			y = y - 43
+			
+			local ring_size = 1000
+			surface.SetDrawColor(0, 0, 0, 200)
+			surface.SetMaterial(background_glow)
+			surface.DrawTexturedRect(x-ring_size/2, y-ring_size/2, ring_size, ring_size)
+
+			surface.SetDrawColor(color.r/2, color.g/2, color.b/2, 255)
+			surface.SetMaterial(hand)
+			local max = 8
+			for i = 1, max do
+				local m = Matrix()
+				m:Translate(Vector(x,y,0))
+				m:Rotate(Angle(0,(i/max) * 360 + (jhud.smooth_scrolls[8] or 0) * 22.5,0))
+				m:Translate(Vector(-20,-220,0))
+				cam.PushModelMatrix(m)
+				surface.DrawTexturedRect(0,0,40,500)
+				cam.PopModelMatrix()
+			end
+
+
+			local ring_size = 350
+			surface.SetDrawColor(color.r, color.g, color.b, 255)
+			surface.SetMaterial(glyph_disc)
+			surface.DrawTexturedRectRotated(x, y, ring_size, ring_size, jhud.smooth_scrolls[2] or 0)
+			
+			local max = #list
+			while max < 32 do
+				max = max + #list
+			end
+			for i = 1, max do
+				local i2 = i - selected_i
+				local i3 = i % #list + 1
+				local wep = list[i3]
+									
+				local m = Matrix()
+				--m:Rotate(Angle(0,0,i2/max * 260))
+
+				jhud.smooth_scrolls[i] = jhud.smooth_scrolls[i] or 0
+				jhud.smooth_scrolls[i] = jhud.smooth_scrolls[i] + ((i2 - jhud.smooth_scrolls[i]) * FrameTime() * 10)
+				local smooth_i = jhud.smooth_scrolls[i] 
+
+				m:Translate(Vector(x,y,0))
+				m:Rotate(Angle(0,smooth_i/max * 360,0))
+				m:Translate(Vector(90,0,0))
+
+				cam.PushModelMatrix(m)
+
+				local s = math.sin((((smooth_i)/max)%1) * math.pi * 2 - math.pi/2) * 0.5 + 0.5
+				s = s ^ 0.25
+				s = -s + 1
+				
+				prettytext.DrawText({
+					text = wep.name:upper(), 
+					x = 0, 
+					y = 0, 
+					font = "Square721 BT", 
+					size = 20,
+					x_align = 0,
+					y_align = -0.5,
+					
+					blur_size = 10,
+					blur_overdraw = 2,
+
+					foreground_color_r = 255*s,
+					foreground_color_g = 255*s,
+					foreground_color_b = 255*s,
+					foreground_color_a = 255*s,
+
+					background_color_r = color.r*2,
+					background_color_g = color.g*2,
+					background_color_b = color.b*2,
+					background_color_a = 255,
+				})
+
+
+				cam.PopModelMatrix()
+			end
+		end
+		surface.DisableClipping(false)
+	end
+end
