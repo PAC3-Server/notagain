@@ -120,8 +120,6 @@ function battlecam.Enable()
 	battlecam.enabled = true
 	battlecam.aim_pos = Vector()
 	battlecam.aim_dir = Vector()
-	--battlecam.CreateCrosshair()
-	--battlecam.CreateHUD()
 
 	battlecam.enemy_visibility = 0
 	battlecam.player_visibility = 0
@@ -489,9 +487,9 @@ do
 			battlecam.target_cam_rotation:Normalize()
 		end
 
-		if battlecam.IsKeyDown("attack") and not ucmd:KeyDown(IN_ATTACK) then
-			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
-		end
+		--if battlecam.IsKeyDown("attack") and not ucmd:KeyDown(IN_ATTACK) then
+			--ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
+		--end
 
 		if battlecam.IsKeyDown("shield") then
 			if not jrpg.IsWieldingShield(ply) then
@@ -510,7 +508,7 @@ do
 ]]
 		if not ply:Alive() or vgui.CursorVisible() then return end
 
-		if battlecam.last_select < RealTime() then
+		--[[if battlecam.last_select < RealTime() then
 			if battlecam.IsKeyDown("select_prev_weapon") then
 				battlecam.weapon_i = battlecam.weapon_i + 1
 				battlecam.last_select = RealTime() + 0.15
@@ -524,7 +522,7 @@ do
 			if wep then
 				ucmd:SelectWeapon(wep)
 			end
-		end
+		end]]
 
 		local veh = ply:GetVehicle()
 		if veh:IsValid() then
