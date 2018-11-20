@@ -169,6 +169,10 @@ function jrpg.IsActorAlive(ent)
 		return false
 	end
 
+	if ent:GetMaxHealth() <= 1 then
+		return true
+	end
+
 	return ent:Health() > 0
 end
 
@@ -281,6 +285,7 @@ local blacklist = {
 function jrpg.IsActor(ent)
 	if not ent or not ent:IsValid() then return false end
 
+	if ent:GetModel() == "models/props_c17/furniturefridge001a.mdl" then return true end
 	if ent:GetClass() == "mount_base" then return true end
 
 	if blacklist[ent:GetClass()] then return end
@@ -366,6 +371,10 @@ if CLIENT then
 			return true
 		end
 
+		if ent:GetModel() == "models/props_c17/furniturestove001a.mdl" then
+			return true
+		end
+	
 		if ent == LocalPlayer() then
 			return true
 		end
@@ -467,7 +476,7 @@ if CLIENT then
 					class:find("medic	", nil, true)
 				then
 					if not wep.IsWeaponMagic then
-					info.self_inflicting = true
+						info.self_inflicting = true
 					end
 					info.healing = true
 				end
