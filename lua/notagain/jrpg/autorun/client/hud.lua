@@ -270,6 +270,8 @@ local function reset()
 			break
 		end
 	end
+
+	jhud.scanner_frame = 1
 end
 
 function attack(ent, data)
@@ -361,19 +363,30 @@ local function get_weapons()
 
 	for i,info in ipairs(jrpg.GetSkills(LocalPlayer())) do
 		local category
+		local color
 
 		if info.weapon.IsWeaponMagic then
 			category = "magic"
+			color = Color(25,50,50)
 		elseif info.self_inflicting then
 			category = "items"
+			color = Color(50,50,50)
 		else
 			category = "skill"
+			color = Color(50,40,25)
 		end
 
 		if not categories[category] then
 			categories[category] = {}
-			table.insert(category_list, {name = category, list = categories[category], sort = sort_order[category]})
+			table.insert(category_list, {
+				name = category, 
+				list = categories[category], 
+				sort = sort_order[category],
+				color = color,
+			})
 		end
+
+		info.color = color
 
 		table.insert(categories[category], info)
 	end
@@ -394,10 +407,10 @@ end
 
 function jhud.UpdateMenu()
 	local categories = get_weapons()
-	
+
 	selected_list = selected_list or categories
 
-	table.insert(categories, 1, {name = "attack"})
+	table.insert(categories, 1, {name = "attack", color = Color(50,25,25)})
 
 	selected_weapon_i[selected_category_i] = selected_weapon_i[selected_category_i] or 1
 
@@ -416,6 +429,7 @@ function jhud.UpdateMenu()
 	elseif check_key(KEY_BACKSPACE) then
 		reset()
 	elseif check_key(KEY_ENTER) then
+		jhud.scanner_frame = 0
 		if select_stage == "categories" then
 			if selected_list[(selected_category_i % #selected_list) + 1].name == "attack" then
 				local skill
@@ -470,7 +484,7 @@ function jhud.DrawSelection(x, y)
 
 	local i = 0
 	--for i, data in ipairs(selected_list) do
-
+	
 	local selected_i = 0
 	if select_stage == "categories" then
 		selected_i = selected_category_i
@@ -478,7 +492,7 @@ function jhud.DrawSelection(x, y)
 		selected_i = selected_weapon_i[selected_category_i]
 	end
 	
-	jhud.DrawList(selected_list, selected_i, x, y)
+	jhud.DrawList(selected_list, selected_i, x, y, selected_list[selected_i%#selected_list + 1].color)
 end
 
 local last_aiment = NULL
@@ -794,6 +808,7 @@ do
 
 	jhud.combine_scanner_ent = nil
 	jhud.suit_charger_ent = nil
+	jhud.scanner_frame = 1
 	
 	function jhud.Draw3DModels(x, y)
 		local sx = ScrW() / 1980
@@ -804,6 +819,7 @@ do
 
 		if not jhud.combine_scanner_ent then
 			jhud.combine_scanner_ent = create_ent("models/combine_scanner.mdl", Angle(-90,-90-45,0), 9)
+			jhud.combine_scanner_ent:SetSequence(jhud.combine_scanner_ent:LookupSequence("alert"))
 		end
 		if not jhud.suit_charger_ent then
 			jhud.suit_charger_ent = create_ent("models/props_combine/suit_charger001.mdl", Angle(-90 + 25,-45, 45), 9)
@@ -811,27 +827,24 @@ do
 
 		local ply = LocalPlayer()
 
-		local hp = smooth(math.max(ply:Health()/ply:GetMaxHealth(), 0), "health"..ply:EntIndex()) ^ 0.3
+		local hp = smooth(jhud.scanner_frame, "scanner_frame") ^ 0.5
 		local mp = smooth(ply:GetMana()/ply:GetMaxMana(), "mana"..ply:EntIndex())
 
-		jhud.combine_scanner_ent:SetRenderOrigin(Vector(x+150,y-38,-200))
-		jhud.suit_charger_ent:SetRenderOrigin(Vector(x+300,y-20,-400))
+		jhud.combine_scanner_ent:SetPos(Vector(x+150,y-38,-200))
+		jhud.suit_charger_ent:SetPos(Vector(x+300,y-20,-400))
 
-		jhud.combine_scanner_ent:SetCycle(((-hp+1)^0.25))
+		jhud.combine_scanner_ent:SetCycle(-hp+1)
 		jhud.suit_charger_ent:SetCycle(-mp+1)
 
+		jhud.combine_scanner_ent:SetupBones()
+
+		render.SetColorModulation(1, 1, 1)
+		render.SetBlend(1)
 		render.SuppressEngineLighting(true)
 
 		cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
 			render.CullMode(MATERIAL_CULLMODE_CW)
-				render.PushCustomClipPlane(Vector(0,1,0), 500)
-					jhud.suit_charger_ent:DrawModel()
-				render.PopCustomClipPlane()
-			render.CullMode(MATERIAL_CULLMODE_CCW)
-		cam.EndOrthoView()
-
-		cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
-			render.CullMode(MATERIAL_CULLMODE_CW)
+				jhud.suit_charger_ent:DrawModel()
 				jhud.combine_scanner_ent:DrawModel()
 			render.CullMode(MATERIAL_CULLMODE_CCW)
 		cam.EndOrthoView()
@@ -867,9 +880,13 @@ do
 			BaseTextureTransform = "center .5 .5 scale 1 5 rotate 0 translate 0 1.25",
 		})
 
-		local color = Color(45, 45, 45)
+		function jhud.DrawList(list, selected_i, x,y, color)
+			color = color or Color(45, 45, 45)
 
-		function jhud.DrawList(list, selected_i, x,y)
+			jhud.smooth_color = jhud.smooth_color or Vector(color.r, color.g, color.b)
+			jhud.smooth_color = jhud.smooth_color + ((Vector(color.r, color.g, color.b) - jhud.smooth_color) * FrameTime() * 10)
+			local color = jhud.smooth_color
+
 			jhud.smooth_scrolls = jhud.smooth_scrolls or {}
 
 			surface.DisableClipping(true)
@@ -909,49 +926,48 @@ do
 				local i2 = i - selected_i
 				local i3 = i % #list + 1
 				local wep = list[i3]
-									
-				local m = Matrix()
-				--m:Rotate(Angle(0,0,i2/max * 260))
 
+				wep.color = wep.color or color
+				
 				jhud.smooth_scrolls[i] = jhud.smooth_scrolls[i] or 0
 				jhud.smooth_scrolls[i] = jhud.smooth_scrolls[i] + ((i2 - jhud.smooth_scrolls[i]) * FrameTime() * 10)
 				local smooth_i = jhud.smooth_scrolls[i] 
 
-				m:Translate(Vector(x,y,0))
-				m:Rotate(Angle(0,smooth_i/max * 360,0))
-				m:Translate(Vector(90,0,0))
-
-				cam.PushModelMatrix(m)
-
 				local s = math.sin((((smooth_i)/max)%1) * math.pi * 2 - math.pi/2) * 0.5 + 0.5
 				s = s ^ 0.25
 				s = -s + 1
-				
-				prettytext.DrawText({
-					text = wep.name:upper(), 
-					x = 0, 
-					y = 0, 
-					font = "Square721 BT", 
-					size = 20,
-					x_align = 0,
-					y_align = -0.5,
-					
-					blur_size = 10,
-					blur_overdraw = 2,
 
-					foreground_color_r = 255*s,
-					foreground_color_g = 255*s,
-					foreground_color_b = 255*s,
-					foreground_color_a = 255*s,
+				if s > 0.1 then										
+					local m = Matrix()
+					m:Translate(Vector(x,y,0))
+					m:Rotate(Angle(0,smooth_i/max * 360,0))
+					m:Translate(Vector(90,0,0))
 
-					background_color_r = color.r*2,
-					background_color_g = color.g*2,
-					background_color_b = color.b*2,
-					background_color_a = 255,
-				})
+					cam.PushModelMatrix(m)					
+						prettytext.DrawText({
+							text = wep.name:upper(), 
+							x = 0, 
+							y = 0, 
+							font = "Square721 BT", 
+							size = 20,
+							x_align = 0,
+							y_align = -0.5,
+							
+							blur_size = 10,
+							blur_overdraw = 2,
 
+							foreground_color_r = 255*s,
+							foreground_color_g = 255*s,
+							foreground_color_b = 255*s,
+							foreground_color_a = 255*s,
 
-				cam.PopModelMatrix()
+							background_color_r = wep.color.r*2,
+							background_color_g = wep.color.g*2,
+							background_color_b = wep.color.b*2,
+							background_color_a = 255,
+						})
+					cam.PopModelMatrix()
+				end
 			end
 		end
 		surface.DisableClipping(false)
