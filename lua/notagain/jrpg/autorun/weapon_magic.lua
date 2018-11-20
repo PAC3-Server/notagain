@@ -401,6 +401,10 @@ if CLIENT then
 	end
 end
 
+if SERVER then
+	util.AddNetworkString(SWEP.ClassName)
+end
+
 function SWEP:Deploy()
 	if SERVER then
 		net.Start(SWEP.ClassName, true)
@@ -492,28 +496,6 @@ function SWEP:SecondaryAttack()
 end
 
 weapons.Register(SWEP, SWEP.ClassName)
-
-do
-	local function register_elemental(what)
-		local SWEP = {}
-		SWEP.Base = "weapon_magic"
-		SWEP.ClassName = "weapon_magic_" .. what
-		SWEP.PrintName = what
-
-		if SERVER then
-			function SWEP:Initialize()
-				self.BaseClass.Initialize(self)
-				wepstats.AddToWeapon(self, nil,nil, what)
-			end
-		end
-
-		weapons.Register(SWEP, SWEP.ClassName)
-	end
-
-	for k,v in pairs(jdmg.types) do
-		register_elemental(k)
-	end
-end
 
 if SERVER then
 	if me then

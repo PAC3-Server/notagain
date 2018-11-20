@@ -538,3 +538,25 @@ do
 		})
 	end
 end
+
+local function register_elemental(what)
+	local SWEP = {}
+	SWEP.Base = "weapon_magic"
+	SWEP.ClassName = "weapon_magic_" .. what
+	SWEP.PrintName = what
+
+	if SERVER then
+		function SWEP:Initialize()
+			self.BaseClass.Initialize(self)
+			wepstats.AddToWeapon(self, nil,nil, what)
+		end
+	end
+
+	weapons.Register(SWEP, SWEP.ClassName)
+end
+
+timer.Simple(0.1, function() 
+	for k,v in pairs(jdmg.types) do
+		register_elemental(k)
+	end
+end)
