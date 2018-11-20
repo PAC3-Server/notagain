@@ -14,7 +14,7 @@ if CLIENT then
 
 		for _, val in ipairs(ents) do
 			if
-				(not val.Alive or jrpg.IsActorAlive(val)) and
+				jrpg.IsActorAlive(val) and
 				((val:IsPlayer() and val ~= ply) or (not val:IsPlayer() and jrpg.IsActor(val))) and
 				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
 				val ~= prev_target and
@@ -283,13 +283,16 @@ if CLIENT then
 			local ent = jtarget.GetEntity(LocalPlayer())
 
 			if not jrpg.IsActorAlive(ent) then
-				jtarget.Scroll(1)
+				if not ent.jtarget_scrolled then
+					ent.jtarget_scrolled = true
+					jtarget.Scroll(1)
 
-				if jtarget.GetEntity(LocalPlayer()) == ent then
-					jtarget.SetEntity(LocalPlayer())
+					if jtarget.GetEntity(LocalPlayer()) == ent then
+						jtarget.SetEntity(LocalPlayer())
 
-					battlecam.focus_ent = ent.jrpg_rag_ent
-					battlecam.focus_time = RealTime() + 1
+						battlecam.focus_ent = ent.jrpg_rag_ent
+						battlecam.focus_time = RealTime() + 1
+					end
 				end
 			end
 
