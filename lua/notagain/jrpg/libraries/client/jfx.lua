@@ -30,15 +30,18 @@ function jfx.CreateMaterial(data)
 
 	for k, v in pairs(data) do
 		if type(v) == "string" and v:StartWith("http") then
-			hook.Add("Think", v, function()
+			local id = tostring({})
+			hook.Add("Think", id, function()
+				if not LocalPlayer():IsValid() then return end
+				
 				local m,w,h = urlimage.GetURLImage(v)
 				if m == nil then
-					hook.Remove("Think", v)
+					hook.Remove("Think", id)
 				elseif m then
 					mat:SetInt("$glowx", w)
 					mat:SetInt("$glowy", h)
 					mat:SetTexture("$" .. k, m:GetTexture("$BaseTexture"))
-					hook.Remove("Think", v)
+					hook.Remove("Think", id)
 				end
 			end)
 		end
