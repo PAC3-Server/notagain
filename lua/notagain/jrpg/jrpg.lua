@@ -417,6 +417,18 @@ if CLIENT then
 				primary = true,
 				melee = true,
 			},
+		},
+		weapon_physcannon = {
+			{
+				name = "gravity gun punt",
+				primary = true,
+				melee = true,
+			},
+			{
+				name = "gravity gun grab",
+				secondary = true,
+				melee = true,
+			},
 		}
 	}
 
@@ -454,13 +466,16 @@ if CLIENT then
 					class:find("medkit", nil, true) or
 					class:find("medic	", nil, true)
 				then
+					if not wep.IsWeaponMagic then
 					info.self_inflicting = true
+					end
 					info.healing = true
 				end
 
 				if
 					wep.is_jsword or
 					class:find("crowbar", nil, true) or
+					class:find("stick", nil, true) or
 					class:find("melee", nil, true) or
 					class:find("fist", nil, true) or
 					class:find("slap", nil, true)
