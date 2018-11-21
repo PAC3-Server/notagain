@@ -544,6 +544,7 @@ local function register_elemental(what)
 	SWEP.Base = "weapon_magic"
 	SWEP.ClassName = "weapon_magic_" .. what
 	SWEP.PrintName = what
+	SWEP.Spawnable = true
 
 	if SERVER then
 		function SWEP:Initialize()
