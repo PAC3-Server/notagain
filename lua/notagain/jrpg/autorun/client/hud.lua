@@ -276,30 +276,32 @@ local function get_weapons()
 	local category_list = {}
 
 	for i,info in pairs(jskill.GetAll()) do
-		local category = info.Category or "skill"
-		local color
+		if not info.Weapon or LocalPlayer():HasWeapon(info.Weapon) then
+			local category = info.Category or "skill"
+			local color
 
-		if category == "magic" then
-			color = Color(25,50,50)
-		elseif category == "items" then
-			color = Color(50,50,50)
-		else
-			color = Color(50,40,25)
+			if category == "magic" then
+				color = Color(25,50,50)
+			elseif category == "items" then
+				color = Color(50,50,50)
+			else
+				color = Color(50,40,25)
+			end
+
+			if not categories[category] then
+				categories[category] = {}
+				table.insert(category_list, {
+					Name = category, 
+					list = categories[category], 
+					sort = sort_order[category] or -1,
+					color = color,
+				})
+			end
+
+			info.color = color
+
+			table.insert(categories[category], info)
 		end
-
-		if not categories[category] then
-			categories[category] = {}
-			table.insert(category_list, {
-				Name = category, 
-				list = categories[category], 
-				sort = sort_order[category] or -1,
-				color = color,
-			})
-		end
-
-		info.color = color
-
-		table.insert(categories[category], info)
 	end
 
 	table.sort(category_list, function(a, b)
@@ -317,11 +319,10 @@ local function advance(i, num)
 end
 
 function jhud.UpdateMenu()
+	if vgui.CursorVisible() then return end
 	local categories = get_weapons()
 
 	selected_list = selected_list or categories
-
-	table.insert(categories, 1, {Name = "attack", color = Color(50,25,25)})
 
 	selected_weapon_i[selected_category_i] = selected_weapon_i[selected_category_i] or 1
 
@@ -343,28 +344,34 @@ function jhud.UpdateMenu()
 		jhud.scanner_frame = 0
 		if select_stage == "categories" then
 			if selected_list[(selected_category_i % #selected_list) + 1].Name == "attack" then
-				reset()
-				jskill.Execute("attack")
+
+				if jtarget.GetEntity(LocalPlayer()):IsValid() then
+					reset()
+					jskill.Execute("attack")
+				else
+					jtarget.StartSelection()
+					if not jtarget.GetEntity(LocalPlayer()):IsValid() then
+						jskill.Execute("attack")
+					else
+						reset()
+						select_stage = "target"
+					end
+				end
 			else
 				selected_list = selected_list[(selected_category_i % #selected_list) + 1].list
 				select_stage = "weapons"
 			end
 		elseif select_stage == "weapons" then
 			local skill = selected_list[(selected_weapon_i[selected_category_i] % #selected_list) + 1]
-			if skill.self_inflicting then
+			local current_target = jtarget.GetEntity(LocalPlayer())
+
+			if current_target:IsValid() then
 				reset()
 				jskill.Execute(skill.ClassName)
-				return
 			else
-				jtarget.StartSelection(not not skill.healing)
-				local current_target = jtarget.GetEntity(LocalPlayer())
-				if not current_target:IsValid() then
-					reset()
-					jskill.Execute(skill.ClassName)
-					return
-				end
+				jtarget.StartSelection(not not skill.Friendly)
+				select_stage = "target"
 			end
-			select_stage = "target"
 		elseif select_stage == "target" then
 			local skill = selected_list[(selected_weapon_i[selected_category_i] % #selected_list) + 1]
 			local current_target = jtarget.GetEntity(LocalPlayer())
