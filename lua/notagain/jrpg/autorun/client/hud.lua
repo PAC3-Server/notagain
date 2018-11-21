@@ -196,8 +196,8 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 			text = real_cur,
 			x = center_number and x+w/2 or (x + w),
 			y = center_number and y+h/2 or y,
-			font = "korataki",
-			size = health_height*1.25 * (center_number and 0.7 or 1)*S,
+			font = "gabriola",
+			size = health_height*1.25 * (center_number and 0.7 or 1)*S * 3,
 			weight = 1000,
 			blur_size = 4,
 			blur_overdraw = 3,
@@ -210,8 +210,8 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 			background_color_g = g/2,
 			background_color_b = b/2,
 			background_color_a = 255,
-			x_align = center_number and -0.5 or 0.25,
-			y_align = center_number and -0.5 or -0.2,
+			x_align = center_number and -0.5 or 0.2,
+			y_align = center_number and -0.5 or -0.45,
 		})
 	end
 
@@ -220,8 +220,8 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 			text = txt,
 			x = x,
 			y = y,
-			font = "korataki",
-			size = health_height*1.25*S,
+			font = "gabriola",
+			size = health_height*1.25*S * 2.5,
 			weight = 0,
 			blur_size = 4,
 			blur_overdraw = 3,
@@ -234,7 +234,7 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 			background_color_b = b/5,
 			background_color_a = 255,
 			x_align = -1,
-			y_align = -0.15,
+			y_align = -0.45,
 		})
 	end
 end
@@ -591,14 +591,14 @@ hook.Add("HUDPaint", "jhud", function()
 				text = (jrpg and jrpg.GetFriendlyName(ply) or ply:Nick()),
 				x = x + 200*S,
 				y = y - offset*S - 8*S,
-				font = "Square721 BT",
-				size = 40*S,
+				font = "Gabriola",
+				size = 40*S * 2.5,
 				blur_size = 4,
 				blur_overdraw = 3,
 				weight = 1000,
 				foreground_color = Color(230, 230, 230, 255),
 				background_color = c,
-				y_align = 0.5,
+				y_align = -0.15,
 			})
 
 			x = x + 200*S
@@ -608,15 +608,15 @@ hook.Add("HUDPaint", "jhud", function()
 					text = "Lv. " .. ply:GetNWInt("jlevel_level", 0),
 					x = x + math.Clamp(70*S + name_width, 50, ScrW()/3),
 					y = y - offset*S + 4*S,
-					font = "Square721 BT",
-					size = 30*S,
+					font = "gabriola",
+					size = 30*S * 2,
 					blur_size = 4,
 					blur_overdraw = 3,
 					weight = 1000,
 					foreground_color = Color(200, 100, 255, 255),
 					background_color = c,
-					y_align = 0.5,
-					x_align = -1,
+					y_align = -0.05,
+					x_align = -1.1,
 
 				})
 			end
@@ -829,7 +829,7 @@ do
 
 		local hp = smooth(jhud.scanner_frame, "scanner_frame") ^ 0.5
 		local mp = smooth(ply:GetMana()/ply:GetMaxMana(), "mana"..ply:EntIndex())
-
+	
 		jhud.combine_scanner_ent:SetPos(Vector(x,y,-200))
 		jhud.suit_charger_ent:SetPos(Vector(x+150,y+10,-400))
 
@@ -948,8 +948,8 @@ do
 							text = wep.name:upper(), 
 							x = 0, 
 							y = 0, 
-							font = "Square721 BT", 
-							size = 20,
+							font = "gabriola", 
+							size = 40,
 							x_align = 0,
 							y_align = -0.5,
 							
