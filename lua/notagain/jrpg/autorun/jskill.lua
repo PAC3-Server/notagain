@@ -16,7 +16,7 @@ do
 	end
 
 	function SKILL:Hook(what, cb, id)
-		id = id or "test" -- tostring(what)
+		id = id or "jskill_" .. self.Player:UniqueID() .. "_"  .. what
 		hook.Add(what, id, function(...) 
 			local a,b,c,d,e,f = pcall(cb, ...) 
 			if not a then 
@@ -28,7 +28,7 @@ do
 	end
 
 	function SKILL:UnHook(what, id)
-		id = id or "test" -- tostring(what)
+		id = id or "jskill_" .. self.Player:UniqueID() .. "_"  .. what
 		hook.Remove(what, id)
 	end
 
@@ -73,7 +73,7 @@ do
 			mov:SetForwardMove(-1000)
 			mov:SetButtons(bit.bor(mov:GetButtons(), IN_SPEED))
 
-			if LocalPlayer():GetVelocity():Length() > 150 then
+			if self.Player:GetVelocity():Length() > 150 then
 				mov:SetButtons(bit.bor(mov:GetButtons(), IN_JUMP))
 			end
 
@@ -93,6 +93,18 @@ do
 	function SKILL:MoveTowards(distance, ent)
 		distance = distance or 100
 		
+		local ent = ent or jtarget.GetEntity(self.Player)
+		if not ent:IsValid() then
+			return false, "target is not valid"
+		end
+		
+		local cur_pos = self.Player:WorldSpaceCenter()
+		local target_pos = ent:WorldSpaceCenter()
+		
+		if target_pos:Distance(cur_pos) < distance then
+			return true
+		end
+		
 		local timer = CurTime() + 3
 		local res, msg = nil
 
@@ -105,7 +117,7 @@ do
 			end
 
 			local cur_pos = self.Player:WorldSpaceCenter()
-			local target_pos = ent:WorldSpaceCenter()
+			local target_pos = ent:NearestPoint(cur_pos)
 
 			mov:SetViewAngles((target_pos - cur_pos):Angle())
 			mov:SetForwardMove(1000)
@@ -130,6 +142,11 @@ do
 	end
 
 	function SKILL:UseWeapon(class)
+		local wep = self.Player:GetActiveWeapon()
+		if wep:IsValid() and wep:GetClass() == class then
+			return true
+		end
+
 		local res = nil
 
 		if SERVER then
@@ -139,7 +156,7 @@ do
 						return true 
 					end
 				end)
-				self.Player:Give(class)
+				local wep = self.Player:Give(class)
 				hook.Remove("PlayerCanPickupWeapon", "temp")
 			end
 		end
@@ -147,10 +164,13 @@ do
 		self:MoveFunc(function(mov)
 			local wep = self.Player:GetWeapon(class)
 			if wep:IsValid() then
+				--wep:SetDeploySpeed(0)				
+				mov:SelectWeapon(wep)
 				if SERVER then
 					self.Player:SelectWeapon(class)
-				end 
-				if self.Player:GetActiveWeapon():GetClass() == class then
+				end
+				local wep = self.Player:GetActiveWeapon()
+				if wep:GetClass() == class then
 					res = true
 					return false
 				end
@@ -169,21 +189,37 @@ do
 
 		local res = nil
 		local time = CurTime() + (duration or 0)
-			
+
+		
 		local wep = self.Player:GetActiveWeapon()
 		if wep:IsValid() then
-			wep:SetNextPrimaryFire(0)
-			wep:SetNextSecondaryFire(0)
+			wep:SetNextPrimaryFire(CurTime())
+			wep:SetNextSecondaryFire(CurTime())
 		end
 		
+		local flip = true
+		local fired = false
 		self:MoveFunc(function(mov)
-			mov:SetButtons(bit.bor(mov:GetButtons(), button))
-			if wep:IsValid() and wep:GetNextPrimaryFire() ~= 0 then
-				wep:SetNextPrimaryFire(CurTime() + duration)
-				wep:SetNextSecondaryFire(CurTime() + duration)
+			local wep = self.Player:GetActiveWeapon()
+			if wep:IsValid() then
+				if wep:GetNextPrimaryFire() - CurTime() < 0 then
+					fired = true
+					if flip then
+						mov:ClearButtons()
+						mov:SetButtons(button)
+						flip = false
+					else
+						mov:ClearButtons()
+						flip = true
+					end
+				elseif fired and wep:GetNextPrimaryFire() - CurTime() < 0 then
+					res = true
+					return false
+				end
 			end
+
 			if CurTime() > time then
-				res = true
+				res = false
 				return false
 			end
 		end)
@@ -211,8 +247,15 @@ do
 		self:UnHook("StartCommand", "hold_trigger")
 	end
 
+	function SKILL:TaskInternal()
+		if self.Weapon then
+			self:UseWeapon(self.Weapon)
+		end
+		self:Task()
+	end
+
 	function SKILL:Execute()
-		local co = coroutine.create(self.Task)
+		local co = coroutine.create(self.TaskInternal)
 		local id = tostring(self)
 		self:Hook("Think", function()
 			if coroutine.status(co) == "dead" then
@@ -220,7 +263,8 @@ do
 			else
 				local ok, err = coroutine.resume(co, self)
 				if not ok then
-					self.Player:ChatPrint(err)
+					print(err)
+					hitmarkers.ShowDamage(jtarget.GetEntity(self.Player), 0, self.Player:EyePos())
 					self:UnHook("Think")
 				end
 			end
@@ -263,11 +307,10 @@ function jskill.Execute(name, actor)
 	for k,v in pairs(jskill.registered[name]) do
 		self[k] = v
 	end
+
 	self:Execute()
 
-	if SERVER then
-		print(actor,  " running skill ", name)
-	end
+	jrpg.ShowAttack(actor, self.Name)
 end
 
 do
@@ -279,9 +322,9 @@ do
 		SKILL.ClassName = id
 		SKILL.Name = friendly_name
 		SKILL.Category = "melee"
+		SKILL.Weapon = weapon_class
 
 		function SKILL:Task()
-			self:UseWeapon(weapon_class)
 			self:MoveTowards(distance)
 			self:TriggerWeapon(0.25, button)
 			self:Dodge(100)
@@ -299,9 +342,9 @@ do
 		SKILL.ClassName = id
 		SKILL.Name = friendly_name
 		SKILL.Category = "items"
+		SKILL.Weapon = weapon_class
 
 		function SKILL:Task()
-			self:UseWeapon(weapon_class)
 			self:TriggerWeapon(0.5, button)
 		end
 		
@@ -317,9 +360,9 @@ do
 		SKILL.ClassName = id
 		SKILL.Name = friendly_name
 		SKILL.Category = "range"
+		SKILL.Weapon = weapon_class
 
 		function SKILL:Task()
-			self:UseWeapon(weapon_class)
 			self:MoveTowards(1000)
 			self:TriggerWeapon(0.25, button)
 		end
@@ -358,7 +401,8 @@ do
 			
 			if 
 				class:find("stick", nil, true) or
-				class:find("sword", nil, true)
+				class:find("sword", nil, true) or
+				class:find("knife", nil, true)
 			then
 				generic_melee(v.ClassName, v.PrintName, v.ClassName, IN_ATTACK, 50)	
 			elseif 
@@ -369,12 +413,17 @@ do
 				class:find("shield", nil, true) or
 				class:find("hand", nil, true)
 			then
-				generic_item(v.ClassName, v.PrintName, v.ClassName, IN_ATTACK)	
+				local SKILL = generic_item(v.ClassName, v.PrintName, v.ClassName, IN_ATTACK)
+				SKILL.Friendly = true
 			else
 				local SKILL = generic_range(v.ClassName, v.PrintName, v.ClassName, IN_ATTACK)
 				if class:find("magic", nil, true) then
 					SKILL.Name = v.PrintName
 					SKILL.Category = "magic"
+				end
+
+				if class:find("heal", nil, true) then
+					SKILL.Friendly = true
 				end
 			end
 		end
@@ -386,11 +435,11 @@ do
 		SKILL.ClassName = "attack"
 		SKILL.Name = "attack"
 		SKILL.Category = "attack"
-
+		SKILL.Weapon = "weapon_jsword_virtuouscontract"
 		function SKILL:Task()
-			self:UseWeapon("weapon_jsword_virtuouscontract")
 			self:MoveTowards(50)
 			self:TriggerWeapon(0.25, IN_ATTACK)
+			self:Dodge(100)
 		end
 		
 		jskill.Register(SKILL)
@@ -402,9 +451,10 @@ do
 		SKILL.ClassName = "weapon_medkit_self"
 		SKILL.Name = "medkit self"
 		SKILL.Category = "items"
+		SKILL.Weapon = "weapon_medkit"
+		SKILL.Friendly = true
 
 		function SKILL:Task()
-			self:UseWeapon("weapon_medkit")	
 			self:TriggerWeapon(1, IN_ATTACK2)
 		end
 		
@@ -416,10 +466,11 @@ do
 
 		SKILL.ClassName = "weapon_medkit_other"
 		SKILL.Name = "medkit other"
-		SKILL.Category = "heal other"
+		SKILL.Category = "items"
+		SKILL.Weapon = "weapon_medkit"
+		SKILL.Friendly = true
 
 		function SKILL:Task()
-			self:UseWeapon("weapon_medkit")	
 			if assert(self:MoveTowards(50)) then
 				self:TriggerWeapon(1, IN_ATTACK)
 			end
@@ -433,10 +484,8 @@ do
 
 		SKILL.ClassName = "weapon_physcannon_fling"
 		SKILL.Name = "gravity gun throw"
-
+		SKILL.Weapon = "weapon_physcannon"
 		function SKILL:Task()
-			self:UseWeapon("weapon_physcannon")
-
 			if assert(self:MoveTowards(200)) then
 				self:TriggerWeapon(0.25, IN_ATTACK2)
 				if jtarget.GetEntity(self.Player):GetOwner() ~= self.Player then
@@ -457,6 +506,7 @@ do
 
 		SKILL.ClassName = "weapon_physgun_smash"
 		SKILL.Name = "physgun throw"
+		SKILL.Weapon = "weapon_physgun"
 
 		function SKILL:PitchTo(to, duration, async)
 			jtarget.pause_aiming = true 
@@ -504,8 +554,6 @@ do
 		end
 
 		function SKILL:Task()
-			self:UseWeapon("weapon_physgun")
-
 			if assert(self:MoveTowards(400)) then
 				self:StartTrigger(IN_ATTACK)
 				if self:WaitForPickup() then
