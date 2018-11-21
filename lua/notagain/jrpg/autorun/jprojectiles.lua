@@ -266,8 +266,6 @@ do
 				end
 			end
 			self:SetDamageTypes(table.concat(ugh, ","))
-
-			hitmarkers.ShowAttack(attacker, self:GetDamageTypes())
 		end
 
 		function ENT:SetBulletData(attacker, data, wep)
