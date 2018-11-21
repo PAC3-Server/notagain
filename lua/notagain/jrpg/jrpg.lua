@@ -366,7 +366,7 @@ function jrpg.GetRoomSize(pos, filter)
 end
 
 if CLIENT then
-	function jrpg.IsFriend(ent)
+	function jrpg.IsFriend(_, ent)
 		if ent:IsPlayer() and engine.ActiveGamemode() == "lambda" then
 			return true
 		end
@@ -401,7 +401,7 @@ if SERVER then
 			return true
 		end
 
-		return a:IsFriend(b)
+		return a.IsFriend and a:IsFriend(b)
 	end
 end
 
