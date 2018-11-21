@@ -262,93 +262,7 @@ local function reset()
 	selected_i = 1
 	select_stage = "categories"
 	jtarget.StopSelection()
-	hook.Remove("CreateMove", "weapon_select_attack")
-
-	for i, wep in ipairs(LocalPlayer():GetWeapons()) do
-		if wep.is_jsword then
-			input.SelectWeapon(wep)
-			break
-		end
-	end
-
 	jhud.scanner_frame = 1
-end
-
-function attack(ent, data)
-	ent = ent or NULL
-	local wep = data.weapon
-	local state = "attack"
-	local attack = 0
-	local info = data
-	local move_back_timer = 0
-
-	if info.melee then
-		state = "move_forward"
-	end
-
-	if not ent:IsValid() then
-		state = "attack"
-	end
-
-	hook.Add("CreateMove", "weapon_select_attack", function(ucmd)
-		if wep and wep:IsValid() then
-			ucmd:SelectWeapon(wep)
-		end
-
-		if state == "move_forward" then
-			ucmd:SetForwardMove(1000) 
-			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_SPEED))
-
-			local cur_pos = LocalPlayer():WorldSpaceCenter()
-			local target_pos = ent:WorldSpaceCenter()
-
-			local aim_ang = (target_pos - cur_pos):Angle()
-			ucmd:SetViewAngles(aim_ang)
-
-			if ent:NearestPoint(cur_pos):Distance(LocalPlayer():NearestPoint(target_pos)) < 55 then
-				state = "attack"
-			end
-		elseif state == "move_back" then
-			local cur_pos = LocalPlayer():GetPos()
-			local target_pos = ent:WorldSpaceCenter()
-
-			ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_SPEED))
-
-			local aim_ang = (target_pos - cur_pos):Angle()
-			aim_ang.p = 0
-			ucmd:SetViewAngles(aim_ang)
-			ucmd:SetForwardMove(-1000)
-
-			if cur_pos:Distance(target_pos) > 150 or move_back_timer < os.clock() then
-				reset()
-			elseif LocalPlayer():GetVelocity():Length() > 150 then
-				ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_JUMP))
-			end
-		elseif state == "attack" then
-			attack = os.clock() + 0.5
-			state = "attacking"
-		elseif state == "attacking" then
-			local next_attack = wep:GetNextPrimaryFire() - CurTime() < 0
-			if attack > os.clock() and next_attack then
-				if data.primary then
-					ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
-				elseif data.secondary then
-					ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK2))
-				else
-					ucmd:SetButtons(bit.bor(ucmd:GetButtons(), IN_ATTACK))
-				end
-			elseif next_attack then
-				if info.melee and ent:IsValid() then
-					state = "move_back"
-					move_back_timer = os.clock() + 1.5
-				else
-					reset()
-				end
-			end
-		end
-
-		return true
-	end)
 end
 
 local sort_order = {
@@ -361,27 +275,24 @@ local function get_weapons()
 	local categories = {}
 	local category_list = {}
 
-	for i,info in ipairs(jrpg.GetSkills(LocalPlayer())) do
-		local category
+	for i,info in pairs(jskill.GetAll()) do
+		local category = info.Category or "skill"
 		local color
 
-		if info.weapon.IsWeaponMagic then
-			category = "magic"
+		if category == "magic" then
 			color = Color(25,50,50)
-		elseif info.self_inflicting then
-			category = "items"
+		elseif category == "items" then
 			color = Color(50,50,50)
 		else
-			category = "skill"
 			color = Color(50,40,25)
 		end
 
 		if not categories[category] then
 			categories[category] = {}
 			table.insert(category_list, {
-				name = category, 
+				Name = category, 
 				list = categories[category], 
-				sort = sort_order[category],
+				sort = sort_order[category] or -1,
 				color = color,
 			})
 		end
@@ -410,7 +321,7 @@ function jhud.UpdateMenu()
 
 	selected_list = selected_list or categories
 
-	table.insert(categories, 1, {name = "attack", color = Color(50,25,25)})
+	table.insert(categories, 1, {Name = "attack", color = Color(50,25,25)})
 
 	selected_weapon_i[selected_category_i] = selected_weapon_i[selected_category_i] or 1
 
@@ -431,21 +342,9 @@ function jhud.UpdateMenu()
 	elseif check_key(KEY_ENTER) then
 		jhud.scanner_frame = 0
 		if select_stage == "categories" then
-			if selected_list[(selected_category_i % #selected_list) + 1].name == "attack" then
-				local skill
-		
-				for i,info in ipairs(jrpg.GetSkills(LocalPlayer())) do
-					if info.weapon.is_jsword then
-						skill = info
-						break
-					end
-				end
-				
-				jtarget.StartSelection(not not skill.healing)
-
-				local current_target = jtarget.GetEntity(LocalPlayer())
+			if selected_list[(selected_category_i % #selected_list) + 1].Name == "attack" then
 				reset()
-				attack(current_target, skill)
+				jskill.Execute("attack")
 			else
 				selected_list = selected_list[(selected_category_i % #selected_list) + 1].list
 				select_stage = "weapons"
@@ -454,14 +353,14 @@ function jhud.UpdateMenu()
 			local skill = selected_list[(selected_weapon_i[selected_category_i] % #selected_list) + 1]
 			if skill.self_inflicting then
 				reset()
-				attack(LocalPlayer(), skill)
+				jskill.Execute(skill.ClassName)
 				return
 			else
 				jtarget.StartSelection(not not skill.healing)
 				local current_target = jtarget.GetEntity(LocalPlayer())
 				if not current_target:IsValid() then
 					reset()
-					attack(LocalPlayer(), skill)
+					jskill.Execute(skill.ClassName)
 					return
 				end
 			end
@@ -471,7 +370,7 @@ function jhud.UpdateMenu()
 			local current_target = jtarget.GetEntity(LocalPlayer())
 			jtarget.StopSelection()
 			reset()
-			attack(current_target, skill)
+			jskill.Execute(skill.ClassName)
 		end
 	end
 
@@ -945,7 +844,7 @@ do
 
 					cam.PushModelMatrix(m)					
 						prettytext.DrawText({
-							text = wep.name:upper(), 
+							text = (wep.Name or "?"):upper(), 
 							x = 0, 
 							y = 0, 
 							font = "gabriola", 

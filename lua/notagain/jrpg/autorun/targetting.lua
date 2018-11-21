@@ -3,6 +3,38 @@ jtarget.scroll_dir = 0
 
 local max_distance = 700
 
+function jtarget.FindEnemies(actor, radius)
+	local pos = actor:EyePos()
+	local temp = {}
+	local i = 1
+	for _, ent in ipairs(ents.FindInSphere(pos, radius or 1000)) do
+		if not jrpg.IsFriend(actor, ent) and jrpg.IsActor(ent) and ent ~= actor then
+			temp[i] = ent
+			i = i + 1
+		end
+	end
+	table.sort(list, function(a, b) 
+		return a:EyePos():Distance(pos) < b:EyePos():Distance(pos) 
+	end)
+	return temp
+end
+
+function jtarget.FindFriends(actor, radius)
+	local pos = actor:EyePos()
+	local temp = {} 
+	local i = 1
+	for _, ent in ipairs(ents.FindInSphere(pos, radius or 1000)) do
+		if jrpg.IsFriend(actor, ent) and ent ~= actor then
+			temp[i] = ent
+			i = i + 1
+		end
+	end
+	table.sort(list, function(a, b) 
+		return a:EyePos():Distance(pos) > b:EyePos():Distance(pos) 
+	end)
+	return temp
+end
+
 if CLIENT then
 	function jtarget.GetTargetsOnScreen(prev_target)
 		local ply = LocalPlayer()
@@ -276,6 +308,7 @@ end
 
 if CLIENT then
 	hook.Add("CreateMove", "jtarget", function(mv)
+		if jtarget.pause_aiming then return end
 		local ang = get_aim_angles(LocalPlayer())
 
 		if ang then
@@ -313,6 +346,8 @@ if CLIENT then
 end
 
 hook.Add("Move", "jtarget", function(ply)
+	if jtarget.pause_aiming then return end
+
 	local ang = get_aim_angles(ply)
 
 	if ang then
