@@ -16,7 +16,7 @@ if CLIENT then
 			if
 				jrpg.IsActorAlive(val) and
 				((val:IsPlayer() and val ~= ply) or (not val:IsPlayer() and jrpg.IsActor(val))) and
-				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(val)) or (not jtarget.friends_only and not jrpg.IsFriend(val))) and
+				(jtarget.friends_only == nil or (jtarget.friends_only and jrpg.IsFriend(LocalPlayer(), val)) or (not jtarget.friends_only and not jrpg.IsFriend(LocalPlayer(), val))) and
 				val ~= prev_target and
 				not util.TraceLine({start = ply:EyePos(), endpos = jrpg.FindHeadPos(val), filter = ents}).Hit
 			then
@@ -126,7 +126,7 @@ if CLIENT then
 					surface.SetDrawColor(255, 255, 255, 200)
 					surface.DrawTexturedRectRotated(pos.x, pos.y, size, size, os.clock()*10)
 
-					if jrpg.IsFriend(current_target) then
+					if jrpg.IsFriend(LocalPlayer(), current_target) then
 						surface.SetDrawColor(team.GetColor(TEAM_FRIENDS))
 					else
 						surface.SetDrawColor(team.GetColor(TEAM_PLAYERS))
@@ -163,23 +163,23 @@ if CLIENT then
 			surface.SetDrawColor(255, 255, 255, 50)
 
 			for i, info in ipairs(targets.left) do
-				jhud.DrawInfoSmall(info.ent, info.pos.x, info.pos.y - 50, -(i / #targets.left - 0.8 ^ 5) + 1, jrpg.IsFriend(info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
+				jhud.DrawInfoSmall(info.ent, info.pos.x, info.pos.y - 50, -(i / #targets.left - 0.8 ^ 5) + 1, jrpg.IsFriend(LocalPlayer(), info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
 				--draw_world_target(info.pos.x, info.pos.y, 0.25)
 			end
 
-			if jrpg.IsFriend(current_target) then
+			if jrpg.IsFriend(LocalPlayer(), current_target) then
 				surface.SetDrawColor(team.GetColor(TEAM_FRIENDS))
 			else
 				surface.SetDrawColor(team.GetColor(TEAM_PLAYERS))
 			end
 
 			draw_world_target(offset + pos.x, pos.y - 50 + math.sin(RealTime()*20) * 3, 1, ent)
-			jhud.DrawInfoSmall(current_target, offset + pos.x, pos.y - 50, 1, jrpg.IsFriend(current_target) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
+			jhud.DrawInfoSmall(current_target, offset + pos.x, pos.y - 50, 1, jrpg.IsFriend(LocalPlayer(), current_target) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
 
 			surface.SetDrawColor(255, 255, 255, 50)
 
 			for i, info in ipairs(targets.right) do
-				jhud.DrawInfoSmall(info.ent, info.pos.x, info.pos.y - 50, -(i / #targets.right - 0.8 ^ 5) + 1, jrpg.IsFriend(info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
+				jhud.DrawInfoSmall(info.ent, info.pos.x, info.pos.y - 50, -(i / #targets.right - 0.8 ^ 5) + 1, jrpg.IsFriend(LocalPlayer(), info.ent) and team.GetColor(TEAM_FRIENDS) or team.GetColor(TEAM_PLAYERS))
 				--draw_world_target(info.pos.x, info.pos.y, 0.25)
 			end
 		end

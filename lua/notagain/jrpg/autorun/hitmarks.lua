@@ -402,7 +402,7 @@ if CLIENT then
 					local bg
 					local fg
 
-					if ent == ply or jrpg.IsFriend(ent) then
+					if ent == ply or jrpg.IsFriend(LocalPlayer(), ent) then
 						fg = Color(255, 255, 255, 220 * fade)
 						bg = Color(25, 100, 130, 50 * fade)
 					else

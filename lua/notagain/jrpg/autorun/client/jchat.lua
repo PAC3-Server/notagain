@@ -167,7 +167,7 @@ do -- players
 			return false
 		end
 
-		if not jrpg.IsFriend(a) then
+		if not jrpg.IsFriend(LocalPlayer(), a) then
 			return false
 		end
 

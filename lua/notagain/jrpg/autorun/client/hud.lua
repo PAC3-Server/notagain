@@ -724,7 +724,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 		local temp = {}
 		for _, ent in ipairs(ents.FindInSphere(ply:EyePos(), 1000)) do
-			if jrpg.IsFriend(ent) and ent ~= LocalPlayer() then
+			if jrpg.IsFriend(LocalPlayer(), ent) and ent ~= LocalPlayer() then
 				temp[i] = ent
 				i = i + 1
 			end
