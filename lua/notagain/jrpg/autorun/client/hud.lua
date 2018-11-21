@@ -811,11 +811,11 @@ do
 	jhud.scanner_frame = 1
 	
 	function jhud.Draw3DModels(x, y)
-		local sx = ScrW() / 1980
-		local sy = ScrH() / 1050
+		local sx = ScrW() / 1920
+		local sy = ScrH() / 1080
 
-		x = x - 180
-		y = y - 35
+		x = x - 35.5
+		y = y - 48
 
 		if not jhud.combine_scanner_ent then
 			jhud.combine_scanner_ent = create_ent("models/combine_scanner.mdl", Angle(-90,-90-45,0), 9)
@@ -830,8 +830,8 @@ do
 		local hp = smooth(jhud.scanner_frame, "scanner_frame") ^ 0.5
 		local mp = smooth(ply:GetMana()/ply:GetMaxMana(), "mana"..ply:EntIndex())
 
-		jhud.combine_scanner_ent:SetPos(Vector(x+150,y-38,-200))
-		jhud.suit_charger_ent:SetPos(Vector(x+300,y-20,-400))
+		jhud.combine_scanner_ent:SetPos(Vector(x,y,-200))
+		jhud.suit_charger_ent:SetPos(Vector(x+150,y+10,-400))
 
 		jhud.combine_scanner_ent:SetCycle(-hp+1)
 		jhud.suit_charger_ent:SetCycle(-mp+1)
@@ -842,7 +842,7 @@ do
 		render.SetBlend(1)
 		render.SuppressEngineLighting(true)
 
-		cam.StartOrthoView(0,0,ScrW()*(1/sx),ScrH()*(1/sy))
+		cam.StartOrthoView(0,0,ScrW(),ScrH())
 			render.CullMode(MATERIAL_CULLMODE_CW)
 				jhud.suit_charger_ent:DrawModel()
 				jhud.combine_scanner_ent:DrawModel()
