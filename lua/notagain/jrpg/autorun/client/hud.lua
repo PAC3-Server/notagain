@@ -370,7 +370,12 @@ function jhud.UpdateMenu()
 				jskill.Execute(skill.ClassName)
 			else
 				jtarget.StartSelection(not not skill.Friendly)
-				select_stage = "target"
+				if not jtarget.GetEntity(LocalPlayer()):IsValid() then
+					jskill.Execute(skill.ClassName)
+					reset()
+				else
+					select_stage = "target"
+				end
 			end
 		elseif select_stage == "target" then
 			local skill = selected_list[(selected_weapon_i[selected_category_i] % #selected_list) + 1]
@@ -744,6 +749,7 @@ do
 
 		jhud.combine_scanner_ent:SetupBones()
 
+		render.ModelMaterialOverride()
 		render.SetColorModulation(1, 1, 1)
 		render.SetBlend(1)
 		render.SuppressEngineLighting(true)
