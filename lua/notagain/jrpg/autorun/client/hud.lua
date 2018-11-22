@@ -448,7 +448,7 @@ hook.Add("HUDPaint", "jhud", function()
 		offset = offset - 16
 	end
 
-	chat.pos_y = math.Round(ScrH()/2.5)
+	chat.pos_y = math.Round(ScrH()/2.7)
 
 	S = ScrW() / 1920
 
@@ -744,7 +744,6 @@ do
 
 		jhud.combine_scanner_ent:SetupBones()
 
-		render.ModelMaterialOverride()
 		render.SetColorModulation(1, 1, 1)
 		render.SetBlend(1)
 		render.SuppressEngineLighting(true)
