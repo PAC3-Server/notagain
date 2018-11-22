@@ -744,6 +744,7 @@ do
 
 		jhud.combine_scanner_ent:SetupBones()
 
+		render.ModelMaterialOverride()
 		render.SetColorModulation(1, 1, 1)
 		render.SetBlend(1)
 		render.SuppressEngineLighting(true)
