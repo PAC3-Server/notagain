@@ -313,7 +313,7 @@ function jskill.Execute(name, actor)
 	jrpg.ShowAttack(actor, self.Name)
 end
 
-function  jskill.LoadSkills()
+function jskill.LoadSkills()
 	local blacklist = {}
 
 	local function generic_melee(id, friendly_name, weapon_class, button, distance)
@@ -572,7 +572,5 @@ function  jskill.LoadSkills()
 end
 
 timer.Simple(0.2, jskill.LoadSkills)
-	
-end)
 
 _G.jskill = jskill
