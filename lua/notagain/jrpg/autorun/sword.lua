@@ -34,27 +34,16 @@ hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
 
-	if ply.sword_anim then
-		local f = (ply.sword_anim_time - CurTime()) / (ply.sword_anim.duration*self.OverallSpeed)
-		f = -f + 1
+	if ply.sword_anim_cycle then
+		local f = ply.sword_anim_cycle
 		if f > 0 and f < 0.7 then
-			if f >= ply.sword_anim.damage_frac then
+			if f >= ply.sword_anim_info.damage_frac then
 				mv:SetForwardSpeed(25)
 			else
 				mv:SetForwardSpeed(0)
 			end
 			mv:SetSideSpeed(0)
 		end
-	end
-end)
-
-hook.Add("CalcMainActivity", SWEP.ClassName, function(ply)
-	local self = ply:GetActiveWeapon()
-	if not self.is_jsword then return end
-	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
-
-	if ply.sword_anim then
---		ply:SetSequence(ply:LookupSequence(ply.sword_anim))
 	end
 end)
 
@@ -67,16 +56,6 @@ local function manip_pos(ply, id, pos)
 end
 
 hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
-	if ply.sword_bone_hack then
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Head1"), Vector(0,0,0))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Neck1"), Vector(0,0,0))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_R_Clavicle"), Vector(0,0,0))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_L_Clavicle"), Vector(0,0,0))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Vector(0,0,0))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_R_UpperArm"), Vector(0,0,0))
-		ply.sword_bone_hack = nil
-	end
-
 	local self = ply:GetActiveWeapon()
 	if not self.is_jsword then return end
 	if jrpg.IsWieldingShield(ply) then return end
@@ -98,25 +77,27 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 		ply:SetSequence(seq)
 	end
 
+	--return true
+end)
 
-	if ply.sword_anim then
-		local f = (ply.sword_anim_time - CurTime()) / (ply.sword_anim.duration*self.OverallSpeed)
-		f = math.Clamp(-f+1, 0, 1)
-
-		if ply.sword_anim then
-			local min = ply.sword_anim.min or 0
-			local max = ply.sword_anim.max or 1
-			local cycle = Lerp(f, min, max)
-			
-			--ply:SetCycle()
-			ply:SetPlaybackRate(0)
-			ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence(ply.sword_anim.seq), cycle, true)
-			ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, f^0.2)
-
-			if f >= ply.sword_anim.damage_frac then
+function SWEP:Animation(type)
+	local ply = self.Owner
+	local info = self.MoveSet2.light[math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2.light))]
+	ply.sword_anim_info = info
+	ply.sword_damaged = nil
+	ply.sword_anim_cycle = nil
+	jrpg.PlayGestureAnimation(ply, {
+		seq = info.seq,
+		duration = 0.5,
+		start = info.start,
+		stop = info.stop,
+		speed = self.OverallSpeed,
+		callback = function(f)
+			ply.sword_anim_cycle = f
+			if f >= info.damage_frac then
 				if not ply.sword_damaged then
 					local pos = ply:WorldSpaceCenter() + ply:GetForward() * self.SwordRange
-					local ang = ply:LocalToWorldAngles(ply.sword_anim.damage_ang)
+					local ang = ply:LocalToWorldAngles(info.damage_ang)
 					local size = 40
 					debugoverlay.Sphere(pos, size, 0.5)
 					debugoverlay.Axis(pos, ang, 20, 1, true)
@@ -145,43 +126,8 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 					ply.sword_damaged = true
 				end
 			end
-
-			if f == 1 then
-				ply.sword_anim_fade = ply.sword_anim_fade or CurTime() + 1
-				local f = ply.sword_anim_fade - CurTime()
-				f = math.Clamp(f,0,1)
-				f = f ^ 5
-
-				ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence(ply.sword_anim.seq), ply.sword_anim.max, true)
-				ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, f)
-
-				if f <= 0 then
-					ply.sword_anim = nil
-					ply.sword_anim_fade = 0
-				end
-			end
 		end
-	end
-
-	if ply:GetSequenceName(ply:GetSequence()):find(self.MoveSet) and jrpg.GetGender(ply) == "female" then
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Head1"), Vector(-2,1,0))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Neck1"), Vector(-0.5,0,0))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_R_Clavicle"), Vector(0,0,1))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_L_Clavicle"), Vector(0,0,-1))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Vector(-2,-1,0))
-		manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_R_UpperArm"), Vector(-2,-1,0))
-		ply.sword_bone_hack = true
-	end
-
-	--return true
-end)
-
-function SWEP:Animation(type)
-	local ply = self.Owner
-	ply.sword_anim_fade = nil
-	ply.sword_anim = self.MoveSet2.light[math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2.light))]
-	ply.sword_anim_time = CurTime() + (ply.sword_anim.duration*self.OverallSpeed)
-	ply.sword_damaged = nil
+	})
 end
 
 if CLIENT then
@@ -240,7 +186,7 @@ if CLIENT then
 			render.SetBlend(1)
 		end
 
-		if self.Owner:IsValid() and self.Owner.sword_anim then
+		if self.Owner:IsValid() and self.Owner.sword_anim_info then
 			if self:GetNWBool("wepstats_elemental") then
 				for k, v in pairs(jdmg.types) do
 					if self:GetNWBool("wepstats_elemental_" .. k) then
@@ -317,7 +263,7 @@ if CLIENT then
 end
 
 function SWEP:Initialize()
-	self:SetHoldType("none")
+	self:SetHoldType("hand")
 	self:SetModelScale(self.ModelScale)
 	--self:SetModelScale(1.25)
 end
@@ -412,6 +358,7 @@ if SERVER then
 end
 
 function SWEP:Attack(type)
+	self:SetHoldType("none")
 	-- self.Owner:SetVelocity(self.Owner:GetAimVector()*500)
 
 	if SERVER then
