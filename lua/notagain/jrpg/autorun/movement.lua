@@ -20,6 +20,7 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 			if ply.sprint_lean > CurTime() then
 				local lean = (ply.sprint_lean - CurTime()) / 2
 				lean = math.sin((lean^2)*math.pi)*30
+				ply.jrpg_last_sprint_lean = lean
 				manip_angles(ply, id, Angle(0, lean, 0))
 			end
 
@@ -29,8 +30,18 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 			end
 		else
 			if ply.sprint_lean then
+				if ply.jrpg_last_sprint_lean then
+					ply.jrpg_sprint_lean_fadeout = ply.jrpg_sprint_lean_fadeout or CurTime() + 1
+					local f = ply.jrpg_sprint_lean_fadeout - CurTime()
+					f = math.Clamp(f, 0, 1) ^ 5
+					manip_angles(ply, id, Angle(0, ply.jrpg_last_sprint_lean * f, 0))
+					if f == 0 then
 				manip_angles(ply, id, Angle(0, 0, 0))
 				ply.sprint_lean = nil
+						ply.jrpg_sprint_lean_fadeout = nil
+						ply.jrpg_last_sprint_lean = nil
+			end
+		end
 			end
 		end
 	else
