@@ -39,7 +39,7 @@ hook.Add("Move", SWEP.ClassName, function(ply, mv)
 		f = -f + 1
 		if f > 0 and f < 0.7 then
 			if f >= ply.sword_anim.damage_frac then
-				mv:SetForwardSpeed(50)
+				mv:SetForwardSpeed(25)
 			else
 				mv:SetForwardSpeed(0)
 			end
@@ -90,16 +90,8 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 		if seq < 0 then
 			seq = ply:LookupSequence(self.MoveSet .. "_b_idle")
 		end
-		ply:SetPlaybackRate(1)
-	elseif false then
-		seq = ply:LookupSequence(self.MoveSet.. "_run_lower")
-		if seq == -1 then
-			seq = ply:LookupSequence(self.MoveSet .. "_run")
-			if seq == -1 then
-				seq = ply:LookupSequence("run_all_02")
-			end
-		end
-		ply:SetPlaybackRate(vel:Length()/200)
+		ply:SetPlaybackRate(0)
+		ply:SetCycle((CurTime()*0.1)%1)
 	end
 
 	if seq then
@@ -112,12 +104,14 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 		f = math.Clamp(-f+1, 0, 1)
 
 		if ply.sword_anim then
-			ply:SetSequence(ply:LookupSequence(ply.sword_anim.seq))
 			local min = ply.sword_anim.min or 0
 			local max = ply.sword_anim.max or 1
-
-			ply:SetCycle(Lerp(f, min, max))
+			local cycle = Lerp(f, min, max)
+			
+			--ply:SetCycle()
 			ply:SetPlaybackRate(0)
+			ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence(ply.sword_anim.seq), cycle, true)
+			ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, f^0.2)
 
 			if f >= ply.sword_anim.damage_frac then
 				if not ply.sword_damaged then
@@ -153,7 +147,18 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 			end
 
 			if f == 1 then
-				ply.sword_anim = nil
+				ply.sword_anim_fade = ply.sword_anim_fade or CurTime() + 1
+				local f = ply.sword_anim_fade - CurTime()
+				f = math.Clamp(f,0,1)
+				f = f ^ 5
+
+				ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence(ply.sword_anim.seq), ply.sword_anim.max, true)
+				ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, f)
+
+				if f <= 0 then
+					ply.sword_anim = nil
+					ply.sword_anim_fade = 0
+				end
 			end
 		end
 	end
@@ -173,6 +178,7 @@ end)
 
 function SWEP:Animation(type)
 	local ply = self.Owner
+	ply.sword_anim_fade = nil
 	ply.sword_anim = self.MoveSet2.light[math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2.light))]
 	ply.sword_anim_time = CurTime() + (ply.sword_anim.duration*self.OverallSpeed)
 	ply.sword_damaged = nil
@@ -311,7 +317,7 @@ if CLIENT then
 end
 
 function SWEP:Initialize()
-	self:SetHoldType("melee2")
+	self:SetHoldType("none")
 	self:SetModelScale(self.ModelScale)
 	--self:SetModelScale(1.25)
 end
@@ -422,6 +428,7 @@ function SWEP:Attack(type)
 end
 
 function SWEP:PrimaryAttack()
+	--if self.Owner.sword_anim then return end
 	self:Attack(3, 0.3)
 	self:SetNextPrimaryFire(CurTime() + 0.5)
 	self:SetNextSecondaryFire(CurTime() + 0.5)
@@ -429,6 +436,7 @@ end
 
 
 function SWEP:SecondaryAttack()
+	--if self.Owner.sword_anim then return end
 	self:Attack(1, 0.25)
 	self:SetNextPrimaryFire(CurTime() + 0.5)
 	self:SetNextSecondaryFire(CurTime() + 0.5)
@@ -444,6 +452,7 @@ do
 	SWEP.PrintName = "virtuous contract"
 	SWEP.Spawnable = true
 	SWEP.Category = "JRPG"
+	SWEP.OverallSpeed = 1
 
 	SWEP.MoveSet2 = {
 		light = {
