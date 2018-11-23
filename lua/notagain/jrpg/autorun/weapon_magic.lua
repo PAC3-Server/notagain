@@ -427,7 +427,11 @@ function SWEP:Deploy()
 end
 
 function SWEP:ThrowAnimation(left_hand)
-	self.Owner:AddVCDSequenceToGestureSlot(left_hand and GESTURE_SLOT_GRENADE or GESTURE_SLOT_ATTACK_AND_RELOAD, self.Owner:LookupSequence("zombie_attack_0" .. (left_hand and 3 or 2)), 0.25, true)
+	self.Owner.jrpg_magic_anim = {
+		slot = left_hand and GESTURE_SLOT_GRENADE or GESTURE_SLOT_ATTACK_AND_RELOAD, 
+		seq = self.Owner:LookupSequence("zombie_attack_0" .. (left_hand and 3 or 2)), 
+		offset = 0.25
+	}
 end
 
 function SWEP:Cast(target)

@@ -36,12 +36,12 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 					f = math.Clamp(f, 0, 1) ^ 5
 					manip_angles(ply, id, Angle(0, ply.jrpg_last_sprint_lean * f, 0))
 					if f == 0 then
-				manip_angles(ply, id, Angle(0, 0, 0))
-				ply.sprint_lean = nil
+						manip_angles(ply, id, Angle(0, 0, 0))
+						ply.sprint_lean = nil
 						ply.jrpg_sprint_lean_fadeout = nil
 						ply.jrpg_last_sprint_lean = nil
-			end
-		end
+					end
+				end
 			end
 		end
 	else
@@ -225,6 +225,21 @@ if CLIENT then
 
 	hook.Add("UpdateAnimation", "movement", function(ply)
 		if not jrpg.IsEnabled(ply) then return end
+
+		do
+			local info = ply.jrpg_magic_anim
+			if info then
+				info.time = info.time or CurTime() + 1
+				local f = CurTime()  - info.time
+				f = math.Clamp(f+1, 0, 1)
+				ply:AddVCDSequenceToGestureSlot(info.slot, info.seq, Lerp(f, 0.25, 1), true)
+				local fade = (math.sin(f*math.pi) * 2 - 1) * 0.5 + 0.5
+				ply:AnimSetGestureWeight(info.slot, fade)
+				if f == 1 then 
+					ply.jrpg_magic_anim = nil
+				end
+			end
+		end
 
 		if ply:OnGround() then
 			local ang = ply:EyeAngles()
