@@ -52,7 +52,7 @@ if CLIENT then
 end
 
 if SERVER then
-	local function freeze(ent, b, f)
+	function jrpg.FreezeEntity(ent, b)
 		if b then
 			if ent.Freeze then
 				ent:Freeze(true)
@@ -90,7 +90,7 @@ if SERVER then
 			if ent.SetLaggedMovementValue then
 				ent:SetLaggedMovementValue(0)
 			else
-				freeze(ent, true)
+				jrpg.FreezeEntity(ent, true)
 			end
 			self.played_unfreeze_sound = false
 			if not self.played_freeze_sound then
@@ -112,7 +112,7 @@ if SERVER then
 		else
 			local time = RealTime()
 			if not self.next_freeze or self.next_freeze < time then
-				freeze(ent, self.freeze, f)
+				jrpg.FreezeEntity(ent, self.freeze, f)
 				self.freeze = not self.freeze
 				self.next_freeze = time + (-f+1)*0.1
 			end
@@ -123,7 +123,7 @@ if SERVER then
 		if ent.SetLaggedMovementValue then
 			ent:SetLaggedMovementValue(1)
 		else
-			freeze(ent, false)
+			jrpg.FreezeEntity(ent, false)
 		end
 	end
 end
