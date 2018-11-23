@@ -169,7 +169,7 @@ if CLIENT then
 			end
 
 			if hitmarkers then
-				hitmarkers.ShowHealth(current_target, true)
+				healthbars.ShowHealth(current_target, true)
 			end
 
 			local offset = 0

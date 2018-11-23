@@ -157,7 +157,7 @@ if CLIENT then
 		local ent = LocalPlayer():GetNWEntity("juse_ent")
 
 		if ent:IsPlayer() or ent:IsNPC() then
-			hitmarkers.ShowHealth(ent)
+			healthbars.ShowHealth(ent)
 		end
 
 		if not ent:IsValid() then
