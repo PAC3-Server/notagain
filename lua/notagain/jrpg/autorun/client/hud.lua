@@ -25,7 +25,7 @@ local function smooth(var, id)
 end
 local last_hp_timer = 0
 local border_size = 2
-local skew = 30
+local skew = 20
 local health_height = 14
 local no_texture = Material("vgui/white")
 
@@ -172,24 +172,24 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 
 	if txt then
 		--draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
-		draw_rect(x-5,y,w+10,h, skew, 0, 70, border_size*3, border:GetTexture("$BaseTexture"):Width(), false)
+		draw_rect(x-5,y,w+10,h, -skew, 0, 70, border_size*3, border:GetTexture("$BaseTexture"):Width(), false)
 	end
 
 	render.OverrideBlend(true, BLEND_ONE, BLEND_DST_COLOR, BLENDFUNC_ADD)
 	render.SetBlend(0.980)
 	render.SetColorModulation(0,0,0)
 	render.SetMaterial(no_texture)
-	draw_rect(x,y,w,h, skew)
+	draw_rect(x,y,w,h, -skew)
 	render.OverrideBlend(false)
 
 	render.SetBlend(1)
 	render.SetMaterial(gradient)
 	render.SetColorModulation(r/255,g/255,b/255)
-	draw_rect(x,y,w * math.min(cur/max, 1),h, skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
+	draw_rect(x,y,w * math.min(cur/max, 1),h, -skew, 0, 20, 0, gradient:GetTexture("$BaseTexture"):Width())
 
 	render.SetMaterial(border)
 	render.SetColorModulation(1,1,1)
-	draw_rect(x,y,w,h, skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
+	draw_rect(x,y,w,h, -skew, 0, 70, border_size, border:GetTexture("$BaseTexture"):Width(), true)
 
 	if real_cur then
 		prettytext.DrawText({
@@ -484,7 +484,7 @@ hook.Add("HUDPaint", "jhud", function()
 	end
 
 	do
-		local x = x - 20
+		local x = x - 0
 		local y = y - 20
 
 		if not jrpg.IsEnabled(ply) then
@@ -854,6 +854,7 @@ do
 					m:Translate(Vector(x,y,0))
 					m:Rotate(Angle(0,smooth_i/max * 360,0))
 					m:Translate(Vector(90,0,0))
+					m:Scale(Vector(1,1,1)*0.4)
 
 					cam.PushModelMatrix(m)					
 						prettytext.DrawText({
@@ -861,7 +862,7 @@ do
 							x = 0, 
 							y = 0, 
 							font = "gabriola", 
-							size = 40,
+							size = 100,
 							x_align = 0,
 							y_align = -0.5,
 							
