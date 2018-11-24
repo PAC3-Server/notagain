@@ -25,10 +25,10 @@ local function calc_gesture_animations(ply)
 		if f > 0 and f <= 1 then
 			local f = -f + 1
 
-			if data.callback then
-				data.callback(f)
-			end
-
+			if data.callback and data.callback(f) == false then
+				data.time = CurTime() + f
+			end	
+			
 			ply:SetPlaybackRate(0)
 			ply:AddVCDSequenceToGestureSlot(data.slot, data.seq, Lerp(f, data.start, data.stop), true)
 
