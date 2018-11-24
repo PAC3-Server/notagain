@@ -187,7 +187,7 @@ end)
 if SERVER then
 
 	function jrpg.Loadout(ply)
-		ply:Give("weapon_shield_soldiers")
+		ply:Give("weapon_shield_dark_silver")
 		ply:Give("potion_health")
 		ply:Give("potion_mana")
 		ply:Give("potion_stamina")

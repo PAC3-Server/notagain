@@ -34,15 +34,15 @@ hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
 
-	if ply.sword_anim_cycle then
+	if ply.sword_anim_cycle and ply:IsOnGround() then
 		local f = ply.sword_anim_cycle
-		if f > 0 and f < 0.7 then
-			if f >= ply.sword_anim_info.damage_frac then
-				mv:SetForwardSpeed(25)
-			else
-				mv:SetForwardSpeed(0)
+		if f > 0 and f < 0.9 then
+			if f <= ply.sword_anim_info.damage_frac then
+				local dir = ply:GetAimVector()
+				dir.z = 0
+				dir = dir*60
+				mv:SetVelocity(dir)
 			end
-			mv:SetSideSpeed(0)
 		end
 	end
 end)
@@ -82,15 +82,15 @@ end)
 
 function SWEP:Animation(type)
 	local ply = self.Owner
-	local info = self.MoveSet2.light[math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2.light))]
+	local info = self.MoveSet2[type][math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2[type]))]
 	ply.sword_anim_info = info
 	ply.sword_damaged = nil
 	ply.sword_anim_cycle = nil
 	jrpg.PlayGestureAnimation(ply, {
 		seq = info.seq,
 		duration = 0.5,
-		start = info.start,
-		stop = info.stop,
+		start = info.min,
+		stop = info.max,
 		speed = self.OverallSpeed,
 		callback = function(f)
 			ply.sword_anim_cycle = f
@@ -124,6 +124,9 @@ function SWEP:Animation(type)
 					end
 
 					ply.sword_damaged = true
+
+					self:SetNextPrimaryFire(CurTime())
+					self:SetNextSecondaryFire(CurTime())
 				end
 			end
 		end
@@ -186,7 +189,7 @@ if CLIENT then
 			render.SetBlend(1)
 		end
 
-		if self.Owner:IsValid() and self.Owner.sword_anim_info then
+		if self.Owner:IsValid() and self.Owner.sword_anim_cycle and self.Owner.sword_anim_cycle < self.Owner.sword_anim_info.damage_frac then
 			if self:GetNWBool("wepstats_elemental") then
 				for k, v in pairs(jdmg.types) do
 					if self:GetNWBool("wepstats_elemental_" .. k) then
@@ -263,7 +266,7 @@ if CLIENT then
 end
 
 function SWEP:Initialize()
-	self:SetHoldType("hand")
+	self:SetHoldType("hands")
 	self:SetModelScale(self.ModelScale)
 	--self:SetModelScale(1.25)
 end
@@ -358,7 +361,7 @@ if SERVER then
 end
 
 function SWEP:Attack(type)
-	self:SetHoldType("none")
+	self:SetHoldType("hands")
 	-- self.Owner:SetVelocity(self.Owner:GetAimVector()*500)
 
 	if SERVER then
@@ -375,18 +378,16 @@ function SWEP:Attack(type)
 end
 
 function SWEP:PrimaryAttack()
-	--if self.Owner.sword_anim then return end
-	self:Attack(3, 0.3)
-	self:SetNextPrimaryFire(CurTime() + 0.5)
-	self:SetNextSecondaryFire(CurTime() + 0.5)
+	self:Attack("light")
+	self:SetNextPrimaryFire(CurTime() + 5)
+	self:SetNextSecondaryFire(CurTime() + 5)
 end
 
 
 function SWEP:SecondaryAttack()
-	--if self.Owner.sword_anim then return end
-	self:Attack(1, 0.25)
-	self:SetNextPrimaryFire(CurTime() + 0.5)
-	self:SetNextSecondaryFire(CurTime() + 0.5)
+	self:Attack(self.MoveSet2.heavy and "heavy" or "light")
+	self:SetNextPrimaryFire(CurTime() + 5)
+	self:SetNextSecondaryFire(CurTime() + 5)
 end
 
 weapons.Register(SWEP, SWEP.ClassName)
@@ -399,7 +400,7 @@ do
 	SWEP.PrintName = "virtuous contract"
 	SWEP.Spawnable = true
 	SWEP.Category = "JRPG"
-	SWEP.OverallSpeed = 1
+	SWEP.OverallSpeed = 1.25
 
 	SWEP.MoveSet2 = {
 		light = {
@@ -412,7 +413,6 @@ do
 				damage_frac = 0.3,
 				damage_ang = Angle(45,-90,0),
 			},
-
 			{
 				seq = "phalanx_b_s2_t3",
 				duration = 0.5,
@@ -574,7 +574,6 @@ do
 		return pos + ang:Forward() * -20, pos + ang:Forward() * 20
 	end
 
-
 	weapons.Register(SWEP, SWEP.ClassName)
 end
 
@@ -583,7 +582,7 @@ do
 	SWEP.ClassName = "weapon_jsword_beastlord"
 	SWEP.Base = "weapon_jsword_base"
 
-	SWEP.OverallSpeed = 1.5
+	SWEP.OverallSpeed = 0.8
 	SWEP.SwordRange = 60
 	SWEP.Damage = 60
 	SWEP.Force = 5
@@ -591,18 +590,9 @@ do
 	SWEP.MoveSet2 = {
 		light = {
 			{
-				seq = "vanguard_b_s1_t3",
-				duration = 1,
-				min = 0,
-				max = 1,
-
-				damage_frac = 0.7,
-				damage_ang = Angle(45,-90,0),
-			},
-			{
 				seq = "vanguard_b_s2_t3",
 				duration = 1,
-				min = 0.25,
+				min = 0.2,
 				max = 1,
 
 				damage_frac = 0.3,
@@ -618,18 +608,9 @@ do
 				damage_ang = Angle(90,-90,0),
 			},
 			{
-				seq = "vanguard_b_s3_t1",
-				duration = 1,
-				min = 0,
-				max = 0.6,
-
-				damage_frac = 0.7,
-				damage_ang = Angle(90,-90,0),
-			},
-			{
 				seq = "vanguard_b_s3_t3",
 				duration = 1,
-				min = 0,
+				min = 0.1,
 				max = 1,
 
 				damage_frac = 0.4,
@@ -638,7 +619,7 @@ do
 			{
 				seq = "vanguard_b_s3_t2",
 				duration = 1,
-				min = 0.1,
+				min = 0.25,
 				max = 1,
 
 				damage_frac = 0.4,

@@ -124,13 +124,21 @@ do
 			end
 		end
 
+		local function draw(self, ent, pos, ang)
+			self.smooth_ang = self.smooth_ang or ang
+			self.smooth_ang = LerpAngle(FrameTime() * 10, self.smooth_ang, ang)			
+			ent:SetPos(pos)
+			ent:SetAngles(self.smooth_ang)
+			ent:SetupBones()
+			ent:DrawModel()
+		end
+
 		function ENT:Draw()
 			local ply = self:GetOwner()
 			if not ply:IsValid() then return end
 
 
 			local pos, ang = self:GetPosAng()
-
 			local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
 
 			if id then
@@ -144,10 +152,7 @@ do
 					local pos, ang = ply:GetBonePosition(id)
 					local pos, ang = self:TranslateModelPosAng(pos, ang, true)
 
-					self:SetPos(pos)
-					self:SetAngles(ang)
-					self:SetupBones()
-					self:DrawModel()
+					draw(self, self, pos, ang)
 
 					return
 				end
@@ -155,16 +160,9 @@ do
 			end
 
 			if self.csent then
-				pos, ang = self:CSTranslateModelPosAng(pos, ang)
-
-				self.csent:SetPos(pos)
-				self.csent:SetAngles(ang)
-				self.csent:DrawModel()
+				draw(self, self.csent, self:CSTranslateModelPosAng(pos, ang))
 			else
-				self:SetPos(pos)
-				self:SetAngles(ang)
-				self:SetupBones()
-				self:DrawModel()
+				draw(self, self, pos, ang)
 			end
 		end
 
@@ -235,6 +233,36 @@ do
 	function SWEP:PrimaryAttack() end
 	function SWEP:SecondaryAttack() end
 
+	function SWEP:ShowShield()
+		local ply = self.Owner
+
+		if ply.shield_timer and ply.shield_timer > CurTime() then return end
+
+		if jattributes.GetStamina(ply) == 0 then return end
+
+		ply:SetNW2Bool("wield_shield", true)
+
+		if SERVER then
+			ply:GetNWEntity("shield"):SetCollisionGroup(COLLISION_GROUP_NONE)
+			ply:GetNWEntity("shield"):GetPhysicsObject():EnableCollisions(true)
+		end
+
+		return true
+	end
+
+	function SWEP:HideShield()
+		local ply = self.Owner
+
+		ply:SetNW2Bool("wield_shield", false)
+
+		if SERVER then
+			ply:GetNWEntity("shield"):GetPhysicsObject():EnableCollisions(false)
+			ply:GetNWEntity("shield"):SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+		end
+
+		return true
+	end
+
 	if SERVER then
 		local shields = {}
 
@@ -254,7 +282,7 @@ do
 			local ply = self:GetOwner()
 
 			for k, v in pairs(ply:GetWeapons()) do
-				if v.is_shield then
+				if v.is_shield and v ~= self then
 					v:SecondaryAttack()
 				end
 			end
@@ -267,31 +295,6 @@ do
 		function SWEP:SecondaryAttack()
 			self:OnRemove()
 			self.active = false
-		end
-
-		function SWEP:ShowShield()
-			local ply = self.Owner
-
-			if ply.shield_timer and ply.shield_timer > CurTime() then return end
-
-			if jattributes.GetStamina(ply) == 0 then return end
-
-			ply:SetNWBool("wield_shield", true)
-			ply:GetNWEntity("shield"):SetCollisionGroup(COLLISION_GROUP_NONE)
-			ply:GetNWEntity("shield"):GetPhysicsObject():EnableCollisions(true)
-
-			return true
-		end
-
-		function SWEP:HideShield()
-			local ply = self.Owner
-
-			ply:SetNWBool("wield_shield", false)
-
-			ply:GetNWEntity("shield"):GetPhysicsObject():EnableCollisions(false)
-			ply:GetNWEntity("shield"):SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-
-			return true
 		end
 
 		function SWEP:OnRemove()
@@ -486,8 +489,6 @@ local shields = {
 	}
 }
 
-local shields = {}
-
 local files = file.Find("models/demonssouls/shields/*.mdl", "GAME")
 for k,v in pairs(files) do
 	table.insert(shields, {
@@ -502,7 +503,7 @@ for k,v in pairs(files) do
 				ang:RotateAroundAxis(ang:Forward(), -90)
 			end
 
-			ang:RotateAroundAxis(ang:Up(), -90)
+			ang:RotateAroundAxis(ang:Up(), 90)
 			ang:RotateAroundAxis(ang:Forward(), 180 + 12.25)
 
 			return pos, ang
@@ -531,46 +532,50 @@ hook.Add("SetupMove", "shield", function(ply, ucmd)
 	end
 end)
 
-if SERVER then
-	function EnableShield(ply, b)
-		if b then
-			for k,v in pairs(ply:GetWeapons()) do
-				if v.is_shield and ply:GetActiveWeapon() ~= v then
+function EnableShield(ply, b)
+	if b then
+		for k,v in pairs(ply:GetWeapons()) do
+			if v.is_shield and ply:GetActiveWeapon() ~= v then
+				if SERVER then 
 					v:GlobalThink()
-					if ply:GetNWEntity("shield", NULL):IsValid() then
-						v:ShowShield()
-					end
-					break
 				end
+				if ply:GetNWEntity("shield", NULL):IsValid() then
+					v:ShowShield()
+				end
+				break
 			end
-		else
-			for k,v in pairs(ply:GetWeapons()) do
-				if v.is_shield and ply:GetActiveWeapon() ~= v then
+		end
+	else
+		for k,v in pairs(ply:GetWeapons()) do
+			if v.is_shield and ply:GetActiveWeapon() ~= v then
+				if SERVER then 
 					v:GlobalThink()
-					if ply:GetNWEntity("shield", NULL):IsValid() then
-						v:HideShield()
-					end
-					break
 				end
+				if ply:GetNWEntity("shield", NULL):IsValid() then
+					v:HideShield()
+				end
+				break
 			end
 		end
 	end
+end
 
+hook.Add("KeyPress", "shield", function(ply, key)
+	if key ~= IN_WALK then return end
+	EnableShield(ply, true)
+end)
+
+hook.Add("KeyRelease", "shield", function(ply, key)
+	if key ~= IN_WALK then return end
+	EnableShield(ply, false)
+end)
+
+if SERVER then
 	concommand.Add("+jshield", function(ply)
 		EnableShield(ply, true)
 	end)
 
 	concommand.Add("-jshield", function(ply)
-		EnableShield(ply, false)
-	end)
-
-	hook.Add("KeyPress", "shield", function(ply, key)
-		if key ~= IN_WALK then return end
-		EnableShield(ply, true)
-	end)
-
-	hook.Add("KeyRelease", "shield", function(ply, key)
-		if key ~= IN_WALK then return end
 		EnableShield(ply, false)
 	end)
 
@@ -586,41 +591,30 @@ local function manip_angles(ply, id, ang)
 		ply:ManipulateBoneAngles(id, ang)
 	end
 end
-
+local speed = 1/0.15
 hook.Add("UpdateAnimation", "shield", function(ply)
+	local weight = 0
+
 	if jrpg.IsWieldingShield(ply) then
-		ply.shield_unwield_time = nil
-		ply.shield_wield_time = ply.shield_wield_time or CurTime()
-		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_bow"), math.min(((CurTime() - ply.shield_wield_time) ^ 0.3) * 0.4, 0.3), false)
-
-		if CLIENT then
-			local id = ply:LookupBone("ValveBiped.Bip01_L_UpperArm")
-			if id then
-				manip_angles(ply, id, Angle(math.Clamp(math.NormalizeAngle(ply:EyeAngles().p - 90), -180,-90),0,0))
-			end
-		end
-
---		return true
+		ply.shield_wield_time = ply.shield_wield_time or CurTime()		
+		weight = math.Clamp((CurTime() - ply.shield_wield_time)*speed, 0, 1)
 	elseif ply.shield_wield_time then
-		ply.shield_unwield_time = ply.shield_unwield_time or CurTime()
-		local cycle = -math.min(((CurTime() - ply.shield_unwield_time) ^ 1.25)*0.8, 0.3)+0.3
-		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("gesture_bow"), cycle, false)
-		if cycle == 0 then
+		ply.shield_unwield_time = ply.shield_unwield_time or CurTime()		
+		weight = math.Clamp((CurTime() - ply.shield_unwield_time)*speed, 0, 1)
+		weight = -weight + 1 
+
+		if weight == 0 then
 			ply.shield_wield_time = nil
 			ply.shield_unwield_time = nil
-			ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, 0)
-			local id = ply:LookupBone("ValveBiped.Bip01_L_UpperArm")
-			if id then
-				ply:ManipulateBoneAngles(id, Angle(0,0,0))
-			end
 		end
+	end
 
-		if CLIENT then
-			local id = ply:LookupBone("ValveBiped.Bip01_L_UpperArm")
-			if id then
-				manip_angles(ply, id, Angle(0,0,0))
-			end
-		end
+	ply.shield_smooth_weight = ply.shield_smooth_weight or weight
+	ply.shield_smooth_weight = ply.shield_smooth_weight + ((weight - ply.shield_smooth_weight) * FrameTime() * 25)
+
+	if ply.shield_smooth_weight > 0.001 then
+		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("walk_knife"), 0, false)
+		ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, ply.shield_smooth_weight)
 	end
 
 	if ply:GetNWBool("shield_stunned") then
@@ -652,5 +646,5 @@ hook.Add("EntityTakeDamage", "shield", function(ent, dmginfo)
 end)
 
 function jrpg.IsWieldingShield(ply)
-	return ply:GetNWEntity("shield"):IsValid() and ply:GetNWBool("wield_shield")
+	return ply:GetNWEntity("shield"):IsValid() and ply:GetNW2Bool("wield_shield")
 end
