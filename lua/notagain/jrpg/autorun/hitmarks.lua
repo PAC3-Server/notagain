@@ -42,6 +42,8 @@ if CLIENT then
 		["$Additive"] = 1,
 	})
 
+	local size_mult = 1
+
 	local hitmark_fonts = {
 		{
 			min = 0,
@@ -49,7 +51,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 20,
+			size = 20*size_mult,
 			color = Color(0, 0, 0, 255),
 		},
 		{
@@ -58,7 +60,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 26,
+			size = 26*size_mult,
 			color = Color(150, 150, 50, 255),
 		},
 		{
@@ -67,7 +69,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 50,
-			size = 30,
+			size = 30*size_mult,
 			color = Color(200, 50, 50, 255),
 		},
 		{
@@ -76,7 +78,7 @@ if CLIENT then
 			font = "korataki",
 			blur_size = 8,
 			weight = 120,
-			size = 40,
+			size = 40*size_mult,
 			--color = Color(200, 50, 50, 255),
 		},
 	}
@@ -88,7 +90,6 @@ if CLIENT then
 	local max_bounce = 2
 	local bounce_plane_height = 0
 
-	local life_time = 3
 	local hitmarks = {}
 	local height_offset = 0
 
@@ -99,19 +100,29 @@ if CLIENT then
 
 		if hitmarks[1] then
 			local d = FrameTime()
+			local time = RealTime()
+			local t = time
 
-			for i = #hitmarks, 1, -1 do
+			for i = 1, #hitmarks do
 				local data = hitmarks[i]
 
 				local pos = data.real_pos
-				local vis = 1
 
+				local vis = 1
 				if data.ent:IsValid() then
 					if data.ent == LocalPlayer() and not data.ent:ShouldDrawLocalPlayer() then
 						continue
 					end
 
-					pos = LocalToWorld(data.real_pos, Angle(0,0,0), data.ent:GetPos(), data.first_angle)
+					if data.move_me then
+						data.real_pos2 = data.real_pos2 or VectorRand() * (data.ent:BoundingRadius()*0.5)
+						data.move_pos_timer = data.move_pos_timer or RealTime()+1
+						local f = data.move_pos_timer - RealTime()
+						f = math.Clamp(f, 0,1)
+						pos = LerpVector(f^20, data.real_pos2, data.real_pos)
+					end
+
+					pos = LocalToWorld(pos, Angle(0,0,0), data.ent:GetPos(), data.first_angle)
 					data.last_pos = pos
 
 					vis = data.ent.hm_pixvis_vis or vis
@@ -119,11 +130,12 @@ if CLIENT then
 					pos = data.last_pos or pos
 				end
 
-				local t = RealTime() + data.offset
-
-				local fraction =  (data.life - t) / life_time
-
+				local fraction =  (time - data.start_time) / data.time_length
+				fraction = -fraction + 1
 				local fade = math.Clamp(fraction ^ 0.25, 0, 1)
+
+
+				local size_mult = fraction > 0.9 and 2 or 1
 
 				if data.bounced < max_bounce then
 					data.vel = data.vel + Vector(0,0,-0.25)
@@ -168,6 +180,9 @@ if CLIENT then
 						y = y + (fade-0.5)*150
 					end
 
+					local hm = (i/#hitmarks) ^ 0.5
+					vis = vis * hm
+
 					fade = fade * vis
 
 					surface.SetAlphaMultiplier(fade)
@@ -187,8 +202,7 @@ if CLIENT then
 						font_info.color = HSVToColor((t*500)%360, 0.75, 1)
 					end
 
-
-					local w, h = prettytext.GetTextSize(txt, font_info.font, font_info.size, font_info.weight, font_info.blur_size)
+					local w, h = prettytext.GetTextSize(txt, font_info.font, font_info.size * size_mult, font_info.weight, font_info.blur_size)
 					local hoffset = data.height_offset * -h
 
 					if data.xp then
@@ -204,18 +218,38 @@ if CLIENT then
 					surface.SetMaterial(line_mat)
 
 					draw_line(
-						x - w, hoffset + y + h + line_height,
-						x - w + w * 3, hoffset + y + h + line_height,
-						line_width,
+						x - w*1.5, 
+						y + h/2.5,
+
+						x - w*-1.5, 
+						y + h/2.5,
+						line_width * (font_info.size/30) * size_mult,
 						true
 					)
 
-					prettytext.Draw(txt, x, hoffset + y, font_info.font, font_info.size, font_info.weight, font_info.blur_size, Color(255, 255, 255, 255), font_info.color)
+					prettytext.DrawText({
+						text = txt,
+						font = font_info.font,
+						weight = font_info.weight,
+						size = font_info.size * size_mult,
+						x = x,
+						y = y,
+						blur_size = font_info.blur_size+size_mult*5,
+						blur_overdraw = 3 + ((size_mult-1)*5),
+						x_align = -0.5,
+						y_align = -0.5,
+					})
 
 					surface.SetAlphaMultiplier(1)
 				end
 
 				if fraction <= 0 then
+					data.remove_me = true
+				end
+			end
+
+			for i = #hitmarks, 1, -1 do
+				if hitmarks[i].remove_me then
 					table.remove(hitmarks, i)
 				end
 			end
@@ -244,29 +278,36 @@ if CLIENT then
 
 		height_offset = (height_offset + 1)%5
 
-		table.insert(
-			hitmarks,
-			{
-				ent = ent,
-				str = str,
-				first_angle = ent:IsValid() and ent:GetAngles() or Angle(0,0,0),
-				real_pos = pos,
-				dmg = dmg,
-				max_health = ent.hm_max_health or dmg,
+		for i,v in ipairs(hitmarks) do
+			if v.ent:IsValid() then
+				if not v.move_me then
+					v.move_me = true
+				end
+			end
+		end
 
-				life = RealTime() + offset + life_time + math.random(),
-				dir = vel,
-				pos = Vector(),
-				vel = vel,
-				rec = rec,
+		table.insert(hitmarks, {
+			ent = ent,
+			str = str,
+			first_angle = ent:IsValid() and ent:GetAngles() or Angle(0,0,0),
+			real_pos = pos,
+			dmg = dmg,
+			max_health = ent.hm_max_health or dmg,
 
-				offset = offset,
-				height_offset = height_offset,
-				xp = xp,
+			start_time = RealTime(),
+			time_length = math.random() + 0.5,
 
-				bounced = 0
-			}
-		)
+			dir = vel,
+			pos = Vector(),
+			vel = vel,
+			rec = rec,
+
+			offset = offset,
+			height_offset = height_offset,
+			xp = xp,
+
+			bounced = 0
+		})
 
 		if ent ~= LocalPlayer() then
 			healthbars.ShowHealth(ent)
@@ -289,7 +330,7 @@ if CLIENT then
 		ent.hm_cur_health = cur
 		ent.hm_max_health = max
 
-		if ent == LocalPlayer() and dmg ~= 0 and dmg ~= -1 then
+		if ent == LocalPlayer() and (dmg > 0) then
 			return
 		end
 
@@ -377,7 +418,8 @@ if SERVER then
 	util.AddNetworkString("hitmark_xp")	
 
 	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
-		if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
+	--	if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
+
 		local filter = {}
 		for k,v in pairs(player.GetAll()) do
 			if v:GetPos():Distance(ent:GetPos()) < 1500 * (ent:GetModelScale() or 1) then
@@ -406,8 +448,8 @@ if SERVER then
 
 				if damage > 0 then
 					if last_health == ent:Health() then
-						if ent:IsNPC() or ent:IsPlayer() then
-							damage = 0
+						if true or jrpg.IsActorAlive(ent) then
+							damage = math.random(30,200)
 						else
 							return
 						end
@@ -415,8 +457,6 @@ if SERVER then
 						damage = last_health - ent:Health()
 					end
 				end
-
-				if damage == 0 and not jrpg.IsActorAlive(ent) then return end
 
 				hitmarkers.ShowDamage(ent, -damage, pos, filter)
 			end
