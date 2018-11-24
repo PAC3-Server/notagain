@@ -33,12 +33,14 @@ local function calc_gesture_animations(ply)
 			ply:AddVCDSequenceToGestureSlot(data.slot, data.seq, Lerp(f, data.start, data.stop), true)
 
 			local weight = math.EaseInOut(f, 0, 1)
-			if weight > 0.5 then
+			if weight > 0.5 then	
 				weight = -weight + 1
 			end
-			weight = math.Clamp(weight * 4, 0, 1) * data.weight
+			weight = math.Clamp(weight * 4, 0, 1)
+			weight = weight ^ 0.4
+			weight = weight * data.weight
 			
-			ply:AnimSetGestureWeight(data.slot, weight ^ 0.4)
+			ply:AnimSetGestureWeight(data.slot, weight)
 		end
 
 		if f <= 0 then
@@ -217,10 +219,45 @@ local find = {
 	"phalanx_",
 	"ryoku_",
 	"vanguard_",
+	"idle_all_01",
 }
 
+local translate = {
+	["ValveBiped.Bip01_Spine"] = Vector(0,1.25,0),
+	["ValveBiped.Bip01_Spine1"] = Vector(-1,1,0),
+	["ValveBiped.Bip01_Spine4"] = Vector(-1,0,0),
+	["ValveBiped.Bip01_R_Clavicle"] = Vector(1, 0, 1),
+	["ValveBiped.Bip01_L_Clavicle"] = Vector(1, 0, -1),
+	["ValveBiped.Bip01_L_UpperArm"] = Vector(-1,0,0),
+	["ValveBiped.Bip01_R_UpperArm"] = Vector(-1,0,0),
+
+}
+
+local function reset_pose(ply)
+	if ply.jrpg_female_anim then
+		for k,v in pairs(translate) do
+			manip_pos(ply, ply:LookupBone(k), Vector(0,0,0))
+		end
+		ply.jrpg_female_anim = nil
+	end
+end
+
 local function male2female_animations(ply)
-	if jrpg.GetGender(ply) ~= "female" then return end
+	if jrpg.GetGender(ply) ~= "female" then 
+		reset_pose(ply)
+		return
+	end
+
+	--[[if not ply:KeyDown(IN_DUCK) then
+		ply:SetSequence(ply:LookupSequence("reference"))
+		ply:AddVCDSequenceToGestureSlot(0, ply:LookupSequence("reference"), 0, true)
+		ply:AnimSetGestureWeight(0, 1)
+		reset_pose(ply)
+	else
+		ply:SetSequence(ply:LookupSequence("phalanx_reference"))
+		ply:AddVCDSequenceToGestureSlot(0, ply:LookupSequence("phalanx_reference"), 0, true)
+		ply:AnimSetGestureWeight(0, 1)
+	end]]
 
 	local seq = ply:GetSequence()
 	local name = ply:GetSequenceName(seq)
@@ -233,24 +270,29 @@ local function male2female_animations(ply)
 				break
 			end
 		end
+
+		if not ok and ply.jrpg_gesture_animations then
+			for _, info in ipairs(ply.jrpg_gesture_animations) do
+				local name = ply:GetSequenceName(info.seq)
+				for _, str in ipairs(find) do
+					if name:find(str, nil, true) then
+						ok = true
+						break
+					end
+				end
+				if ok then
+					break
+				end
+			end
+		end
+
 		if ok then
-			manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Head1"), Vector(-2,1,0))
-			manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Neck1"), Vector(-0.5,0,0))
-			manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_R_Clavicle"), Vector(0,0,1))
-			manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_L_Clavicle"), Vector(0,0,-1))
-			manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Vector(-2,-1,0))
-			manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_R_UpperArm"), Vector(-2,-1,0))
+			for k,v in pairs(translate) do
+				manip_pos(ply, ply:LookupBone(k), v)
+			end
 			ply.jrpg_female_anim = true
 		else
-			if ply.jrpg_female_anim then
-				manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Head1"), Vector(0,0,0))
-				manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_Neck1"), Vector(0,0,0))
-				manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_R_Clavicle"), Vector(0,0,0))
-				manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_L_Clavicle"), Vector(0,0,0))
-				manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_L_UpperArm"), Vector(0,0,0))
-				manip_pos(ply, ply:LookupBone("ValveBiped.Bip01_R_UpperArm"), Vector(0,0,0))
-				ply.jrpg_female_anim = nil
-			end
+			reset_pose(ply)
 		end
 	end	
 end
