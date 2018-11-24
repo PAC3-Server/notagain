@@ -215,7 +215,7 @@ do -- view
 			end
 		end
 
-		--[[if ok and not jchat.IsActive() and battlecam.IsKeyDown("simple_target") and not LocalPlayer():GetNWEntity("juse_ent"):IsValid() or (jtarget.IsSelecting() and input.IsKeyDown(KEY_ENTER)) then
+		if ok and not jchat.IsActive() and battlecam.IsKeyDown("simple_target") and not LocalPlayer():GetNWEntity("juse_ent"):IsValid() or (jtarget.IsSelecting() and input.IsKeyDown(KEY_ENTER)) then
 
 			if jtarget.IsSelecting() then
 				jtarget.StopSelection()
@@ -230,7 +230,7 @@ do -- view
 				battlecam.last_target_select = RealTime() + 0.15
 				battlecam.target_select_wait_for_release = true
 			end
-		end]]
+		end
 
 		if true then
 			-- do a more usefull and less cinematic view if we're holding ctrl
