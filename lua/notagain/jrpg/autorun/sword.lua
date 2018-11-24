@@ -82,18 +82,28 @@ end)
 
 function SWEP:Animation(type)
 	local ply = self.Owner
-	local info = self.MoveSet2[type][math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2[type]))]
+	local index = math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2[type]))
+	local info = self.MoveSet2[type][index]
+
 	ply.sword_anim_info = info
 	ply.sword_damaged = nil
 	ply.sword_anim_cycle = nil
+
 	jrpg.PlayGestureAnimation(ply, {
 		seq = info.seq,
 		duration = 0.5,
 		start = info.min,
 		stop = info.max,
-		speed = self.OverallSpeed,
+		speed = self.OverallSpeed * (info.speed or 1),
 		callback = function(f)
 			ply.sword_anim_cycle = f
+
+			if info.callback then
+				if info.callback(self, f) == false then
+					return false
+				end
+			end
+
 			if f >= info.damage_frac then
 				if not ply.sword_damaged then
 					local pos = ply:WorldSpaceCenter() + ply:GetForward() * self.SwordRange
@@ -104,13 +114,14 @@ function SWEP:Animation(type)
 					for k,v in pairs(ents.FindInSphere(pos, size)) do
 						if v ~= ply and v:GetOwner() ~= ply then
 							if SERVER then
+								local z_mult = (math.abs(ply.sword_last_zvel or ply:GetVelocity().z) / 1000) +1
 								local d = DamageInfo()
 								d:SetAttacker(ply)
 								d:SetInflictor(ply)
-								d:SetDamage(self.Damage)
+								d:SetDamage(self.Damage * z_mult)
 								d:SetDamageType(DMG_SLASH)
 								d:SetDamagePosition(ply:EyePos())
-								d:SetDamageForce(ang:Forward() * 10000 * self.Force)
+								d:SetDamageForce(ang:Forward() * 1000 * self.Force * z_mult)
 								v:TakeDamageInfo(d)
 							else
 								v:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 70, math.Rand(140,160))
@@ -137,9 +148,9 @@ if CLIENT then
 	net.Receive(SWEP.ClassName, function()
 		local wep = net.ReadEntity()
 		if not wep:IsValid() or not wep.Attack then return end
-		local light = net.ReadBool()
+		local type = net.ReadString()
 		local delay = net.ReadFloat()
-		wep:Attack(light and "light" or "heavy")
+		wep:Attack(type)
 	end)
 
 	local suppress_player_draw = false
@@ -368,7 +379,7 @@ function SWEP:Attack(type)
 		self:Animation(type)
 		net.Start(SWEP.ClassName, true)
 			net.WriteEntity(self)
-			net.WriteBool(type == "light")
+			net.WriteString(type)
 		net.SendOmit(self.Owner)
 	end
 
@@ -378,7 +389,13 @@ function SWEP:Attack(type)
 end
 
 function SWEP:PrimaryAttack()
-	self:Attack("light")
+	if not self.Owner:IsOnGround() then
+		self:Attack("jump")
+	elseif self.Owner:GetVelocity():Dot(self.Owner:GetForward()) > 50 then
+		self:Attack("forward")
+	else
+		self:Attack("light")
+	end
 	self:SetNextPrimaryFire(CurTime() + 5)
 	self:SetNextSecondaryFire(CurTime() + 5)
 end
@@ -402,18 +419,8 @@ do
 	SWEP.Category = "JRPG"
 	SWEP.OverallSpeed = 1.25
 
-	SWEP.MoveSet2 = {
-		light = {
-			{
-				seq = "phalanx_b_s2_t2",
-				duration = 0.5,
-				min = 0,
-				max = 0.7,
 
-				damage_frac = 0.3,
-				damage_ang = Angle(45,-90,0),
-			},
-			{
+			--[[{
 				seq = "phalanx_b_s2_t3",
 				duration = 0.5,
 				min = 0,
@@ -439,6 +446,77 @@ do
 
 				damage_frac = 0.4,
 				damage_ang = Angle(60,90,0),
+			},]]
+
+	SWEP.MoveSet2 = {
+		light = {
+			{
+				seq = "phalanx_b_s1_t2",
+				speed = 1,
+				min = 0,
+				max = 1,
+
+				damage_frac = 0.23,
+				damage_ang = Angle(-70,-90,0),
+			},
+			{
+				seq = "phalanx_b_s2_t2",
+				speed = 1,
+				min = 0,
+				max = 1,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,-90,0),
+			},
+		},
+		heavy = {
+			{
+				seq = "phalanx_b_s1_t2",
+				speed = 0.6,
+				min = 0,
+				max = 1,
+
+				damage_frac = 0.23,
+				damage_ang = Angle(-70,-90,0),
+			},
+			{
+				seq = "phalanx_b_s2_t3",
+				speed = 1,
+				min = 0,
+				max = 1,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(45,-90,0),
+			},
+		},
+		jump = {
+			{
+				seq = "phalanx_h_s1_t3",
+				speed = 0.8,
+				min = 0,
+				max = 1,
+				damage_frac = 0.4,
+				damage_ang = Angle(90,0,0),
+				callback = function(self, f)
+					if f > 0.4 then
+						if not self.Owner:IsOnGround() then
+							self.Owner.sword_last_zvel = self.Owner:GetVelocity().z
+
+							return false 
+						end
+					end
+				end
+			},
+		},
+		forward = {
+			{
+				seq = "phalanx_b_s3_t2",
+				speed = 0.6,
+				min = 0,
+				max = 1,
+
+				damage_frac = 0.5,
+				damage_ang = Angle(-90,0,0),
 			},
 		},
 	}
