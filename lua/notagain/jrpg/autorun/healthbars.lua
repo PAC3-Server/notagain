@@ -109,41 +109,6 @@ if CLIENT then
 		return false
 	end)
 
-	local function surface_DrawTexturedRectRotatedPoint( x, y, w, h, rot)
-
-		x = math.ceil(x)
-		y = math.ceil(y)
-		w = math.ceil(w)
-		h = math.ceil(h)
-
-		local y0 = -h/2
-		local x0 = -w/2
-
-		local c = math.cos( math.rad( rot ) )
-		local s = math.sin( math.rad( rot ) )
-
-		local newx = y0 * s - x0 * c
-		local newy = y0 * c + x0 * s
-
-		surface.DrawTexturedRectRotated( x + newx, y + newy, w, h, rot )
-
-	end
-
-	-- close enough
-	local function draw_RoundedBoxOutlined(border_size, x, y, w, h, color )
-		x = math.ceil(x)
-		y = math.ceil(y)
-		w = math.ceil(w)
-		h = math.ceil(h)
-		border_size = border_size/2
-		surface.SetDrawColor(color)
-		surface.DrawRect(x, y, border_size*2, h, color)
-		surface.DrawRect(x+border_size*2, y, w-border_size*4, border_size*2)
-
-		surface.DrawRect(x+w-border_size*2, y, border_size*2, h)
-		surface.DrawRect(x+border_size*2, y+h-border_size*2, w-border_size*4, border_size*2)
-	end
-
     hook.Add("HUDPaint", "healthbars", function()
         if hook.Run("HUDShouldDraw", "Jhealthbars") == false then
             return
@@ -165,14 +130,19 @@ if CLIENT then
                 local world_pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2))
                 local pos = world_pos:ToScreen()
                 local dist = world_pos:Distance(EyePos())
+
+                local x,y,x2,y2 = jrpg.Get2DBoundingBox(ent)
+                pos.x = x + (x2-x)*0.5
+                pos.y = y - 20
+
                 local scale = ent:GetModelScale() and ent:GetModelScale() or 1
                 local radius = ent:BoundingRadius() * 5
                 local max_distance = scale * radius
                 fraction = fraction * ((-(dist / max_distance)+1) ^ 2)
 
-                ent.hm_pixvis = ent.hm_pixvis or util.GetPixelVisibleHandle()
-                ent.hm_pixvis_vis = util.PixelVisible(world_pos, ent:BoundingRadius()/5, ent.hm_pixvis)
-                local vis = ent.hm_pixvis_vis
+                --ent.hm_pixvis = ent.hm_pixvis or util.GetPixelVisibleHandle()
+                --ent.hm_pixvis_vis = util.PixelVisible(world_pos, ent:BoundingRadius()/5, ent.hm_pixvis)
+                local vis = 1--ent.hm_pixvis_vis
                 local selected_target = jtarget.GetEntity(LocalPlayer()) == ent
 
                 if selected_target then
@@ -223,7 +193,7 @@ if CLIENT then
                         border_size = 10
                         boss_bar_y = boss_bar_y + height + 20
                     else
-                        width = math.Clamp(width + (max - 50), 0, 500)
+                        --width = math.Clamp(width + (max - 50), 0, 500)
                     end
 
                     local width2 = width/2
