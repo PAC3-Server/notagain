@@ -427,7 +427,7 @@ function SWEP:Deploy()
 end
 
 function SWEP:ThrowAnimation(left_hand)
-	jrpg.PlayGestureAnimation(me, {
+	jrpg.PlayGestureAnimation(self.Owner, {
 		seq = "zombie_attack_0" .. (left_hand and 3 or 2),
 		start = 0.25,
 		stop = 1,
