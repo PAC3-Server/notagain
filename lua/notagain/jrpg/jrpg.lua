@@ -176,12 +176,26 @@ function jrpg.IsActorAlive(ent)
 	return ent:Health() > 0
 end
 
-jrpg.AddHook("OnEntityCreated", "jrpg_isalive", function(ent)
+hook.Add("OnEntityCreated", "jrpg_isalive", function(ent)
 	if ent.GetRagdollOwner and ent:GetRagdollOwner() and ent:GetRagdollOwner():IsValid() then
 		ent:GetRagdollOwner().jrpg_rag_ent = ent
 	end
 end)
 
+function jrpg.GetActorBody(ent)
+	if not jrpg.IsActorAlive(ent) then
+		if ent:IsPlayer() then
+			local rag = ent:GetRagdollEntity()
+			if IsValid(rag) then
+				return rag
+			end
+		elseif ent:IsNPC() and IsValid(ent.jrpg_rag_ent) then
+			return ent.jrpg_rag_ent
+		end
+	end
+	
+	return ent
+end
 
 
 if SERVER then
