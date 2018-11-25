@@ -1,3 +1,15 @@
+do
+	local META = FindMetaTable("Weapon")
+	META.jrpg_GetHoldType = META.jrpg_GetHoldType or META.GetHoldType
+
+	function META:GetHoldType(...)
+		if type(self:GetOwner().jrpg_holdtype) == "string" then
+			return self:GetOwner().jrpg_holdtype
+		end
+		return META.jrpg_GetHoldType(self, ...)
+	end
+end
+
 function jrpg.PlayGestureAnimation(ent, info)
 	ent.jrpg_gesture_animations = {}
 	ent.jrpg_gesture_animations = ent.jrpg_gesture_animations or {}
@@ -102,14 +114,14 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 		ply.m_flJumpStartTime = 0
 		ply.m_fGroundTime = 0
 
+		local holdtype = "all"
+		local wep = ply:GetActiveWeapon()
+
+		if wep:IsValid() then
+			holdtype = wep:GetHoldType()
+		end
+
 		if ply:Crouching() then
-			local holdtype = "all"
-			local wep = ply:GetActiveWeapon()
-
-			if wep:IsValid() then
-				holdtype = wep:GetHoldType()
-			end
-
 			-- airduck
 			local seq = ply:LookupSequence("cidle_" .. holdtype)
 			if seq < 1 then seq = ply:LookupSequence("cidle_all") end
@@ -119,13 +131,6 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 			end
 		elseif vel:Length() > 750 then
 			ply:SetCycle(0.57)
-
-			local holdtype = "all"
-			local wep = ply:GetActiveWeapon()
-
-			if wep:IsValid() then
-				holdtype = wep:GetHoldType()
-			end
 
 			local seq = ply:LookupSequence("swimming_" .. holdtype)
 
@@ -319,7 +324,7 @@ hook.Add("UpdateAnimation", "movement", function(ply)
 		manip_angles(ply, 0, Angle(0,0,0))
 	end
 
-	if jtarget.GetEntity(ply):IsValid() then
+	if jtarget.GetEntity(ply):IsValid() and not jrpg.IsWieldingShield(ply) then
 		ply.jrpg_bounce_anim_seed = ply.jrpg_bounce_anim_seed or math.random()
 		if (CurTime() + ply.jrpg_bounce_anim_seed)%0.5 < 0.25 then
 			if not ply.jrpg_bounce_anim then

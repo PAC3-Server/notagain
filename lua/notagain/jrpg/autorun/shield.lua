@@ -241,12 +241,8 @@ do
 		if jattributes.GetStamina(ply) == 0 then return end
 
 		ply:SetNW2Bool("wield_shield", true)
-
-		if SERVER then
-			ply:GetNWEntity("shield"):SetCollisionGroup(COLLISION_GROUP_NONE)
-			ply:GetNWEntity("shield"):GetPhysicsObject():EnableCollisions(true)
-		end
-
+		ply:GetNWEntity("shield"):SetSolid(SOLID_VPHYSICS)
+		
 		return true
 	end
 
@@ -254,11 +250,7 @@ do
 		local ply = self.Owner
 
 		ply:SetNW2Bool("wield_shield", false)
-
-		if SERVER then
-			ply:GetNWEntity("shield"):GetPhysicsObject():EnableCollisions(false)
-			ply:GetNWEntity("shield"):SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-		end
+		ply:GetNWEntity("shield"):SetSolid(SOLID_NONE)
 
 		return true
 	end
@@ -591,6 +583,29 @@ local function manip_angles(ply, id, ang)
 		ply:ManipulateBoneAngles(id, ang)
 	end
 end
+
+do
+	local translate = { }
+	translate[ ACT_MP_STAND_IDLE ] = ACT_HL2MP_IDLE_KNIFE
+	translate[ ACT_MP_WALK ] = ACT_HL2MP_WALK_KNIFE
+	translate[ ACT_MP_RUN ] = ACT_HL2MP_RUN_KNIFE
+	translate[ ACT_MP_CROUCH_IDLE ] = ACT_HL2MP_IDLE_CROUCH_KNIFE
+	translate[ ACT_MP_CROUCHWALK ] = ACT_HL2MP_WALK_CROUCH_KNIFE
+	translate[ ACT_MP_ATTACK_STAND_PRIMARYFIRE ] = ACT_HL2MP_GESTURE_RANGE_ATTACK_KNIFE
+	translate[ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE ] = ACT_HL2MP_GESTURE_RANGE_ATTACK_KNIFE
+	translate[ ACT_MP_RELOAD_STAND ] = ACT_HL2MP_GESTURE_RELOAD_KNIFE
+	translate[ ACT_MP_RELOAD_CROUCH ] = ACT_HL2MP_GESTURE_RELOAD_KNIFE
+	translate[ ACT_MP_JUMP ] = ACT_HL2MP_JUMP_KNIFE
+	translate[ ACT_MP_SWIM_IDLE ] = ACT_HL2MP_SWIM_KNIFE
+	translate[ ACT_MP_SWIM ] = ACT_HL2MP_SWIM_KNIFE
+
+	hook.Add("TranslateActivity", "shield", function(ply, act)
+		if jrpg.IsWieldingShield(ply) and translate[act] then
+			return translate[act]
+		end
+	end)
+end
+
 local speed = 1/0.15
 hook.Add("UpdateAnimation", "shield", function(ply)
 	local weight = 0
@@ -598,6 +613,8 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 	if jrpg.IsWieldingShield(ply) then
 		ply.shield_wield_time = ply.shield_wield_time or CurTime()		
 		weight = math.Clamp((CurTime() - ply.shield_wield_time)*speed, 0, 1)
+
+		ply.jrpg_holdtype = "knife"
 	elseif ply.shield_wield_time then
 		ply.shield_unwield_time = ply.shield_unwield_time or CurTime()		
 		weight = math.Clamp((CurTime() - ply.shield_unwield_time)*speed, 0, 1)
@@ -607,13 +624,17 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 			ply.shield_wield_time = nil
 			ply.shield_unwield_time = nil
 		end
+
+		ply.jrpg_holdtype = nil
 	end
+
+	weight = weight / (ply:GetVelocity():Length()+1)
 
 	ply.shield_smooth_weight = ply.shield_smooth_weight or weight
 	ply.shield_smooth_weight = ply.shield_smooth_weight + ((weight - ply.shield_smooth_weight) * FrameTime() * 25)
 
 	if ply.shield_smooth_weight > 0.001 then
-		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("walk_knife"), 0, false)
+		ply:AddVCDSequenceToGestureSlot(GESTURE_SLOT_CUSTOM, ply:LookupSequence("crouch_knife"), 0, false)
 		ply:AnimSetGestureWeight(GESTURE_SLOT_CUSTOM, ply.shield_smooth_weight)
 	end
 
