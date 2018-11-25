@@ -135,8 +135,7 @@ if CLIENT then
 				fraction = -fraction + 1
 				local fade = math.Clamp(fraction ^ 0.25, 0, 1)
 
-
-				local size_mult = fraction > 0.8 and 2 or 1
+				local size_mult = data.attacker == LocalPlayer() and fraction > 0.8 and 2 or 1
 
 				if data.bounced < max_bounce then
 					data.vel = data.vel + Vector(0,0,-0.25)
@@ -258,7 +257,7 @@ if CLIENT then
 		end
 	end)
 
-	function hitmarkers.ShowDamage(ent, dmg, pos, xp)
+	function hitmarkers.ShowDamage(ent, dmg, pos, xp, attacker)
 		ent = ent or NULL
 		dmg = dmg or 0
 		pos = pos or ent:EyePos()
@@ -281,7 +280,7 @@ if CLIENT then
 		height_offset = (height_offset + 1)%5
 
 		for i,v in ipairs(hitmarks) do
-			if v.ent:IsValid() then
+			if v.ent:IsValid() and v.attacker == LocalPlayer() then
 				if not v.move_me then
 					v.move_me = true
 				end
@@ -290,6 +289,7 @@ if CLIENT then
 
 		table.insert(hitmarks, {
 			ent = ent,
+			attacker = attacker,
 			str = str,
 			first_angle = ent:IsValid() and ent:GetAngles() or Angle(0,0,0),
 			real_pos = pos,
@@ -343,7 +343,7 @@ if CLIENT then
 			return
 		end
 
-		hitmarkers.ShowDamage(ent, dmg, pos)
+		hitmarkers.ShowDamage(ent, dmg, pos, nil, attacker)
 	end)
 
 	net.Receive("jrpg_hitmarks_custom", function()
@@ -462,6 +462,8 @@ if SERVER then
 			pos = ent:NearestPoint(pos)
 		end
 
+		local attacker = dmg:GetAttacker()
+
 		timer.Create(tostring(ent).."_hitmarker", 0, 1, function()
 			if ent:IsValid() then
 
@@ -473,7 +475,7 @@ if SERVER then
 					end
 				end
 
-				hitmarkers.ShowDamage(ent, -damage, pos, filter, dmg:GetAttacker())
+				hitmarkers.ShowDamage(ent, -damage, pos, filter, attacker)
 			end
 		end)
 	end)
