@@ -488,7 +488,8 @@ hook.Add("HUDPaint", "jhud", function()
 		local y = y - 20
 
 		if not jrpg.IsEnabled(ply) then
-			x = x - 280
+			x = x - 220
+			y = y + 10
 		end
 		
 		local c = team.GetColor(TEAM_FRIENDS)
