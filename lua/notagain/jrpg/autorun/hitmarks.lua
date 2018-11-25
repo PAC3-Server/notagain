@@ -115,7 +115,8 @@ if CLIENT then
 					end
 
 					if data.move_me then
-						data.real_pos2 = data.real_pos2 or VectorRand() * (data.ent:BoundingRadius()*0.5)
+						local min, max = data.ent:OBBMins(),data.ent:OBBMaxs()
+						data.real_pos2 = data.real_pos2 or Vector(math.Rand(min.x, max.x), math.Rand(min.y, max.y), math.Rand(min.z, max.z))
 						data.move_pos_timer = data.move_pos_timer or RealTime()+1
 						local f = data.move_pos_timer - RealTime()
 						f = math.Clamp(f, 0,1)
@@ -135,7 +136,7 @@ if CLIENT then
 				local fade = math.Clamp(fraction ^ 0.25, 0, 1)
 
 
-				local size_mult = fraction > 0.9 and 2 or 1
+				local size_mult = fraction > 0.8 and 2 or 1
 
 				if data.bounced < max_bounce then
 					data.vel = data.vel + Vector(0,0,-0.25)
@@ -180,7 +181,7 @@ if CLIENT then
 						y = y + (fade-0.5)*150
 					end
 
-					local hm = (i/#hitmarks) ^ 0.5
+					local hm = (i/#hitmarks) ^ 4
 					vis = vis * hm
 
 					fade = fade * vis
@@ -238,6 +239,7 @@ if CLIENT then
 						blur_overdraw = 3 + ((size_mult-1)*5),
 						x_align = -0.5,
 						y_align = -0.5,
+						background_color = font_info.color,
 					})
 
 					surface.SetAlphaMultiplier(1)
@@ -314,12 +316,19 @@ if CLIENT then
 		end
 	end
 
-	net.Receive("hitmark", function()
+	net.Receive("jrpg_hitmarks", function()
 		local ent = net.ReadEntity()
 		local dmg = math.Round(net.ReadFloat())
 		local pos = net.ReadVector()
 		local cur = math.Round(net.ReadFloat())
 		local max = math.Round(net.ReadFloat())
+		local attacker = net.ReadEntity()
+
+		if not jrpg.IsEnabled(LocalPlayer()) then
+			if not attacker:IsPlayer() or not jrpg.IsEnabled(attacker) then
+				return
+			end
+		end
 
 		if not ent.hm_last_health_time or ent.hm_last_health_time < CurTime() then
 			ent.hm_last_health = ent.hm_cur_health or max
@@ -337,12 +346,17 @@ if CLIENT then
 		hitmarkers.ShowDamage(ent, dmg, pos)
 	end)
 
-	net.Receive("hitmark_custom", function()
+	net.Receive("jrpg_hitmarks_custom", function()
 		local ent = net.ReadEntity()
 		local str = net.ReadString()
 		local pos = net.ReadVector()
 		local cur = math.Round(net.ReadFloat())
 		local max = math.Round(net.ReadFloat())
+
+		if not jrpg.IsEnabled(LocalPlayer()) then
+			return
+		end
+
 
 		if not ent.hm_last_health_time or ent.hm_last_health_time < CurTime() then
 			ent.hm_last_health = ent.hm_cur_health or max
@@ -366,32 +380,33 @@ if CLIENT then
 end
 
 if SERVER then
-	function hitmarkers.ShowDamage(ent, dmg, pos, filter)
+	function hitmarkers.ShowDamage(ent, dmg, pos, filter, attacker)
 		ent = ent or NULL
 		dmg = dmg or 0
 		pos = pos or ent:EyePos()
 		filter = filter or player.GetAll()
 
-		net.Start("hitmark", true)
+		net.Start("jrpg_hitmarks", true)
 			net.WriteEntity(ent)
 			net.WriteFloat(dmg)
 			net.WriteVector(pos)
 			net.WriteFloat(ent:Health())
 			net.WriteFloat(ent:GetMaxHealth())
+			net.WriteEntity(attacker)
 		net.Send(filter)
 
 		-- to prevent the timer from showing damage as well
 		ent.hm_last_health = ent:Health()
 	end
 
-	util.AddNetworkString("hitmark")
+	util.AddNetworkString("jrpg_hitmarks")
 
 	function hitmarkers.ShowDamageCustom(ent, str, pos, filter)
 		ent = ent or NULL
 		pos = pos or ent:EyePos()
 		filter = filter or player.GetAll()
 
-		net.Start("hitmark_custom", true)
+		net.Start("jrpg_hitmarks_custom", true)
 			net.WriteEntity(ent)
 			net.WriteString(str)
 			net.WriteVector(pos)
@@ -400,7 +415,7 @@ if SERVER then
 		net.Send(filter)
 	end
 
-	util.AddNetworkString("hitmark_custom")
+	util.AddNetworkString("jrpg_hitmarks_custom")
 
 	function hitmarkers.ShowXP(ent, xp, pos, filter)
 		ent = ent or NULL
@@ -418,7 +433,7 @@ if SERVER then
 	util.AddNetworkString("hitmark_xp")	
 
 	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
-	--	if not (dmg:GetAttacker():IsNPC() or dmg:GetAttacker():IsPlayer()) then return end
+		if not jrpg.IsActor(ent) then return end
 
 		local filter = {}
 		for k,v in pairs(player.GetAll()) do
@@ -433,14 +448,18 @@ if SERVER then
 		local damage = dmg:GetDamage()
 
 		if damage == -1 then
-			hitmarkers.ShowDamageCustom(ent, "BLOCK", pos, filter)
+			hitmarkers.ShowDamageCustom(ent, "BLOCK", pos, filter, dmg:GetAttacker())
 			return
 		end
 
 		local pos = dmg:GetDamagePosition()
 
 		if pos == vector_origin then
-			pos = ent:GetPos()
+			pos = ent:WorldSpaceCenter()
+		end
+
+		if ent:WorldSpaceCenter():Distance(pos) > ent:BoundingRadius() then
+			pos = ent:NearestPoint(pos)
 		end
 
 		timer.Create(tostring(ent).."_hitmarker", 0, 1, function()
@@ -448,17 +467,13 @@ if SERVER then
 
 				if damage > 0 then
 					if last_health == ent:Health() then
-						if true or jrpg.IsActorAlive(ent) then
-							damage = math.random(30,200)
-						else
-							return
-						end
+						damage = 0
 					elseif (ent:Health() - last_health) ~= damage then
 						damage = last_health - ent:Health()
 					end
 				end
 
-				hitmarkers.ShowDamage(ent, -damage, pos, filter)
+				hitmarkers.ShowDamage(ent, -damage, pos, filter, dmg:GetAttacker())
 			end
 		end)
 	end)
