@@ -4,7 +4,7 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 	if ply.fdmg_last_vel and ply:GetMoveType() == MOVETYPE_WALK then
 		local diff = vel - ply.fdmg_last_vel
 		local len = diff:Length()
-		local rpg = ply:GetNWBool("rpg") and len > 50
+		local rpg = jrpg and jrpg.IsEnabled(ply) and len > 50
 
 		if len > 500 or rpg then
 			local params = {}
@@ -19,7 +19,7 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 			local z = math.abs(res.HitNormal.z)
 
 			if res.Hit and (rpg or (z < 0.1 or z > 0.9)) then
-				local fall_damage = hook.Run("GetFallDamage", ply, len) -- Prepare Override & Check Expected Fall Damage
+				local fall_damage = hook.Run("GetFallDamage", ply, len) or 1 -- Prepare Override & Check Expected Fall Damage
 
 				if rpg or fall_damage > 0 then
 					dmg = math.max(dmg, 0)
@@ -35,10 +35,13 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 					info:SetInflictor(world)
 					info:SetDamageForce(ply.fdmg_last_vel)
 
-					if hook.Run("RealisticFallDamage", ply, info, len, fall_damage, res, params) ~= true then
-						ply:TakeDamageInfo(info)
+					if hook.Run("RealisticFallDamage", ply, info, len, fall_damage, res, params, data) ~= true then
+						
+						if SERVER then
+							ply:TakeDamageInfo(info)
+						end
 
-						hook.Run("PostRealisticFallDamage", ply, info, len, fall_damage, res, params)
+						hook.Run("PostRealisticFallDamage", ply, info, len, fall_damage, res, params, data)
 					end
 				end
 			end
@@ -48,13 +51,15 @@ hook.Add("Move", "realistic_falldamage", function(ply, data)
 	ply.fdmg_last_vel = vel
 end)
 
---- Supress Engine Fall Damage
+if SERVER then
+	--- Supress Engine Fall Damage
 
-hook.Add("EntityTakeDamage", "realistic_falldamage", function(ply, dmginfo)
-	if dmginfo:IsFallDamage() then
-		local dbug = debug.getinfo(3)
-		if (not dbug) or dbug.what ~= "C" then
-			return true
+	hook.Add("EntityTakeDamage", "realistic_falldamage", function(ply, dmginfo)
+		if dmginfo:IsFallDamage() then
+			local dbug = debug.getinfo(3)
+			if (not dbug) or dbug.what ~= "C" then
+				return true
+			end
 		end
-	end
-end)
+	end)
+end
