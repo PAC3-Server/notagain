@@ -281,8 +281,8 @@ if CLIENT then
 
 				local body = jrpg.GetActorBody(data.ent)
 				data.type.draw(body, f, data.strength, time + data.time_offset)
-						end
-					end
+			end
+		end
 
 		render.SetColorModulation(1,1,1)
 		render.ModelMaterialOverride()
@@ -395,13 +395,20 @@ if SERVER then
 		duration = duration or 1
 		strength = strength or 1
 
+		local filter = {}
+		for k,v in pairs(player.GetAll()) do
+			if jrpg.IsEnabled(v) and v:GetPos():Distance(ent:GetPos()) < 1500 * (ent:GetModelScale() or 1) then
+				table.insert(filter, v)
+			end
+		end
+
 		net.Start("jdmg", true)
 			net.WriteEntity(ent)
 			net.WriteString(type)
 			net.WriteFloat(duration)
 			net.WriteFloat(strength)
 			net.WriteVector(pos or vector_origin)
-		net.Broadcast()
+		net.Send(filter)
 
 		if type ~= "heal" and ent.AddGesture then
 			ent:AddGesture(ACT_GESTURE_FLINCH_BLAST)
