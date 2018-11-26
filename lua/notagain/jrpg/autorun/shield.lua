@@ -76,9 +76,8 @@ do
 					self:Remove()
 					self:EmitSound("physics/glass/glass_largesheet_break3.wav", 75, math.random(90,110))
 					ply:SetNWBool("shield_stunned", true)
-					ply:Freeze(true)
+					jrpg.Stagnate(ply, 2, 4)
 					timer.Simple(2, function()
-						ply:Freeze(false)
 						ply:SetNWBool("shield_stunned", false)
 					end)
 				end
