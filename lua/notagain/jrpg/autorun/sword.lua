@@ -82,12 +82,19 @@ end)
 
 function SWEP:Animation(type)
 	local ply = self.Owner
-	local index = math.Round(util.SharedRandom(self.ClassName, 1, #self.MoveSet2[type]))
+	local move_index = self:GetNW2Int("move_index")
+	local index = (move_index%#self.MoveSet2[type]) + 1
 	local info = self.MoveSet2[type][index]
 
 	ply.sword_anim_info = info
 	ply.sword_damaged = nil
 	ply.sword_anim_cycle = nil
+	self.sound_played = nil
+	self.pos_history = {}
+	local reversed = false
+	local reversed2 = 0
+
+	local pos_history = {}
 
 	jrpg.PlayGestureAnimation(ply, {
 		seq = info.seq,
@@ -104,13 +111,45 @@ function SWEP:Animation(type)
 				end
 			end
 
+			if CLIENT then
+				if f >= info.damage_frac - 0.5 then
+					if not self.sound_played then
+						ply:EmitSound("npc/fast_zombie/claw_miss1.wav", 70, math.Rand(140,160))
+						self.sound_played = true
+					end
+				end
+			end
+			
+			local pos, ang, mins, maxs = self:GetHitBox()
+
+			if not ply.sword_damaged and f >= info.damage_frac-0.25 then
+				table.insert(pos_history, pos + ang:Up() * self.SwordRange*0.5)
+				debugoverlay.Cross(pos + ang:Up() * self.SwordRange*0.5, 1, 5, SERVER and Color(0,0,255) or Color(255,255,0))
+			end
+
 			if f >= info.damage_frac then
 				if not ply.sword_damaged then
+					local dir = Vector()
+					for i = 2, #pos_history do
+						local a, b = pos_history[i], pos_history[i - 1]
+						if a:Distance(b) > 5 then
+							dir = dir + (a - b)
+						end
+					end
+
 					local pos = ply:WorldSpaceCenter() + ply:GetForward() * self.SwordRange
-					local ang = ply:LocalToWorldAngles(info.damage_ang)
+
+					ang = dir:Angle()
+
 					local size = 40
-					debugoverlay.Sphere(pos, size, 0.5)
-					debugoverlay.Axis(pos, ang, 20, 1, true)
+					--debugoverlay.Sphere(pos, size, 0.5)
+					if GetConVarNumber("developer") > 0 then
+						debugoverlay.Axis(pos, ang, 10, 5, true)
+						debugoverlay.Line(pos, pos + ang:Forward() * 150, 5, SERVER and Color(0,0,255) or Color(255,255,0), true)
+					end
+
+
+
 					for k,v in pairs(ents.FindInSphere(pos, size)) do
 						if v ~= ply and v:GetOwner() ~= ply then
 							if SERVER then
@@ -118,10 +157,10 @@ function SWEP:Animation(type)
 								local d = DamageInfo()
 								d:SetAttacker(ply)
 								d:SetInflictor(ply)
-								d:SetDamage(self.Damage * z_mult)
+								d:SetDamage(self.Damage * z_mult * (info.damage or 1))
 								d:SetDamageType(DMG_SLASH)
 								d:SetDamagePosition(ply:EyePos())
-								d:SetDamageForce(ang:Forward() * 1000 * self.Force * z_mult)
+								d:SetDamageForce(ang:Forward() * 10000 * self.Force * z_mult)
 								v:TakeDamageInfo(d)
 							else
 								v:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 70, math.Rand(140,160))
@@ -130,15 +169,11 @@ function SWEP:Animation(type)
 						end
 					end
 
-					if CLIENT then
-						ply:EmitSound("npc/fast_zombie/claw_miss1.wav", 70, math.Rand(140,160))
-					end
-
 					ply.sword_damaged = true
 
 					self:SetNextPrimaryFire(CurTime())
 					self:SetNextSecondaryFire(CurTime())
-				end
+				end		
 			end
 		end
 	})
@@ -171,6 +206,61 @@ if CLIENT then
 			return true
 		end
 	end)
+
+	local function add_quad(start_pos, stop_pos, start_ang, stop_ang, start_width, stop_width, r,g,b,a)
+		local lower_right = Vector(0,-start_width*0.5,0)
+		local lower_left = Vector(0,start_width*0.5,0)
+
+		local upper_right = Vector(0,-stop_width*0.5,0)
+		local upper_left = Vector(0,stop_width*0.5,0)
+
+		lower_right:Rotate(start_ang)
+		upper_right:Rotate(stop_ang)
+
+		lower_left:Rotate(start_ang)
+		upper_left:Rotate(stop_ang)
+
+		mesh.TexCoord(0, 0, 1)
+		mesh.Color(r,g,b,a)
+		mesh.Position(stop_pos + upper_left) 
+		mesh.AdvanceVertex()
+
+		mesh.TexCoord(0, 0, 0)
+		mesh.Color(r,g,b,a)
+		mesh.Position(start_pos + lower_left) 
+		mesh.AdvanceVertex()
+
+		mesh.TexCoord(0, 1, 0)
+		mesh.Color(r,g,b,a)
+		mesh.Position(start_pos + lower_right)
+		mesh.AdvanceVertex()
+
+		mesh.TexCoord(0, 1, 1)
+		mesh.Color(r,g,b,a)
+		mesh.Position(stop_pos + upper_right) 
+		mesh.AdvanceVertex()
+
+		mesh.TexCoord(0, 0, 1)
+		mesh.Color(r,g,b,a)
+		mesh.Position(stop_pos + upper_left)
+		mesh.AdvanceVertex()
+
+		mesh.TexCoord(0, 1, 0)
+		mesh.Color(r,g,b,a)
+		mesh.Position(start_pos + lower_right)
+		mesh.AdvanceVertex()
+	end
+
+	local jfx = requirex("jfx")
+	local trail = jfx.CreateMaterial({
+		Shader = "UnlitGeneric",
+		BaseTexture = "vgui/gradient-r",
+		NoCull = 1,
+		Additive = 1,
+		VertexColor = 1,
+		VertexAlpha = 1,
+	})
+
 	function SWEP:DrawWorldModel()
 		local pos, ang = Vector(), Angle()
 		if self.Owner:IsValid() then
@@ -199,7 +289,7 @@ if CLIENT then
 			render.ModelMaterialOverride()
 			render.SetBlend(1)
 		end
-
+		
 		if self.Owner:IsValid() and self.Owner.sword_anim_cycle and self.Owner.sword_anim_cycle < self.Owner.sword_anim_info.damage_frac then
 			if self:GetNWBool("wepstats_elemental") then
 				for k, v in pairs(jdmg.types) do
@@ -216,53 +306,37 @@ if CLIENT then
 				render.SetBlend(1)
 			end
 
-			suppress_player_draw = true
 			self.pos_history = self.pos_history or {}
-
-			if #self.pos_history > 5 then
-				table.remove(self.pos_history, 1)
-			end
-
-			self:RemoveEffects(EF_BONEMERGE)
-
-			table.insert(self.pos_history, {pos = pos, ang = ang})
-
-			local vel = Vector()
-			for i, data in ipairs(self.pos_history) do
-				if self.pos_history[i+1] then
-					vel = vel + (data.pos - self.pos_history[i+1].pos)
+			local pos, ang = self:GetHitBox()
+			if pos then
+				local real_ang = ang*1
+				ang:RotateAroundAxis(ang:Forward(), 90)
+				if not self.pos_history[1] or self.pos_history[1].pos:Distance(pos) > 1 then
+					table.insert(self.pos_history, {pos = pos - real_ang:Up() * -self.SwordRange * 0.5, ang = ang})
 				end
-			end
-			vel = vel / #self.pos_history
-			local l = vel:Length()
 
-			self.last_vel_length = l
+				if #self.pos_history > 15 then
+					table.remove(self.pos_history, 1)
+				end
+				
+				render.SetMaterial(trail)
 
-			local hit = false
-			local last_pos = Vector()
-
-			render.SetColorModulation(1,1,1)
-			for i, data in ipairs(self.pos_history) do
-				render.SetBlend(((i/5) * 0.1)^1.25)
-
-				if self.pos_history[i+1] then
-
-					local cur_pos = data.pos
-					local nxt_pos = self.pos_history[i+1].pos
-
-					local cur_ang = data.ang
-					local nxt_ang = self.pos_history[i+1].ang
-
-					for i2 = 1,20 do
-						local pos = LerpVector(i2/20, cur_pos, nxt_pos)
-						local ang = LerpAngle(i2/20, cur_ang, nxt_ang)
-
-						self:SetPos(pos)
-						self:SetAngles(ang)
-						self:SetupBones()
-						self:DrawModel()
+				local quads = #self.pos_history
+				--cam.IgnoreZ(true)
+				render.SuppressEngineLighting(true)
+				mesh.Begin(MATERIAL_TRIANGLES, 2*quads)
+					local ok, err = pcall(function() 
+					for i = 0, quads - 1 do
+						local a = self.pos_history[i+1]
+						local b = self.pos_history[i]
+						if a and b then
+							add_quad(b.pos, a.pos, b.ang, a.ang, self.SwordRange, self.SwordRange, 255, 255, 255, 55*(i/quads)^1)
+						end
 					end
-				end
+					end) if not ok then ErrorNoHalt(err) end
+				mesh.End()
+				render.SuppressEngineLighting(false)
+				--cam.IgnoreZ(false)
 			end
 
 			render.SetBlend(1)
@@ -344,6 +418,28 @@ function SWEP:OnRemove()
 end
 ]]
 
+function SWEP:GetHitBox()
+	local pos, ang = Vector(), Angle()
+	if self.Owner:IsValid() then
+		local id = self.Owner:LookupBone("ValveBiped.Bip01_R_Hand")
+		if id then
+			pos, ang = self.Owner:GetBonePosition(id)
+			pos, ang = self:SetupPosition(pos, ang)
+
+			local min = Vector(-3,-3,0)
+			local max = Vector(3,3,self.SwordRange)
+
+			return pos, ang, min, max
+		end
+	end
+end
+
+function SWEP:Think()
+	if GetConVarNumber("developer") == 0 then return end
+	local pos, ang, min, max = self:GetHitBox()
+	debugoverlay.BoxAngles(pos, min, max, ang, 0, SERVER and Color(0,0,255) or Color(255,255,0))
+end
+
 if SERVER then
 	util.AddNetworkString(SWEP.ClassName)
 
@@ -372,11 +468,9 @@ if SERVER then
 end
 
 function SWEP:Attack(type)
-	self:SetHoldType("hands")
-	-- self.Owner:SetVelocity(self.Owner:GetAimVector()*500)
-
 	if SERVER then
 		self:Animation(type)
+
 		net.Start(SWEP.ClassName, true)
 			net.WriteEntity(self)
 			net.WriteString(type)
@@ -386,9 +480,13 @@ function SWEP:Attack(type)
 	if CLIENT then
 		self:Animation(type)
 	end
+
+	self:SetNW2Int("move_index", self:GetNW2Int("move_index", 0) + 1)
 end
 
 function SWEP:PrimaryAttack()
+	if jrpg.IsActorRolling(self.Owner) or jrpg.IsActorDodging(self.Owner) then return end
+
 	if not self.Owner:IsOnGround() then
 		self:Attack("jump")
 	elseif self.Owner:GetVelocity():Dot(self.Owner:GetForward()) > 50 then
@@ -402,6 +500,8 @@ end
 
 
 function SWEP:SecondaryAttack()
+	if jrpg.IsActorRolling(self.Owner) or jrpg.IsActorDodging(self.Owner) then return end
+
 	self:Attack(self.MoveSet2.heavy and "heavy" or "light")
 	self:SetNextPrimaryFire(CurTime() + 5)
 	self:SetNextSecondaryFire(CurTime() + 5)
@@ -418,35 +518,7 @@ do
 	SWEP.Spawnable = true
 	SWEP.Category = "JRPG"
 	SWEP.OverallSpeed = 1.25
-
-
-			--[[{
-				seq = "phalanx_b_s2_t3",
-				duration = 0.5,
-				min = 0,
-				max = 0.8,
-
-				damage_frac = 0.3,
-				damage_ang = Angle(45,-90,0),
-			},
-			{
-				seq = "phalanx_b_s1_t2",
-				duration = 1,
-				min = 0,
-				max = 0.65,
-
-				damage_frac = 0.3,
-				damage_ang = Angle(45,90,0),
-			},
-			{
-				seq = "phalanx_b_s1_t3",
-				duration = 1,
-				min = 0,
-				max = 0.8,
-
-				damage_frac = 0.4,
-				damage_ang = Angle(60,90,0),
-			},]]
+	SWEP.SwordRange = 40
 
 	SWEP.MoveSet2 = {
 		light = {
@@ -466,7 +538,7 @@ do
 				max = 1,
 
 				damage_frac = 0.3,
-				damage_ang = Angle(45,-90,0),
+				damage = 2,
 			},
 		},
 		heavy = {
@@ -477,7 +549,7 @@ do
 				max = 1,
 
 				damage_frac = 0.23,
-				damage_ang = Angle(-70,-90,0),
+				damage = 2,
 			},
 			{
 				seq = "phalanx_b_s2_t3",
@@ -486,7 +558,7 @@ do
 				max = 1,
 
 				damage_frac = 0.3,
-				damage_ang = Angle(45,-90,0),
+				damage = 2,
 			},
 		},
 		jump = {
@@ -496,7 +568,7 @@ do
 				min = 0,
 				max = 1,
 				damage_frac = 0.4,
-				damage_ang = Angle(90,0,0),
+				damage = 3,
 				callback = function(self, f)
 					if f > 0.4 then
 						if not self.Owner:IsOnGround() then
@@ -516,7 +588,7 @@ do
 				max = 1,
 
 				damage_frac = 0.5,
-				damage_ang = Angle(-90,0,0),
+				damage = 1.5,
 			},
 		},
 	}
