@@ -371,20 +371,6 @@ if CLIENT then
 		local strength = net.ReadFloat()
 		local pos = net.ReadVector()
 
-		if ent:IsPlayer() and type ~= "heal" then
-			local name = "flinch_stomach_0" .. math.random(2)
-			local bone = ent:LookupBone("ValveBiped.Bip01_Head1") or ent:LookupBone("ValveBiped.Bip01_Neck")
-
-			if bone and pos:Distance(ent:WorldToLocal(ent:GetBonePosition(bone))) < 20 or pos:Distance(ent:WorldToLocal(ent:EyePos())) < 20 then
-				name = "flinch_head_0" .. math.random(2)
-			elseif strength > 0.5 then
-				name = "flinch_phys_0" .. math.random(2)
-			end
-
-			local seq = ent:GetSequenceActivity(ent:LookupSequence(name))
-			ent:AnimRestartGesture(GESTURE_SLOT_FLINCH, seq, true)
-		end
-
 		jdmg.DamageEffect(ent, type, duration, strength)
 	end)
 end
@@ -409,10 +395,6 @@ if SERVER then
 			net.WriteFloat(strength)
 			net.WriteVector(pos or vector_origin)
 		net.Send(filter)
-
-		if type ~= "heal" and ent.AddGesture then
-			ent:AddGesture(ACT_GESTURE_FLINCH_BLAST)
-		end
 	end
 
 	util.AddNetworkString("jdmg")

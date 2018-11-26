@@ -51,8 +51,14 @@ if CLIENT then
 	end
 end
 
+function jrpg.IsEntityFrozen(ent)
+	return ent:GetNW2Bool("jrpg_frozen")
+end
+
 if SERVER then
 	function jrpg.FreezeEntity(ent, b)
+		ent:SetNW2Bool("jrpg_frozen", b)
+
 		if b then
 			if ent.Freeze then
 				ent:Freeze(true)

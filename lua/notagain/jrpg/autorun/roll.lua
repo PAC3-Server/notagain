@@ -21,6 +21,9 @@ local function is_dodging(ply)
 	return ply.dodge_time and ply.dodge_time > CurTime()
 end
 
+jrpg.IsActorRolling = is_rolling
+jrpg.IsActorDodging = is_dodging
+
 local function vel_to_dir(ang, vel, speed)
 	ang.p = 0
 	local dot = ang:Forward():Dot(vel)
