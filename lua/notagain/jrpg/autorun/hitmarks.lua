@@ -180,7 +180,7 @@ if CLIENT then
 						y = y + (fade-0.5)*150
 					end
 
-					local hm = (i/#hitmarks) ^ 4
+					local hm = (i/#hitmarks) 
 					vis = vis * hm
 
 					fade = fade * vis
