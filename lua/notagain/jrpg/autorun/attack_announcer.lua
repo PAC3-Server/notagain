@@ -68,6 +68,10 @@ if CLIENT then
 			local pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2)):ToScreen()
 			local vis = ent.hm_pixvis_vis or ent == LocalPlayer() and 1 or 0
 
+			local x,y,x2,y2 = jrpg.Get2DBoundingBox(ent)
+			pos.x = x + (x2-x)*0.5
+			pos.y = y - 20
+
 			if pos.visible then
 				local y_offset = 0
 				if ent == LocalPlayer() then y_offset = 50 end
