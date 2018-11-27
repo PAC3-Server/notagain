@@ -73,6 +73,7 @@ end
 
 hook.Add("CalcMainActivity", "movement", function(ply)
 	if not jrpg.IsEnabled(ply) then return end
+	if jrpg.IsActorRolling(ply) or jrpg.IsActorDodging(ply) then return end
 
 	local vel = ply:GetVelocity()
 
