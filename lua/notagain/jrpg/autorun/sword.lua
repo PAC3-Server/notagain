@@ -8,6 +8,7 @@ SWEP.OverallSpeed = 1
 SWEP.SwordRange = 30
 SWEP.Damage = 30
 SWEP.Force = 1
+SWEP.RenderGroup = RENDERGROUP_BOTH
 
 SWEP.ViewModel = SWEP.WorldModel
 SWEP.UseHands = true
@@ -160,7 +161,7 @@ function SWEP:Animation(type)
 								d:SetDamage(self.Damage * z_mult * (info.damage or 1))
 								d:SetDamageType(DMG_SLASH)
 								d:SetDamagePosition(ply:EyePos())
-								d:SetDamageForce(ang:Forward() * 10000 * self.Force * z_mult)
+								d:SetDamageForce(ang:Forward() * 3000 * self.Force * z_mult)
 								v:TakeDamageInfo(d)
 							else
 								v:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 70, math.Rand(140,160))
@@ -276,7 +277,9 @@ if CLIENT then
 		end
 
 		self:DrawModel()
+	end
 
+	function SWEP:DrawWorldModelTranslucent()
 		if self:GetNWBool("wepstats_elemental") then
 			for k, v in pairs(jdmg.types) do
 				if self:GetNWBool("wepstats_elemental_" .. k) then
@@ -285,26 +288,38 @@ if CLIENT then
 					v.draw(self, len, len, RealTime())
 				end
 			end
-			render.SetColorModulation(1,1,1)
-			render.ModelMaterialOverride()
-			render.SetBlend(1)
 		end
 		
 		if self.Owner:IsValid() and self.Owner.sword_anim_cycle and self.Owner.sword_anim_cycle < self.Owner.sword_anim_info.damage_frac then
+			local R,G,B = 255,255,255
+			local total = 1
+
 			if self:GetNWBool("wepstats_elemental") then
 				for k, v in pairs(jdmg.types) do
 					if self:GetNWBool("wepstats_elemental_" .. k) then
-						local len = self.last_vel_length or 0
-						len = 1
-						v.draw(self, len, len, RealTime())
-						if v.think then v.think(self, len, len, RealTime()) end
-						v.draw_projectile(self, len, false)
+						
+						local old = self:GetPos()
+						for i = 1, 3 do
+							self:SetPos(old + self:GetUp() * math.random(self.SwordRange))
+							local len = self.last_vel_length or 0
+							len = 1
+							v.draw(self, len, len, RealTime())
+							if v.think then v.think(self, len, len, RealTime()) end
+							v.draw_projectile(self, len, false)
+							ent:SetPos(old)
+						end
+
+						R = R + v.color.r
+						G = G + v.color.g
+						B = B + v.color.b
+						total = total + 1
 					end
 				end
-				render.SetColorModulation(1,1,1)
-				render.ModelMaterialOverride()
-				render.SetBlend(1)
 			end
+
+			R = R / total
+			G = G / total
+			B = B / total
 
 			self.pos_history = self.pos_history or {}
 			local pos, ang = self:GetHitBox()
@@ -322,7 +337,6 @@ if CLIENT then
 				render.SetMaterial(trail)
 
 				local quads = #self.pos_history
-				--cam.IgnoreZ(true)
 				render.SuppressEngineLighting(true)
 				mesh.Begin(MATERIAL_TRIANGLES, 2*quads)
 					local ok, err = pcall(function() 
@@ -330,19 +344,20 @@ if CLIENT then
 						local a = self.pos_history[i+1]
 						local b = self.pos_history[i]
 						if a and b then
-							add_quad(b.pos, a.pos, b.ang, a.ang, self.SwordRange, self.SwordRange, 255, 255, 255, 55*(i/quads)^1)
+							add_quad(b.pos, a.pos, b.ang, a.ang, self.SwordRange, self.SwordRange, R,G,B, 55*(i/quads)^1)
 						end
 					end
 					end) if not ok then ErrorNoHalt(err) end
 				mesh.End()
 				render.SuppressEngineLighting(false)
-				--cam.IgnoreZ(false)
 			end
 
-			render.SetBlend(1)
-			render.SetColorModulation(1,1,1)
 			suppress_player_draw = false
 		end
+
+		render.SetColorModulation(1,1,1)
+		render.ModelMaterialOverride()
+		render.SetBlend(1)
 	end
 
 	function SWEP:OnRemove()
