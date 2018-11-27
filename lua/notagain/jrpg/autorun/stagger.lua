@@ -1,3 +1,5 @@
+local ease = requirex("ease")
+
 local function manip_angles(ply, id, ang)
     if pac and pac.ManipulateBoneAngles then
         pac.ManipulateBoneAngles(ply, id, ang)
@@ -19,8 +21,8 @@ local function calc_staggnation()
 
         if not data.ent.jrpg_stagger_bones or data.ent.jrpg_stagger_lastmdl ~= data.ent:GetModel() then
             data.ent.jrpg_stagger_bones = {}
-            local center = data.ent:EyePos()
-            local radius = data.ent:BoundingRadius() / 1.25
+            local center = data.ent:NearestPoint(data.ent:EyePos())
+            local radius = data.ent:BoundingRadius() / 1.6
             for i = 0, data.ent:GetBoneCount() do
                 local pos, ang = data.ent:GetBonePosition(i)
                 if pos then
@@ -29,19 +31,36 @@ local function calc_staggnation()
                     end
                 end
             end
-            if #data.ent.jrpg_stagger_bones <= 1 then
+            if false and #data.ent.jrpg_stagger_bones <= 1 then
                 for i = 0, data.ent:GetBoneCount() do
                     table.insert(data.ent.jrpg_stagger_bones, i)                  
                 end
             end
+
             data.ent.jrpg_stagger_lastmdl = data.ent:GetModel()
         end
 
         local time = (data.time - CurTime()) / data.length
         local f = math.Clamp(time, 0, 1)           
         f = -f + 1
-        f = math.sin(f * math.pi)
-        f = math.EaseInOut(f, 0.25, 1)^0.25
+        f = f * 2
+        if f > 1 then 
+            f = -(f - 1) + 1 
+            f = ease.inOutQuad(f, 0, 1, 1)
+        else
+            f = ease.outExpo(f, 0, 1, 1)
+        end
+
+        if time > 0 then
+            if not data.tposed and data.ent:GetSequence(0) ~= 0 then
+                data.prev_seq = data.ent:GetSequence()
+                data.ent:SetSequence(0)
+                data.tposed = true
+            elseif data.prev_seq then
+                data.ent:SetSequence(data.prev_seq)
+                data.prev_seq = nil
+            end
+        end
         
         local weight = f * data.force
 
@@ -119,14 +138,14 @@ if SERVER then
             jrpg.FreezeEntity(ent, true)
             timer.Create("freeze_" .. tostring(ent), freeze_time, 1, function()
                 if ent:IsValid() then
-                    jrpg.FreezeEntity(ent, false) 
+                    jrpg.FreezeEntity(ent, false)  
                 end
             end)
         end
 
         length = length + 0.1
         local time = CurTime() + length
-        local dir = VectorRand()*force*5
+        local dir = VectorRand()*force*10
 
         net.Start("jrpg_stagger")
             net.WriteEntity(ent)
@@ -142,8 +161,10 @@ if SERVER then
     hook.Add("EntityTakeDamage", "stagger", function(ent, dmginfo)
         if jrpg.IsActor(ent) then
             if not ent:IsPlayer() or jrpg.IsEnabled(ply) then
-                local f = dmginfo:GetDamage() / ent:GetMaxHealth()
-                jrpg.Stagnate(ent, Lerp(f, 0.01, 1.5), Lerp(f, 0.5, 6))
+                local f = math.Clamp(dmginfo:GetDamage() / ent:GetMaxHealth(), 0, 1)
+                
+                
+                jrpg.Stagnate(ent, Lerp(f, 0.4, 1.5), Lerp(f, 0.5, 3))
             end
         end
     end)
