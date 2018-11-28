@@ -366,6 +366,10 @@ do -- view
 		params.fov = smooth_fov
 		params.znear = 20
 
+		if jrpg.CalcScreenShake then
+			params.origin, params.angles = jrpg.CalcScreenShake(params.origin, params.angles)
+		end
+
 		return params
 	end
 end
