@@ -35,10 +35,10 @@ hook.Add("Move", SWEP.ClassName, function(ply, mv)
 	if ply:GetNW2Float("roll_time", 0) > CurTime() or ply.roll_time then return end
 
 
-	if ply.sword_anim_cycle and ply:IsOnGround() then
-		local f = ply.sword_anim_cycle
+	if self.sword_anim_cycle and ply:IsOnGround() then
+		local f = self.sword_anim_cycle
 		if f > 0 and f < 0.9 then
-			if f <= ply.sword_anim_info.damage_frac then
+			if f <= self.sword_anim_info.damage_frac then
 				local dir = ply:GetAimVector()
 				dir.z = 0
 				dir = dir*60
@@ -87,9 +87,9 @@ function SWEP:Animation(type)
 	local index = (move_index%#self.MoveSet2[type]) + 1
 	local info = self.MoveSet2[type][index]
 
-	ply.sword_anim_info = info
-	ply.sword_damaged = nil
-	ply.sword_anim_cycle = nil
+	self.sword_anim_info = info
+	self.sword_damaged = nil
+	self.sword_anim_cycle = nil
 	self.sound_played = nil
 	self.pos_history = {}
 	local reversed = false
@@ -104,7 +104,7 @@ function SWEP:Animation(type)
 		stop = info.max,
 		speed = self.OverallSpeed * (info.speed or 1),
 		callback = function(f)
-			ply.sword_anim_cycle = f
+			self.sword_anim_cycle = f
 
 			if info.callback then
 				if info.callback(self, f) == false then
@@ -123,13 +123,13 @@ function SWEP:Animation(type)
 			
 			local pos, ang, mins, maxs = self:GetHitBox()
 
-			if not ply.sword_damaged and f >= info.damage_frac-0.25 then
+			if not self.sword_damaged and f >= info.damage_frac-0.25 then
 				table.insert(pos_history, pos + ang:Up() * self.SwordRange*0.5)
 				debugoverlay.Cross(pos + ang:Up() * self.SwordRange*0.5, 1, 5, SERVER and Color(0,0,255) or Color(255,255,0))
 			end
 
 			if f >= info.damage_frac then
-				if not ply.sword_damaged then
+				if not self.sword_damaged then
 					local dir = Vector()
 					for i = 2, #pos_history do
 						local a, b = pos_history[i], pos_history[i - 1]
@@ -151,26 +151,30 @@ function SWEP:Animation(type)
 
 
 
+					local z_mult = (math.abs(ply.sword_last_zvel or ply:GetVelocity().z) / 1000) +1
+					local damage = self.Damage * z_mult * (info.damage or 1)
+					local hit_something = false
 					for k,v in pairs(ents.FindInSphere(pos, size)) do
 						if v ~= ply and v:GetOwner() ~= ply then
-							if SERVER then
-								local z_mult = (math.abs(ply.sword_last_zvel or ply:GetVelocity().z) / 1000) +1
+							if SERVER then	
 								local d = DamageInfo()
 								d:SetAttacker(ply)
 								d:SetInflictor(ply)
-								d:SetDamage(self.Damage * z_mult * (info.damage or 1))
+								d:SetDamage(damage)
 								d:SetDamageType(DMG_SLASH)
 								d:SetDamagePosition(ply:EyePos())
 								d:SetDamageForce(ang:Forward() * 3000 * self.Force * z_mult)
 								v:TakeDamageInfo(d)
-							else
-								v:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 70, math.Rand(140,160))
+							end
+							if CLIENT then
+								self.Owner:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 70, math.Rand(140,160))
 								debugoverlay.Cross(v:GetPos(), 10)
+								break
 							end
 						end
 					end
 
-					ply.sword_damaged = true
+					self.sword_damaged = true
 
 					self:SetNextPrimaryFire(CurTime())
 					self:SetNextSecondaryFire(CurTime())
@@ -500,6 +504,8 @@ function SWEP:Attack(type)
 end
 
 function SWEP:PrimaryAttack()
+	--if not IsFirstTimePredicted() then return end
+	print("huh")
 	if jrpg.IsActorRolling(self.Owner) or jrpg.IsActorDodging(self.Owner) then return end
 
 	if not self.Owner:IsOnGround() then
@@ -515,6 +521,7 @@ end
 
 
 function SWEP:SecondaryAttack()
+	--if not IsFirstTimePredicted() then return end
 	if jrpg.IsActorRolling(self.Owner) or jrpg.IsActorDodging(self.Owner) then return end
 
 	self:Attack(self.MoveSet2.heavy and "heavy" or "light")
