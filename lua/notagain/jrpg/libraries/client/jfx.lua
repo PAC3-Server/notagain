@@ -147,6 +147,58 @@ do
 	end
 end
 
+
+do
+    local mat = jfx.CreateMaterial({
+        Shader = "refract",
+        NormalMap = "effects/fisheyelens_normal",
+        --NormalMap2 = "Models/effects/fisheyelens_normal",
+        --DudvMap = "Models/effects/fisheyelens_dudv",
+        VertexColorModulate = 1,
+        VertexColor = 1,
+        Translucent = 1,
+        Model = 1,
+        ForceRefract = 1
+    })
+
+    function jfx.DrawPointBlur(x, y, size, refract)
+        render.UpdateScreenEffectTexture()
+
+        render.SetMaterial(mat)
+        
+        render.SetColorModulation(0.5, 1, 0.4)
+        render.SetBlend(0.1)
+
+        surface.SetMaterial(mat)
+        mat:SetVector( "$RefractTint", Vector(1,1,1) )
+
+        local max = 3*20
+        local r,g,b = 1,1,1
+
+        for i = 1, max do
+            local f = i/max
+            f = f ^ 3
+            mat:SetFloat( "$refractamount", f * 0.1 * refract)
+            
+            local r,g,b = r,g,b
+            local a = f^5
+            local i = i%3
+            if i == 0 then
+                r = r * 0.5
+            elseif i == 1 then
+                b = b * 0.5
+            elseif i == 2 then
+                g = g * 0.5
+            end
+
+            local size = size * f
+
+            surface.SetDrawColor(r*255,g*255,b*255,a*70)
+            surface.DrawTexturedRect(x-size/2,y-size/2,size,size)
+        end
+    end
+end
+
 do
 	local c = Color(255,255,255,255)
 	local EyeVector = EyeVector
