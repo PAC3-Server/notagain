@@ -505,7 +505,6 @@ end
 
 function SWEP:PrimaryAttack()
 	--if not IsFirstTimePredicted() then return end
-	print("huh")
 	if jrpg.IsActorRolling(self.Owner) or jrpg.IsActorDodging(self.Owner) then return end
 
 	if not self.Owner:IsOnGround() then
