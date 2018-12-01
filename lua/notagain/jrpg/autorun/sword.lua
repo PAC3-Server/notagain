@@ -523,7 +523,13 @@ function SWEP:SecondaryAttack()
 	--if not IsFirstTimePredicted() then return end
 	if jrpg.IsActorRolling(self.Owner) or jrpg.IsActorDodging(self.Owner) then return end
 
-	self:Attack(self.MoveSet2.heavy and "heavy" or "light")
+	if not self.Owner:IsOnGround() then
+		self:Attack("jump")
+	elseif self.Owner:GetVelocity():Dot(self.Owner:GetForward()) > 50 then
+		self:Attack("forward")
+	else
+		self:Attack("heavy")
+	end
 	self:SetNextPrimaryFire(CurTime() + 5)
 	self:SetNextSecondaryFire(CurTime() + 5)
 end
