@@ -167,7 +167,7 @@ function goluwa.CreateEnv()
 				path = path:sub(6)
 				where = "DATA"
 
-				if not file.IsDir(path, where) then
+				if not file.IsDir(path, where) and path:sub(-1) ~= "/" then
 					local dir, file_name = path:match("(.+/)(.+)")
 
 					if not dir then
@@ -280,8 +280,12 @@ function goluwa.CreateEnv()
 
 	do
 
-		env.e.DATA_FOLDER = "/data/goluwa/data/"
-		env.e.USERDATA_FOLDER = "/data/goluwa/userdata/"
+		env.e.STORAGE_FOLDER = "/data/goluwa/storage/"
+		env.e.USERDATA_FOLDER = env.e.STORAGE_FOLDER.."userdata/"
+		env.e.SHARED_FOLDER = env.e.STORAGE_FOLDER.."shared/"
+		env.e.CACHE_FOLDER = env.e.STORAGE_FOLDER.."cache/"
+		env.e.TEMP_FOLDER = env.e.STORAGE_FOLDER.."temp/"
+
 		env.e.ROOT_FOLDER = notagain.addon_dir .. "lua/notagain/goluwa/goluwa/"
 		env.e.SRC_FOLDER = env.e.ROOT_FOLDER
 		env.e.BIN_FOLDER = "bin/"
@@ -302,6 +306,15 @@ function goluwa.CreateEnv()
 				["table.gcnew"] = true,
 				["table.clear"] = true,
 				["table.new"] = true,
+				ffi = true,
+				archive = true,
+				freeimage = true,
+				opengl = true,
+				freetype = true,
+				["table.new"] = true,
+				["table.clear"] = true,
+				["deflatelua"] = true,
+				von = true,
 			}
 
 			local old_gmod_require = _G.require
@@ -483,6 +496,13 @@ function goluwa.CreateEnv()
 	env.runfile("core/lua/libraries/platforms/gmod/globals.lua")
 	env.fs = env.runfile("core/lua/libraries/platforms/gmod/filesystem.lua")
 
+	env.fs.createdir(env.e.STORAGE_FOLDER)
+	env.fs.createdir(env.e.STORAGE_FOLDER .. "/userdata/")
+	env.fs.createdir(env.e.USERDATA_FOLDER)
+	env.fs.createdir(env.e.CACHE_FOLDER)
+	env.fs.createdir(env.e.SHARED_FOLDER)
+	env.fs.createdir(env.e.TEMP_FOLDER)
+
 	env.runfile("core/lua/libraries/platforms/gmod/os.lua", env.os)
 
 	env.io = {}
@@ -511,19 +531,8 @@ function goluwa.CreateEnv()
 
 	env.check = function() end
 
-	do
-		env.ffi = false
-		env.archive = false
-		env.freeimage = false
-		env.opengl = false
-		env["table.new"] = false
-		env["table.clear"] = false
-		env["deflatelua"] = false
-		env["lunajson"] = {encode = util.TableToJSON, decode = util.JSONToTable}
-
-		env.msgpack_ffi = {encode = msgpack.pack, decode = msgpack.unpack}
-		env.von = false
-	end
+	env["json"] = {encode = util.TableToJSON, decode = util.JSONToTable}
+	env.msgpack_ffi = {encode = msgpack.pack, decode = msgpack.unpack}
 
 	local commands_add_buffer = {}
 	env.commands = {Add = function(...) table.insert(commands_add_buffer, {...}) end}
@@ -546,10 +555,17 @@ function goluwa.CreateEnv()
 	env.runfile("game/lua/libraries/utilities/line.lua", env.utility)
 
 	env.vfs = env.runfile("core/lua/libraries/filesystem/vfs.lua")
-	env.vfs.Mount("os:/data/goluwa/data/", "os:data/")
-	env.vfs.Mount("os:/data/goluwa/data/", "os:")
-	env.vfs.Mount("os:/data/goluwa/userdata/", "os:data/")
-	env.vfs.Mount("os:/", "os:")
+
+	--env.vfs.Mount("os:/data/goluwa/data/", "os:data/")
+	--env.vfs.Mount("os:/data/goluwa/data/", "os:")
+	--env.vfs.Mount("os:/data/goluwa/userdata/", "os:data/")
+	--env.vfs.Mount("os:/", "os:")
+
+	env.vfs.Mount("os:" .. env.e.STORAGE_FOLDER) -- mount the storage folder to allow requiring files from bin/*
+	env.vfs.Mount("os:" .. env.e.USERDATA_FOLDER, "os:data") -- mount "ROOT/data/users/*username*/" to "/data/"
+	env.vfs.Mount("os:" .. env.e.CACHE_FOLDER, "os:cache")
+	env.vfs.Mount("os:" .. env.e.SHARED_FOLDER, "os:shared")
+
 	env.R = env.vfs.GetAbsolutePath -- a nice global for loading resources externally from current dir
 	env.crypto = env.runfile("core/lua/libraries/crypto.lua")
 
@@ -557,10 +573,12 @@ function goluwa.CreateEnv()
 	env.commands = env.runfile("engine/lua/libraries/commands.lua")
 	for i, args in ipairs(commands_add_buffer) do env.commands.Add(unpack(args)) end
 
-	env.window = env.runfile("framework/lua/libraries/graphics/window.lua")
 	env.tasks = env.runfile("framework/lua/libraries/tasks.lua")
 
 	env.system = env.runfile("core/lua/libraries/system.lua")
+
+	env.WINDOW_IMPLEMENTATION = "gmod"
+	env.window = env.runfile("framework/lua/libraries/window/window.lua")
 	env.profiler = env.runfile("core/lua/libraries/profiler.lua")
 	env.runfile("engine/lua/libraries/extensions/profiler.lua")
 	env.P = env.profiler.ToggleTimer
@@ -568,7 +586,6 @@ function goluwa.CreateEnv()
 	env.S = env.profiler.ToggleStatistical
 
 	env.event = env.runfile("core/lua/libraries/event.lua")
-	env.runfile("framework/lua/libraries/extensions/event_timers.lua")
 
 	env.event.AddListener("EventAdded", "gmod", function(info)
 	--	print("goluwa event added: ", info.event_type, info.id)
@@ -595,7 +612,10 @@ function goluwa.CreateEnv()
 	do
 		local sockets = {}
 		env.SOCKETS = true
-		env.runfile("framework/lua/libraries/sockets/http.lua", sockets)
+		env.callback = env.runfile("core/lua/libraries/callback.lua", sockets)
+		env.runfile("core/lua/libraries/sockets/download.lua", sockets)
+		env.sockets = sockets
+		env.http = env.runfile("core/lua/libraries/http.lua")
 
 		function sockets.Request(tbl)
 			tbl.callback = tbl.callback or env.table.print
@@ -646,16 +666,37 @@ function goluwa.CreateEnv()
 			})
 		end
 
-		env.sockets = sockets
+		function sockets.Download(url, on_finish, on_error, on_chunks, on_header, on_code)
+			sockets.Request({
+				url = url,
+				error_callback = on_error,
+				callback = function(data)
+					if on_code then
+						on_code(data.code)
+					end
+					if on_header then
+						on_header(data.header)
+					end
+					if on_chunks then
+						on_chunks(data.content)
+					end
+					if on_finish then
+						on_finish(data.content)
+					end
+				end,
+			})
+		end
 	end
 
-	env.resource = env.runfile("framework/lua/libraries/sockets/resource.lua")
+	env.resource = env.runfile("core/lua/libraries/resource.lua")
 
 	env.resource.AddProvider("https://gitlab.com/CapsAdmin/goluwa-assets/raw/master/base/", true)
 
 	env.input = env.runfile("framework/lua/libraries/input.lua")
 	env.language = env.runfile("engine/lua/libraries/language.lua")
 	env.L = env.language.LanguageString
+
+	env.runfile("engine/lua/libraries/extensions/serializer.lua")
 
 	do
 		local backend = CreateClientConVar("goluwa_audio_backend", "webaudio")
@@ -667,7 +708,7 @@ function goluwa.CreateEnv()
 		function audio.CreateSource(path)
 			local snd = common_audio.CreateSoundFromInterface(backend:GetString())
 			snd:SetEntity(audio.player_object)
-			env.resource.Download(path, function(path)
+			env.resource.Download(path):Then(function(path)
 				local path, where = env.GoluwaToGmodPath(path)
 				snd:SetPath(path, where)
 			end)
@@ -741,9 +782,9 @@ function goluwa.CreateEnv()
 		env.camera = env.runfile("framework/lua/libraries/graphics/camera.lua")
 		env.render = env.runfile("framework/lua/libraries/graphics/render/render.lua")
 		env.render.GenerateTextures = function()
+			env.render.error_texture = env.render.CreateTextureFromPath("error", true)
 			env.render.white_texture = env.render.CreateTextureFromPath("materials/color/white.vtf")
 			env.render.loading_texture = env.render.CreateTextureFromPath("vgui/loading-rotate", true)
-			env.render.error_texture = env.render.CreateTextureFromPath("error", true)
 		end
 
 		do
@@ -839,9 +880,6 @@ function goluwa.CreateEnv()
 
 		env.gfx = env.runfile("framework/lua/libraries/graphics/gfx/gfx.lua")
 		env.runfile("engine/lua/libraries/graphics/gfx/markup.lua", env.gfx)
-
-		env.io.stdin = env.io.open("stdin", "r")
-		env.io.stdout = env.io.open("stdout", "w")
 
 		env.window.Open()
 
