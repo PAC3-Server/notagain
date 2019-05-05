@@ -12,8 +12,10 @@ local function dprint(...)
 	print("goluwa: ", ...)
 end
 
+local delete_directory
+
 do
-	local function delete_directory(dir)
+	function delete_directory(dir)
 		local files, folders = file.Find(dir .. "*", "DATA")
 
 		for k,v in ipairs(files) do
@@ -621,8 +623,6 @@ function goluwa.CreateEnv()
 			tbl.callback = tbl.callback or env.table.print
 			tbl.method = tbl.method or "GET"
 
-			local ok = false
-
 			if tbl.timeout and tbl.timedout_callback then
 				env.event.Delay(tbl.timeout, function()
 					if not ok then
@@ -638,7 +638,12 @@ function goluwa.CreateEnv()
 			HTTP({
 				failed = tbl.error_callback,
 				success = function(code, body, header)
-					ok = true
+					if code >= 400 and code < 600 then
+						if tbl.error_callback then
+							tbl.error_callback(tostring(code))
+						end
+						return
+					end
 
 					if not tbl.code_callback or tbl.code_callback(code) ~= false then
 
@@ -1062,6 +1067,10 @@ if game.IsDedicated() or CLIENT then
 		else
 			include("notagain/goluwa/goluwa.lua")
 		end
+	end)
+
+	concommand.Add("goluwa_clear_cache", function()
+		delete_directory("goluwa/")
 	end)
 end
 
