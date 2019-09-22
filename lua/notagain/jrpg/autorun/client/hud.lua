@@ -57,13 +57,13 @@ function jhud.DrawInfoSmall(ply, x, y, alpha, color, no_avatar, width_override)
 	local spacing = 3*S
 	S = S * 0.9
 
-	if width_override then 
+	if width_override then
 		width = width_override*S
 	end
 
 	alpha = alpha or 1
 	color = color or color_white
-	
+
 	if not no_avatar then
 	surface.DisableClipping(true)
 	render.ClearStencil()
@@ -164,8 +164,8 @@ local function DrawBar(x,y,w,h,cur,max,border_size, r,g,b, txt, real_cur, center
 	if not txt then
 		skew = skew / 1.5
 	end
---	
---	
+--
+--
 	render.SetMaterial(border)
 	render.SetBlend(1)
 	render.SetColorModulation(1,1,1)
@@ -291,8 +291,8 @@ local function get_weapons()
 			if not categories[category] then
 				categories[category] = {}
 				table.insert(category_list, {
-					Name = category, 
-					list = categories[category], 
+					Name = category,
+					list = categories[category],
 					sort = sort_order[category] or -1,
 					color = color,
 				})
@@ -395,14 +395,14 @@ function jhud.DrawSelection(x, y)
 
 	local i = 0
 	--for i, data in ipairs(selected_list) do
-	
+
 	local selected_i = 0
 	if select_stage == "categories" then
 		selected_i = selected_category_i
 	elseif select_stage == "weapons" then
 		selected_i = selected_weapon_i[selected_category_i]
 	end
-	
+
 	jhud.DrawList(selected_list, selected_i, x, y, selected_list[selected_i%#selected_list + 1].color)
 end
 
@@ -476,7 +476,7 @@ hook.Add("HUDPaint", "jhud", function()
 		--render.OverrideBlend(false, BLEND_SRC_ALPHA, BLEND_ONE_MINUS_DST_ALPHA, BLENDFUNC_REVERSE_SUBTRACT)
 	end
 
-	
+
 	if jrpg.IsEnabled(ply) then
 		jhud.Draw3DModels(x, y)
 		jhud.UpdateMenu()
@@ -491,7 +491,7 @@ hook.Add("HUDPaint", "jhud", function()
 			x = x - 220
 			y = y + 10
 		end
-		
+
 		local c = team.GetColor(TEAM_FRIENDS)
 		c.r = c.r/5
 		c.g = c.g/5
@@ -646,7 +646,7 @@ hook.Add("HUDPaint", "jhud", function()
 
 		for i = 1, #temp do
 			local ent = temp[i]
-			
+
 			local x = 75
 			local y = -25 + (i * 50)
 
@@ -721,7 +721,7 @@ do
 	jhud.combine_scanner_ent = nil
 	jhud.suit_charger_ent = nil
 	jhud.scanner_frame = 1
-	
+
 	function jhud.Draw3DModels(x, y)
 		local sx = ScrW() / 1920
 		local sy = ScrH() / 1080
@@ -741,7 +741,7 @@ do
 
 		local hp = smooth(jhud.scanner_frame, "scanner_frame") ^ 0.5
 		local mp = smooth(ply:GetMana()/ply:GetMaxMana(), "mana"..ply:EntIndex())
-	
+
 		jhud.combine_scanner_ent:SetPos(Vector(x,y,-200))
 		jhud.suit_charger_ent:SetPos(Vector(x+150,y+10,-400))
 
@@ -770,14 +770,14 @@ do
 
 		local glyph_disc = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678820698947584/disc.png",
+			BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/disc.png",
 			VertexColor = 1,
 			VertexAlpha = 1,
 		})
 
 		local ring = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678934834085888/ring2.png",
+			BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/ring2.png",
 			VertexColor = 1,
 			VertexAlpha = 1,
 		})
@@ -786,7 +786,7 @@ do
 		local hand = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291690387033161728/clock_hand.png",
+			BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/clock_hand.png",
 			Additive = 0,
 			VertexColor = 1,
 			VertexAlpha = 1,
@@ -806,7 +806,7 @@ do
 
 			x = x - 31
 			y = y - 43
-			
+
 			local ring_size = 1000
 			surface.SetDrawColor(0, 0, 0, 200)
 			surface.SetMaterial(background_glow)
@@ -830,7 +830,7 @@ do
 			surface.SetDrawColor(color.r, color.g, color.b, 255)
 			surface.SetMaterial(glyph_disc)
 			surface.DrawTexturedRectRotated(x, y, ring_size, ring_size, jhud.smooth_scrolls[2] or 0)
-			
+
 			local max = #list
 			while max < 32 do
 				max = max + #list
@@ -841,32 +841,32 @@ do
 				local wep = list[i3]
 
 				wep.color = wep.color or color
-				
+
 				jhud.smooth_scrolls[i] = jhud.smooth_scrolls[i] or 0
 				jhud.smooth_scrolls[i] = jhud.smooth_scrolls[i] + ((i2 - jhud.smooth_scrolls[i]) * FrameTime() * 10)
-				local smooth_i = jhud.smooth_scrolls[i] 
+				local smooth_i = jhud.smooth_scrolls[i]
 
 				local s = math.sin((((smooth_i)/max)%1) * math.pi * 2 - math.pi/2) * 0.5 + 0.5
 				s = s ^ 0.25
 				s = -s + 1
 
-				if s > 0.1 then										
+				if s > 0.1 then
 					local m = Matrix()
 					m:Translate(Vector(x,y,0))
 					m:Rotate(Angle(0,smooth_i/max * 360,0))
 					m:Translate(Vector(90,0,0))
 					m:Scale(Vector(1,1,1)*0.4)
 
-					cam.PushModelMatrix(m)					
+					cam.PushModelMatrix(m)
 						prettytext.DrawText({
-							text = (wep.Name or "?"):upper(), 
-							x = 0, 
-							y = 0, 
-							font = "gabriola", 
+							text = (wep.Name or "?"):upper(),
+							x = 0,
+							y = 0,
+							font = "gabriola",
 							size = 100,
 							x_align = 0,
 							y_align = -0.5,
-							
+
 							blur_size = 10,
 							blur_overdraw = 2,
 

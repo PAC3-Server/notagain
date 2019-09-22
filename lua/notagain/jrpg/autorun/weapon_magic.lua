@@ -21,7 +21,7 @@ if CLIENT then
 		local glyph_disc = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678820698947584/disc.png",
+			BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/disc.png",
 			VertexColor = 1,
 			VertexAlpha = 1,
 		})
@@ -29,7 +29,7 @@ if CLIENT then
 		local ring = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291678934834085888/ring2.png",
+			BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/ring2.png",
 			Additive = 0,
 			VertexColor = 1,
 			VertexAlpha = 1,
@@ -38,7 +38,7 @@ if CLIENT then
 		local hand = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291690387033161728/clock_hand.png",
+			BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/clock_hand.png",
 			Additive = 0,
 			VertexColor = 1,
 			VertexAlpha = 1,
@@ -48,7 +48,7 @@ if CLIENT then
 		local glow = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
 
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291695131914928128/glow.png",
+			BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/glow.png",
 			Additive = 1,
 			VertexColor = 1,
 			VertexAlpha = 1,
@@ -433,7 +433,7 @@ function SWEP:ThrowAnimation(left_hand)
 		stop = 1,
 		speed = 1,
 		weight = 1,
-		slot = left_hand and GESTURE_SLOT_GRENADE or GESTURE_SLOT_ATTACK_AND_RELOAD, 
+		slot = left_hand and GESTURE_SLOT_GRENADE or GESTURE_SLOT_ATTACK_AND_RELOAD,
 	})
 end
 

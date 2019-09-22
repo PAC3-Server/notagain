@@ -46,7 +46,7 @@ if CLIENT then
 	local arc = jfx.CreateMaterial({
 		Shader = "UnlitGeneric",
 
-		BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291918796027985920/lightning.png",
+		BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/lightning.png",
 		BaseTextureTransform = "center .5 .5 scale 2 2 rotate 0 translate -0.45 -0.45",
 		Additive = 1,
 		VertexColor = 1,
