@@ -13,8 +13,6 @@ local function find(path)
 end
 
 local function check_path(path, cb, what, lib)
-	local name = path:match("(.+)%.lua$")
-
 	local time = file.Time(path, "MOD")
 
 	if last[path] ~= time then
@@ -25,7 +23,9 @@ local function check_path(path, cb, what, lib)
 				if isfunction(lib) then
 					code = lib(code)
 				else
-					code = "notagain.loaded_libraries." .. name .. "=(function()" .. code .. ";end)()"
+					local name = path:match("^.+/(.+)%.lua$") or path:match("^(.+)%.lua$")
+
+					code = [[notagain.loaded_libraries[']] .. name .. [[']=(function()]] .. code .. [[;end)()]]
 				end
 			end
 			cb(path, code, what)
