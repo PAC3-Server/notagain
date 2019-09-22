@@ -33,8 +33,9 @@ function jfx.CreateMaterial(data)
 			local id = tostring({})
 			hook.Add("Think", id, function()
 				if not LocalPlayer():IsValid() then return end
-				
+
 				local m,w,h = urlimage.GetURLImage(v)
+
 				if m == nil then
 					hook.Remove("Think", id)
 				elseif m then
@@ -165,7 +166,7 @@ do
         render.UpdateScreenEffectTexture()
 
         render.SetMaterial(mat)
-        
+
         render.SetColorModulation(0.5, 1, 0.4)
         render.SetBlend(0.1)
 
@@ -179,7 +180,7 @@ do
             local f = i/max
             f = f ^ 3
             mat:SetFloat( "$refractamount", f * 0.1 * refract)
-            
+
             local r,g,b = r,g,b
             local a = f^5
             local i = i%3
@@ -358,7 +359,7 @@ do
 	jfx.materials.trail = jfx.CreateMaterial({
 		Shader = "UnlitGeneric",
 
-		BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291702123689934849/trail.png",
+		BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/trail.png",
 		Additive = 1,
 		GlowAlpha = 1,
 		VertexColor = 1,

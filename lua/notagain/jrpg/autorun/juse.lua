@@ -139,7 +139,7 @@ if CLIENT then
 	local gradient = Material("gui/center_gradient")
 	local crosshair = jfx.CreateMaterial({
 			Shader = "UnlitGeneric",
-			BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/292078741830762496/crosshair.png",
+			BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/crosshair.png",
 			VertexColor = 1,
 			VertexAlpha = 1,
 			Additive = 1,

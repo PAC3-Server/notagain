@@ -47,7 +47,7 @@ if CLIENT then
     local feather_mat = jfx.CreateMaterial({
         Shader = "VertexLitGeneric",
 
-        BaseTexture = "https://cdn.discordapp.com/attachments/273575417401573377/291905352876687360/feather.png",
+        BaseTexture = "https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/feather.png",
         VertexColor = 1,
         VertexAlpha = 1,
     })

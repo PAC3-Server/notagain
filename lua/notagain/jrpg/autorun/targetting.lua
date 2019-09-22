@@ -13,15 +13,15 @@ function jtarget.FindEnemies(actor, radius)
 			i = i + 1
 		end
 	end
-	table.sort(list, function(a, b) 
-		return a:EyePos():Distance(pos) < b:EyePos():Distance(pos) 
+	table.sort(list, function(a, b)
+		return a:EyePos():Distance(pos) < b:EyePos():Distance(pos)
 	end)
 	return temp
 end
 
 function jtarget.FindFriends(actor, radius)
 	local pos = actor:EyePos()
-	local temp = {} 
+	local temp = {}
 	local i = 1
 	for _, ent in ipairs(ents.FindInSphere(pos, radius or 1000)) do
 		if jrpg.IsFriend(actor, ent) and ent ~= actor then
@@ -29,8 +29,8 @@ function jtarget.FindFriends(actor, radius)
 			i = i + 1
 		end
 	end
-	table.sort(list, function(a, b) 
-		return a:EyePos():Distance(pos) > b:EyePos():Distance(pos) 
+	table.sort(list, function(a, b)
+		return a:EyePos():Distance(pos) > b:EyePos():Distance(pos)
 	end)
 	return temp
 end
@@ -117,7 +117,7 @@ if CLIENT then
 			["$Additive"] = 1,
 		})
 		local urlimage = requirex("urlimage")
-		ring_mat = urlimage.URLMaterial("https://cdn.discordapp.com/attachments/273575417401573377/306178930208145408/arrow.png")
+		ring_mat = urlimage.URLMaterial("https://raw.githubusercontent.com/PAC3-Server/ServerAssets/master/materials/pac_server/jrpg/arrow.png")
 
 		local size = 32
 
