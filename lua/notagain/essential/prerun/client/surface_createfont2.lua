@@ -251,10 +251,6 @@ function surface.CreateFont(id, tbl, ...)
 			tbl.size = 126
 		end
 
-		if tbl.outline and system.IsLinux() then
-			tbl.size = tbl.size + 2
-		end
-
 		if font then
 			if system.IsWindows() then
 				tbl.font = font.full_name
