@@ -15,10 +15,12 @@ do
 	end
 
 	function META:ExecuteEventQueue()
-		for i, data in ipairs(self.event_queue) do
-			self:OnEvent(data.event, data.val)
+		if self.event_queue then --Fix SH errors
+			for i, data in ipairs(self.event_queue) do
+				self:OnEvent(data.event, data.val)
+			end
+			self.event_queue = nil
 		end
-		self.event_queue = nil
 	end
 
 	function META:SetSoundObject(obj)
