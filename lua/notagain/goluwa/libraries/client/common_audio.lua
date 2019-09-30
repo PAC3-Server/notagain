@@ -10,7 +10,6 @@ do
 	end
 
 	function META:QueueEvent(event, val)
-		self.event_queue = self.event_queue or {}
 		table.insert(self.event_queue, {event = event, val = val})
 	end
 
@@ -18,7 +17,6 @@ do
 		for i, data in ipairs(self.event_queue) do
 			self:OnEvent(data.event, data.val)
 		end
-		self.event_queue = nil
 	end
 
 	function META:SetSoundObject(obj)
@@ -332,6 +330,7 @@ function audio.CreateSoundFromInterface(interface)
 	local self = setmetatable({}, audio.registered[interface])
 	self.__gcproxy = newproxy(true)
 	getmetatable(self.__gcproxy).__gc = function() self:OnRemove() end
+	self.event_queue = {}
 
 	return self
 end
