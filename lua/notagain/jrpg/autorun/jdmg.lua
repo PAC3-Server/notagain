@@ -347,7 +347,7 @@ if CLIENT then
 			jrpg.AddScreenShake(math.min(strength*2, 5), 1, duration*0.5)
 			math.randomseed(CurTime())
 
-			--jrpg.ImpactEffect(pos, normal, math.Clamp(strength*4, 0.5, 1.25), type.color)
+			jrpg.ImpactEffect(pos, normal, math.Clamp(strength*4, 0.5, 1.25), type.color)
 		end
 
 		if type ~= jdmg.types.generic then
