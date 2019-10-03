@@ -82,6 +82,10 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 end)
 
 function SWEP:Animation(type)
+	if not self.MoveSet2[type] then
+		return
+	end
+
 	local ply = self.Owner
 	local move_index = self:GetNW2Int("move_index")
 	local index = (move_index%#self.MoveSet2[type]) + 1
@@ -94,6 +98,7 @@ function SWEP:Animation(type)
 	self.pos_history = {}
 	local reversed = false
 	local reversed2 = 0
+	local callback_timer = nil
 
 	local pos_history = {}
 
@@ -103,19 +108,26 @@ function SWEP:Animation(type)
 		start = info.min,
 		stop = info.max,
 		speed = self.OverallSpeed * (info.speed or 1),
-		callback = function(f)
+		done = function(f)
+			if info.done then
+				info.done(self, f, callback_timer and (CurTime() - callback_timer) or 0, info)
+			end
+		end,
+		callback = function(f, data)
 			self.sword_anim_cycle = f
 
-			if info.callback then
-				if info.callback(self, f) == false then
-					return false
-				end
+			local res = info.callback and info.callback(self, f, callback_timer and (CurTime() - callback_timer) or 0, info)
+
+			if res ~= nil then
+				callback_timer = callback_timer or CurTime()
+				return res
 			end
+
 
 			local pos, ang, mins, maxs = self:GetHitBox()
 
 			if CLIENT then
-				if f >= info.damage_frac - 0.5 then
+				if f >= info.damage_frac - 0.5 and type ~= "heavy" then
 					if not self.sound_played then
 						local pitch = (0.8/mins:Distance(maxs))*60
 						ply:EmitSound("npc/zombie/claw_miss1.wav", 70, math.Clamp(math.Rand(100,120) * pitch, 50, 255))
@@ -127,7 +139,7 @@ function SWEP:Animation(type)
 
 			if not self.sword_damaged and f >= info.damage_frac-0.25 then
 				table.insert(pos_history, pos + ang:Up() * self.SwordRange*0.5)
-				--debugoverlay.Cross(pos + ang:Up() * self.SwordRange*0.5, 1, 5, SERVER and Color(0,0,255) or Color(255,255,0))
+				debugoverlay.Cross(pos + ang:Up() * self.SwordRange*0.5, 1, 5, SERVER and Color(0,0,255) or Color(255,255,0))
 			end
 
 			if f >= info.damage_frac then
@@ -145,10 +157,10 @@ function SWEP:Animation(type)
 					ang = dir:Angle()
 
 					local size = 40
-					--debugoverlay.Sphere(pos, size, 0.5)
+					debugoverlay.Sphere(pos, size, 0.5)
 					if GetConVarNumber("developer") > 0 then
-						--debugoverlay.Axis(pos, ang, 10, 5, true)
-						--debugoverlay.Line(pos, pos + ang:Forward() * 150, 5, SERVER and Color(0,0,255) or Color(255,255,0), true)
+						debugoverlay.Axis(pos, ang, 10, 5, true)
+						debugoverlay.Line(pos, pos + ang:Forward() * 150, 5, SERVER and Color(0,0,255) or Color(255,255,0), true)
 					end
 
 					local z_mult = (math.abs(ply.sword_last_zvel or ply:GetVelocity().z) / 1000) +1
@@ -164,7 +176,7 @@ function SWEP:Animation(type)
 								d:SetDamage(damage)
 								d:SetDamageType(DMG_SLASH)
 								d:SetDamagePosition(v:NearestPoint(pos))
-								d:SetDamageForce(ang:Forward() * (3000 * self.Force * z_mult))
+								d:SetDamageForce(ang:Forward() * (3000 * self.Force * z_mult) * damage)
 								v:TakeDamageInfo(d)
 							end
 							if CLIENT then
@@ -179,12 +191,12 @@ function SWEP:Animation(type)
 									self.Owner:EmitSound("weapons/blade_slice_"..math.random(2,4)..".wav", 70, math.Clamp(math.Rand(200,240)/(i*0.75) * pitch, 50, 255))
 									local tbl = sound.GetProperties(info.impactHardSound).sound
 									if _G.type(tbl) == "string" then tbl = {tbl} end
-									v:EmitSound((table.Random(tbl)), 70, math.Clamp(math.Rand(140,160)/(i*0.75)*pitch, 50, 255))
+									self.Owner:EmitSound((table.Random(tbl)), 70, math.Clamp(math.Rand(140,160)/(i*0.75)*pitch, 50, 255))
 								end
 
 								local tbl = sound.GetProperties(info.bulletImpactSound).sound
 								if _G.type(tbl) == "string" then tbl = {tbl} end
-								v:EmitSound((table.Random(tbl)), 70, math.Clamp(math.Rand(140,160)*pitch, 50, 255))
+								self.Owner:EmitSound((table.Random(tbl)), 70, math.Clamp(math.Rand(140,160)*pitch, 50, 255))
 
 								--debugoverlay.Cross(v:GetPos(), 10)
 								break
@@ -476,7 +488,7 @@ end
 function SWEP:Think()
 	if GetConVarNumber("developer") == 0 then return end
 	local pos, ang, min, max = self:GetHitBox()
-	--debugoverlay.BoxAngles(pos, min, max, ang, 0, SERVER and Color(0,0,255) or Color(255,255,0))
+	debugoverlay.BoxAngles(pos, min, max, ang, 0, SERVER and Color(0,0,255) or Color(255,255,0))
 end
 
 if SERVER then
@@ -543,18 +555,94 @@ function SWEP:SecondaryAttack()
 	--if not IsFirstTimePredicted() then return end
 	if jrpg.IsActorRolling(self.Owner) or jrpg.IsActorDodging(self.Owner) then return end
 
-	if not self.Owner:IsOnGround() then
-		self:Attack("jump")
-	elseif self.Owner:GetVelocity():Dot(self.Owner:GetForward()) > 50 then
-		self:Attack("forward")
-	else
-		self:Attack("heavy")
-	end
+	self:Attack("heavy")
 	self:SetNextPrimaryFire(CurTime() + 5)
 	self:SetNextSecondaryFire(CurTime() + 5)
 end
 
 weapons.Register(SWEP, SWEP.ClassName)
+
+local shared_charge = {
+	{
+		seq = "phalanx_h_s2_t1",
+		speed = 1,
+		min = 0,
+		max = 0.8,
+
+		damage_frac = 0.3,
+		damage = 2,
+
+		done = function(self, f, f2, info)
+			info.damage = 2
+			if self.charge_sounds then
+				for i,v in ipairs(self.charge_sounds) do
+					v:Stop()
+				end
+			end
+			self.charge_sounds = nil
+		end,
+
+		callback = function(self, f, f2, info)
+			self.sword_anim_cycle = 1
+			if self.Owner:KeyDown(IN_ATTACK2) and f > 0.1 then
+				self:SetNextPrimaryFire(CurTime())
+				self:SetNextSecondaryFire(CurTime())
+				info.damage = f2*5
+
+				if CLIENT then
+					jrpg.AddScreenShake(f2/10, f2, 0.35)
+				end
+
+				self.charge_sounds = self.charge_sounds or {}
+
+				self.charge_sounds[1] = self.charge_sounds[1] or CreateSound(self.Owner, "ambient/levels/citadel/citadel_hub_ambience1.mp3")
+				self.charge_sounds[1]:PlayEx(f2/10, 100)
+				self.charge_sounds[1]:ChangePitch(100+f2)
+
+				self.charge_sounds[2] = self.charge_sounds[2] or CreateSound(self.Owner, "ambient/levels/citadel/extract_loop1.wav")
+				self.charge_sounds[2]:PlayEx(f2/10, 100)
+				self.charge_sounds[2]:ChangePitch(100+f2*2)
+
+				self.charge_sounds[3] = self.charge_sounds[3] or CreateSound(self.Owner, "ambient/atmosphere/tone_quiet.wav")
+				self.charge_sounds[3]:PlayEx(f/3, 100)
+				self.charge_sounds[3]:ChangePitch(50+f2)
+
+
+				return 0.1+(math.random()*f2*0.01)
+			else
+				if self.charge_sounds then
+					for i,v in ipairs(self.charge_sounds) do
+						v:Stop()
+					end
+
+
+
+					if CLIENT then
+						timer.Simple(0.25,function()
+							self.Owner:EmitSound("npc/scanner/cbot_energyexplosion1.wav", 75, 200, f2/10)
+							self.Owner:EmitSound("npc/scanner/cbot_energyexplosion1.wav", 75, 100, f2/20)
+							self.Owner:EmitSound("npc/scanner/cbot_energyexplosion1.wav", 75, 150, f2/30)
+							self.Owner:EmitSound("npc/scanner/cbot_energyexplosion1.wav", 75, 50, f2/40)
+							self.Owner:EmitSound("npc/scanner/cbot_energyexplosion1.wav", 75, 50, f2/40)
+						end)
+					end
+
+				end
+
+				self.charge_sounds = nil
+			end
+		end,
+	},
+	--[[{
+		seq = "phalanx_b_s2_t3",
+		speed = 1,
+		min = 0,
+		max = 1,
+
+		damage_frac = 0.3,
+		damage = 2,
+	},]]
+}
 
 do
 	local SWEP = {Primary = {}, Secondary = {}}
@@ -588,26 +676,7 @@ do
 				damage = 2,
 			},
 		},
-		heavy = {
-			{
-				seq = "phalanx_b_s1_t2",
-				speed = 0.6,
-				min = 0,
-				max = 1,
-
-				damage_frac = 0.23,
-				damage = 2,
-			},
-			{
-				seq = "phalanx_b_s2_t3",
-				speed = 1,
-				min = 0,
-				max = 1,
-
-				damage_frac = 0.3,
-				damage = 2,
-			},
-		},
+		heavy = shared_charge,
 		jump = {
 			{
 				seq = "phalanx_h_s1_t3",
@@ -621,7 +690,7 @@ do
 						if not self.Owner:IsOnGround() then
 							self.Owner.sword_last_zvel = self.Owner:GetVelocity().z
 
-							return false
+							return 0.4
 						end
 					end
 				end
@@ -787,24 +856,6 @@ do
 	SWEP.MoveSet2 = {
 		light = {
 			{
-				seq = "vanguard_b_s2_t3",
-				duration = 1,
-				min = 0.2,
-				max = 1,
-
-				damage_frac = 0.3,
-				damage_ang = Angle(-45,-90,0),
-			},
-			{
-				seq = "vanguard_b_s3_t1",
-				duration = 1,
-				min = 0.1,
-				max = 1,
-
-				damage_frac = 0.4,
-				damage_ang = Angle(90,-90,0),
-			},
-			{
 				seq = "vanguard_b_s3_t3",
 				duration = 1,
 				min = 0.1,
@@ -821,6 +872,37 @@ do
 
 				damage_frac = 0.4,
 				damage_ang = Angle(90,-90,0),
+			},
+		},
+		heavy = shared_charge,
+		jump = {
+			{
+				seq = "phalanx_h_s1_t3",
+				speed = 0.8,
+				min = 0,
+				max = 1,
+				damage_frac = 0.4,
+				damage = 3,
+				callback = function(self, f)
+					if f > 0.4 then
+						if not self.Owner:IsOnGround() then
+							self.Owner.sword_last_zvel = self.Owner:GetVelocity().z
+
+							return false
+						end
+					end
+				end
+			},
+		},
+		forward = {
+			{
+				seq = "vanguard_b_s2_t3",
+				duration = 1,
+				min = 0.2,
+				max = 1,
+
+				damage_frac = 0.3,
+				damage_ang = Angle(-45,-90,0),
 			},
 		},
 	}
