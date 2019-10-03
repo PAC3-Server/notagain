@@ -325,6 +325,9 @@ do -- view
 			end
 		end
 
+		smooth_pos = smooth_pos + ((target_pos - smooth_pos) * delta * battlecam.cam_speed)
+
+
 		local data = util.TraceLine({
 				start = ply:EyePos(),
 				endpos = smooth_pos,
@@ -338,7 +341,6 @@ do -- view
 			end
 
 		-- smoothing
-		smooth_pos = smooth_pos + ((target_pos - smooth_pos) * delta * battlecam.cam_speed)
 		smooth_dir = smooth_dir + ((target_dir:GetNormalized() - smooth_dir) * delta * battlecam.cam_speed)
 		smooth_fov = smooth_fov + ((target_fov - smooth_fov) * delta * battlecam.cam_speed)
 		smooth_roll = smooth_roll + ((target_roll - smooth_roll) * delta * battlecam.cam_speed)
