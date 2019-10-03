@@ -112,20 +112,22 @@ function SWEP:Animation(type)
 				end
 			end
 
+			local pos, ang, mins, maxs = self:GetHitBox()
+
 			if CLIENT then
 				if f >= info.damage_frac - 0.5 then
 					if not self.sound_played then
-						ply:EmitSound("npc/fast_zombie/claw_miss1.wav", 70, math.Rand(140,160))
+						local pitch = (0.8/mins:Distance(maxs))*60
+						ply:EmitSound("npc/zombie/claw_miss1.wav", 70, math.Clamp(math.Rand(100,120) * pitch, 50, 255))
+						ply:EmitSound("npc/scanner/scanner_nearmiss1.wav", 70, math.Clamp(math.Rand(90,120) * pitch, 50, 255))
 						self.sound_played = true
 					end
 				end
 			end
-			
-			local pos, ang, mins, maxs = self:GetHitBox()
 
 			if not self.sword_damaged and f >= info.damage_frac-0.25 then
 				table.insert(pos_history, pos + ang:Up() * self.SwordRange*0.5)
-				debugoverlay.Cross(pos + ang:Up() * self.SwordRange*0.5, 1, 5, SERVER and Color(0,0,255) or Color(255,255,0))
+				--debugoverlay.Cross(pos + ang:Up() * self.SwordRange*0.5, 1, 5, SERVER and Color(0,0,255) or Color(255,255,0))
 			end
 
 			if f >= info.damage_frac then
@@ -145,30 +147,46 @@ function SWEP:Animation(type)
 					local size = 40
 					--debugoverlay.Sphere(pos, size, 0.5)
 					if GetConVarNumber("developer") > 0 then
-						debugoverlay.Axis(pos, ang, 10, 5, true)
-						debugoverlay.Line(pos, pos + ang:Forward() * 150, 5, SERVER and Color(0,0,255) or Color(255,255,0), true)
+						--debugoverlay.Axis(pos, ang, 10, 5, true)
+						--debugoverlay.Line(pos, pos + ang:Forward() * 150, 5, SERVER and Color(0,0,255) or Color(255,255,0), true)
 					end
-
-
 
 					local z_mult = (math.abs(ply.sword_last_zvel or ply:GetVelocity().z) / 1000) +1
 					local damage = self.Damage * z_mult * (info.damage or 1)
 					local hit_something = false
-					for k,v in pairs(ents.FindInSphere(pos, size)) do
-						if v ~= ply and v:GetOwner() ~= ply then
-							if SERVER then	
+					local found =  ents.FindInSphere(pos, size)
+					for k,v in ipairs(found) do
+						if v ~= ply and v:GetOwner() ~= ply and not table.HasValue(found, v:GetOwner()) then
+							if SERVER then
 								local d = DamageInfo()
 								d:SetAttacker(ply)
 								d:SetInflictor(ply)
 								d:SetDamage(damage)
 								d:SetDamageType(DMG_SLASH)
-								d:SetDamagePosition(ply:EyePos())
-								d:SetDamageForce(ang:Forward() * 3000 * self.Force * z_mult)
+								d:SetDamagePosition(v:NearestPoint(pos))
+								d:SetDamageForce(ang:Forward() * (3000 * self.Force * z_mult))
 								v:TakeDamageInfo(d)
 							end
 							if CLIENT then
-								self.Owner:EmitSound("npc/fast_zombie/claw_strike"..math.random(1,3)..".wav", 70, math.Rand(140,160))
-								debugoverlay.Cross(v:GetPos(), 10)
+								local info = util.GetSurfaceData(util.QuickTrace(pos, ang:Forward()*1000).SurfaceProps)
+
+								--PrintTable(info)
+
+								local pitch = (0.8/mins:Distance(maxs))*60
+
+
+								for i = 1, 3 do
+									self.Owner:EmitSound("weapons/blade_slice_"..math.random(2,4)..".wav", 70, math.Clamp(math.Rand(200,240)/(i*0.75) * pitch, 50, 255))
+									local tbl = sound.GetProperties(info.impactHardSound).sound
+									if _G.type(tbl) == "string" then tbl = {tbl} end
+									v:EmitSound((table.Random(tbl)), 70, math.Clamp(math.Rand(140,160)/(i*0.75)*pitch, 50, 255))
+								end
+
+								local tbl = sound.GetProperties(info.bulletImpactSound).sound
+								if _G.type(tbl) == "string" then tbl = {tbl} end
+								v:EmitSound((table.Random(tbl)), 70, math.Clamp(math.Rand(140,160)*pitch, 50, 255))
+
+								--debugoverlay.Cross(v:GetPos(), 10)
 								break
 							end
 						end
@@ -178,7 +196,7 @@ function SWEP:Animation(type)
 
 					self:SetNextPrimaryFire(CurTime())
 					self:SetNextSecondaryFire(CurTime())
-				end		
+				end
 			end
 		end
 	})
@@ -227,12 +245,12 @@ if CLIENT then
 
 		mesh.TexCoord(0, 0, 1)
 		mesh.Color(r,g,b,a)
-		mesh.Position(stop_pos + upper_left) 
+		mesh.Position(stop_pos + upper_left)
 		mesh.AdvanceVertex()
 
 		mesh.TexCoord(0, 0, 0)
 		mesh.Color(r,g,b,a)
-		mesh.Position(start_pos + lower_left) 
+		mesh.Position(start_pos + lower_left)
 		mesh.AdvanceVertex()
 
 		mesh.TexCoord(0, 1, 0)
@@ -242,7 +260,7 @@ if CLIENT then
 
 		mesh.TexCoord(0, 1, 1)
 		mesh.Color(r,g,b,a)
-		mesh.Position(stop_pos + upper_right) 
+		mesh.Position(stop_pos + upper_right)
 		mesh.AdvanceVertex()
 
 		mesh.TexCoord(0, 0, 1)
@@ -284,6 +302,7 @@ if CLIENT then
 	end
 
 	function SWEP:DrawWorldModelTranslucent()
+
 		if self:GetNWBool("wepstats_elemental") then
 			for k, v in pairs(jdmg.types) do
 				if self:GetNWBool("wepstats_elemental_" .. k) then
@@ -293,15 +312,15 @@ if CLIENT then
 				end
 			end
 		end
-		
-		if self.Owner:IsValid() and self.Owner.sword_anim_cycle and self.Owner.sword_anim_cycle < self.Owner.sword_anim_info.damage_frac then
+
+		if self.Owner:IsValid() and self.sword_anim_cycle and self.sword_anim_cycle < self.sword_anim_info.damage_frac then
 			local R,G,B = 255,255,255
 			local total = 1
 
 			if self:GetNWBool("wepstats_elemental") then
 				for k, v in pairs(jdmg.types) do
 					if self:GetNWBool("wepstats_elemental_" .. k) then
-						
+
 						local old = self:GetPos()
 						for i = 1, 3 do
 							self:SetPos(old + self:GetUp() * math.random(self.SwordRange))
@@ -310,7 +329,8 @@ if CLIENT then
 							v.draw(self, len, len, RealTime())
 							if v.think then v.think(self, len, len, RealTime()) end
 							v.draw_projectile(self, len, false)
-							ent:SetPos(old)
+							--if v.think then v.think(self, len, 1,1) end
+							self:SetPos(old)
 						end
 
 						R = R + v.color.r
@@ -337,13 +357,13 @@ if CLIENT then
 				if #self.pos_history > 15 then
 					table.remove(self.pos_history, 1)
 				end
-				
+
 				render.SetMaterial(trail)
 
 				local quads = #self.pos_history
 				render.SuppressEngineLighting(true)
 				mesh.Begin(MATERIAL_TRIANGLES, 2*quads)
-					local ok, err = pcall(function() 
+					local ok, err = pcall(function()
 					for i = 0, quads - 1 do
 						local a = self.pos_history[i+1]
 						local b = self.pos_history[i]
@@ -456,7 +476,7 @@ end
 function SWEP:Think()
 	if GetConVarNumber("developer") == 0 then return end
 	local pos, ang, min, max = self:GetHitBox()
-	debugoverlay.BoxAngles(pos, min, max, ang, 0, SERVER and Color(0,0,255) or Color(255,255,0))
+	--debugoverlay.BoxAngles(pos, min, max, ang, 0, SERVER and Color(0,0,255) or Color(255,255,0))
 end
 
 if SERVER then
@@ -601,7 +621,7 @@ do
 						if not self.Owner:IsOnGround() then
 							self.Owner.sword_last_zvel = self.Owner:GetVelocity().z
 
-							return false 
+							return false
 						end
 					end
 				end

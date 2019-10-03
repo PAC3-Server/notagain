@@ -88,7 +88,7 @@ if CLIENT then
 
 					ice:SetPos(ent:GetPos())
 					ice:SetAngles(VectorRand():Angle())
-					ice:SetModelScale(math.Rand(0.1, 0.2)*0.3)
+					ice:SetModelScale(math.Rand(0.1, 0.2)*size)
 
 					ice:SetRenderMode(RENDERMODE_TRANSADD)
 
