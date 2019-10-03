@@ -23,6 +23,7 @@ function jrpg.PlayGestureAnimation(ent, info)
 	data.duration = ent:SequenceDuration(data.seq)
 	data.weight = info.weight or 1
 	data.callback = info.callback
+	data.done = info.done
 
 	data.time = CurTime() + (data.duration / data.speed)
 
@@ -32,13 +33,18 @@ end
 local function calc_gesture_animations(ply)
 	for i = #ply.jrpg_gesture_animations, 1, -1 do
 		local data = ply.jrpg_gesture_animations[i]
-		local f = (data.time - CurTime()) / (data.duration / data.speed)
+		local f = (data.time - (data.frozen_time or CurTime())) / (data.duration / data.speed)
 
 		if f > 0 and f <= 1 then
 			local f = -f + 1
 
-			if data.callback and data.callback(f) == false then
-				data.time = CurTime() + f
+			local res = data.callback and data.callback(f,data)
+			if res then
+				data.frozen_time = data.frozen_time or CurTime()
+				f = res
+			elseif data.frozen_time then
+				data.time = CurTime() - (data.frozen_time - data.time)
+				data.frozen_time = nil
 			end
 
 			ply:SetPlaybackRate(0)
@@ -57,6 +63,9 @@ local function calc_gesture_animations(ply)
 
 		if f <= 0 then
 			table.remove(ply.jrpg_gesture_animations, i)
+			if data.done then
+				data.done(f)
+			end
 		end
 	end
 		--local fade = (math.sin(f*math.pi) * 2 - 1) * 0.5 + 0.5
