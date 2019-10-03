@@ -29,7 +29,7 @@ local function calc_screenshake(eye_pos)
 			table.remove(queue, i)
 		end
 	end
-	
+
 	return pos
 end
 

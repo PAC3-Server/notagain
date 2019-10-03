@@ -259,6 +259,7 @@ do
 	local BASE = {}
 
 	function BASE:Initialize() end
+	function BASE:OnRemove() end
 	function BASE:DrawTranslucent() end
 	function BASE:DrawOpaque() end
 
@@ -277,22 +278,26 @@ do
 
 		local f2 = math.sin(f*math.pi) ^ 0.5
 
-		if self.ent:IsValid() then
-			local m = self.ent:GetBoneMatrix(self.ent:LookupBone("ValveBiped.Bip01_Pelvis"))
-			if m then
-				self.position = m:GetTranslation()
-			else
-				self.position = self.ent:GetPos() + self.ent:OBBCenter()
-			end
-			self.position2 = self.ent:GetPos() + self.ent:OBBCenter()
+		if self.ent then
+			if self.ent:IsValid() then
+				local m = self.ent:GetBoneMatrix(self.ent:LookupBone("ValveBiped.Bip01_Pelvis"))
+				if m then
+					self.position = m:GetTranslation()
+				else
+					self.position = self.ent:GetPos() + self.ent:OBBCenter()
+				end
+				self.position2 = self.ent:GetPos() + self.ent:OBBCenter()
 
+
+			else
+				self:Remove()
+			end
+		else
 			if how == "opaque" then
 				self:DrawOpaque(time, f, f2)
 			else
 				self:DrawTranslucent(time, f, f2)
 			end
-		else
-			self:Remove()
 		end
 	end
 
@@ -305,6 +310,8 @@ do
 				break
 			end
 		end
+
+		self:OnRemove()
 	end
 
 	jfx.effects = jfx.effects or {}

@@ -23,7 +23,7 @@ function jrpg.PlayGestureAnimation(ent, info)
 	data.duration = ent:SequenceDuration(data.seq)
 	data.weight = info.weight or 1
 	data.callback = info.callback
-	
+
 	data.time = CurTime() + (data.duration / data.speed)
 
 	table.insert(ent.jrpg_gesture_animations, data)
@@ -39,19 +39,19 @@ local function calc_gesture_animations(ply)
 
 			if data.callback and data.callback(f) == false then
 				data.time = CurTime() + f
-			end	
-			
+			end
+
 			ply:SetPlaybackRate(0)
 			ply:AddVCDSequenceToGestureSlot(data.slot, data.seq, Lerp(f, data.start, data.stop), true)
 
 			local weight = math.EaseInOut(f, 0, 1)
-			if weight > 0.5 then	
+			if weight > 0.5 then
 				weight = -weight + 1
 			end
 			weight = math.Clamp(weight * 4, 0, 1)
 			weight = weight ^ 0.4
 			weight = weight * data.weight
-			
+
 			ply:AnimSetGestureWeight(data.slot, weight)
 		end
 
@@ -249,7 +249,7 @@ local function reset_pose(ply)
 end
 
 local function male2female_animations(ply)
-	if jrpg.GetGender(ply) ~= "female" then 
+	if jrpg.GetGender(ply) ~= "female" then
 		reset_pose(ply)
 		return
 	end
@@ -300,12 +300,12 @@ local function male2female_animations(ply)
 		else
 			reset_pose(ply)
 		end
-	end	
+	end
 end
 
 hook.Add("UpdateAnimation", "movement", function(ply)
 	if not jrpg.IsEnabled(ply) then return end
-	
+
 	if ply.jrpg_gesture_animations then
 		calc_gesture_animations(ply)
 	end

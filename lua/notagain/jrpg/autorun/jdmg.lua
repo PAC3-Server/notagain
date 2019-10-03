@@ -260,7 +260,6 @@ if CLIENT then
 			local data = active[i]
 
 			local f = (data.time - time) / data.duration
-			f = f ^ data.pow
 
 			if f <= 0 or not data.ent:IsValid() then
 				table.remove(active, i)
@@ -335,18 +334,103 @@ if CLIENT then
 		hook.Add("RenderScreenspaceEffects", "jdmg_lowhealth", jrpg.SafeDraw(cam.Start3D, cam.End3D, render_lowhealth))
 	end
 
-	function jdmg.DamageEffect(ent, type, duration, strength, pow)
+	local emitter = ParticleEmitter(vector_origin)
+
+	function jdmg.DamageEffect(ent, type, duration, strength, pos, dir, normal)
 		type = jdmg.types[type] or jdmg.types.generic
 		duration = duration or 1
 		strength = strength or 1
-		pow = pow or 3
+		if type == jdmg.types.generic then
+			--debugoverlay.Axis(pos, dir:Angle(), strength+1, 5, true)
+			--debugoverlay.Line(pos, pos + normal * strength, 5, Color(255, 255, 255, 255), true)
+
+			jrpg.AddScreenShake(math.min(strength*2, 5), 1, duration*0.5)
+			math.randomseed(CurTime())
+
+			--jrpg.ImpactEffect(pos, normal, math.Clamp(strength*4, 0.5, 1.25), type.color)
+		end
+
+		if type ~= jdmg.types.generic then
+			jrpg.ImpactEffect(pos, normal, math.Clamp(strength*4, 0.5, 1.25), type.color)
+
+			local active = {}
+			for i = 1, math.random(3,5) do
+
+				local p = emitter:Add("particle/fire", pos)
+				p:SetStartSize(0)
+				p:SetEndSize(0)
+				p:SetCollide(true)
+				p:SetVelocity(normal*100 + VectorRand()*40)
+				p:SetGravity(VectorRand()*100)
+				p:SetLifeTime(0)
+				p:SetDieTime((math.Rand(0.1,0.75)^5) * 5)
+				active[i] = {p = p, size=math.Rand(2.5,6)*math.max(strength, 5), ent = ClientsideModel("models/XQM/Rails/gumball_1.mdl")}
+				local e = active[i].ent
+				e:SetModelScale(0)
+			end
+			local key = tostring({})
+			hook.Add("RenderScreenspaceEffects", key, function()
+				math.randomseed(CurTime())
+				cam.Start3D()
+
+				local ok = false
+				for i,v in ipairs(active) do
+					local f = math.Clamp(-(v.p:GetLifeTime() / v.p:GetDieTime())+1, 0, 1)
+
+					if f > 0 then
+						ok = true
+						v.ent:SetPos(v.p:GetPos())
+
+						type.draw_projectile(v.ent, v.size*f, false)
+
+					else
+						SafeRemoveEntity(v.ent)
+					end
+				end
+				cam.End3D()
+				if not ok then
+					hook.Remove("RenderScreenspaceEffects", key)
+				end
+			end)
+		end
+
+		if false then
+			if ent.jrpg_freeze_frame then
+				ent.jrpg_freeze_frame()
+			end
+
+			local dummy = ClientsideModel(ent:GetModel())
+			dummy:SetPos(ent:GetPos())
+			dummy:SetAngles(ent:GetAngles())
+			dummy:SetSequence(ent:GetSequence())
+			dummy:SetCycle(ent:GetCycle())
+			local pos = dummy:GetPos()
+			local t = duration*0.25
+			dummy.RenderOverride = function(s)
+				t = t - FrameTime()
+				math.randomseed(CurTime())
+				render.SetColorModulation(1000,1000,1000)
+				s:SetRenderOrigin(pos + VectorRand() * strength * 0.15 * t)
+				s:SetupBones()
+				s:DrawModel()
+			end
+
+			local old = ent.RenderOverride
+			ent.RenderOverride = function() end
+			ent.jrpg_freeze_frame = function()
+				SafeRemoveEntity(dummy)
+				ent.RenderOverride = old
+			end
+
+			timer.Simple(duration*0.25, ent.jrpg_freeze_frame)
+		end
+
 
 		table.insert(active, {
 			ent = ent,
 			type = type,
 			duration = duration,
 			strength = strength,
-			pow = pow,
 			time = RealTime() + duration,
 			time_offset = math.random(),
 		})
@@ -370,13 +454,15 @@ if CLIENT then
 		local duration = net.ReadFloat()
 		local strength = net.ReadFloat()
 		local pos = net.ReadVector()
+		local dir = net.ReadVector()
+		local normal = net.ReadVector()
 
-		jdmg.DamageEffect(ent, type, duration, strength)
+		jdmg.DamageEffect(ent, type, duration, strength, pos, dir, normal)
 	end)
 end
 
 if SERVER then
-	function jdmg.DamageEffect(ent, type, duration, strength, pos)
+	function jdmg.DamageEffect(ent, type, duration, strength, pos, dir, normal)
 		type = type or "generic"
 		duration = duration or 1
 		strength = strength or 1
@@ -388,12 +474,31 @@ if SERVER then
 			end
 		end
 
+		if false and ent:GetPhysicsObject():IsValid() then
+			timer.Simple(0, function()
+			local phys = ent:GetPhysicsObject()
+			local vel = phys:GetVelocity()
+			local velang = phys:GetAngleVelocity()
+			print(phys, vel, velang)
+			phys:Sleep()
+			phys:EnableMotion(false)
+			timer.Simple(duration*0.5, function()
+				phys:EnableMotion(true)
+				phys:Wake()
+				phys:SetVelocity(vel)
+				phys:AddAngleVelocity(velang)
+			end)
+		end)
+		end
+
 		net.Start("jdmg", true)
 			net.WriteEntity(ent)
 			net.WriteString(type)
 			net.WriteFloat(duration)
 			net.WriteFloat(strength)
 			net.WriteVector(pos or vector_origin)
+			net.WriteVector(dir or vector_origin)
+			net.WriteVector(normal or vector_origin)
 		net.Send(filter)
 	end
 
@@ -412,7 +517,23 @@ if SERVER then
 	hook.Add("EntityTakeDamage", "jdmg", function(ent, dmginfo)
 		if ent:GetNoDraw() then return end
 
-		local pos = ent:WorldToLocal(dmginfo:GetDamagePosition())
+		local pos = dmginfo:GetDamagePosition()
+		local dir = dmginfo:GetDamageForce()
+
+		local t = {
+			start = pos - dir:GetNormalized() * 1,
+			endpos = pos + dir:GetNormalized() * 10,
+		}
+		local t = util.TraceLine(t)
+		local normal
+		if t.Hit then
+			normal = t.HitNormal
+		else
+			normal = dir:GetNormalized()
+		end
+
+		--debugoverlay.Line(t.start, t.endpos, 5, Color(255, 255, 0,255))
+
 		local type = dmginfo:GetDamageType()
 		local dmg = dmginfo:GetDamage()
 		local max_health = math.max(ent:GetMaxHealth(), 1)
@@ -424,7 +545,7 @@ if SERVER then
 		local override = jdmg.GetDamageType(dmginfo)
 
 		if override then
-			jdmg.DamageEffect(ent, override, duration, strength, pos)
+			jdmg.DamageEffect(ent, override, duration, strength, pos, dir, normal)
 			if override == "lightning" then
 				dmginfo:SetDamageType(DMG_DISSOLVE)
 			end
@@ -442,7 +563,7 @@ if SERVER then
 						end
 					end
 
-					jdmg.DamageEffect(ent, jdmg_name, duration, strength, pos)
+					jdmg.DamageEffect(ent, jdmg_name, duration, strength, pos, dir, normal)
 
 					done[hl2_name] = true
 				end
@@ -533,7 +654,7 @@ local function register_elemental(what)
 	weapons.Register(SWEP, SWEP.ClassName)
 end
 
-timer.Simple(0.1, function() 
+timer.Simple(0.1, function()
 	for k,v in pairs(jdmg.types) do
 		register_elemental(k)
 	end
