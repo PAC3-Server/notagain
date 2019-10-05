@@ -95,7 +95,8 @@ if SERVER then
 	local maps = {}
 	local maps2 = {}
 
-	local files = file.Find("maps/*.bsp", "MOD")
+	local files = table.Add(file.Find("maps/*.bsp", "MOD"), file.Find("maps/*.bsp", "THIRDPARTY"))
+
 	for _, name in pairs(files) do
 		name = name:match("(.+)%.bsp")
 		if not blacklist[name] then
