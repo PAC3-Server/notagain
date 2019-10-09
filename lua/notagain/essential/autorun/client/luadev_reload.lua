@@ -15,7 +15,7 @@ end
 local function check_path(path, cb, what, lib)
 	local time = file.Time(path, "MOD")
 
-	if last[path] ~= time then
+	if time and last[path] ~= time then
 		if last[path] then
 			print(path, " changed")
 			local code = file.Read(path, "MOD")
@@ -24,6 +24,8 @@ local function check_path(path, cb, what, lib)
 					code = lib(code)
 				else
 					local name = path:match("^.+/(.+)%.lua$") or path:match("^(.+)%.lua$")
+
+					print("reloaded library " .. name)
 
 					code = [[notagain.loaded_libraries[']] .. name .. [[']=(function()]] .. code .. [[;end)()]]
 				end
