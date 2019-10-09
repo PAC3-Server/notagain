@@ -15,9 +15,12 @@ for _, event in ipairs(hooks) do
         local tp = ply:GetInfo("battlecam_enabled")
         if tp == "1" then
             local ent = args[#args]
-            if IsEntity(ent) and ent:GetPos():Distance(ply:GetPos()) > 700 then
-                ent:SetPos(ply:EyePos() + ply:GetAimVector() * 300)
-            end
+
+            local rand = ply:GetAimVector() + VectorRand()*0.5
+            rand.z = 0
+
+            ent:SetPos(util.QuickTrace(ply:EyePos(), rand * 200, ply).HitPos)
+            ent:DropToFloor()
         end
     end)
 end
