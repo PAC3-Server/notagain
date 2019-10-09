@@ -1,7 +1,7 @@
 local prettytext = requirex("pretty_text")
 
-local function FrameTime()
-	return math.Clamp(_G.FrameTime(), 0, 0.1)
+local function RealFrameTime()
+	return math.Clamp(_G.RealFrameTime(), 0, 0.1)
 end
 
 battlecam = battlecam or {}
@@ -183,7 +183,7 @@ do -- view
 
 		--battlecam.SetupCrosshair(battlecam.crosshair_ent)
 
-		local delta = FrameTime()
+		local delta = RealFrameTime()
 		local target_pos = battlecam.aim_pos * 1
 		local target_dir = battlecam.aim_dir * 1
 		local target_fov = 60
@@ -244,6 +244,7 @@ do -- view
 
 				local ent = jtarget.GetEntity(ply)
 
+
 				local focus = battlecam.focus_ent and battlecam.focus_ent:IsValid()
 
 				if focus then
@@ -259,6 +260,10 @@ do -- view
 				local room_size = math.Clamp(math.Round(jrpg.GetRoomSize(ply)/50)*50, 50, 300)
 
 				if ent:IsValid() then
+					if ent:GetParent():IsValid() then
+						ent = ent:GetParent()
+					end
+
 					local enemy_size = math.min(ent:BoundingRadius() * (ent:GetModelScale() or 1), 200) + 50
 					local ply_pos = ply:EyePos()
 
@@ -307,8 +312,8 @@ do -- view
 					local cam_ang = smooth_dir:Angle()
 					cam_ang:Normalize()
 
-					local right = cam_ang:Right() * FrameTime() * - battlecam.cam_rotation_velocity.y
-					local up = cam_ang:Up() * FrameTime() * battlecam.cam_rotation_velocity.x
+					local right = cam_ang:Right() * RealFrameTime() * - battlecam.cam_rotation_velocity.y
+					local up = cam_ang:Up() * RealFrameTime() * battlecam.cam_rotation_velocity.x
 
 					smooth_pos = smooth_pos + right*room_size*4.5 + up*room_size*4.5
 					smooth_dir = smooth_dir - right*room_size/50 - up*room_size/50
@@ -430,8 +435,8 @@ do
 		smooth_x = smooth_x or x
 		smooth_y = smooth_y or y
 
-		smooth_x = smooth_x + ((x - smooth_x) * FrameTime() * 20)
-		smooth_y = smooth_y + ((y - smooth_y) * FrameTime() * 20)
+		smooth_x = smooth_x + ((x - smooth_x) * RealFrameTime() * 20)
+		smooth_y = smooth_y + ((y - smooth_y) * RealFrameTime() * 20)
 
 		battlecam.cam_rotation_velocity.y = smooth_x / 100
 		battlecam.cam_rotation_velocity.x = smooth_y / 100
@@ -475,19 +480,19 @@ do
 			end
 
 			if input.IsButtonDown(KEY_XSTICK2_RIGHT) or input.IsButtonDown(KEY_PAD_6) then
-				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - FrameTime()*20
-				battlecam.cam_rotation_velocity.y = FrameTime()*15
+				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y - RealFrameTime()*20
+				battlecam.cam_rotation_velocity.y = RealFrameTime()*15
 			elseif input.IsButtonDown(KEY_XSTICK2_LEFT) or input.IsButtonDown(KEY_PAD_4) then
-				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y + FrameTime()*20
-				battlecam.cam_rotation_velocity.y = -FrameTime()*15
+				battlecam.target_cam_rotation.y = battlecam.target_cam_rotation.y + RealFrameTime()*20
+				battlecam.cam_rotation_velocity.y = -RealFrameTime()*15
 			end
 
 			if input.IsButtonDown(KEY_XSTICK2_UP) or input.IsButtonDown(KEY_PAD_8) then
-				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x - FrameTime()*20
-				battlecam.cam_rotation_velocity.x = FrameTime()*8
+				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x - RealFrameTime()*20
+				battlecam.cam_rotation_velocity.x = RealFrameTime()*8
 			elseif input.IsButtonDown(KEY_XSTICK2_DOWN) or input.IsButtonDown(KEY_PAD_2) then
-				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x + FrameTime()*40
-				battlecam.cam_rotation_velocity.x = -FrameTime()*8
+				battlecam.target_cam_rotation.p = battlecam.target_cam_rotation.x + RealFrameTime()*40
+				battlecam.cam_rotation_velocity.x = -RealFrameTime()*8
 			end
 
 			battlecam.target_cam_rotation:Normalize()
@@ -574,7 +579,7 @@ do
 			dir.z = 0
 
 			if dir ~= Vector(0,0,0) then
-				smooth_dir = smooth_dir + ((dir - smooth_dir) * FrameTime() * 10)
+				smooth_dir = smooth_dir + ((dir - smooth_dir) * RealFrameTime() * 10)
 				ucmd:SetViewAngles(smooth_dir:Angle())
 
 				ucmd:SetForwardMove(10000)
