@@ -176,6 +176,10 @@ function jrpg.IsActorAlive(ent)
 	return ent:Health() > 0
 end
 
+hook.Add("CreateClientsideRagdoll", "jrpg_isalive", function(ent, rag)
+	ent.jrpg_rag_ent = rag
+end)
+
 hook.Add("OnEntityCreated", "jrpg_isalive", function(ent)
 	if ent.GetRagdollOwner and ent:GetRagdollOwner() and ent:GetRagdollOwner():IsValid() then
 		ent:GetRagdollOwner().jrpg_rag_ent = ent
@@ -193,7 +197,7 @@ function jrpg.GetActorBody(ent)
 			return ent.jrpg_rag_ent
 		end
 	end
-	
+
 	return ent
 end
 
@@ -388,7 +392,7 @@ if CLIENT then
 		if ent:GetModel() == "models/props_c17/furniturestove001a.mdl" then
 			return true
 		end
-	
+
 		if ent == LocalPlayer() then
 			return true
 		end
@@ -421,7 +425,7 @@ end
 
 jrpg.FindHeadPos = requirex("find_head_pos")
 
-	
+
 function jrpg.Get2DBoundingBox(v)
 	local min, max = v:OBBMins(), v:OBBMaxs()
 
