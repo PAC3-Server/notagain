@@ -389,6 +389,8 @@ do
 end
 
 function jfx.DrawModel(ent)
+	ent = jrpg.GetActorBody(ent)
+
 	if ent.pacDrawModel then
 		ent:pacDrawModel(true)
 	else
