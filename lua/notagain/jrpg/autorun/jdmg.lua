@@ -347,11 +347,11 @@ if CLIENT then
 			jrpg.AddScreenShake(math.min(strength*2, 5), 1, duration*0.5)
 			math.randomseed(CurTime())
 
-			jrpg.ImpactEffect(pos, normal, math.Clamp(strength*4, 0.5, 1.25), type.color)
+			jrpg.ImpactEffect(pos, normal, dir, math.Clamp(strength*4, 0.5, 1.25), type.color)
 		end
 
 		if type ~= jdmg.types.generic then
-			jrpg.ImpactEffect(pos, normal, math.Clamp(strength*4, 0.5, 1.25), type.color)
+			jrpg.ImpactEffect(pos, normal, dir, math.Clamp(strength*4, 0.5, 1.25), type.color)
 
 			local active = {}
 			for i = 1, math.random(3,5) do
@@ -479,7 +479,7 @@ if SERVER then
 			local phys = ent:GetPhysicsObject()
 			local vel = phys:GetVelocity()
 			local velang = phys:GetAngleVelocity()
-			print(phys, vel, velang)
+
 			phys:Sleep()
 			phys:EnableMotion(false)
 			timer.Simple(duration*0.5, function()
@@ -521,12 +521,13 @@ if SERVER then
 		local dir = dmginfo:GetDamageForce()
 
 		local t = {
-			start = pos - dir:GetNormalized() * 1,
+			start = pos - dir:GetNormalized() * 10,
 			endpos = pos + dir:GetNormalized() * 10,
 		}
 		local t = util.TraceLine(t)
+
 		local normal
-		if t.Hit then
+		if t.Entity == ent and not t.HitNormal:IsZero() then
 			normal = t.HitNormal
 		else
 			normal = dir:GetNormalized()
