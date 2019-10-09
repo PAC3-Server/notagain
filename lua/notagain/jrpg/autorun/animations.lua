@@ -11,15 +11,18 @@ do
 end
 
 function jrpg.PlayGestureAnimation(ent, info)
-	ent.jrpg_gesture_animations = {}
 	ent.jrpg_gesture_animations = ent.jrpg_gesture_animations or {}
+
+--	if SERVER then
+		ent.jrpg_gesture_animations = {}
+--	end
 
 	local data = {}
 	data.seq = ent:LookupSequence(info.seq)
 	data.start = info.start or 0
 	data.stop = info.stop or 1
 	data.speed = info.speed or 0
-	data.slot = info.slot or 0
+	data.slot = info.slot or math.Clamp(#ent.jrpg_gesture_animations, 0, 1)
 	data.duration = ent:SequenceDuration(data.seq)
 	data.weight = info.weight or 1
 	data.callback = info.callback
@@ -33,6 +36,11 @@ end
 local function calc_gesture_animations(ply)
 	for i = #ply.jrpg_gesture_animations, 1, -1 do
 		local data = ply.jrpg_gesture_animations[i]
+
+		if data.speed_mult then
+			data.time = data.time - FrameTime() * data.speed_mult
+		end
+
 		local f = (data.time - (data.frozen_time or CurTime())) / (data.duration / data.speed)
 
 		if f > 0 and f <= 1 then
