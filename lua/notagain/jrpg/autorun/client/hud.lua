@@ -626,7 +626,7 @@ hook.Add("HUDPaint", "jhud", function()
 		render.SetBlend(0.784)
 		render.SetColorModulation(0, 0, 0)
 		render.SetMaterial(no_texture)
-		draw_rect(x+w-size,y+h,size*status:GetAmount(),size)
+		draw_rect(x+w-size,y+h,math.min(size*status:GetAmount(), size),size)
 
 		x = x - size - 5
 	end

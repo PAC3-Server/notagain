@@ -122,10 +122,11 @@ if CLIENT then
             local ent = data.ent
 
             if ent:IsValid() then
+                local name = jrpg.GetFriendlyName(ent)
+                ent = jrpg.GetActorBody(ent)
+
                 local t = RealTime()
                 local fraction = (data.time - t) / life_time * 2
-
-                local name = jrpg.GetFriendlyName(ent)
 
                 local world_pos = (ent:NearestPoint(ent:EyePos() + Vector(0,0,100000)) + Vector(0,0,2))
                 local pos = world_pos:ToScreen()
@@ -257,7 +258,7 @@ if CLIENT then
         end
     end)
 
-    
+
 	timer.Create("healthbars", 0.25, 0, function()
 		local ply = LocalPlayer()
 		if not ply:IsValid() or not ply:GetEyeTrace() then return end
