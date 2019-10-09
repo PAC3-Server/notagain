@@ -64,7 +64,7 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 
 	local vel = ply:GetVelocity()
 	local seq
-	if vel:IsZero() then
+	if vel:Length2D() < 20 then
 		seq = ply:LookupSequence(self.MoveSet .. "_idle_lower")
 
 		if seq < 0 then
@@ -104,7 +104,6 @@ function SWEP:Animation(type)
 
 	jrpg.PlayGestureAnimation(ply, {
 		seq = info.seq,
-		duration = 0.5,
 		start = info.min,
 		stop = info.max,
 		speed = self.OverallSpeed * (info.speed or 1),
@@ -139,26 +138,23 @@ function SWEP:Animation(type)
 
 			if not self.sword_damaged and f >= info.damage_frac-0.25 then
 				table.insert(pos_history, pos + ang:Up() * self.SwordRange*0.5)
-				debugoverlay.Cross(pos + ang:Up() * self.SwordRange*0.5, 1, 5, SERVER and Color(0,0,255) or Color(255,255,0))
+				if GetConVarNumber("developer") > 4 then
+					debugoverlay.Cross(pos + ang:Up() * self.SwordRange*0.5, 1, 5, SERVER and Color(0,0,255) or Color(255,255,0))
+				end
 			end
 
 			if f >= info.damage_frac then
 				if not self.sword_damaged then
-					local dir = Vector()
-					for i = 2, #pos_history do
-						local a, b = pos_history[i], pos_history[i - 1]
-						if a:Distance(b) > 5 then
-							dir = dir + (a - b)
-						end
-					end
-
 					local pos = ply:WorldSpaceCenter() + ply:GetForward() * self.SwordRange
-
+					local dir = (pos_history[1] - pos_history[#pos_history]):GetNormalized()
 					ang = dir:Angle()
 
+					--debugoverlay.Line(pos + dir:GetNormalized() * 100, pos - dir:GetNormalized() * 100, 1.5, Color(255, 0,255,255), true)
+
+
 					local size = 40
-					debugoverlay.Sphere(pos, size, 0.5)
-					if GetConVarNumber("developer") > 0 then
+					if GetConVarNumber("developer") > 4 then
+						debugoverlay.Sphere(pos, size, 0.5, Color(255, 255, 255, 5))
 						debugoverlay.Axis(pos, ang, 10, 5, true)
 						debugoverlay.Line(pos, pos + ang:Forward() * 150, 5, SERVER and Color(0,0,255) or Color(255,255,0), true)
 					end
@@ -168,7 +164,7 @@ function SWEP:Animation(type)
 					local hit_something = false
 					local found =  ents.FindInSphere(pos, size)
 					for k,v in ipairs(found) do
-						if v ~= ply and v:GetOwner() ~= ply and not table.HasValue(found, v:GetOwner()) then
+						if v ~= ply and v:GetOwner() ~= ply and not table.HasValue(found, v:GetOwner()) and v:GetPhysicsObject():IsValid() then
 							if SERVER then
 								local d = DamageInfo()
 								d:SetAttacker(ply)
@@ -176,13 +172,15 @@ function SWEP:Animation(type)
 								d:SetDamage(damage)
 								d:SetDamageType(DMG_SLASH)
 								d:SetDamagePosition(v:NearestPoint(pos))
-								d:SetDamageForce(ang:Forward() * (3000 * self.Force * z_mult) * damage)
+								d:SetDamageForce(dir * -(300 * self.Force * z_mult) * damage)
 								v:TakeDamageInfo(d)
+
+								if damage > 100 and v:IsNPC() then
+									jrpg.KnockoutEntity(v, ply, (dir+Vector(0,0,0.7))*-4 * damage, true)
+								end
 							end
 							if CLIENT then
-								local info = util.GetSurfaceData(util.QuickTrace(pos, ang:Forward()*1000).SurfaceProps)
-
-								--PrintTable(info)
+								local info = util.GetSurfaceData(util.QuickTrace(pos, dir*1000).SurfaceProps)
 
 								local pitch = (0.8/mins:Distance(maxs))*60
 
@@ -205,9 +203,13 @@ function SWEP:Animation(type)
 					end
 
 					self.sword_damaged = true
+				end
 
-					self:SetNextPrimaryFire(CurTime())
-					self:SetNextSecondaryFire(CurTime())
+				self:SetNextPrimaryFire(CurTime())
+				self:SetNextSecondaryFire(CurTime())
+
+				if info.recovery_time then
+					data.speed_mult = info.recovery_time
 				end
 			end
 		end
@@ -488,7 +490,9 @@ end
 function SWEP:Think()
 	if GetConVarNumber("developer") == 0 then return end
 	local pos, ang, min, max = self:GetHitBox()
-	debugoverlay.BoxAngles(pos, min, max, ang, 0, SERVER and Color(0,0,255) or Color(255,255,0))
+	if GetConVarNumber("developer") > 4 then
+		debugoverlay.BoxAngles(pos, min, max, ang, 0, SERVER and Color(0,0,255) or Color(255,255,0))
+	end
 end
 
 if SERVER then
@@ -662,6 +666,7 @@ do
 				speed = 1,
 				min = 0,
 				max = 1,
+				recovery_time = 1,
 
 				damage_frac = 0.23,
 				damage_ang = Angle(-70,-90,0),
@@ -671,6 +676,7 @@ do
 				speed = 1,
 				min = 0,
 				max = 1,
+				recovery_time = 1,
 
 				damage_frac = 0.3,
 				damage = 2,
