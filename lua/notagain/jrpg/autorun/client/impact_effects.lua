@@ -1,4 +1,5 @@
 local jfx = requirex("jfx")
+local draw_line = requirex("draw_line")
 
 do
 
@@ -170,7 +171,7 @@ local e = ParticleEmitter(vector_origin)
 local particles = {}
 local len = 1
 
-hook.Add("Think", "test", function()
+hook.Add("Think", "jrpg_impact_effects", function()
     for i = #particles, 1, -1 do
         local v = particles[i]
         local f = math.Clamp(-(v.p:GetLifeTime() / v.p:GetDieTime())+1, 0, 1)
@@ -200,7 +201,7 @@ local materials = {
     "particle/Particle_Glow_04_Additive",
 }
 
-function jrpg.ImpactEffect(pos, dir, f, color)
+function jrpg.ImpactEffect(pos, normal, dir, f, color)
     local h = color and ColorToHSV(color) or 20
 
     local col = HSVToColor(h+math.Rand(-10,10), math.Rand(0.25, 0.75)^2, 1)
@@ -235,7 +236,7 @@ function jrpg.ImpactEffect(pos, dir, f, color)
 
         --p:SetRollDelta(math.Rand(-1,1)*20)
         p:SetAirResistance(math.Rand(100,500))
-        p:SetVelocity((VectorRand()*(math.Rand(0.5, 1)^5)*100 + dir*100 * math.Rand(1,4)) * f)
+        p:SetVelocity((VectorRand()*(math.Rand(0.5, 1)^5)*100 + normal*100 * math.Rand(1,4)) * f)
         p:SetGravity(physenv.GetGravity()*math.Rand(0.2,0.3))
     end
 end
