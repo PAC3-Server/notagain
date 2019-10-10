@@ -180,7 +180,7 @@ if CLIENT then
 						y = y + (fade-0.5)*150
 					end
 
-					local hm = (i/#hitmarks) 
+					local hm = (i/#hitmarks)
 					vis = vis * hm
 
 					fade = fade * vis
@@ -218,10 +218,10 @@ if CLIENT then
 					surface.SetMaterial(line_mat)
 
 					draw_line(
-						x - w*1.5, 
+						x - w*1.5,
 						y + h/2.5,
 
-						x - w*-1.5, 
+						x - w*-1.5,
 						y + h/2.5,
 						line_width * (font_info.size/30) * size_mult,
 						true
@@ -430,7 +430,7 @@ if SERVER then
 		net.Send(filter)
 	end
 
-	util.AddNetworkString("hitmark_xp")	
+	util.AddNetworkString("hitmark_xp")
 
 	hook.Add("EntityTakeDamage", "hitmarker", function(ent, dmg)
 		if not jrpg.IsActor(ent) then return end
@@ -487,7 +487,7 @@ if SERVER then
 					local diff = ent:Health() - (ent.hm_last_health or 0)
 					if diff > 0 then
 						hitmarkers.ShowDamage(ent, diff)
-						jdmg.DamageEffect(ent, "heal")
+						jdmg.DamageEffect(ent, "heal", math.min(diff, 1), math.min(diff, 1), ent:WorldSpaceCenter())
 					elseif diff < 0 then
 						hitmarkers.ShowDamage(ent, diff)
 					end
