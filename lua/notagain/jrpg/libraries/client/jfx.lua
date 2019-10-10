@@ -287,17 +287,14 @@ do
 					self.position = self.ent:GetPos() + self.ent:OBBCenter()
 				end
 				self.position2 = self.ent:GetPos() + self.ent:OBBCenter()
-
-
 			else
 				self:Remove()
 			end
+		end
+		if how == "opaque" then
+			self:DrawOpaque(time, f, f2)
 		else
-			if how == "opaque" then
-				self:DrawOpaque(time, f, f2)
-			else
-				self:DrawTranslucent(time, f, f2)
-			end
+			self:DrawTranslucent(time, f, f2)
 		end
 	end
 
