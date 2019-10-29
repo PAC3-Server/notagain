@@ -303,7 +303,11 @@ if CLIENT then
 		if self.Owner:IsValid() then
 			local id = self.Owner:LookupBone("ValveBiped.Bip01_R_Hand")
 			if id then
-				pos, ang = self.Owner:GetBonePosition(id)
+				self.Owner:InvalidateBoneCache()
+				local m = self.Owner:GetBoneMatrix(id)
+				pos = m:GetTranslation()
+				ang = m:GetAngles()
+
 				pos, ang = self:SetupPosition(pos, ang)
 
 				self:SetPos(pos)
