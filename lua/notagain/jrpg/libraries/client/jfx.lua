@@ -2,6 +2,58 @@ local jfx = {}
 
 local urlimage = requirex("urlimage")
 
+do
+	local min = math.min
+	local max = math.max
+	local abs = math.abs
+
+	function jfx.HSV2RGB(h,s,v)
+		local _, h = math.modf(h)
+		return
+			(min(max(abs(h * 6 - 3) - 1, 0), 1)*s + (-s+1)) * v * 255,
+			(min(max(2-abs(h * 6 - 2), 0), 1)*s + (-s+1)) * v * 255,
+			(min(max(2-abs(h * 6 - 4), 0), 1)*s + (-s+1)) * v * 255
+	end
+
+	function jfx.RGB2HSV(r,g,b)
+		r = r / 255
+		g = g / 255
+		b = b / 255
+
+		local minRGB = min(r, min(g, b))
+		local maxRGB = max(r, max(g, b))
+
+		if minRGB == maxRGB then
+			return 0,0,minRGB
+		end
+
+		local h,d
+
+		if r == minRGB then
+			d = g - b
+		elseif b == minRGB then
+			d = r - g
+		else
+			d = b - r
+		end
+
+		if r == minRGB then
+			h = 3/360
+		elseif b == minRGB then
+			h = 1/360
+		else
+			h = 5/360
+		end
+
+		local diff = (maxRGB - minRGB)
+
+		return
+			(60/360) * (h - d / diff),
+			diff / maxRGB,
+			maxRGB
+	end
+end
+
 function jfx.CreateMaterial(data)
 	if type(data) == "string" then
 		return Material(data)
