@@ -276,7 +276,9 @@ do
 			if ply:IsValid() then
 				local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
 				if id then
-					local pos, ang = ply:GetBonePosition(id)
+					local m = ply:GetBoneMatrix(id)
+					pos = m:GetTranslation()
+					ang = m:GetAngles()
 
 					pos = pos + (ang:Forward() * 5)
 					pos = pos + (ang:Right() * 3)

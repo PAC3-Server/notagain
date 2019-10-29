@@ -125,7 +125,7 @@ do
 
 		local function draw(self, ent, pos, ang)
 			self.smooth_ang = self.smooth_ang or ang
-			self.smooth_ang = LerpAngle(FrameTime() * 10, self.smooth_ang, ang)			
+			self.smooth_ang = LerpAngle(FrameTime() * 10, self.smooth_ang, ang)
 			ent:SetPos(pos)
 			ent:SetAngles(self.smooth_ang)
 			ent:SetupBones()
@@ -141,21 +141,27 @@ do
 			local id = ply:LookupBone("ValveBiped.Bip01_L_Hand")
 
 			if id then
-				local handpos, handang = ply:GetBonePosition(id)
+				ply:SetupBones()
+				local m = ply:GetBoneMatrix(id)
+				if m then
+					handpos = m:GetTranslation()
+					handang = m:GetAngles()
 
-				pos = LerpVector(0.75, pos, handpos)
-				ang = LerpAngle(0.1, ang, handang)
+					pos = LerpVector(0.75, pos, handpos)
+					ang = LerpAngle(0.1, ang, handang)
 
-				if not ply.shield_wield_time then
+					if not ply.shield_wield_time then
 
-					local pos, ang = ply:GetBonePosition(id)
-					local pos, ang = self:TranslateModelPosAng(pos, ang, true)
+						local m = ply:GetBoneMatrix(id)
+						pos = m:GetTranslation()
+						ang = m:GetAngles()
+						local pos, ang = self:TranslateModelPosAng(pos, ang, true)
 
-					draw(self, self, pos, ang)
+						draw(self, self, pos, ang)
 
-					return
+						return
+					end
 				end
-
 			end
 
 			if self.csent then
@@ -241,7 +247,7 @@ do
 
 		ply:SetNW2Bool("wield_shield", true)
 		ply:GetNWEntity("shield"):SetSolid(SOLID_VPHYSICS)
-		
+
 		return true
 	end
 
@@ -527,7 +533,7 @@ function EnableShield(ply, b)
 	if b then
 		for k,v in pairs(ply:GetWeapons()) do
 			if v.is_shield and ply:GetActiveWeapon() ~= v then
-				if SERVER then 
+				if SERVER then
 					v:GlobalThink()
 				end
 				if ply:GetNWEntity("shield", NULL):IsValid() then
@@ -539,7 +545,7 @@ function EnableShield(ply, b)
 	else
 		for k,v in pairs(ply:GetWeapons()) do
 			if v.is_shield and ply:GetActiveWeapon() ~= v then
-				if SERVER then 
+				if SERVER then
 					v:GlobalThink()
 				end
 				if ply:GetNWEntity("shield", NULL):IsValid() then
@@ -610,14 +616,14 @@ hook.Add("UpdateAnimation", "shield", function(ply)
 	local weight = 0
 
 	if jrpg.IsWieldingShield(ply) then
-		ply.shield_wield_time = ply.shield_wield_time or CurTime()		
+		ply.shield_wield_time = ply.shield_wield_time or CurTime()
 		weight = math.Clamp((CurTime() - ply.shield_wield_time)*speed, 0, 1)
 
 		ply.jrpg_holdtype = "knife"
 	elseif ply.shield_wield_time then
-		ply.shield_unwield_time = ply.shield_unwield_time or CurTime()		
+		ply.shield_unwield_time = ply.shield_unwield_time or CurTime()
 		weight = math.Clamp((CurTime() - ply.shield_unwield_time)*speed, 0, 1)
-		weight = -weight + 1 
+		weight = -weight + 1
 
 		if weight == 0 then
 			ply.shield_wield_time = nil
