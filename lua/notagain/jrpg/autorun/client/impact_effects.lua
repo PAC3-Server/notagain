@@ -166,34 +166,19 @@ do
     jfx.RegisterEffect(META)
 end
 
-local e = ParticleEmitter(vector_origin)
+local function think(p)
+    local f = math.Clamp(-(p:GetLifeTime() / p:GetDieTime())+1, 0, 1)
 
-local particles = {}
-local len = 1
+    local vel = p:GetVelocity() + (Vector(jfx.GetRandomOffset(p:GetPos(), p:GetRoll(), 0.04)) * 10)
+    p:SetVelocity(vel)
 
-hook.Add("Think", "jrpg_impact_effects", function()
-    for i = #particles, 1, -1 do
-        local v = particles[i]
-        local f = math.Clamp(-(v.p:GetLifeTime() / v.p:GetDieTime())+1, 0, 1)
+    local l = (vel:Length()/10) + 1
 
-        if f <= 0 then
-            table.remove(particles, i)
-            continue
-        end
+    p:SetStartLength(l)
+    p:SetEndLength(-l)
 
-        local hm = Vector(jfx.GetRandomOffset(v.p:GetPos(), i, 0.04))*10
-        local vel = v.p:GetVelocity() + hm
-        v.p:SetVelocity(vel)
-
-        local l = vel:Length()/10
-        l = l + 1
-
-        --l = l+ (math.random()*f*10)
-
-        v.p:SetStartLength(l)
-        v.p:SetEndLength(-l)
-    end
-end)
+    p:SetNextThink(CurTime())
+end
 
 local materials = {
     "particle/particle_glow_05",
@@ -202,25 +187,26 @@ local materials = {
 }
 
 function jrpg.ImpactEffect(pos, normal, dir, f, color)
-    local h = color and ColorToHSV(color) or 20
-
-    local col = HSVToColor(h+math.Rand(-10,10), math.Rand(0.25, 0.75)^2, 1)
+    local h = color and jfx.RGB2HSV(color.r, color.g, color.b) or 20/360
 
     jfx.CreateEffect("impact_effect", {
-        color = col,
+        color = Color(jfx.HSV2RGB(h+math.Rand(-0.03,0.03), math.Rand(0.25, 0.75)^2, 1)),
         size = 0.1*f,
         something = 0,
         length = 0.1*f,
         pos = pos,
     })
 
+    local t = CurTime()
+    local gravity = physenv.GetGravity()
+
     for i = 1, math.random(100*f,200*f) do
-        local p = e:Add(table.Random(materials), pos)
-        table.insert(particles, {p = p})
+        local p = jfx.emitter:Add(materials[math.random(1, #materials)], pos)
 
-        local col = HSVToColor(h+math.Rand(-20,20), math.Rand(0.25, 0.75)^2, 1)
-        p:SetColor(col.r, col.g, col.b, 255)
-
+        local r,g,b = jfx.HSV2RGB(h+math.Rand(-0.05,0.05), math.Rand(0.25, 0.75)^2, 1)
+        p:SetColor(r, g, b)
+        p:SetNextThink(t)
+        p:SetThinkFunction(think)
 
         p:SetDieTime((math.Rand(0.5, 1)^10)*3*f)
         p:SetLifeTime(0)
@@ -233,10 +219,10 @@ function jrpg.ImpactEffect(pos, normal, dir, f, color)
         p:SetEndAlpha(0)
         p:SetCollide(true)
         p:SetBounce(1)
+        p:SetRoll(i)
 
-        --p:SetRollDelta(math.Rand(-1,1)*20)
         p:SetAirResistance(math.Rand(100,500))
         p:SetVelocity((VectorRand()*(math.Rand(0.5, 1)^5)*100 + normal*100 * math.Rand(1,4)) * f)
-        p:SetGravity(physenv.GetGravity()*math.Rand(0.2,0.3))
+        p:SetGravity(gravity*math.Rand(0.2,0.3))
     end
 end
