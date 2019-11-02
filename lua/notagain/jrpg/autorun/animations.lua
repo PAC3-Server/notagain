@@ -81,6 +81,7 @@ local function calc_gesture_animations(ply)
 end
 
 local function manip_angles(ply, id, ang)
+	ply:InvalidateBoneCache()
 	if pac and pac.ManipulateBoneAngles then
 		pac.ManipulateBoneAngles(ply, id, ang)
 	else
@@ -242,7 +243,6 @@ local find = {
 	"phalanx_",
 	"ryoku_",
 	"vanguard_",
-	"idle_all_01",
 }
 
 local translate = {
@@ -333,8 +333,8 @@ hook.Add("UpdateAnimation", "movement", function(ply)
 
 		local dot = ang:Right():Dot(vel)
 
-		if ang:Forward():Dot(vel) > 200 then
-			manip_angles(ply, 0, Angle(0,math.Clamp(dot*-0.15, -15, 15),0))
+		if ang:Forward():Dot(vel) > 100 then
+			manip_angles(ply, 0, Angle(0,math.Clamp(dot*-0.25, -15, 15),0))
 		else
 			manip_angles(ply, 0, Angle(0,0,0))
 		end
