@@ -164,7 +164,7 @@ function SWEP:Animation(type)
 					local hit_something = false
 					local found =  ents.FindInSphere(pos, size)
 					for k,v in ipairs(found) do
-						if v ~= ply and v:GetOwner() ~= ply and not table.HasValue(found, v:GetOwner()) and v:GetPhysicsObject():IsValid() then
+						if v ~= ply and v:GetOwner() ~= ply and not table.HasValue(found, v:GetOwner()) and ((not SERVER or v:GetPhysicsObject():IsValid()) or jrpg.IsActor(ent)) then
 							if SERVER then
 								local d = DamageInfo()
 								d:SetAttacker(ply)
