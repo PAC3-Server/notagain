@@ -366,6 +366,16 @@ hook.Add("UpdateAnimation", "movement", function(ply)
 
 	if CLIENT then
 		calc_duck(ply)
+
+
+		if ply:IsOnGround() then
+			ply.jrpg_smooth_ground_z = ply.jrpg_smooth_ground_z or ply:GetPos().z
+			ply.jrpg_smooth_ground_z = ply.jrpg_smooth_ground_z + ((ply:GetPos().z - ply.jrpg_smooth_ground_z) * (FrameTime() * 10))
+
+			manip_origin(ply, Vector(0,0,ply.jrpg_smooth_ground_z-ply:GetPos().z))
+		else
+			ply.jrpg_smooth_ground_z = ply:GetPos().z
+		end
 	end
 
 	male2female_animations(ply)
