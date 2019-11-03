@@ -242,6 +242,7 @@ end
 
 
 local find = {
+	"wos_bs_",
 	"phalanx_",
 	"ryoku_",
 	"vanguard_",
@@ -279,8 +280,8 @@ local function male2female_animations(ply)
 		ply:AnimSetGestureWeight(0, 1)
 		reset_pose(ply)
 	else
-		ply:SetSequence(ply:LookupSequence("phalanx_reference"))
-		ply:AddVCDSequenceToGestureSlot(0, ply:LookupSequence("phalanx_reference"), 0, true)
+		ply:SetSequence(ply:LookupSequence("wos_phalanx_reference"))
+		ply:AddVCDSequenceToGestureSlot(0, ply:LookupSequence("wos_phalanx_reference"), 0, true)
 		ply:AnimSetGestureWeight(0, 1)
 	end]]
 

@@ -167,11 +167,11 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 		local seq = ""
 
 		if dir == "forward" or dir == "backward" then
-			seq = "roll_forward"
+			seq = "wos_bs_shared_roll_forward"
 		elseif dir == "left" then
-			seq = "roll_left"
+			seq = "wos_bs_shared_roll_left"
 		elseif dir == "right" then
-			seq = "roll_right"
+			seq = "wos_bs_shared_roll_right"
 		end
 
 		local seqid = ply:LookupSequence(seq)
@@ -184,7 +184,7 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 	if is_dodging(ply) and ply.dodge_fraction and ply.dodge_fraction < 1 then
 		local dir = vel_to_dir(ply:EyeAngles(), ply:GetVelocity(), dodge_speed)
 
-		local seq = "roll_backward"
+		local seq = "ws_bs_shared_roll_backward"
 
 		if dir == "left" then
 			---seq = "pure_b_s2_t1"
