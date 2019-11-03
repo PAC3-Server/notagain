@@ -81,7 +81,9 @@ local function calc_gesture_animations(ply)
 end
 
 local function manip_angles(ply, id, ang)
-	ply:InvalidateBoneCache()
+	if CLIENT then
+		ply:InvalidateBoneCache()
+	end
 	if pac and pac.ManipulateBoneAngles then
 		pac.ManipulateBoneAngles(ply, id, ang)
 	else
