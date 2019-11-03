@@ -169,19 +169,18 @@ if CLIENT then
 			for _, which in ipairs(feet) do
 				ply.realistic_footsteps = ply.realistic_footsteps or {}
 				ply.realistic_footsteps[which] = ply.realistic_footsteps[which] or {}
-				ply.realistic_footsteps[which].next_time = ply.realistic_footsteps[which].next_time or CurTime()
 
-				if CurTime() < ply.realistic_footsteps[which].next_time then
-					continue
-				end
 
 				ply:SetupBones()
 				local toes = true
 				local id = ply:LookupBone(which == "right" and "valvebiped.bip01_r_toe0" or "valvebiped.bip01_l_toe0")
+
 				if not id then
 					toes = false
-					id = ply:LookupBone(which == "right" and "valvebiped.bip01_r_foot" or "valvebiped.bip01_l_foot")
 				end
+				id = ply:LookupBone(which == "right" and "valvebiped.bip01_r_foot" or "valvebiped.bip01_l_foot")
+				toes = false
+
 
 				if not id then continue end
 
@@ -205,7 +204,7 @@ if CLIENT then
 
 				local dir = Vector(0,0,-50)
 
-				local trace = util.TraceLine({start = pos, endpos = pos + dir, filter = {ply}})
+				local trace = util.TraceLine({start = pos - dir*0.25, endpos = pos + dir, filter = {ply}})
 
 				if trace.HitTexture == "TOOLS/TOOLSNODRAW" or trace.HitTexture == "**empty**" then
 					trace.Hit = false
@@ -213,7 +212,7 @@ if CLIENT then
 
 				-- if dir is -50 this is required to check if the foot is actualy above player pos
 				if toes then
-					if pos.z - ply:GetPos().z > scale*2 then
+					if pos.z - ply:GetPos().z > scale*2.5 then
 						trace.Hit = false
 					end
 				else
@@ -221,12 +220,24 @@ if CLIENT then
 						trace.Hit = false
 					end
 				end
-				local volume = math.Clamp(vel:Length()*0.5, 0, 1)
+				local volume = math.Clamp(vel:Length2D()/20, 0, 1)
 
---				debugoverlay.Line(pos, pos + dir * volume, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
+				if volume == 0 then
+					trace.Hit = false
+				end
+
+				if ply.realistic_footsteps[which].hit and ply.realistic_footsteps[which].hit > CurTime() then
+					trace.Hit = false
+				end
+
+				--debugoverlay.Cross(trace.HitPos, 1, 1)
+				--debugoverlay.Line(trace.StartPos, trace.HitPos, 0.25, trace.Hit and Color(255,0,0,255) or Color(255,255,255,255), true)
+				--debugoverlay.Line(trace.HitPos, pos + dir, 0.25, Color(0,255,0,255), true)
 
 				if trace.Hit then
+					ply.realistic_footsteps[which].hit = CurTime() + 0.25
 
+					--debugoverlay.Cross(trace.HitPos, 5, 1, which == "left" and Color(0,255,255) or Color(255,0,255))
 					local data
 
 					if bit.band(util.PointContents(trace.HitPos), CONTENTS_WATER) == CONTENTS_WATER then
@@ -292,7 +303,7 @@ if CLIENT then
 												pos,
 												ply:EntIndex(),
 												CHAN_BODY,
-												data.volume * volume * 0.1,
+												data.volume * volume,
 												data.level,
 												SND_NOFLAGS,
 												math.Clamp((pitch / scale) + math.Rand(-10,10) * (info.random_pitch or 1), 0, 255)
@@ -303,13 +314,9 @@ if CLIENT then
 							end
 						end
 					end
-
-					break
 				end
 
-				local a = math.Clamp(vel:Length2D() / 20, 0, 1) * 0.1
 				ply.realistic_footsteps[which].last_pos = pos
-				ply.realistic_footsteps[which].next_time = CurTime() + (0.1 - a)
 			end
 		end
 	end)
