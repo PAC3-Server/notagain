@@ -592,7 +592,12 @@ local shared_charge = {
 
 		callback = function(self, f, f2, info)
 			self.sword_anim_cycle = 1
-			if self.Owner:KeyDown(IN_ATTACK2) and f > 0.1 then
+			if SERVER then
+
+				self.Owner:SetNW2Bool("jrpg_sword_charge", self.Owner:KeyDown(IN_ATTACK2))
+			end
+
+			if self.Owner:GetNW2Bool("jrpg_sword_charge") and f > 0.1 then
 				self:SetNextPrimaryFire(CurTime())
 				self:SetNextSecondaryFire(CurTime())
 				info.damage = f2*5
