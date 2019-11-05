@@ -187,7 +187,9 @@ local materials = {
 }
 
 function jrpg.ImpactEffect(pos, normal, dir, f, color)
-    local h = color and jfx.RGB2HSV(color.r, color.g, color.b) or 20/360
+    if jfx.emitter:GetNumActiveParticles() > 500 then return end
+
+    local h = color and (ColorToHSV(color) / 360) or 20/360
 
     jfx.CreateEffect("impact_effect", {
         color = Color(jfx.HSV2RGB(h+math.Rand(-0.03,0.03), math.Rand(0.25, 0.75)^2, 1)),
@@ -199,6 +201,7 @@ function jrpg.ImpactEffect(pos, normal, dir, f, color)
 
     local t = CurTime()
     local gravity = physenv.GetGravity()
+
 
     for i = 1, math.random(100*f,200*f) do
         local p = jfx.emitter:Add(materials[math.random(1, #materials)], pos)

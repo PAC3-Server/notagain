@@ -174,8 +174,8 @@ do -- view
 
 		if not ply:Alive() then return end
 
-		battlecam.aim_pos = ply:GetShootPos()
-		battlecam.aim_dir = (ply:EyePos() - battlecam.cam_pos):GetNormalized()
+		battlecam.aim_pos = (ply:GetPos() + ply:GetUp() * 40 * ply:GetModelScale())
+		battlecam.aim_dir = (battlecam.aim_pos - battlecam.cam_pos):GetNormalized()
 
 		--if not battlecam.crosshair_ent:IsValid() then
 			--battlecam.CreateCrosshair()
@@ -257,7 +257,7 @@ do -- view
 					end
 				end
 
-				local room_size = math.Clamp(math.Round(jrpg.GetRoomSize(ply)/50)*50, 50, 300)
+				local room_size = math.Clamp(math.Round(jrpg.GetRoomSize(ply)/50)*50, 50, 250) + (ply:IsOnGround() and ply:GetVelocity():Length()/3 or 0)
 
 				if ent:IsValid() then
 					if ent:GetParent():IsValid() then

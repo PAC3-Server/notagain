@@ -91,6 +91,10 @@ local function manip_angles(ply, id, ang)
 	end
 end
 
+hook.Add("HandlePlayerJumping", "movement", function(ply)
+
+end)
+
 hook.Add("CalcMainActivity", "movement", function(ply)
 	if not jrpg.IsEnabled(ply) then return end
 	if jrpg.IsActorRolling(ply) or jrpg.IsActorDodging(ply) then return end
@@ -115,6 +119,14 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 				return seq, seq
 			end
 		else
+			if ply.jrpg_jumped then
+				local seq = ply:LookupSequence("wos_bs_shared_jump_land")
+				if seq > 1 then
+					ply:SetSequence(seq)
+				end
+				ply.jrpg_jumped = false
+			end
+
 			if ply.sprint_lean then
 				if ply.jrpg_last_sprint_lean then
 					ply.jrpg_sprint_lean_fadeout = ply.jrpg_sprint_lean_fadeout or CurTime() + 1
@@ -160,6 +172,14 @@ hook.Add("CalcMainActivity", "movement", function(ply)
 			end
 
 			return -1, seq
+		else
+			local seq = ply:LookupSequence("wos_bs_shared_jump")
+
+			ply.jrpg_jumped = true
+
+			if seq > 1 then
+				--return seq, seq
+			end
 		end
 	end
 end)

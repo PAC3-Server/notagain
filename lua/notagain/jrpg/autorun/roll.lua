@@ -167,11 +167,11 @@ hook.Add("CalcMainActivity", "roll", function(ply)
 		local seq = ""
 
 		if dir == "forward" or dir == "backward" then
-			seq = "wos_bs_shared_roll_forward"
+			seq = "wos_bs_shared_recover_forward"
 		elseif dir == "left" then
-			seq = "wos_bs_shared_roll_left"
+			seq = "wos_bs_shared_recover_left"
 		elseif dir == "right" then
-			seq = "wos_bs_shared_roll_right"
+			seq = "wos_bs_shared_recover_right"
 		end
 
 		local seqid = ply:LookupSequence(seq)
