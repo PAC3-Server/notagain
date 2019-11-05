@@ -80,7 +80,6 @@ function jrpg.SetRPG(ply, b, cheat)
 				ply:SetSuperJumpMultiplier(1)
 			end
 
-			hook.Run("OnRPGEnabled", ply, cheat)
 			ply:SendLua([[jrpg.SetRPG(LocalPlayer(), true)]])
 		else
 			jattributes.Disable(ply)
@@ -92,7 +91,6 @@ function jrpg.SetRPG(ply, b, cheat)
 				ply:SetSuperJumpMultiplier(1.5)
 			end
 
-			hook.Run("OnRPGDisabled", ply)
 			ply:SendLua([[jrpg.SetRPG(LocalPlayer(), false)]])
 		end
 
@@ -113,6 +111,12 @@ function jrpg.SetRPG(ply, b, cheat)
 				end
 			end
 		end
+	end
+
+	if b then
+		hook.Run("OnRPGEnabled", ply, cheat)
+	else
+		hook.Run("OnRPGDisabled", ply)
 	end
 
 	if b then
@@ -341,6 +345,17 @@ function jrpg.IsActor(ent)
 	end
 
 	return false
+end
+
+function jrpg.IsPhysical(ent)
+	if not ent or not ent:IsValid() then return false end
+	local class = ent:GetClass()
+
+	if class:StartWith("func_") then
+		return false
+	end
+
+	return true
 end
 
 local friendly_npcs = {

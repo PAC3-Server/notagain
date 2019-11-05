@@ -62,6 +62,7 @@ if CLIENT then
 			VertexColor = 1,
 			VertexAlpha = 1,
 			Translucent = 1,
+			IgnoreZ = 1,
 		})
 
 		local META = {}
@@ -426,14 +427,32 @@ function SWEP:Deploy()
 	return true
 end
 
+local function manip_angles(ply, id, ang)
+	if CLIENT then
+		ply:InvalidateBoneCache()
+	end
+	if pac and pac.ManipulateBoneAngles then
+		pac.ManipulateBoneAngles(ply, id, ang)
+	else
+		ply:ManipulateBoneAngles(id, ang)
+	end
+end
+
 function SWEP:ThrowAnimation(left_hand)
 	jrpg.PlayGestureAnimation(self.Owner, {
 		seq = "zombie_attack_0" .. (left_hand and 3 or 2),
-		start = 0.25,
+		--seq = "wos_bs_shared_throw_star",
+		start = 0.2,
 		stop = 1,
-		speed = 1,
-		weight = 1,
-		slot = left_hand and GESTURE_SLOT_GRENADE or GESTURE_SLOT_ATTACK_AND_RELOAD,
+		speed = 1.5,
+		weight = math.Rand(0.45, 0.75),
+		slot = GESTURE_SLOT_GRENADE,
+		callback =  function(f)
+			manip_angles(self.Owner, self.Owner:LookupBone("ValveBiped.Bip01_Head1"), Angle(0,Lerp(f, -65, -0),0))
+		end,
+		done = function()
+			manip_angles(self.Owner, self.Owner:LookupBone("ValveBiped.Bip01_Head1"), Angle(0,0,0))
+		end,
 	})
 end
 

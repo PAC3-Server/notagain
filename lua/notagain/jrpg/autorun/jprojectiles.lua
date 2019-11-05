@@ -108,7 +108,7 @@ do
 						if ent:IsValid() then
 							ent:TakeDamageInfo(d)
 						else
-							for i = 1, math.random(3, 6) do
+							for i = 1, math.random(2, 4) do
 								local temp = ents.Create("prop_physics")
 								temp:SetModel("models/props_junk/rock001a.mdl")
 								if CPPI then temp:CPPISetOwner(self:GetOwner()) end
@@ -132,6 +132,7 @@ do
 								d:SetDamageCustom(jdmg.enums[name])
 								d:SetAttacker(self:GetOwner())
 								d:SetInflictor(self:GetOwner())
+								d:SetDamagePosition(pos)
 								temp:TakeDamageInfo(d)
 							end
 
@@ -321,7 +322,7 @@ do
 				local rand_dir = Vector(math.sin(n+self.rand_dir.x), math.cos(n+self.rand_dir.y), math.sin(n+self.rand_dir.z)) * self.rand_dir*20
 				rand_dir.z = math.abs(rand_dir.z)
 
-				local vel = LerpVector(math.max(self.start_time - RealTime(), 0), dir * math.Clamp(dist / 10, 1, 30), (dir + rand_dir) * 20)
+				local vel = LerpVector(math.max(self.start_time - RealTime(), 0), dir * math.Clamp(dist / 10, 1, 20), (dir + rand_dir) * 50)
 				vel = vel + phys:GetVelocity() * -delta*3
 
 				for _, ent in ipairs(ents.FindInSphere(self:GetPos(), 100)) do

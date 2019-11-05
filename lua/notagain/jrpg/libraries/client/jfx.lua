@@ -435,6 +435,8 @@ do
 	})
 
 	jfx.materials.glow2 = Material("sprites/light_ignorez")
+	jfx.pixvis = util.GetPixelVisibleHandle()
+
 end
 
 function jfx.DrawModel(ent)
@@ -445,6 +447,21 @@ function jfx.DrawModel(ent)
 	else
 		ent:DrawModel()
 	end
+end
+
+function jfx.DrawSunbeams(pos, size, mult, darken)
+	local eye = EyePos()
+
+	do return end
+
+	local spos = pos:ToScreen()
+	DrawSunbeams(
+		darken,
+		math.Clamp(mult * (math.Clamp(EyeVector():DotProduct((pos - eye):GetNormalized()) - 0.5, 0, 1) * 2) ^ 5, 0, 1),
+		size,
+		spos.x / ScrW(),
+		spos.y / ScrH()
+	)
 end
 
 jfx.emitter = ParticleEmitter(vector_origin)

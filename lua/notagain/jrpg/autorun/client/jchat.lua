@@ -376,9 +376,6 @@ do -- view
 	jchat.message = "hi2"
 	jchat.fade = 1
 
-	local grad_up = surface.GetTextureID("gui/gradient_up")
-	local grad_down = surface.GetTextureID("gui/gradient_down")
-
 	local function string_wrapwords(Str,width)
 		local tbl, len, Start, End = {}, string.len( Str ), 1, 1
 
@@ -462,25 +459,7 @@ do -- view
 		end
 	end
 
-	local blur_mat = Material( "pp/bokehblur" )
-
-	local mat = Material("particle/Particle_Glow_04_Additive")
-	local size = 400
 	function jchat.RenderScreenspaceEffects()
-		do
-			surface.SetMaterial(mat)
-			surface.SetDrawColor(35,35,35,255)
-			surface.DrawTexturedRect(-size, -size, ScrW()+size*2, ScrH()+size*2)
-
-			surface.SetDrawColor(0,0,0, 220)
-
-			surface.SetTexture(grad_down)
-			surface.DrawTexturedRect(0, 0, ScrW(), ScrH()/2)
-
-			surface.SetTexture(grad_up)
-			surface.DrawTexturedRect(0, ScrH()/2, ScrW(), ScrH()/2)
-		end
-
 		jchat.DrawSubtitles()
 	end
 end

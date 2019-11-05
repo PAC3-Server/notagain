@@ -173,7 +173,7 @@ jattributes.types = {
 			if ent:IsPlayer() then
 				ent.jattributes_base_jump_power = ent.jattributes_base_jump_power or ent:GetJumpPower()
 
-				ent:SetJumpPower(ent.jattributes_base_jump_power * stats.jump)
+				ent:SetJumpPower(ent.jattributes_base_jump_power * stats.jump * 1.4)
 			end
 		end,
 		reset = function(ent, stats)

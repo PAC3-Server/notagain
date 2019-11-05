@@ -61,6 +61,9 @@ if CLIENT then
         render.SetMaterial(jfx.materials.glow2)
         render.DrawSprite(ent:GetPos(), 64*size, 64*size, Color(self.Color.r, self.Color.g, self.Color.b, 200))
 
+        --jfx.DrawSunbeams(ent:GetPos(), size/20, 0.05, 0.5)
+
+
         render.SetMaterial(jfx.materials.refract3)
         render.DrawSprite(ent:GetPos(), 32*size, 32*size, Color(255,255,255, 150))
 
@@ -68,11 +71,11 @@ if CLIENT then
 
             for i = 1, 3 do
                 local pos = ent:GetPos()
-                pos = pos + Vector(jfx.GetRandomOffset(pos, i, 2))*size*10
+                pos = pos + Vector(jfx.GetRandomOffset(pos, i, 2))*size*25
 
                 ent.trail_data = ent.trail_data or {}
                 ent.trail_data[i] = ent.trail_data[i] or {}
-                jfx.DrawTrail(ent.trail_data[i], 0.25, 0, pos, jfx.materials.trail, self.Color.r, self.Color.g, self.Color.b, 255, self.Color.r, self.Color.g, self.Color.b, 0, 15*size, 0)
+                jfx.DrawTrail(ent.trail_data[i], 0.5, 0, pos, jfx.materials.trail, self.Color.r, self.Color.g, self.Color.b, 255, self.Color.r, self.Color.g, self.Color.b, 0, 15*size, 0)
             end
 
             render.SetMaterial(jfx.materials.glow)
@@ -89,7 +92,7 @@ if CLIENT then
                     feather:SetModel("models/pac/default.mdl")
                     feather:SetPos(ent:GetPos() + (VectorRand()*size))
                     feather:SetAngles(VectorRand():Angle())
-                    feather:SetModelScale(size)
+                    feather:SetModelScale(size + math.random()*0.75)
 
                     feather:SetRenderMode(RENDERMODE_TRANSADD)
 
@@ -107,6 +110,9 @@ if CLIENT then
                     m:Scale(Vector(1,1,1))
                     feather:EnableMatrix("RenderMultiply", m)
 
+                    local h,s,v = ColorToHSV(self.Color)
+                    local color = HSVToColor(h,s*0.25,v*0.8)
+
                     feather.RenderOverride = function()
                         local f = (feather.life_time - RealTime()) / 2
                         if f <= 0 then return end
@@ -114,7 +120,7 @@ if CLIENT then
 
 
                         render.SuppressEngineLighting(true)
-                        render.SetColorModulation(self.Color.r/200, self.Color.g/200, self.Color.b/200)
+                        render.SetColorModulation(color.r/200, color.g/200, color.b/200)
                         render.SetBlend(f2)
 
                         render.MaterialOverride(feather_mat)
