@@ -80,6 +80,7 @@ if CLIENT then
 		if hook.Run("ChatCloseChatBox", ...) ~= false then
 			hook.Run("FinishChat")
 			chat.TextChanged("")
+			chat.last_closed = CurTime()
 			return chat._ChatClose(...)
 		end
 	end

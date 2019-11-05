@@ -340,26 +340,29 @@ function jhud.UpdateMenu()
 		end
 	elseif check_key(KEY_BACKSPACE) then
 		reset()
-	elseif check_key(KEY_ENTER) then
+	elseif check_key(KEY_ENTER) and (not chat.last_closed or chat.last_closed+0.2 < CurTime()) then
 		jhud.scanner_frame = 0
 		if select_stage == "categories" then
-			if selected_list[(selected_category_i % #selected_list) + 1].Name == "attack" then
+			local category = selected_list[(selected_category_i % #selected_list) + 1]
+			if category then
+				if category.Name == "attack" then
 
-				if jtarget.GetEntity(LocalPlayer()):IsValid() then
-					reset()
-					jskill.Execute("attack")
-				else
-					jtarget.StartSelection()
-					if not jtarget.GetEntity(LocalPlayer()):IsValid() then
+					if jtarget.GetEntity(LocalPlayer()):IsValid() then
+						reset()
 						jskill.Execute("attack")
 					else
-						reset()
-						select_stage = "target"
+						jtarget.StartSelection()
+						if not jtarget.GetEntity(LocalPlayer()):IsValid() then
+							jskill.Execute("attack")
+						else
+							reset()
+							select_stage = "target"
+						end
 					end
+				else
+					selected_list = category.list
+					select_stage = "weapons"
 				end
-			else
-				selected_list = selected_list[(selected_category_i % #selected_list) + 1].list
-				select_stage = "weapons"
 			end
 		elseif select_stage == "weapons" then
 			local skill = selected_list[(selected_weapon_i[selected_category_i] % #selected_list) + 1]
