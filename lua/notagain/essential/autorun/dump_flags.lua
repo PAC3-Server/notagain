@@ -60,7 +60,8 @@ function DumpFlags(ent)
 	if CLIENT then
 		print("predictable: ", ent:GetPredictable())
 	end
-	print("sequence: ", ent:GetSequenceName(ent:GetSequence()) .. "(" ..  ent:GetSequence() .. ")")
+	local seq = ent:GetSequence() or -1
+	print("sequence: ", (ent:GetSequenceName(seq) or "INVALID") .. "(" .. seq .. ")")
 	print("transmit with parent: ", ent:GetTransmitWithParent())
 
 	if SERVER then
