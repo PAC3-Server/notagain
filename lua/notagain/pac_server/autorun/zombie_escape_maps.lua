@@ -10,6 +10,7 @@ local function fix_map()
 			game_text = true,
 			func_wall_toggle = true,
 			func_clip_vphysics = true,
+			filter_activator_team = true,
 		}
 
 		for _, ent in pairs(ents.GetAll()) do
