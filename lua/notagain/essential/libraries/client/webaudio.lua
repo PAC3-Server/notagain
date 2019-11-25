@@ -647,13 +647,13 @@ do
 	end
 
 	function META:IsValid()
-		return true
+		return self.invalid == nil
 	end
 
 	function META:Remove()
 		self:Stop()
 		run_javascript(string.format("DestroyStream(%i)", self:GetId()))
-		setmetatable(self, getmetatable(NULL))
+		self.invalid = true
 	end
 
 	-- Browser
