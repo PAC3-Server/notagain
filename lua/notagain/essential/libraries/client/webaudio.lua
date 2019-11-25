@@ -1,5 +1,4 @@
-local webaudio = _G.webaudio or {}
-_G.webaudio = webaudio
+local webaudio = {}
 
 if me then
 	webaudio.debug = true
