@@ -35,7 +35,6 @@ if CLIENT then
 		react.Menu:SetTitle("")
 		react.Menu:SetSize(300,300)
 		react.Menu:SetDeleteOnClose(false)
-		react.Menu:SetScreenLock(true)
 		react.Menu:ShowCloseButton(false)
 		react.Menu:SetPos(0,ScrH()-react.Menu:GetTall())
 		react.Menu:Hide()
@@ -208,7 +207,6 @@ if CLIENT then
 			net.SendToServer()
 		end
 		react.Menu:Show()
-		react.Menu:MakePopup()
 	end)
 
 	hook.Add("OnContextMenuClose", "ReactionMenuClose", function()
