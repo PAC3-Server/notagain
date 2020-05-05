@@ -39,42 +39,42 @@ end
 
 
 local function GodCheck(ply, dmginfo, actor)
-    local infoTable = {}
-    local infoStr = ValidString( ply:GetInfo("cl_godmode") ) or "0"
-    -- Maybe we should store this as a variable on the player and only update with the command, so we don't have to poll the client on every hit.
-    -- Maybe it's done internally?
+	local infoTable = {}
+	local infoStr = ValidString( ply:GetInfo("cl_godmode") ) or "0"
+	-- Maybe we should store this as a variable on the player and only update with the command, so we don't have to poll the client on every hit.
+	-- Maybe it's done internally?
 
-    local v = string.sub(string.lower(infoStr), 1, 1)
+	local v = string.sub(string.lower(infoStr), 1, 1)
 
-    if check(v,'off') then
-        return false
-    elseif check(v,'all') then
-        return true
-    end
+	if check(v,'off') then
+		return false
+	elseif check(v,'all') then
+		return true
+	end
 
-    string.gsub(infoStr, "(%w+)", function(char) table.insert(infoTable, char) end)
+	string.gsub(infoStr, "(%w+)", function(char) table.insert(infoTable, char) end)
 
-    if table.Count(infoTable) > 7 then
-        return false
-    end
+	if table.Count(infoTable) > 7 then
+		return false
+	end
 
-    for _,v in next, infoTable do
-        local v = string.sub(string.lower(v), 1, 1)
+	for _,v in next, infoTable do
+		local v = string.sub(string.lower(v), 1, 1)
 
-        if actor == game.GetWorld() and check(v,'world') then
-            return true
-        elseif actor.CanAlter and ( not actor:CanAlter(ply) ) and check(v,'enemy') then
-            return true
-        elseif actor.CanAlter and ( actor:CanAlter(ply) ) and check(v,'friend') then
-            return true
-        elseif actor.IsNPC and actor:IsNPC() and check(v,'npc') then
-            return true
-        elseif actor == ply and check(v,'self') then
-            return true
-        end
-    end
+		if actor == game.GetWorld() and check(v,'world') then
+			return true
+		elseif actor.CanAlter and ( not actor:CanAlter(ply) ) and check(v,'enemy') then
+			return true
+		elseif actor.CanAlter and ( actor:CanAlter(ply) ) and check(v,'friend') then
+			return true
+		elseif actor.IsNPC and actor:IsNPC() and check(v,'npc') then
+			return true
+		elseif actor == ply and check(v,'self') then
+			return true
+		end
+	end
 
-    return false
+	return false
 end
 
 if CLIENT then
@@ -230,7 +230,7 @@ if CLIENT then
 end
 
 if SERVER then
-    util.AddNetworkString("cl_godmode_clearDecals")
+	util.AddNetworkString("cl_godmode_clearDecals")
 
 	timer.Simple(0.3, function()
 		RunConsoleCommand("sbox_godmode", "0")
@@ -264,36 +264,36 @@ if SERVER then
 			local actor = dmginfo:GetAttacker() or dmginfo:GetInflictor()
 
 			if GodCheck(ply, dmginfo, actor) then
-                if ply.bloodcolor then
-                    ply:SetBloodColor(ply.bloodcolor)
-                    ply.bloodcolor = nil
-                end
+				if ply.bloodcolor then
+					ply:SetBloodColor(ply.bloodcolor)
+					ply.bloodcolor = nil
+				end
 
-                if ply == actor then
-                    if ( not ply:IsOnGround() ) then
-                        ply:SetVelocity( dmginfo:GetDamageForce()*0.03 )
-                    end
-                else
-                    if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(actor) then
-                        suppress = true
-                        local mirror = ents.FindByClass('god_reflect_damage')[1]
+				if ply == actor then
+					if ( not ply:IsOnGround() ) then
+						ply:SetVelocity( dmginfo:GetDamageForce()*0.03 )
+					end
+				else
+					if tobool( ply:GetInfo("cl_godmode_reflect") ) and IsValid(actor) then
+						suppress = true
+						local mirror = ents.FindByClass('god_reflect_damage')[1]
 
-                        dmginfo:SetAttacker(ply)
-                        dmginfo:SetInflictor(mirror or actor)
+						dmginfo:SetAttacker(ply)
+						dmginfo:SetInflictor(mirror or actor)
 
-                        actor:TakeDamageInfo(dmginfo)
-                        suppress = false
-                    end
-                end
+						actor:TakeDamageInfo(dmginfo)
+						suppress = false
+					end
+				end
 
-                net.Start("cl_godmode_clearDecals")
-                net.WriteEntity(ply)
-                net.Broadcast()
+				net.Start("cl_godmode_clearDecals")
+				net.WriteEntity(ply)
+				net.Broadcast()
 
-                if not ply.bloodcolor then
-                    ply.bloodcolor = ply:GetBloodColor()
-                    ply:SetBloodColor(DONT_BLEED)
-                end
+				if not ply.bloodcolor then
+					ply.bloodcolor = ply:GetBloodColor()
+					ply:SetBloodColor(DONT_BLEED)
+				end
 
 				return true
 			end
