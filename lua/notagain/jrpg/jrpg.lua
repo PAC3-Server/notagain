@@ -307,6 +307,8 @@ local blacklist = {
 function jrpg.IsActor(ent)
 	if not ent or not ent:IsValid() then return false end
 
+	if ent:GetMaxHealth() > 0 and ent:Health() > 0 then return true end
+
 	if ent:GetModel() == "models/props_c17/furniturefridge001a.mdl" then return true end
 	if ent:GetClass() == "mount_base" then return true end
 
