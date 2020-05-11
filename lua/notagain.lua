@@ -231,6 +231,12 @@ local function run(path)
 end
 
 local function run_dir(addon_name, dir, addcsluafile_only)
+
+	local map_dir = dir .. "map_" .. game.GetMap():lower() .. "/"
+	if file.IsDir(map_dir, "LUA") then
+		run_dir(addon_name, map_dir, addcslua_files)
+	end
+
 	notagain.autorun_results[addon_name] = notagain.autorun_results[addon_name] or {}
 
 	for _, name in pairs((file.Find(dir .. "*.lua", "LUA"))) do
