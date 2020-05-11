@@ -7,7 +7,6 @@ local size = 400
 local cvars = {
     r_WaterDrawReflection = 1,
     r_3dsky = 1,
-    mat_hdr_level = 1,
 }
 
 local old_cvars = {}
