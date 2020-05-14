@@ -8,20 +8,20 @@ script:
   paths=($(git -C $TRAVIS_BUILD_DIR diff --name-only $TRAVIS_COMMIT_RANGE))
   echo $paths
   paths=("${paths[@]/#/$TRAVIS_BUILD_DIR/}")
-  sh ../goluwa/goluwa cli --gluacheck $(printf '%s,' "${paths[@]}")
+  cd ../goluwa && sh ../goluwa/goluwa cli --gluacheck $(printf '%s,' "${paths[@]}")
 env:
   global:
     secure: HXt5CeuruS9sZF8Bzz44TMZ8oeuYXdZ6HJVVqUjTmjFj7+cK/xwfzPwpu+93UC9fRd8o635X4oMVYlQ4ebP4jSu6Kv1R/tOicZ8MEafkcETJxkupOJsXatT3n4UNq4TWlwo5b5j2x6loU0cm8O4sJWR5o2E3bO5VpL21GJhrCrG8cAXlrgMgUIjapIlN2amRrwhyzgZ+C2WXkeNpGX2OfkFT95cdaA86v/9XmlvwFdPUIDIECxfdgl0B1A4JkZ6Up/hZUBvvASv+O5WPnbabcVjrwNxQOggEpwJ+oSWLDGIWJemUDs/zqykL4WYSthKchVVIa+qGUOqvsrGzPzav6qAcaCev42oxWDUpyXKt+ZJNVVpDBwnKhm7PxLfK0dm9907rGDEXY6LM+GCyGN64AFzrZNSRESpHLH+orxYzP9v0rAaxAftyeg39Gs3CHaWMNAdV77ARk/LjG8VQMTRV/eb6/OvuCrT8MbjJw9zeBPWc/Oj2N9EPWl+iRg+TTSZNPHwQ0aN6KaI9K5669eYtmXOu1h+xboetjYDp7a/uTdGU0tE/CcQla7g1nPUuygsGV70lmlUKm4Nle21sYxZYEE+2sWpY/NdswDJq4TNbai5cfRhyMSvwFhiN3d/ZFxhFb2iadF/j6Hdjt4EpG7KR2nMSqKyH5ibus4oMTJbTVLA=
 after_failure: >-
   curl -X POST -g --data-binary '
   {
-  "embeds": [
-  {
-  "title": "BUILD FAILED for '"$TRAVIS_REPO_SLUG"'",
-  "color": 16711680,
-  "description": "Author: `'$(git log -1 --pretty=format:'%an')'`\nMessage: `'"$TRAVIS_COMMIT_MESSAGE"'`"
-  }
-  ]
+    "embeds": [
+      {
+        "title": "BUILD FAILED for '"$TRAVIS_REPO_SLUG"'",
+        "color": 16711680,
+        "description": "Author: `'$(git log -1 --pretty=format:'%an')'`\nMessage: `'"$TRAVIS_COMMIT_MESSAGE"'`"
+      }
+    ]
   }
   '
   -H "Content-Type: application/json"
