@@ -1,7 +1,7 @@
 language: generic
 
 before_install:
-- mkdir -p ../goluwa && wget https://gitlab.com/CapsAdmin/goluwa/raw/master/goluwa -O ../goluwa/goluwa
+- mkdir -p ../goluwa && wget https://gitlab.com/CapsAdmin/goluwa/raw/master/goluwa -O ../goluwa/goluwa && chmod +x ../goluwa/goluwa
 
 script:
 - |
