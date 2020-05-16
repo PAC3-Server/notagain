@@ -1,5 +1,7 @@
 local userdata = requirex("userdata")
 
+local cache = {}
+
 local default_lists = {
 	"PAC3-Server/chatsounds-valve-games/csgo",
 	"PAC3-Server/chatsounds-valve-games/css",
@@ -14,6 +16,34 @@ local default_lists = {
 	"Metastruct/garrysmod-chatsounds/sound/chatsounds/autoadd",
 	"PAC3-Server/chatsounds",
 }
+
+local function load_subscriptions(subscriptions)
+    if not subscriptions then return end
+
+    local env = requirex("goluwa").env
+
+    for _, sub in ipairs(subscriptions) do
+        local location, directory = sub:match("^(.-/.-)/(.*)$")
+        location = location or sub
+        directory = directory or ""
+
+        if location then
+            local friendly = location .. "/" .. directory
+
+            env.autocomplete.translate_list_id["chatsounds_custom_" .. sub] = friendly
+
+            local directory = directory
+            if directory == "" then
+                directory = nil
+            end
+
+            if not cache[sub] then
+                env.chatsounds.BuildFromGithub(location, directory, sub)
+                cache[sub] = true
+            end
+        end
+    end
+end
 
 userdata.Setup("chatsounds_subscriptions", default_lists, function(ply, subscriptions)
 	for _, sub in ipairs(subscriptions) do
@@ -30,27 +60,10 @@ userdata.Setup("chatsounds_subscriptions", default_lists, function(ply, subscrip
 		end
 	end
 
-	if CLIENT then
-        for _, sub in ipairs(subscriptions) do
-            local location, directory = sub:match("^(.-/.-)/(.*)$")
-            location = location or sub
-            directory = directory or ""
+    if CLIENT then
+        local env = requirex("goluwa").env
 
-            if location then
-                local friendly = location .. "/" .. directory
-
-                env.autocomplete.translate_list_id["chatsounds_custom_" .. sub] = friendly
-
-                local directory = directory
-                if directory == "" then
-                    directory = nil
-                end
-
-                if not env.chatsounds.custom or not env.chatsounds.custom[sub] then
-                    env.chatsounds.BuildFromGithub(location, directory, sub)
-                end
-            end
-        end
+        load_subscriptions(subscriptions)
 
         if env.chatsounds.custom then
             local found = {}
@@ -70,6 +83,7 @@ userdata.Setup("chatsounds_subscriptions", default_lists, function(ply, subscrip
             for id, val in pairs(env.chatsounds.custom) do
                 if not found[id] then
                     env.chatsounds.custom[id] = nil
+                    cache[id] = nil
                     print("chatsounds: unloading " .. id .. " since no one is using it anymore")
                 end
             end
@@ -78,6 +92,13 @@ userdata.Setup("chatsounds_subscriptions", default_lists, function(ply, subscrip
 end)
 
 if CLIENT then
+    concommand.Add("chatsounds_reload", function()
+        cache = {}
+        for _, ply in ipairs(player.GetAll()) do
+            load_subscriptions(userdata.Get(ply, "chatsounds_subscriptions"))
+        end
+    end)
+
     local env = requirex("goluwa").env
 
     local autocomplete_font = env.fonts.CreateFont({
@@ -127,16 +148,16 @@ if CLIENT then
         local random_mode = false
 
         local function query(str, scroll)
-            local trees = userdata.Get(LocalPlayer(), "chatsounds_subscriptions")
+            local subscriptions = userdata.Get(LocalPlayer(), "chatsounds_subscriptions")
 
-            if not trees then
+            if not subscriptions then
                 return
             end
 
             local temp = {}
 
-            for i,v in ipairs(trees) do
-                table.insert(temp, "chatsounds_custom_" .. v)
+            for _, sub in ipairs(subscriptions) do
+                table.insert(temp, "chatsounds_custom_" .. sub)
             end
 
             found_autocomplete = env.autocomplete.Query("chatsounds", str, scroll, temp)

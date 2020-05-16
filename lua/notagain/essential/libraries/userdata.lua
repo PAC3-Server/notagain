@@ -71,6 +71,7 @@ function userdata.Setup(key, default, callback)
             local ok, err = pcall(userdata.known[key].callback, LocalPlayer(), val)
             if not ok then
                 print("error setting up userdata due to callback error, defaulting to default value")
+                print(err)
                 save(key, defaulting)
                 val = default
             end
@@ -117,7 +118,7 @@ if CLIENT then
     end
 
     function userdata.Get(ply, key, default)
-        if not userdata.known[key] then return end
+        if not userdata.known[key] then return default end
 
         local data = userdata.players[ply:UniqueID()]
 
@@ -132,9 +133,6 @@ if CLIENT then
         local ply = net.ReadEntity()
         local key = net.ReadString()
         local val = net.ReadType()
-
-        print("received userdata from " .. tostring(ply))
-        print(key, val)
 
         if userdata.known[key].callback then
             local ok, err = pcall(userdata.known[key].callback, ply, val)
@@ -168,9 +166,6 @@ if SERVER then
 
         userdata.players[ply:UniqueID()] = userdata.players[ply:UniqueID()] or {}
         userdata.players[ply:UniqueID()][key] = val
-
-        print("received userdata from " .. tostring(ply))
-        print(key, val)
 
         net.Start("userdata_broadcast")
             net.WriteEntity(ply)
