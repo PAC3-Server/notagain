@@ -123,7 +123,7 @@ if CLIENT then
         local data = userdata.players[ply:UniqueID()]
 
         if not data then
-            return data.default or default
+            return userdata.known[key].default or default
         end
 
         return data[key]
