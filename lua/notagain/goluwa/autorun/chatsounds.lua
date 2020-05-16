@@ -32,34 +32,49 @@ userdata.Setup("chatsounds_subscriptions", default_lists, function(ply, subscrip
 	end
 
 	if CLIENT then
-		if subscriptions then
-			for _, sub in ipairs(subscriptions) do
-				local location, directory = sub:match("^(.-/.-)/(.*)$")
-				location = location or sub
-				directory = directory or ""
+        for _, sub in ipairs(subscriptions) do
+            local location, directory = sub:match("^(.-/.-)/(.*)$")
+            location = location or sub
+            directory = directory or ""
 
-				if location then
-					local friendly = location .. "/" .. directory
+            if location then
+                local friendly = location .. "/" .. directory
 
-					env.autocomplete.translate_list_id["chatsounds_custom_" .. sub] = friendly
+                env.autocomplete.translate_list_id["chatsounds_custom_" .. sub] = friendly
 
-					local directory = directory
-					if directory == "" then
-						directory = nil
-					end
+                local directory = directory
+                if directory == "" then
+                    directory = nil
+                end
 
-					env.chatsounds.BuildFromGithub(location, directory, sub)
-				end
-			end
-		else
-			if not env.chatsounds.custom then return end
+                if not env.chatsounds.custom or not env.chatsounds.custom[sub] then
+                    env.chatsounds.BuildFromGithub(location, directory, sub)
+                end
+            end
+        end
 
-			for k,v in pairs(env.chatsounds.custom) do
-				if k:StartWith(ply:UniqueID() .. "_") then
-					env.chatsounds.custom[k] = nil
-				end
-			end
-		end
+        if env.chatsounds.custom then
+            local found = {}
+
+            for _, sub in ipairs(subscriptions) do
+                found[sub] = true
+            end
+
+            for _, ply in ipairs(player.GetAll()) do
+                if ply ~= LocalPlayer() then
+                    for _, sub in ipairs(userdata.Get(ply, "chatsounds_subscriptions")) do
+                        found[sub] = true
+                    end
+                end
+            end
+
+            for id, val in pairs(env.chatsounds.custom) do
+                if not found[id] then
+                    env.chatsounds.custom[id] = nil
+                    print("chatsounds: unloading " .. id .. " since no one is using it anymore")
+                end
+            end
+        end
 	end
 end)
 
