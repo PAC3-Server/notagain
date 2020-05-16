@@ -14,8 +14,19 @@ net.Receive("chatsounds_subscriptions", function(len, ply)
         subs[i] = net.ReadString()
     end
 
+    ply.chatsounds_subscriptions = subs
+
     net.Start("chatsounds_subscriptions_broadcast")
         net.WriteEntity(ply)
         net.WriteTable(subs)
     net.SendOmit(ply)
+end)
+
+hook.Add("PlayerInitialSpawn", "chatsounds_subscriptions", function(ply)
+    for _, other in ipairs(player.GetAll()) do
+        net.Start("chatsounds_subscriptions_broadcast")
+            net.WriteEntity(other)
+            net.WriteTable(other.chatsounds_subscriptions)
+        net.SendOmit(ply)
+    end
 end)
