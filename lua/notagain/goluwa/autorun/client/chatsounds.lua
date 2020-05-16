@@ -168,6 +168,8 @@ do
 		for i, sub in ipairs(default) do
 			LocalPlayer():ConCommand("chatsounds_subscribe local www.github.com/" .. sub)
 		end
+
+		tell()
 	end
 end
 
