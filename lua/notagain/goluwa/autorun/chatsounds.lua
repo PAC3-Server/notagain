@@ -1,4 +1,3 @@
-local env = requirex("goluwa").env
 local userdata = requirex("userdata")
 
 local default_lists = {
@@ -79,6 +78,7 @@ userdata.Setup("chatsounds_subscriptions", default_lists, function(ply, subscrip
 end)
 
 if CLIENT then
+    local env = requirex("goluwa").env
 
     local autocomplete_font = env.fonts.CreateFont({
         font = "Roboto Black",
