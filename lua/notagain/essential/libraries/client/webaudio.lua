@@ -5,7 +5,7 @@ if me then
 end
 
 webaudio.sample_rate = nil
-webaudio.speed_of_sound = 340.29 -- metres per
+webaudio.speed_of_sound = CreateClientConVar("webaudio_doppler", "800", true)
 webaudio.buffer_size = CreateClientConVar("webaudio_buffer_size", "2048", true)
 
 local function logn(str)
@@ -879,11 +879,11 @@ do
 			self:SetRightVolume((math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 			self:SetLeftVolume((math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 
-			if self:GetDoppler() then
+			if self:GetDoppler() and webaudio.speed_of_sound:GetFloat() ~= 0 then
 				local relativeSourceVelocity = self.SourceVelocity - webaudio.eye_velocity
 				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
 
-				self:UpdatePlaybackSpeed(relativeSourceSpeed / webaudio.speed_of_sound)
+				self:UpdatePlaybackSpeed(relativeSourceSpeed / webaudio.speed_of_sound:GetFloat())
 			end
 
 			self.ListenerOutOfRadius = false
