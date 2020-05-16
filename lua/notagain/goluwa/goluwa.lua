@@ -97,15 +97,15 @@ do
 					return
 				end
 
-				local commits = util.JSONToTable(data)
+				local last_commit = util.JSONToTable(data)
 
-				if file.Read("goluwa/update_id.txt") == commits[1].id then
+				if file.Read("goluwa/update_id.txt") == last_commit.id then
 					cb()
 				else
 					dprint("last commit is different, redownloading")
 					redownload(branch, function()
 						cb()
-						file.Write("goluwa/update_id.txt", commits[1].id)
+						file.Write("goluwa/update_id.txt", last_commit.id)
 					end)
 				end
 			end)
