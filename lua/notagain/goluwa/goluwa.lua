@@ -619,7 +619,7 @@ function goluwa.CreateEnv()
 		env.http = env.runfile("core/lua/libraries/http.lua")
 
 		function sockets.Request(tbl)
-			tbl.callback = tbl.callback or env.table.print
+			--tbl.callback = tbl.callback or env.table.print
 			tbl.method = tbl.method or "GET"
 
 			if tbl.timeout and tbl.timedout_callback then
@@ -656,7 +656,9 @@ function goluwa.CreateEnv()
 								tbl.on_chunks(body)
 							end
 
-							tbl.callback({content = body, header = copy, code = code})
+							if tbl.callback then
+								tbl.callback({content = body, header = copy, code = code})
+							end
 						end
 					end
 				end,
@@ -1054,6 +1056,10 @@ end
 
 if CLIENT then
 	goluwa.Update(goluwa.Initialize)
+end
+
+if SERVER then
+	notagain.AutorunDirectory("goluwa")
 end
 
 if game.IsDedicated() or CLIENT then
