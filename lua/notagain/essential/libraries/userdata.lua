@@ -4,6 +4,25 @@ local userdata = {}
 userdata.players = {}
 userdata.known = {}
 
+local function encode(val)
+    return luadata.Encode({value = val})
+end
+
+local function decode(str)
+    return luadata.Decode(str).value
+end
+
+local function save(key, val)
+    cookie.Set("userdata_" .. key, encode(val))
+end
+
+local function load(key)
+    local str = cookie.GetString("userdata_" .. key)
+    if str then
+        return decode(str)
+    end
+end
+
 function userdata.SetupConVar(key, default, callback)
     userdata.known[key] = {
         default = default,
@@ -38,28 +57,28 @@ function userdata.Setup(key, default, callback)
 
     if CLIENT then
         if
-            not cookie.GetString("userdata_" .. key) or
+            not load(key) or
             not pcall(function()
-                assert(luadata.Decode(cookie.GetString("userdata_" .. key)).value ~= nil)
+                assert(load(key) ~= nil)
             end)
         then
-            cookie.Set("userdata_" .. key, luadata.Encode({value = default}))
+            save(key, default)
         end
 
-        local val = luadata.Decode(cookie.GetString("userdata_" .. key)).value
+        local val = load(key)
 
         if userdata.known[key].callback then
             local ok, err = pcall(userdata.known[key].callback, LocalPlayer(), val)
             if not ok then
                 print("error setting up userdata due to callback error, defaulting to default value")
-                cookie.Set("userdata_" .. key, luadata.Encode({value = default}))
+                save(key, defaulting)
                 val = default
             end
         end
 
         net.Start("userdata")
             net.WriteString(key)
-            net.WriteType()
+            net.WriteType(load(key))
         net.SendToServer()
 
         local uid = LocalPlayer():UniqueID()
@@ -84,7 +103,7 @@ if CLIENT then
                 end
             end
 
-            cookie.Set("userdata_" .. key, luadata.Encode({value = val}))
+            save(key, val)
 
             local uid = LocalPlayer():UniqueID()
             userdata.players[uid] = userdata.players[uid] or {}
@@ -92,17 +111,20 @@ if CLIENT then
 
             net.Start("userdata")
                 net.WriteString(key)
-                net.WriteType(luadata.Decode(cookie.GetString("userdata_" .. key)))
+                net.WriteType(load(key))
             net.SendToServer()
         end
     end
 
     function userdata.Get(ply, key, default)
-        local data = userdata.known[key]
-        if not data then return end
+        if not userdata.known[key] then return end
 
         local data = userdata.players[ply:UniqueID()]
-        if not data then return data.default or default end
+
+        if not data then
+            return data.default or default
+        end
+
         return data[key]
     end
 
@@ -110,6 +132,9 @@ if CLIENT then
         local ply = net.ReadEntity()
         local key = net.ReadString()
         local val = net.ReadType()
+
+        print("received userdata from " .. tostring(ply))
+        print(key, val)
 
         if userdata.known[key].callback then
             local ok, err = pcall(userdata.known[key].callback, ply, val)
@@ -144,17 +169,24 @@ if SERVER then
         userdata.players[ply:UniqueID()] = userdata.players[ply:UniqueID()] or {}
         userdata.players[ply:UniqueID()][key] = val
 
+        print("received userdata from " .. tostring(ply))
+        print(key, val)
+
         net.Start("userdata_broadcast")
             net.WriteEntity(ply)
             net.WriteString(key)
             net.WriteType(val)
-        net.Broadcast()
+        net.SendOmit(ply)
     end)
 
     hook.Add("PlayerFullLoad", "userdata", function(ply)
         userdata.players[ply:UniqueID()] = userdata.players[ply:UniqueID()] or {}
 
         for _, other in pairs(player.GetAll()) do
+            if ply == other then continue end
+
+            userdata.players[other:UniqueID()] = userdata.players[other:UniqueID()] or {}
+
             local data = userdata.players[other:UniqueID()]
             for key, val in pairs(data) do
                 net.Start("userdata_broadcast")
