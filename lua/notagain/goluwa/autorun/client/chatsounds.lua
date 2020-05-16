@@ -57,6 +57,8 @@ do
 	end
 
 	local function unload_custom(ply, sub)
+		ply.chatsounds_custom_lists = {}
+
 		if env.chatsounds.custom then
 			local id = ply:UniqueID() .. "_" .. sub
 			env.chatsounds.custom[id] = nil
