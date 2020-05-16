@@ -5,6 +5,12 @@ net.Receive("chatsounds_subscriptions", function(len, ply)
     local count = net.ReadInt(32)
 
     if not (count >= 1 and count <= 5) then
+        ply.chatsounds_subscriptions = {}
+
+        net.Start("chatsounds_subscriptions_broadcast")
+            net.WriteEntity(ply)
+        net.SendOmit(ply)
+
         return
     end
 

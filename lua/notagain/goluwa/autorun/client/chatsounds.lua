@@ -12,7 +12,7 @@ local autocomplete_font = env.fonts.CreateFont({
 
 local chatsounds_enabled = CreateClientConVar("chatsounds_enabled", "1", true, false, "Disable chatsounds")
 
-local function read(str)
+local function read()
 	local subs = file.Read("chatsounds_subscriptions.txt", "DATA") or ""
 	subs = subs:Split("\n")
 	return subs
@@ -33,145 +33,139 @@ local default = {
 	--"PAC3-Server/chatsounds",
 }
 
-do
-	local function load_custom(ply, sub)
-		ply.chatsounds_custom_lists = ply.chatsounds_custom_lists or {}
-		local location, directory = sub:match("^www%.github%.com%/([^/]+/[^/]+)(.*)")
-		if location then
-			local id = ply:UniqueID() .. "_" .. sub
-			local friendly = location .. directory
-			directory = directory:sub(2)
-			if directory == "" then
-				directory = nil
-			end
-			env.autocomplete.translate_list_id["chatsounds_custom_" .. id] = function()
-				if ply:IsValid() then
-					return ply:Nick() .. "'s " .. friendly
-				end
-			end
-			env.chatsounds.BuildFromGithub(location, directory, id)
-			if not table.HasValue(ply.chatsounds_custom_lists, id) then
-				table.insert(ply.chatsounds_custom_lists, id)
+local function load_custom(ply, sub)
+	ply.chatsounds_custom_lists = ply.chatsounds_custom_lists or {}
+	local location, directory = sub:match("^www%.github%.com%/([^/]+/[^/]+)(.*)")
+	if location then
+		local id = ply:UniqueID() .. "_" .. sub
+		local friendly = location .. directory
+		directory = directory:sub(2)
+		if directory == "" then
+			directory = nil
+		end
+		env.autocomplete.translate_list_id["chatsounds_custom_" .. id] = function()
+			if ply:IsValid() then
+				return ply:Nick() .. "'s " .. friendly
 			end
 		end
-	end
-
-	local function unload_custom(ply, sub)
-		ply.chatsounds_custom_lists = {}
-
-		if env.chatsounds.custom then
-			local id = ply:UniqueID() .. "_" .. sub
-			env.chatsounds.custom[id] = nil
+		env.chatsounds.BuildFromGithub(location, directory, id)
+		if not table.HasValue(ply.chatsounds_custom_lists, id) then
+			table.insert(ply.chatsounds_custom_lists, id)
 		end
-	end
-
-	net.Receive("chatsounds_subscriptions_broadcast", function()
-		local ply = net.ReadEntity()
-		local subs = net.ReadTable()
-
-		for _, sub in ipairs(subs) do
-			load_custom(ply, sub)
-		end
-	end)
-
-	local function clean(subs, str)
-		for i = #subs, 1, -1 do
-			if subs[i] == str or subs[i]:Trim() == "" then
-				table.remove(subs, i)
-
-				if str:StartWith("custom ") then
-					unload_custom(LocalPlayer(), str:sub(#"custom " + 1))
-				end
-			end
-		end
-	end
-
-	local function tell()
-		local subs = read(str)
-
-		local temp = {}
-
-		for i,v in ipairs(subs) do
-			if v:StartWith("custom ") then
-				table.insert(temp, v:sub(#"custom " + 1))
-			end
-		end
-
-		subs = temp
-
-		if #subs == 0 then return end
-
-		net.Start("chatsounds_subscriptions")
-			net.WriteInt(#subs, 32)
-			for _, line in ipairs(subs) do
-				net.WriteString(line)
-			end
-		net.SendToServer()
-	end
-
-	local function save(subs)
-		file.Write("chatsounds_subscriptions.txt", table.concat(subs, "\n"))
-	end
-
-	concommand.Add("chatsounds_subscribe", function(ply, _, _, str)
-		if not str:StartWith("local ") and not str:StartWith("custom ") then
-			print("a subscription must be either local or custom")
-			print("example:")
-			print("custom www.github.com/CapsAdmin/mylist")
-			print("local www.github.com/PAC3-Server/chatsounds-valve-games/hl1")
-			return
-		end
-
-		if not str:find("^%S.- www%.github%.com/") then
-			print("a subscription must be on www.github.com")
-			return
-		end
-
-		if str:StartWith("local ") then
-			local location, directory = str:match("^local www%.github%.com%/([^/]+/[^/]+)(.*)")
-			directory = directory:sub(2)
-			if directory == "" then
-				directory = nil
-			end
-			env.chatsounds.BuildFromGithub(location, directory)
-		elseif str:StartWith("custom ") then
-			load_custom(ply, str:sub(#"custom " + 1))
-		end
-
-		local subs = read(str)
-		clean(subs, str)
-		table.insert(subs, str)
-		save(subs)
-		tell()
-	end)
-
-	concommand.Add("chatsounds_unsubscribe", function(ply, _, _, str)
-		local subs = read(str)
-		clean(subs, str)
-		save(subs)
-	end, function(cmd, args)
-		local subs = read(str)
-		for i,v in ipairs(subs) do
-			subs[i] = "chatsounds_unsubscribe " .. v
-		end
-		tell()
-		return subs
-	end)
-
-	concommand.Add("chatsounds_list_subscriptions", function(ply, _, _, str)
-		for _, line in ipairs((file.Read("chatsounds_subscriptions.txt", "DATA") or ""):Split("\n")) do
-			print(line)
-		end
-	end)
-
-	if LocalPlayer():IsValid() then
-		for i, sub in ipairs(default) do
-			LocalPlayer():ConCommand("chatsounds_subscribe local www.github.com/" .. sub)
-		end
-
-		tell()
 	end
 end
+
+local function unload_custom(ply, sub)
+	if env.chatsounds.custom then
+		local id = ply:UniqueID() .. "_" .. sub
+		env.chatsounds.custom[id] = nil
+	end
+end
+
+net.Receive("chatsounds_subscriptions_broadcast", function()
+	local ply = net.ReadEntity()
+	local subs = net.ReadTable()
+
+	ply.chatsounds_custom_lists = {}
+
+	for _, sub in ipairs(subs) do
+		load_custom(ply, sub)
+	end
+end)
+
+local function clean(subs, str)
+	for i = #subs, 1, -1 do
+		if subs[i] == str or subs[i]:Trim() == "" then
+			table.remove(subs, i)
+
+			if str:StartWith("custom ") then
+				unload_custom(LocalPlayer(), str:sub(#"custom " + 1))
+			end
+		end
+	end
+end
+
+local function tell()
+	local subs = read(str)
+
+	local temp = {}
+
+	for i,v in ipairs(subs) do
+		if v:StartWith("custom ") then
+			table.insert(temp, v:sub(#"custom " + 1))
+		end
+	end
+
+	subs = temp
+
+	net.Start("chatsounds_subscriptions")
+		net.WriteInt(#subs, 32)
+		for _, line in ipairs(subs) do
+			net.WriteString(line)
+		end
+	net.SendToServer()
+end
+
+local function save(subs)
+	file.Write("chatsounds_subscriptions.txt", table.concat(subs, "\n"))
+end
+
+local function load_sub(ply, sub)
+	if sub:StartWith("local ") then
+		local location, directory = sub:match("^local www%.github%.com%/([^/]+/[^/]+)(.*)")
+		directory = directory:sub(2)
+		if directory == "" then
+			directory = nil
+		end
+		env.chatsounds.BuildFromGithub(location, directory)
+	elseif sub:StartWith("custom ") then
+		load_custom(ply, sub:sub(#"custom " + 1))
+	end
+end
+
+concommand.Add("chatsounds_subscribe", function(ply, _, _, str)
+	if not str:StartWith("local ") and not str:StartWith("custom ") then
+		print("a subscription must be either local or custom")
+		print("example:")
+		print("custom www.github.com/CapsAdmin/mylist")
+		print("local www.github.com/PAC3-Server/chatsounds-valve-games/hl1")
+		return
+	end
+
+	if not str:find("^%S.- www%.github%.com/") then
+		print("a subscription must be on www.github.com")
+		return
+	end
+
+	load_sub(ply, str)
+
+	local subs = read()
+	clean(subs, str)
+	table.insert(subs, str)
+	save(subs)
+	tell()
+end)
+
+concommand.Add("chatsounds_unsubscribe", function(ply, _, _, str)
+	local subs = read(str)
+	clean(subs, str)
+	save(subs)
+	tell()
+end, function(cmd, args)
+	local subs = read(str)
+	for i,v in ipairs(subs) do
+		subs[i] = "chatsounds_unsubscribe " .. v
+	end
+	tell()
+	return subs
+end)
+
+concommand.Add("chatsounds_list_subscriptions", function(ply, _, _, str)
+	for _, line in ipairs((file.Read("chatsounds_subscriptions.txt", "DATA") or ""):Split("\n")) do
+		print(line)
+	end
+end)
+
 
 do
 	local found_autocomplete
@@ -247,12 +241,11 @@ local function player_say(ply, str)
 	if not init then
 		env.chatsounds.Initialize()
 
-		if LocalPlayer():IsValid() then
-			for i, sub in ipairs(default) do
-				LocalPlayer():ConCommand("chatsounds_subscribe local www.github.com/" .. sub)
-			end
-			LocalPlayer():ConCommand("chatsounds_subscribe custom www.github.com/PAC3-Server/chatsounds")
+		for _, sub in ipairs(read()) do
+			load_sub(LocalPlayer(), sub)
 		end
+
+		tell()
 
 		hook.Run("ChatsoundsInitialized")
 
@@ -268,7 +261,9 @@ local function player_say(ply, str)
 
 	env.audio.player_object = ply
 
-	env.chatsounds.Say(str, math.Round(CurTime()), ply.chatsounds_custom_lists)
+	local custom = ply.chatsounds_custom_lists
+
+	env.chatsounds.Say(str, math.Round(CurTime()), custom and custom[1] and custom or nil)
 end
 
 hook.Add("OnPlayerChat", "chatsounds", player_say)
