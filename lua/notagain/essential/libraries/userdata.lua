@@ -111,16 +111,16 @@ if CLIENT then
         local key = net.ReadString()
         local val = net.ReadType()
 
-        local uid = ply:UniqueID()
-        userdata.players[uid] = userdata.players[uid] or {}
-        userdata.players[uid][key] = val
-
         if userdata.known[key].callback then
             local ok, err = pcall(userdata.known[key].callback, ply, val)
             if not ok then
                 print("userdata error: " .. err)
             end
         end
+
+        local uid = ply:UniqueID()
+        userdata.players[uid] = userdata.players[uid] or {}
+        userdata.players[uid][key] = val
     end)
 end
 

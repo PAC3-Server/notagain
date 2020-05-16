@@ -113,9 +113,15 @@ do
 	local random_mode = false
 
 	local function query(str, scroll)
+		local trees = userdata.Get(LocalPlayer(), "chatsounds_subscriptions")
+
+		if not trees then
+			return
+		end
+
 		local temp = {}
 
-		for i,v in ipairs(userdata.Get(LocalPlayer(), "chatsounds_subscriptions")) do
+		for i,v in ipairs(trees) do
 			table.insert(temp, "chatsounds_custom_" .. v)
 		end
 
