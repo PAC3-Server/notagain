@@ -89,7 +89,9 @@ do
 		file.CreateDir("goluwa/goluwa")
 
 		local function rolling()
-			http.Fetch("https://gitlab.com/api/v4/projects/CapsAdmin%2Fgoluwa/repository/commits", function(data, _, _, code)
+			local branch = branch:GetString()
+
+			http.Fetch("https://gitlab.com/api/v4/projects/CapsAdmin%2Fgoluwa/repository/commits/" .. branch, function(data, _, _, code)
 				if code ~= 200 then
 					ErrorNoHalt("goluwa: " .. data)
 					return
@@ -101,7 +103,7 @@ do
 					cb()
 				else
 					dprint("last commit is different, redownloading")
-					redownload(branch:GetString(), function()
+					redownload(branch, function()
 						cb()
 						file.Write("goluwa/update_id.txt", commits[1].id)
 					end)
