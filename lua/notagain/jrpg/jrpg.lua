@@ -92,6 +92,8 @@ function jrpg.SetRPG(ply, b, cheat)
 			end
 
 			ply:SendLua([[jrpg.SetRPG(LocalPlayer(), false)]])
+
+			jrpg.Unloadout(ply)
 		end
 
 		ply.rpg_cheat = cheat
@@ -209,6 +211,11 @@ end
 if SERVER then
 
 	function jrpg.Loadout(ply)
+		local wep = ply:GetActiveWeapon()
+		if IsValid(wep) then
+			ply.jrpg_last_weapon = wep:GetClass()
+		end
+
 		ply:Give("weapon_shield_dark_silver")
 		ply:Give("potion_health")
 		ply:Give("potion_mana")
@@ -220,10 +227,40 @@ if SERVER then
 
 		ply:SelectWeapon("weapon_jsword_virtuouscontract")
 
+		ply.jrpg_old_speeds = {
+			WalkSpeed = ply:GetWalkSpeed(),
+			RunSpeed = ply:GetRunSpeed(),
+			DuckSpeed = ply:GetDuckSpeed(),
+			UnDuckSpeed = ply:GetUnDuckSpeed(),
+		}
+
 		ply:SetWalkSpeed(100)
 		ply:SetRunSpeed(200)
 		ply:SetDuckSpeed(0.5)
 		ply:SetUnDuckSpeed(0.5)
+	end
+
+	function jrpg.Unloadout(ply)
+		SafeRemoveEntity(ply:GetWeapon("weapon_shield_dark_silver"))
+		SafeRemoveEntity(ply:GetWeapon("potion_health"))
+		SafeRemoveEntity(ply:GetWeapon("potion_mana"))
+		SafeRemoveEntity(ply:GetWeapon("potion_stamina"))
+		for k,v in pairs(jdmg.types) do
+			SafeRemoveEntity(ply:GetWeapon("weapon_magic_" .. k))
+		end
+		SafeRemoveEntity(ply:GetWeapon("weapon_jsword_virtuouscontract"))
+
+		if ply.jrpg_old_speeds then
+			for k,v in pairs(ply.jrpg_old_speeds) do
+				ply["Set" .. k](ply, v)
+			end
+			ply.jrpg_old_speeds = nil
+		end
+
+		if ply.jrpg_last_weapon then
+			ply:SelectWeapon(ply.jrpg_last_weapon)
+			ply.jrpg_last_weapon = nil
+		end
 	end
 
 	jrpg.AddPlayerHook("PlayerLoadout", "loadout", function(ply)

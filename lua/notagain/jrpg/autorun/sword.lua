@@ -64,11 +64,16 @@ hook.Add("UpdateAnimation", SWEP.ClassName, function(ply)
 
 	local vel = ply:GetVelocity()
 	local seq
-	if vel:Length2D() < 20 then
-		seq = ply:LookupSequence(self.MoveSet .. "_idle_lower")
 
-		if seq < 0 then
-			seq = ply:LookupSequence(self.MoveSet .. "_b_idle")
+	if vel:Length2D() < 20 then
+		if ply:KeyDown(IN_DUCK) then
+			seq = ply:LookupSequence("cidle_knife")
+		else
+			seq = ply:LookupSequence(self.MoveSet .. "_idle_lower")
+
+			if seq < 0 then
+				seq = ply:LookupSequence(self.MoveSet .. "_b_idle")
+			end
 		end
 		ply:SetPlaybackRate(0)
 		ply:SetCycle((CurTime()*0.1)%1)
@@ -305,14 +310,16 @@ if CLIENT then
 			if id then
 				self.Owner:InvalidateBoneCache()
 				local m = self.Owner:GetBoneMatrix(id)
-				pos = m:GetTranslation()
-				ang = m:GetAngles()
+				if m then
+					pos = m:GetTranslation()
+					ang = m:GetAngles()
 
-				pos, ang = self:SetupPosition(pos, ang)
+					pos, ang = self:SetupPosition(pos, ang)
 
-				self:SetPos(pos)
-				self:SetAngles(ang)
-				self:SetupBones()
+					self:SetPos(pos)
+					self:SetAngles(ang)
+					self:SetupBones()
+				end
 			end
 		end
 
