@@ -365,7 +365,7 @@ hook.Add("UpdateAnimation", "movement", function(ply)
 		manip_angles(ply, 0, Angle(0,0,0))
 	end
 
-	if jtarget.GetEntity(ply):IsValid() and not jrpg.IsWieldingShield(ply) then
+	if jtarget.GetEntity(ply):IsValid() and not jrpg.IsWieldingShield(ply) and not ply:GetNW2Bool("jrpg_sword_charge") then
 		ply.jrpg_bounce_anim_seed = ply.jrpg_bounce_anim_seed or math.random()
 		if (CurTime() + ply.jrpg_bounce_anim_seed)%0.5 < 0.25 then
 			if not ply.jrpg_bounce_anim then
