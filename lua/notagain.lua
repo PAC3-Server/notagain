@@ -52,17 +52,28 @@ do
 end
 
 local function load_path(path)
-	if not file.Exists(path, "LUA") then
-		return nil, "unable to find " .. path
+	if file.Exists(path, "LUA") then
+		local var = CompileFile(path)
+
+		if type(var) ~= "string" then
+			return var
+		end
+
+		return nil, var
 	end
 
-	local var = CompileFile(path)
+	if file.Exists(notagain.addon_dir .. "lua/" .. path, "MOD") then
+		local str = file.Read(notagain.addon_dir .. "lua/" .. path, "MOD")
+		local var = CompileString(str, "lua/" .. path)
 
-	if type(var) ~= "string" then
-		return var
+		if type(var) ~= "string" then
+			return var
+		end
+
+		return nil, var
 	end
 
-	return nil, var or "no error?"
+	return nil, "unable to find " .. path
 end
 
 local call_level = 0
@@ -348,6 +359,10 @@ do
 		dirs[addon_dir] = root_dir .. "/" .. addon_dir
 	end
 
+	for i, addon_dir in ipairs(select(2, file.Find(notagain.addon_dir .. "lua/" .. root_dir .. "/*", "MOD"))) do
+		dirs[addon_dir] = root_dir .. "/" .. addon_dir
+	end
+
 	notagain.directories = dirs
 
 	for addon_name, addon_dir in pairs(notagain.directories) do
@@ -371,3 +386,15 @@ function _G.requirex(name, ...)
 	if res == nil then error(err, 2) end
 	return res
 end
+
+concommand.Add("notagain_reload", function()
+	local str = file.Read(notagain.addon_dir .. "lua/notagain.lua", "MOD")
+	if str then
+		CompileString(str, "lua/notagain.lua")()
+	else
+		include("lua/notagain.lua")
+	end
+
+	notagain.Initialize()
+	notagain.Autorun()
+end)
