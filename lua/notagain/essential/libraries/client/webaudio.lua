@@ -138,7 +138,9 @@ function webaudio.Initialize()
 	webaudio.browser_panel:AddFunction("lua", "message", function(typ, ...)
 		local args = {...}
 
-		dprint(typ .. " " .. table.concat(args, ", "))
+		local strs = {}
+		for i, arg in ipairs(args) do strs[i] = tostring(arg) end
+		dprint(typ .. " " .. table.concat(strs, ", "))
 
 		if typ == "initialized" then
 			webaudio.browser_state = "initialized"
