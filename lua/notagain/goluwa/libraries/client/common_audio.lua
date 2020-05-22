@@ -256,6 +256,9 @@ do
 		end
 
 		local snd = webaudio.CreateStream(path)
+		snd.OnError = function(_, str)
+			self:OnError(str)
+		end
 		snd.OnLoad = function()
 			self:SetSoundObject(snd)
 
