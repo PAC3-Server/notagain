@@ -167,6 +167,8 @@ if CLIENT then
             if not chatsounds_enabled:GetBool() then return end
 
             hook.Add("OnChatTab", "chatsounds_autocomplete", function(str)
+                if str:Trim() == "" then return end
+
                 if str == "random" or random_mode then
                     random_mode = true
                     query("", 0)
@@ -216,19 +218,34 @@ if CLIENT then
     local init = false
 
     local function player_say(ply, str)
+        if not chatsounds_enabled:GetBool() then
+            return
+        end
+
+        -- prevent error when server says something
+        if not ply:IsValid() then return end
+
         if not init then
             env.chatsounds.Initialize()
             hook.Run("ChatsoundsInitialized")
             init = true
         end
 
+        local info = {
+            ply = ply,
+            line = str,
+            seed = math.Round(CurTime())
+        }
+
+        if hook.Run("PreChatSound", info) == false then return end
+
+        ply = info.ply
+        str = info.line
+        local seed = info.seed
+
         if str == "sh" or (str:find("sh%s") and not str:find("%Ssh")) or (str:find("%ssh") and not str:find("sh%S")) then
             env.audio.Panic()
         end
-
-        if str:Trim():find("^<.*>$") then return end
-        if str:find("^%p") then return end
-
 
         local ids = {}
         for _, subscription in ipairs(userdata.Get(ply, "chatsounds_subscriptions")) do
@@ -236,16 +253,33 @@ if CLIENT then
         end
 
         env.audio.player_object = ply
-        env.chatsounds.Say(str, math.Round(CurTime()), ids)
+        env.chatsounds.Say(str, seed, ids)
+
+        hook.Run("PostChatSound", info)
     end
 
     hook.Add("OnPlayerChat", "chatsounds", player_say)
 
-    concommand.Add("saysound",function(ply, _,_, str)
+    net.Receive("chatsounds_saysound", function()
+        local ply = net.ReadEntity()
+        if not ply:IsValid() then return end
+
+        local str = net.ReadString()
         player_say(ply, str)
     end)
 
     if not chatsounds_enabled:GetBool() then
         hook.Remove("OnPlayerChat", "chatsounds")
     end
+end
+
+if SERVER then
+    util.AddNetworkString("chatsounds_saysound")
+
+    concommand.Add("saysound",function(ply, _,_, str)
+        net.Start("chatsounds_saysound", true)
+            net.WriteEntity(ply)
+            net.WriteString(str)
+        net.Broadcast()
+    end)
 end

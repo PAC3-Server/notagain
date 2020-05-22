@@ -1,5 +1,9 @@
 local luadata = requirex("luadata")
 
+if SERVER then
+    requirex("player_fully_load")
+end
+
 local userdata = {}
 userdata.players = {}
 userdata.known = {}

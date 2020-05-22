@@ -8,3 +8,5 @@ hook.Add("PlayerInitialSpawn", "FullLoadSetup", function(ply)
         end
     end)
 end)
+
+return true
