@@ -660,6 +660,10 @@ function luadev.AddCommands()
 	luadev.COMMAND('send_self',function(ply,c)
 		handle(ply, c, luadev.RunOnSelf)
 	end)
+
+	luadev.COMMAND('send_self_now',function(ply,c)
+		handle(ply, c, luadev.RunOnSelfNow)
+	end)
 end
 
 
@@ -720,6 +724,10 @@ if CLIENT then
 
 	function luadev.RunOnSelf(script,chunkname,extra)
 		return luadev.RunOnClient(script,LocalPlayer(),chunkname,extra)
+	end
+
+	function luadev.RunOnSelfNow(script,chunkname,extra)
+		return luadev.Run(script, chunkname, extra)
 	end
 
 	function luadev.RunOnClient(script,targets,chunkname,extra)
