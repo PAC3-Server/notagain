@@ -2,9 +2,8 @@ local debug_traceback2 = requirex("debug_traceback2")
 
 local function hook_error(cb)
 	_G.old_glua_error = _G.old_glua_error or debug.getregistry()[1]
-	debug.getregistry()[1] = function(error_message)
-		_G.old_glua_error(error_message)
-
+	debug.getregistry()[1] = function(msg, ...)
+		
 		local ok, err = pcall(function()
 			local stack = {}
 			for i = 0, math.huge do
@@ -18,12 +17,14 @@ local function hook_error(cb)
 				stack[i + 1] = info
 			end
 
-			cb(error_message, debug_traceback2(5), stack)
+			cb(msg, debug_traceback2(5), stack)
 		end)
 
 		if not ok then
-			print(err)
+			ErrorNoHalt("error in error handling: " .. err)
 		end
+
+		return _G.old_glua_error(msg, ...)
 	end
 end
 
