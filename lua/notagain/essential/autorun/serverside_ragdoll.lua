@@ -61,33 +61,42 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerDeath", "serverside_ragdoll", function(ply)
-		SafeRemoveEntity(ply:GetRagdollEntity())
+		SafeRemoveEntity(ply:Old_GetRagdollEntity())
+
 		for _, ent in ipairs(ents.FindByClass("prop_ragdoll")) do
 			if ent:GetOwner() == ply then
 				ent:Remove()
 			end
 		end
 
-		timer.Simple(0.1, function() if ply:IsValid() then ply:SetMoveType(MOVETYPE_FLYGRAVITY) end end) --0 does weird things
+		timer.Simple(0.1, function() 
+			if ply:IsValid() then 
+				ply:SetMoveType(MOVETYPE_FLYGRAVITY) 
+			end 
+		end) --0 does weird things
 
+		
 		hook.Add("OnEntityCreated", "serverside_ragdoll", function(ent)
-			if ply:IsValid() then
-				if ent:GetOwner() == ply then
-					if ent.CPPISetOwner then
-						ent:CPPISetOwner(ply)
-					end
-					ply:SetNWEntity("serverside_ragdoll", ent)
-					for i = 1, ent:GetPhysicsObjectCount() - 1 do
-						local phys = ent:GetPhysicsObjectNum(i)
-						phys:SetVelocity(ply.serverside_ragdoll_vel or ply:GetVelocity())
-					end
-					net.Start("serverside_ragdoll")
-						net.WriteBool(true)
-					net.Send(ply)
-				end
-				ply.serverside_ragdoll_vel = nil
-			end
 			hook.Remove("OnEntityCreated", "serverside_ragdoll")
+			if not ply:IsValid() then return end
+			if ent:GetClass() ~= "prop_ragdoll" then print("not a ragdoll") return end
+			timer.Simple(0, function() 
+				if not ent:IsValid() then print("no longer valid") return end
+				if ent:GetPos():Distance(ply:WorldSpaceCenter()) > 10 then print("ragdoll too far away") return end
+
+				if ent.CPPISetOwner then
+					ent:CPPISetOwner(ply)
+				end
+				ply:SetNWEntity("serverside_ragdoll", ent)
+				for i = 1, ent:GetPhysicsObjectCount() - 1 do
+					local phys = ent:GetPhysicsObjectNum(i)
+					phys:SetVelocity(ply.serverside_ragdoll_vel or ply:GetVelocity())
+				end
+				net.Start("serverside_ragdoll")
+					net.WriteBool(true)
+				net.Send(ply)
+				ply.serverside_ragdoll_vel = nil
+			end)
 		end)
 	end)
 
