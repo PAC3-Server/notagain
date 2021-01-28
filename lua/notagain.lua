@@ -294,7 +294,7 @@ function notagain.AutorunDirectory(addon_name)
 end
 
 function notagain.Initialize()
-
+	
 	-- load foo/foo.lua
 	for addon_name, addon_dir in pairs(notagain.directories) do
 		if not notagain.loaded_libraries[addon_name] then
@@ -386,15 +386,3 @@ function _G.requirex(name, ...)
 	if res == nil then error(err, 2) end
 	return res
 end
-
-concommand.Add("notagain_reload", function()
-	local str = file.Read(notagain.addon_dir .. "lua/notagain.lua", "MOD")
-	if str then
-		CompileString(str, "lua/notagain.lua")()
-	else
-		include("lua/notagain.lua")
-	end
-
-	notagain.Initialize()
-	notagain.Autorun()
-end)
