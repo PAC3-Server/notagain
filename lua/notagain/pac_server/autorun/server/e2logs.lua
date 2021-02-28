@@ -42,7 +42,7 @@ hook.Add("OnEntityCreated", "e2log", function(ent)
 
                     local data = context.data
                     local holos = #data.holos
-                    local props = #data.spawnedProps
+                    local props = data.spawnedProps and #data.spawnedProps or 0
                     local sounds = #data.sound_data.sounds
 
                     Msg("[E2] ")
