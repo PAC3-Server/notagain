@@ -35,7 +35,7 @@ do
 
 	local function redownload(tag, cb)
 		tag = tag or "master"
-		http.Fetch("https://gitlab.com/CapsAdmin/goluwa/repository/" .. tag .. "/archive.zip", function(data, _, _, code)
+		http.Fetch("https://gitlab.com/api/v4/projects/CapsAdmin%2Fgoluwa/repository/archive.zip?sha=" .. tag, function(data, _, _, code)
 			if code ~= 200 then
 				ErrorNoHalt("goluwa: " .. data)
 				return
